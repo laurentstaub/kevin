@@ -1,0 +1,36 @@
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Demander à Kevin
+    link(rel="stylesheet", href="/css/style.css")
+    script(src="/js/search.js" defer)
+
+  body
+    .search-container
+      h1.page-title Demander à Kevin
+      form.search-form(method="GET" action="/search")
+        input.search-input(
+          type="text"
+          name="q"
+          placeholder="Rechercher un médicament..."
+          value=query
+          autocomplete="off"
+        )
+        button.search-button(type="submit") Rechercher
+
+      #loading.loading Recherche en cours...
+
+      if error
+        .error= error
+
+      #results
+        if results && results.length > 0
+          h2.results-header Résultats de la recherche
+          .results
+            each result in results
+              a.result-item(href=`/product/${result.id}`)
+                div= result.denomination_medicament
+                if result.libelle_presentation
+                  div= result.libelle_presentation

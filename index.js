@@ -30,28 +30,68 @@ const pool = new Pool({
 
 // Serve the search page as the default route
 app.get('/', (req, res) => {
-  res.render('search');
+  res.render('search_page');
 });
 
 // Search endpoint
 app.get('/search', async (req, res) => {
   const query = req.query.q;
+  const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
   
-  if (!query) {
-    return res.render('search', { results: [] });
-  }
-
   try {
-    const results = await searchMedications(pool, query);
-    res.render('search', { 
-      results: results,
-      query: query
-    });
+    let results = [];
+    if (query) {
+      results = await searchMedications(pool, query);
+    }
+    
+    if (wantsJson) {
+      res.json({ results, query });
+    } else {
+      res.render('search', { results, query });
+    }
   } catch (err) {
     console.error('Error executing query', err);
-    res.render('search', { 
-      error: 'Une erreur est survenue lors de la recherche',
-      query: query
+    
+    if (wantsJson) {
+      res.status(500).json({ 
+        error: 'Une erreur est survenue lors de la recherche'
+      });
+    } else {
+      res.render('search', { 
+        error: 'Une erreur est survenue lors de la recherche',
+        query,
+        results: []
+      });
+    }
+  }
+});
+
+// Product details endpoint
+app.get('/product/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await pool.query(`
+      SELECT 
+        m.code_cis as id,
+        m.denomination_medicament,
+        p.libelle_presentation
+      FROM dbpm.cis_bdpm m
+      LEFT JOIN dbpm.cis_cip_bdpm p ON m.code_cis = p.code_cis
+      WHERE m.code_cis = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).render('search', { 
+        error: 'Médicament non trouvé'
+      });
+    }
+
+    res.render('product', { product: result.rows[0] });
+  } catch (err) {
+    console.error('Error fetching product:', err);
+    res.status(500).render('search', { 
+      error: 'Une erreur est survenue lors de la récupération du médicament'
     });
   }
 });

@@ -1,0 +1,23 @@
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title #{product.denomination_medicament} - Détails du médicament
+    link(rel="stylesheet", href="/css/style.css")
+
+  body
+    a.back-button(href="/") Retour à la recherche
+    
+    .product-header
+      h1= product.denomination_medicament
+    
+    .product-details
+      .detail-section
+        h2 Informations générales
+        p
+          span.label Code CIS : 
+          span= product.id
+        p
+          span.label Présentation : 
+          span= product.libelle_presentation 
