@@ -48,12 +48,29 @@ html(lang="fr")
           p#pharmacy-name.pharmacy-name
           p#pharmacy-address.pharmacy-address
           p#pharmacy-location
+          
+          .radius-control
+            label(for="radius") Rayon de recherche : 
+              span#radius-value 5
+              |  km
+            input#radius(
+              type="range"
+              min="1"
+              max="20"
+              value="5"
+              step="1"
+            )
+          
+          .nearby-pharmacies
+            h3 Pharmacies à proximité
+            #nearby-list.nearby-list
         
         #map.pharmacy-map
 
     script.
       // Initialize map
-      const map = L.map('map').setView([46.603354, 1.888334], 6); // Center on France
+      const map = L.map('map').setView([46.603354, 1.888334], 6);
+      const markers = L.layerGroup().addTo(map);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -61,6 +78,57 @@ html(lang="fr")
       }).addTo(map);
       
       let currentMarker = null;
+      
+      // Update nearby pharmacies
+      async function updateNearbyPharmacies(lat, lng, radius) {
+        try {
+          const response = await fetch(`/api/nearby-pharmacies?lat=${lat}&lng=${lng}&radius=${radius}`);
+          const pharmacies = await response.json();
+          
+          // Clear existing markers
+          markers.clearLayers();
+          
+          // Add marker for selected pharmacy
+          currentMarker = L.marker([lat, lng])
+            .bindPopup('<strong>Pharmacie sélectionnée</strong>')
+            .addTo(markers);
+          
+          // Update nearby list
+          const nearbyList = document.getElementById('nearby-list');
+          nearbyList.innerHTML = pharmacies
+            .filter(p => p.distance_km > 0) // Exclude selected pharmacy
+            .map(p => `
+              <div class="nearby-item">
+                <strong>${p.raison_sociale}</strong>
+                <div>${p.adresse}</div>
+                <div>${p.code_postal} ${p.ville}</div>
+                <div class="distance">${p.distance_km.toFixed(1)} km</div>
+              </div>
+            `)
+            .join('');
+          
+          // Add markers for nearby pharmacies
+          pharmacies.forEach(p => {
+            if (p.distance_km > 0) { // Exclude selected pharmacy
+              L.marker([p.latitude, p.longitude])
+                .bindPopup(`
+                  <strong>${p.raison_sociale}</strong><br>
+                  ${p.adresse}<br>
+                  ${p.code_postal} ${p.ville}<br>
+                  <em>${p.distance_km.toFixed(1)} km</em>
+                `)
+                .addTo(markers);
+            }
+          });
+          
+          // Fit map bounds to show all markers
+          const bounds = L.featureGroup(markers.getLayers()).getBounds();
+          map.fitBounds(bounds, { padding: [50, 50] });
+          
+        } catch (error) {
+          console.error('Error fetching nearby pharmacies:', error);
+        }
+      }
       
       // Handle pharmacy selection
       document.getElementById('pharmacy').addEventListener('change', function() {
@@ -82,22 +150,28 @@ html(lang="fr")
           addressElement.textContent = address;
           locationElement.textContent = `Département : ${dept}`;
           
-          // Update map
-          if (currentMarker) {
-            map.removeLayer(currentMarker);
-          }
+          // Update nearby pharmacies
+          const radius = document.getElementById('radius').value;
+          updateNearbyPharmacies(lat, lng, radius);
           
-          currentMarker = L.marker([lat, lng])
-            .addTo(map)
-            .bindPopup(`<strong>${this.value}</strong><br>${address}`);
-          
-          map.setView([lat, lng], 15);
-          currentMarker.openPopup();
         } else {
           details.style.display = 'none';
-          if (currentMarker) {
-            map.removeLayer(currentMarker);
-          }
+          markers.clearLayers();
           map.setView([46.603354, 1.888334], 6);
+        }
+      });
+      
+      // Handle radius change
+      document.getElementById('radius').addEventListener('input', function() {
+        const selectedOption = document.getElementById('pharmacy').options[
+          document.getElementById('pharmacy').selectedIndex
+        ];
+        
+        if (selectedOption.value) {
+          const lat = parseFloat(selectedOption.dataset.lat);
+          const lng = parseFloat(selectedOption.dataset.lng);
+          
+          document.getElementById('radius-value').textContent = this.value;
+          updateNearbyPharmacies(lat, lng, this.value);
         }
       }); 

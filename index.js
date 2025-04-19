@@ -66,9 +66,54 @@ app.get('/search', async (req, res) => {
   }
 });
 
+// Function to get nearby pharmacies
+const getNearbyPharmacies = async (pool, lat, lng, radiusKm) => {
+  const result = await pool.query(`
+    WITH selected_pharmacy AS (
+      SELECT 
+        raison_sociale,
+        adresse,
+        code_postal,
+        ville,
+        departement,
+        latitude,
+        longitude,
+        0 as distance_km
+      FROM officines.etablissements
+      WHERE latitude = $1 AND longitude = $2
+    ),
+    nearby_pharmacies AS (
+      SELECT 
+        raison_sociale,
+        adresse,
+        code_postal,
+        ville,
+        departement,
+        latitude,
+        longitude,
+        (point($2, $1) <-> point(longitude, latitude)) * 111.32 as distance_km
+      FROM officines.etablissements
+      WHERE (latitude != $1 OR longitude != $2)
+        AND point($2, $1) <-> point(longitude, latitude) <= ($3 / 111.32)
+    )
+    SELECT *
+    FROM (
+      SELECT * FROM selected_pharmacy
+      UNION ALL
+      SELECT * FROM nearby_pharmacies
+    ) combined
+    ORDER BY distance_km;
+  `, [lat, lng, radiusKm]);
+  
+  return result.rows;
+};
+
 // Product details endpoint
 app.get('/product/:id', async (req, res) => {
   const { id } = req.params;
+  const radius = parseFloat(req.query.radius) || 5; // Default 5km radius
+  const selectedLat = req.query.lat ? parseFloat(req.query.lat) : null;
+  const selectedLng = req.query.lng ? parseFloat(req.query.lng) : null;
   
   try {
     // Get product details
@@ -91,8 +136,8 @@ app.get('/product/:id', async (req, res) => {
       });
     }
 
-    // Get pharmacies list
-    const pharmaciesResult = await pool.query(`
+    // Get all pharmacies for initial list
+    const allPharmaciesResult = await pool.query(`
       SELECT DISTINCT 
         raison_sociale,
         adresse,
@@ -108,14 +153,42 @@ app.get('/product/:id', async (req, res) => {
       ORDER BY raison_sociale
     `);
 
+    // Get nearby pharmacies if coordinates are provided
+    let nearbyPharmacies = [];
+    if (selectedLat && selectedLng) {
+      nearbyPharmacies = await getNearbyPharmacies(pool, selectedLat, selectedLng, radius);
+    }
+
     res.render('product', { 
       product: productResult.rows[0],
-      pharmacies: pharmaciesResult.rows
+      pharmacies: allPharmaciesResult.rows,
+      nearbyPharmacies,
+      selectedRadius: radius
     });
   } catch (err) {
     console.error('Error fetching product:', err);
     res.status(500).render('search_page', { 
       error: 'Une erreur est survenue lors de la récupération du médicament'
+    });
+  }
+});
+
+// Add endpoint to get nearby pharmacies
+app.get('/api/nearby-pharmacies', async (req, res) => {
+  const { lat, lng, radius } = req.query;
+  
+  try {
+    const nearbyPharmacies = await getNearbyPharmacies(
+      pool,
+      parseFloat(lat),
+      parseFloat(lng),
+      parseFloat(radius) || 5
+    );
+    res.json(nearbyPharmacies);
+  } catch (err) {
+    console.error('Error fetching nearby pharmacies:', err);
+    res.status(500).json({ 
+      error: 'Une erreur est survenue lors de la recherche des pharmacies'
     });
   }
 });
