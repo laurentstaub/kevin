@@ -47,7 +47,7 @@ app.get('/search', async (req, res) => {
     if (wantsJson) {
       res.json({ results, query });
     } else {
-      res.render('search', { results, query });
+      res.render('search_page', { results, query });
     }
   } catch (err) {
     console.error('Error executing query', err);
@@ -57,7 +57,7 @@ app.get('/search', async (req, res) => {
         error: 'Une erreur est survenue lors de la recherche'
       });
     } else {
-      res.render('search', { 
+      res.render('search_page', { 
         error: 'Une erreur est survenue lors de la recherche',
         query,
         results: []
@@ -71,26 +71,50 @@ app.get('/product/:id', async (req, res) => {
   const { id } = req.params;
   
   try {
-    const result = await pool.query(`
+    // Get product details
+    const productResult = await pool.query(`
       SELECT 
         m.code_cis as id,
         m.denomination_medicament,
-        p.libelle_presentation
+        p.libelle_presentation,
+        string_agg(DISTINCT c.denomination_substance, ', ' ORDER BY c.denomination_substance) as active_ingredients
       FROM dbpm.cis_bdpm m
       LEFT JOIN dbpm.cis_cip_bdpm p ON m.code_cis = p.code_cis
+      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
       WHERE m.code_cis = $1
+      GROUP BY m.code_cis, m.denomination_medicament, p.libelle_presentation
     `, [id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).render('search', { 
+    if (productResult.rows.length === 0) {
+      return res.status(404).render('search_page', { 
         error: 'Médicament non trouvé'
       });
     }
 
-    res.render('product', { product: result.rows[0] });
+    // Get pharmacies list
+    const pharmaciesResult = await pool.query(`
+      SELECT DISTINCT 
+        raison_sociale,
+        adresse,
+        code_postal,
+        ville,
+        departement,
+        latitude,
+        longitude
+      FROM officines.etablissements
+      WHERE raison_sociale IS NOT NULL
+        AND latitude IS NOT NULL 
+        AND longitude IS NOT NULL
+      ORDER BY raison_sociale
+    `);
+
+    res.render('product', { 
+      product: productResult.rows[0],
+      pharmacies: pharmaciesResult.rows
+    });
   } catch (err) {
     console.error('Error fetching product:', err);
-    res.status(500).render('search', { 
+    res.status(500).render('search_page', { 
       error: 'Une erreur est survenue lors de la récupération du médicament'
     });
   }

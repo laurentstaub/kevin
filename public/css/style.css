@@ -158,4 +158,73 @@ body {
 .label {
   font-weight: bold;
   color: #666;
+}
+
+.pharmacy-selector {
+  margin: 20px 0;
+}
+
+.pharmacy-selector label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.pharmacy-select {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: white;
+}
+
+.pharmacy-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0,86,179,0.2);
+}
+
+.pharmacy-map {
+  height: 400px;
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+
+.pharmacy-details {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e1e1e1;
+}
+
+.pharmacy-name {
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+.pharmacy-address {
+  margin: 0 0 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+#pharmacy-location {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+#pharmacy-address {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
 } 

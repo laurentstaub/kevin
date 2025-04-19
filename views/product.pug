@@ -5,6 +5,8 @@ html(lang="fr")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title #{product.denomination_medicament} - Détails du médicament
     link(rel="stylesheet", href="/css/style.css")
+    link(rel="stylesheet", href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")
+    script(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js")
 
   body
     a.back-button(href="/") Retour à la recherche
@@ -20,4 +22,82 @@ html(lang="fr")
           span= product.id
         p
           span.label Présentation : 
-          span= product.libelle_presentation 
+          span= product.libelle_presentation
+        if product.active_ingredients
+          p
+            span.label Substance(s) active(s) : 
+            span= product.active_ingredients
+
+      .detail-section
+        h2 Trouver en pharmacie
+        .pharmacy-selector
+          label(for="pharmacy") Sélectionner une pharmacie :
+          select#pharmacy.pharmacy-select(name="pharmacy")
+            option(value="") -- Choisir une pharmacie --
+            if pharmacies && pharmacies.length
+              each pharmacy in pharmacies
+                option(
+                  value=pharmacy.raison_sociale
+                  data-lat=pharmacy.latitude
+                  data-lng=pharmacy.longitude
+                  data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
+                  data-dept=pharmacy.departement
+                )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
+        
+        #pharmacy-details.pharmacy-details(style="display: none;")
+          p#pharmacy-name.pharmacy-name
+          p#pharmacy-address.pharmacy-address
+          p#pharmacy-location
+        
+        #map.pharmacy-map
+
+    script.
+      // Initialize map
+      const map = L.map('map').setView([46.603354, 1.888334], 6); // Center on France
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      let currentMarker = null;
+      
+      // Handle pharmacy selection
+      document.getElementById('pharmacy').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const details = document.getElementById('pharmacy-details');
+        const nameElement = document.getElementById('pharmacy-name');
+        const addressElement = document.getElementById('pharmacy-address');
+        const locationElement = document.getElementById('pharmacy-location');
+        
+        if (this.value) {
+          const lat = parseFloat(selectedOption.dataset.lat);
+          const lng = parseFloat(selectedOption.dataset.lng);
+          const address = selectedOption.dataset.address;
+          const dept = selectedOption.dataset.dept;
+          
+          // Update pharmacy details
+          details.style.display = 'block';
+          nameElement.textContent = this.value;
+          addressElement.textContent = address;
+          locationElement.textContent = `Département : ${dept}`;
+          
+          // Update map
+          if (currentMarker) {
+            map.removeLayer(currentMarker);
+          }
+          
+          currentMarker = L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(`<strong>${this.value}</strong><br>${address}`);
+          
+          map.setView([lat, lng], 15);
+          currentMarker.openPopup();
+        } else {
+          details.style.display = 'none';
+          if (currentMarker) {
+            map.removeLayer(currentMarker);
+          }
+          map.setView([46.603354, 1.888334], 6);
+        }
+      }); 
