@@ -285,4 +285,13 @@ body {
   margin-top: 5px;
   color: #666;
   font-style: italic;
+}
+
+/* Map marker styles */
+.selected-pharmacy-marker img {
+  filter: brightness(0.3) saturate(0);
+}
+
+.nearby-pharmacy-marker img {
+  filter: brightness(0.7) saturate(0);
 } 
