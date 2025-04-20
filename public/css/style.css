@@ -25,7 +25,7 @@ body {
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 30px;
   outline: none;
 }
 
@@ -40,13 +40,17 @@ body {
   color: white;
   background-color: #4CAF50;
   border: none;
-  border-radius: 8px;
+  border-radius: 30px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .search-button:hover {
   background-color: #45a049;
+}
+
+.search-button i {
+  font-size: 1.1em;
 }
 
 .results {
