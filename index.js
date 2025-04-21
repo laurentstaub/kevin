@@ -118,16 +118,31 @@ app.get('/product/:id', async (req, res) => {
   try {
     // Get product details
     const productResult = await pool.query(`
+      WITH product_info AS (
+        SELECT 
+          m.code_cis as id,
+          m.denomination_medicament,
+          string_agg(DISTINCT c.denomination_substance, ', ' ORDER BY c.denomination_substance) as active_ingredients
+        FROM dbpm.cis_bdpm m
+        LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
+        WHERE m.code_cis = $1
+        GROUP BY m.code_cis, m.denomination_medicament
+      ),
+      cip_info AS (
+        SELECT 
+          p.code_cip7,
+          p.code_cip13,
+          p.libelle_presentation
+        FROM dbpm.cis_cip_bdpm p
+        WHERE p.code_cis = $1
+        ORDER BY p.libelle_presentation
+      )
       SELECT 
-        m.code_cis as id,
-        m.denomination_medicament,
-        p.libelle_presentation,
-        string_agg(DISTINCT c.denomination_substance, ', ' ORDER BY c.denomination_substance) as active_ingredients
-      FROM dbpm.cis_bdpm m
-      LEFT JOIN dbpm.cis_cip_bdpm p ON m.code_cis = p.code_cis
-      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-      WHERE m.code_cis = $1
-      GROUP BY m.code_cis, m.denomination_medicament, p.libelle_presentation
+        p.*,
+        json_agg(c.*) as cip_products
+      FROM product_info p
+      CROSS JOIN cip_info c
+      GROUP BY p.id, p.denomination_medicament, p.active_ingredients
     `, [id]);
 
     if (productResult.rows.length === 0) {

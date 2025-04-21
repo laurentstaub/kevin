@@ -17,17 +17,21 @@ html(lang="fr")
     
     .product-details
       .detail-section
-        h2 Informations générales
+
         p
           span.label Code CIS : 
           span= product.id
-        p
-          span.label Présentation : 
-          span= product.libelle_presentation
+
         if product.active_ingredients
           p
             span.label Substance(s) active(s) : 
             span= product.active_ingredients
+        h3 Présentations disponibles : 
+        if product.cip_products && product.cip_products.length > 0
+          each cip in product.cip_products
+            .cip-item
+              p
+                span= `${cip.code_cip13} / ${cip.code_cip7} - ${cip.libelle_presentation}`
 
       .detail-section
         h2 Trouver en pharmacie
