@@ -36,18 +36,19 @@ app.get('/', (req, res) => {
 // Search endpoint
 app.get('/search', async (req, res) => {
   const query = req.query.q;
+  const filter = req.query.filter || 'all';
   const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
   
   try {
     let results = [];
     if (query) {
-      results = await searchMedications(pool, query);
+      results = await searchMedications(pool, query, filter);
     }
     
     if (wantsJson) {
       res.json({ results, query });
     } else {
-      res.render('search_page', { results, query });
+      res.render('search_page', { results, query, filter });
     }
   } catch (err) {
     console.error('Error executing query', err);
@@ -60,6 +61,7 @@ app.get('/search', async (req, res) => {
       res.render('search_page', { 
         error: 'Une erreur est survenue lors de la recherche',
         query,
+        filter,
         results: []
       });
     }

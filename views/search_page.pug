@@ -6,21 +6,25 @@ html(lang="fr")
     title Demander à Kevin
     link(rel="stylesheet", href="/css/style.css")
     link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
-    script(src="/js/search.js" defer)
 
   body
     .search-container
       h1.page-title Demander à Kevin
-      form.search-form(method="GET" action="/search")
-        input.search-input(
-          type="text"
-          name="q"
-          placeholder="Rechercher un médicament..."
-          value=query
-          autocomplete="off"
-        )
-        button.search-button(type="submit")
-          i.fas.fa-search
+      .search-wrapper
+        form.search-form(method="GET" action="/search")
+          .input-wrapper
+            input.search-input(
+              type="text"
+              name="q"
+              placeholder="Rechercher un médicament..."
+              value=query
+              autocomplete="off"
+            )
+            button.search-button(type="submit")
+              i.fas.fa-search
+        
+        #suggestions.suggestions-dropdown
+          .suggestions-list
 
       #loading.loading Recherche en cours...
 
@@ -29,10 +33,122 @@ html(lang="fr")
 
       #results
         if results && results.length > 0
-          h2.results-header Résultats de la recherche
+          .search-filters
+            .filter-tabs
+              a.filter-tab(class=(!filter || filter === 'all' ? 'active' : ''), href=`/search?q=${query}`) Tous
+              a.filter-tab(class=(filter === 'specialty' ? 'active' : ''), href=`/search?q=${query}&filter=specialty`) Spécialités
+              a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
+              //- We'll add CIP filter later
+              //- a.filter-tab(href=`/search?q=${query}&filter=cip`) CIP
           .results
             each result in results
               a.result-item(href=`/product/${result.id}`)
                 div= result.denomination_medicament
                 if result.libelle_presentation
-                  div= result.libelle_presentation
+                  div.result-presentation= result.libelle_presentation
+                if result.active_ingredients
+                  div.result-active-ingredients
+                    i.fas.fa-pills 
+                    span= result.active_ingredients
+
+    script.
+      const searchForm = document.querySelector('.search-form');
+      const searchWrapper = document.querySelector('.search-wrapper');
+      const searchInput = searchForm.querySelector('.search-input');
+      const suggestionsDropdown = document.getElementById('suggestions');
+      const suggestionsList = suggestionsDropdown.querySelector('.suggestions-list');
+      const loadingIndicator = document.getElementById('loading');
+      
+      // Function to show suggestions
+      function showSuggestions() {
+        suggestionsDropdown.style.display = 'block';
+        searchWrapper.classList.add('suggestions-visible');
+      }
+
+      // Function to hide suggestions
+      function hideSuggestions() {
+        suggestionsDropdown.style.display = 'none';
+        searchWrapper.classList.remove('suggestions-visible');
+      }
+
+      // Debounce function
+      function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+      }
+
+      // Function to fetch suggestions
+      async function fetchSuggestions(query) {
+        if (query.length < 3) {
+          hideSuggestions();
+          return;
+        }
+
+        loadingIndicator.style.display = 'block';
+        try {
+          const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            displaySuggestions(data.results);
+          } else {
+            hideSuggestions();
+          }
+        } catch (error) {
+          console.error('Error fetching suggestions:', error);
+          hideSuggestions();
+        } finally {
+          loadingIndicator.style.display = 'none';
+        }
+      }
+
+      // Function to display suggestions
+      function displaySuggestions(results) {
+        suggestionsList.innerHTML = '';
+        
+        results.slice(0, 5).forEach(result => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.innerHTML = `
+            <div class="suggestion-name">${result.denomination_medicament}</div>
+            ${result.libelle_presentation ? 
+              `<div class="suggestion-presentation">${result.libelle_presentation}</div>` : 
+              ''}
+          `;
+          
+          div.addEventListener('click', () => {
+            window.location.href = `/product/${result.id}`;
+          });
+          
+          suggestionsList.appendChild(div);
+        });
+        
+        showSuggestions();
+      }
+
+      // Event listeners
+      const debouncedFetch = debounce(fetchSuggestions, 300);
+      
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        debouncedFetch(query);
+      });
+
+      // Close suggestions when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!searchForm.contains(e.target)) {
+          hideSuggestions();
+        }
+      });
+
+      // Handle form submission
+      searchForm.addEventListener('submit', () => {
+        hideSuggestions();
+      });

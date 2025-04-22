@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Function Guidelines
+
+## Core Principles
+- Keep functions small and focused (single responsibility)
+- Maximum 20-30 lines per function
+- Return early to avoid deep nesting
+- Use descriptive names that indicate purpose
+
+## Function Structure
+- Use function expressions with `const` rather than declarations
+- Use default parameters instead of conditionals when appropriate
+- Place helper functions after main functions
+- Keep parameter count low (ideally 3 or fewer)
+
+## Documentation
+```javascript
+/**
+ * Example of proper function documentation
+ * @param {type} paramName - Parameter description
+ * @returns {type} Description of return value
+ */
+const functionName = function(paramName) {
+  // Implementation
+};
+```
+
+## Error Handling
+- Handle edge cases at the start of functions
+- Use appropriate error types
+- Provide meaningful error messages
+- Document expected errors in JSDoc comments
+
+## Testing
+- Write tests for both expected and edge cases
+- Keep tests independent
+- Use descriptive test names
+- Test error conditions

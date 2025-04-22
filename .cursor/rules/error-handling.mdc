@@ -1,0 +1,47 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Error Handling Guidelines
+
+## Core Principles
+- Always handle potential errors
+- Provide meaningful error messages
+- Don't swallow errors without logging
+- Use appropriate error types
+
+## Error Handling Structure
+```javascript
+// Example error handling
+try {
+  // Potentially error-prone code
+} catch (error) {
+  // Handle specific errors first
+  if (error instanceof TypeError) {
+    // Handle type error
+  } else {
+    // Handle general error
+    console.error('Error:', error.message);
+    throw error;
+  }
+}
+```
+
+## Custom Error Types
+```javascript
+class ValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+```
+
+## Best Practices
+- Use try/catch blocks for error-prone code
+- Handle errors at the appropriate level
+- Log errors with useful context
+- Consider using error boundaries in React
+- Document error handling in comments
+- Return early for validation errors

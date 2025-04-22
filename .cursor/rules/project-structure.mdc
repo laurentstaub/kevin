@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure Guidelines
+
+## Directory Structure
+```
+project-root/
+├── src/
+│   ├── components/      # React components
+│   ├── services/       # Business logic and API calls
+│   ├── utils/          # Helper functions and utilities
+│   ├── types/          # TypeScript type definitions
+│   └── styles/         # CSS/SCSS files
+├── tests/              # Test files
+├── public/             # Static assets
+└── docs/              # Documentation
+```
+
+## File Organization
+- Group related files together
+- Keep files focused on single responsibility
+- Use consistent naming conventions
+- Separate concerns appropriately
+
+## Module Guidelines
+- Use ES6 modules
+- Export only what's needed
+- Avoid circular dependencies
+- Keep import statements organized
+- Use absolute imports for project files
+
+## Configuration
+- Keep configuration in dedicated files
+- Use environment variables for sensitive data
+- Document configuration options
+- Version control configuration templates
+
+## Documentation
+- Maintain up-to-date README
+- Document setup and installation
+- Include usage examples
+- Document API endpoints
+- Keep inline documentation current

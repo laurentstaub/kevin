@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Code Style Guide
+
+## Formatting Standards
+- Use 2 spaces for indentation (no tabs)
+- Maximum line length: 80 characters
+- Use spaces around operators and after commas
+- No trailing whitespace
+- Files must end with a newline
+
+## Naming Conventions
+- Variables/Functions: camelCase (`myVariable`, `calculateTotal`)
+- Constants: UPPER_SNAKE_CASE (`MAX_USERS`, `API_KEY`)
+- Classes: PascalCase (`UserAccount`, `TransactionProcessor`)
+- Boolean variables: prefix with `is`, `has`, `can` (`isActive`, `hasPermission`)
+
+## Variable Declaration
+- Use `const` by default
+- Use `let` only when reassignment is necessary
+- Avoid `var`
+- One variable declaration per line
+- Declare variables at the top of their scope
+
+## Code Organization
+- Group related code together
+- Keep files focused on a single responsibility
+- Import/export only what's needed
+- Separate concerns appropriately
+- css rules not included in html or pug, put is in css file
+- no js scripts inline, put it in own js file
+
+## Comments
+- Use JSDoc style for function documentation
+- Add comments for complex logic
+- Keep comments up-to-date with code changes
+- Code should be self-documenting when possible

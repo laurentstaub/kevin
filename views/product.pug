@@ -12,20 +12,17 @@ html(lang="fr")
   body
     a.back-button(href="/") Retour à la recherche
     
-    .product-header
-      h1= product.denomination_medicament
-    
     .product-details
       .detail-section
-
-        p
-          span.label Code CIS : 
-          span= product.id
-
+        h1= product.denomination_medicament
         if product.active_ingredients
           p
             span.label Substance(s) active(s) : 
             span= product.active_ingredients
+        p
+          span.label Code CIS : 
+          span= product.id
+
         h3 Présentations disponibles : 
         if product.cip_products && product.cip_products.length > 0
           each cip in product.cip_products
@@ -35,36 +32,40 @@ html(lang="fr")
 
       .detail-section
         h2 Trouver en pharmacie
-        .pharmacy-selector
-          label(for="pharmacy") Sélectionner une pharmacie :
-          select#pharmacy.pharmacy-select(name="pharmacy")
-            option(value="") -- Choisir une pharmacie --
-            if pharmacies && pharmacies.length
-              each pharmacy in pharmacies
-                option(
-                  value=pharmacy.raison_sociale
-                  data-lat=pharmacy.latitude
-                  data-lng=pharmacy.longitude
-                  data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
-                  data-dept=pharmacy.departement
-                )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
+        .pharmacy-controls
+          .pharmacy-selector
+            label(for="pharmacy") Sélectionner une pharmacie :
+            select#pharmacy.pharmacy-select(name="pharmacy")
+              option(value="") -- Choisir une pharmacie --
+              if pharmacies && pharmacies.length
+                each pharmacy in pharmacies
+                  option(
+                    value=pharmacy.raison_sociale
+                    data-lat=pharmacy.latitude
+                    data-lng=pharmacy.longitude
+                    data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
+                    data-dept=pharmacy.departement
+                  )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
+          
+          .radius-control
+            label(for="radius") Rayon : 
+              span#radius-value 5
+              |  km
+            .slider-container
+              span.unit-marker 1 km
+              input#radius(
+                type="range"
+                min="1"
+                max="100"
+                value="5"
+                step="1"
+              )
+              span.unit-marker 100 km
         
         #pharmacy-details.pharmacy-details(style="display: none;")
           p#pharmacy-name.pharmacy-name
           p#pharmacy-address.pharmacy-address
           p#pharmacy-location
-          
-          .radius-control
-            label(for="radius") Rayon de recherche : 
-              span#radius-value 5
-              |  km
-            input#radius(
-              type="range"
-              min="1"
-              max="20"
-              value="5"
-              step="1"
-            )
           
           .nearby-pharmacies
             h3 Pharmacies à proximité
