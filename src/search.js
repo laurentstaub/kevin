@@ -36,7 +36,6 @@ const searchMedications = async (pool, query, filter = 'all') => {
       SELECT DISTINCT
         m.code_cis as id,
         m.denomination_medicament,
-        p.libelle_presentation,
         string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
         CASE 
           WHEN $${terms.length + 1} = 'active' AND (${terms.map((_, i) => 
@@ -48,15 +47,13 @@ const searchMedications = async (pool, query, filter = 'all') => {
           ELSE 1
         END as sort_order
       FROM dbpm.cis_bdpm m
-      LEFT JOIN dbpm.cis_cip_bdpm p ON m.code_cis = p.code_cis
       LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
       WHERE ${whereClause}
-      GROUP BY m.code_cis, m.denomination_medicament, p.libelle_presentation
+      GROUP BY m.code_cis, m.denomination_medicament
     )
     SELECT 
       id,
       denomination_medicament,
-      libelle_presentation,
       active_ingredients
     FROM results
     ORDER BY sort_order, denomination_medicament
@@ -65,6 +62,4 @@ const searchMedications = async (pool, query, filter = 'all') => {
   return result.rows;
 };
 
-module.exports = {
-  searchMedications
-}; 
+export { searchMedications }; 

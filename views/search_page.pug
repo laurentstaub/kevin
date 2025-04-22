@@ -5,7 +5,7 @@ html(lang="fr")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title Demander à Kevin
     link(rel="stylesheet", href="/css/style.css")
-    link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
+    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
 
   body
     .search-container
@@ -21,7 +21,7 @@ html(lang="fr")
               autocomplete="off"
             )
             button.search-button(type="submit")
-              i.fas.fa-search
+              i.fa-light.fa-magnifying-glass
         
         #suggestions.suggestions-dropdown
           .suggestions-list
@@ -32,24 +32,22 @@ html(lang="fr")
         .error= error
 
       #results
-        if results && results.length > 0
+        if query
           .search-filters
             .filter-tabs
               a.filter-tab(class=(!filter || filter === 'all' ? 'active' : ''), href=`/search?q=${query}`) Tous
               a.filter-tab(class=(filter === 'specialty' ? 'active' : ''), href=`/search?q=${query}&filter=specialty`) Spécialités
               a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
-              //- We'll add CIP filter later
-              //- a.filter-tab(href=`/search?q=${query}&filter=cip`) CIP
           .results
-            each result in results
-              a.result-item(href=`/product/${result.id}`)
-                div= result.denomination_medicament
-                if result.libelle_presentation
-                  div.result-presentation= result.libelle_presentation
-                if result.active_ingredients
-                  div.result-active-ingredients
-                    i.fas.fa-pills 
-                    span= result.active_ingredients
+            if results && results.length > 0
+              each result in results
+                a.result-item(href=`/product/${result.id}`)
+                  div= result.denomination_medicament
+                  if result.active_ingredients
+                    div.result-active-ingredients
+                      span= result.active_ingredients
+            else
+              .no-results Pas de résultat
 
     script.
       const searchForm = document.querySelector('.search-form');
@@ -59,6 +57,9 @@ html(lang="fr")
       const suggestionsList = suggestionsDropdown.querySelector('.suggestions-list');
       const loadingIndicator = document.getElementById('loading');
       
+      let currentSuggestionIndex = -1;
+      let suggestions = [];
+
       // Function to show suggestions
       function showSuggestions() {
         suggestionsDropdown.style.display = 'block';
@@ -69,6 +70,68 @@ html(lang="fr")
       function hideSuggestions() {
         suggestionsDropdown.style.display = 'none';
         searchWrapper.classList.remove('suggestions-visible');
+        currentSuggestionIndex = -1;
+        updateSelectedSuggestion();
+      }
+
+      // Function to update the visual selection of suggestions
+      function updateSelectedSuggestion() {
+        const items = suggestionsList.querySelectorAll('.suggestion-item');
+        items.forEach((item, index) => {
+          if (index === currentSuggestionIndex) {
+            item.classList.add('selected');
+          } else {
+            item.classList.remove('selected');
+          }
+        });
+      }
+
+      // Function to handle keyboard navigation
+      function handleKeyboardNavigation(e) {
+        const items = suggestionsList.querySelectorAll('.suggestion-item');
+        
+        if (!items.length) return;
+
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, items.length - 1);
+            updateSelectedSuggestion();
+            break;
+
+          case 'ArrowUp':
+            e.preventDefault();
+            currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+            updateSelectedSuggestion();
+            if (currentSuggestionIndex === -1) {
+              searchInput.value = searchInput.dataset.originalValue || searchInput.value;
+            }
+            break;
+
+          case 'Enter':
+            if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
+              e.preventDefault();
+              const selectedItem = items[currentSuggestionIndex];
+              window.location.href = `/product/${suggestions[currentSuggestionIndex].id}`;
+            }
+            break;
+
+          case 'Escape':
+            hideSuggestions();
+            searchInput.blur();
+            break;
+        }
+
+        // Update input value when navigating through suggestions
+        if (currentSuggestionIndex >= 0 && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+          const selectedItem = suggestions[currentSuggestionIndex];
+          if (selectedItem) {
+            if (!searchInput.dataset.originalValue) {
+              searchInput.dataset.originalValue = searchInput.value;
+            }
+            searchInput.value = selectedItem.denomination_medicament;
+          }
+        }
       }
 
       // Debounce function
@@ -97,6 +160,7 @@ html(lang="fr")
           const data = await response.json();
           
           if (data.results && data.results.length > 0) {
+            suggestions = data.results;
             displaySuggestions(data.results);
           } else {
             hideSuggestions();
@@ -112,19 +176,29 @@ html(lang="fr")
       // Function to display suggestions
       function displaySuggestions(results) {
         suggestionsList.innerHTML = '';
+        currentSuggestionIndex = -1;
         
         results.slice(0, 5).forEach(result => {
           const div = document.createElement('div');
           div.className = 'suggestion-item';
+          
+          const activeIngredientsHtml = result.active_ingredients ? 
+            `<div class="suggestion-active-ingredients">
+              <span>${result.active_ingredients}</span>
+            </div>` : '';
+          
           div.innerHTML = `
             <div class="suggestion-name">${result.denomination_medicament}</div>
-            ${result.libelle_presentation ? 
-              `<div class="suggestion-presentation">${result.libelle_presentation}</div>` : 
-              ''}
+            ${activeIngredientsHtml}
           `;
           
           div.addEventListener('click', () => {
             window.location.href = `/product/${result.id}`;
+          });
+
+          div.addEventListener('mouseenter', () => {
+            currentSuggestionIndex = Array.from(suggestionsList.children).indexOf(div);
+            updateSelectedSuggestion();
           });
           
           suggestionsList.appendChild(div);
@@ -138,8 +212,11 @@ html(lang="fr")
       
       searchInput.addEventListener('input', (e) => {
         const query = e.target.value.trim();
+        searchInput.dataset.originalValue = query;
         debouncedFetch(query);
       });
+
+      searchInput.addEventListener('keydown', handleKeyboardNavigation);
 
       // Close suggestions when clicking outside
       document.addEventListener('click', (e) => {

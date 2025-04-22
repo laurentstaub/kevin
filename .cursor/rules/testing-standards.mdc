@@ -1,5 +1,49 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Testing Standards
+
+## Test-Driven Development (TDD)
+- Write tests before or alongside code
+- Follow the Red-Green-Refactor cycle
+- Test both expected and edge cases
+- Keep tests independent of each other
+
+## Test Structure
+```javascript
+// Example test structure
+describe('ComponentName', () => {
+  beforeEach(() => {
+    // Setup
+  });
+
+  it('should describe expected behavior', () => {
+    // Test implementation
+  });
+
+  afterEach(() => {
+    // Cleanup
+  });
+});
+```
+
+## Test Coverage
+- Aim for high test coverage
+- Test error conditions
+- Test boundary cases
+- Include integration tests where appropriate
+
+## Testing Best Practices
+- Use descriptive test names
+- One assertion per test when possible
+- Mock external dependencies
+- Keep test code as simple as possible
+- Use appropriate test doubles (stubs, mocks, spies)
+
+## Development Testing
+- Use console.log for quick validation
+- Test in small increments
+- Verify edge cases manually
+- Document test cases and expected results

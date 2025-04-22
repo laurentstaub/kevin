@@ -6,69 +6,135 @@ html(lang="fr")
     title #{product.denomination_medicament} - Détails du médicament
     link(rel="stylesheet", href="/css/style.css")
     link(rel="stylesheet", href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")
+    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
     script(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js")
     script(src="/js/mapping.js")
 
   body
-    a.back-button(href="/") Retour à la recherche
-    
-    .product-details
-      .detail-section
-        h1= product.denomination_medicament
-        if product.active_ingredients
-          p
-            span.label Substance(s) active(s) : 
-            span= product.active_ingredients
-        p
-          span.label Code CIS : 
-          span= product.id
+    .product-container
+      .product-header
+        a.back-button(href="/") 
+          i.fa-light.fa-arrow-left
+          span Retour à la recherche
+        h1.product-title= product.denomination_medicament
+        .product-subtitle
+          if product.active_ingredients
+            a.product-category(href="#")= product.active_ingredients.toUpperCase()
 
-        h3 Présentations disponibles : 
-        if product.cip_products && product.cip_products.length > 0
-          each cip in product.cip_products
-            .cip-item
-              p
-                span= `${cip.code_cip13} / ${cip.code_cip7} - ${cip.libelle_presentation}`
+      .product-content
+        .main-content
+          .presentations-section
+            h2.section-title Présentations disponibles
+            if product.cip_products && product.cip_products.length > 0
+              .cip-list
+                each cip in product.cip_products
+                  .cip-item
+                    p= `${cip.code_cip7} - ${cip.libelle_presentation}`
 
-      .detail-section
-        h2 Trouver en pharmacie
-        .pharmacy-controls
-          .pharmacy-selector
-            label(for="pharmacy") Sélectionner une pharmacie :
-            select#pharmacy.pharmacy-select(name="pharmacy")
-              option(value="") -- Choisir une pharmacie --
-              if pharmacies && pharmacies.length
-                each pharmacy in pharmacies
-                  option(
-                    value=pharmacy.raison_sociale
-                    data-lat=pharmacy.latitude
-                    data-lng=pharmacy.longitude
-                    data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
-                    data-dept=pharmacy.departement
-                  )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
-          
-          .radius-control
-            label(for="radius") Rayon : 
-              span#radius-value 5
-              |  km
-            .slider-container
-              span.unit-marker 1 km
-              input#radius(
-                type="range"
-                min="1"
-                max="100"
-                value="5"
-                step="1"
-              )
-              span.unit-marker 100 km
-        
-        #pharmacy-details.pharmacy-details(style="display: none;")
-          p#pharmacy-name.pharmacy-name
-          p#pharmacy-address.pharmacy-address
-          p#pharmacy-location
-          
-          .nearby-pharmacies
-            h3 Pharmacies à proximité
-            #nearby-list.nearby-list
-        
-        #map.pharmacy-map 
+          .pharmacy-section
+            h2.section-title Trouver en pharmacie
+            .pharmacy-controls
+              .pharmacy-selector
+                label(for="pharmacy") Sélectionner une pharmacie :
+                select#pharmacy.pharmacy-select(name="pharmacy")
+                  option(value="") -- Choisir une pharmacie --
+                  if pharmacies && pharmacies.length
+                    each pharmacy in pharmacies
+                      option(
+                        value=pharmacy.raison_sociale
+                        data-lat=pharmacy.latitude
+                        data-lng=pharmacy.longitude
+                        data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
+                        data-dept=pharmacy.departement
+                        selected=(pharmacy.id === 9554)
+                      )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
+              
+              .radius-control
+                label(for="radius") Rayon de recherche : 
+                  span#radius-value 5
+                  |  km
+                .slider-container
+                  span.unit-marker 1 km
+                  input#radius(
+                    type="range"
+                    min="1"
+                    max="100"
+                    value="5"
+                    step="1"
+                  )
+                  span.unit-marker 100 km
+
+            .pharmacy-map-container
+              #map.pharmacy-map
+              #pharmacy-details.pharmacy-details(style="display: none;")
+                p#pharmacy-name.pharmacy-name
+                p#pharmacy-address.pharmacy-address
+                p#pharmacy-location
+                
+                .nearby-pharmacies
+                  h3 Pharmacies à proximité
+                  #nearby-list.nearby-list
+
+          .other-info-section
+            h2.section-title Autres informations
+            .info-grid
+              .info-item
+                h3 Nom du médicament
+                p= product.denomination_medicament
+
+              .info-item
+                h3 Forme pharmaceutique
+                p= product.forme_pharmaceutique
+
+              .info-item
+                h3 Titulaire de l'autorisation de mise sur le marché (AMM)
+                p= product.titulaires
+
+        .side-content
+          .quick-links
+            h2.section-title Liens rapides
+            ul.links-list
+              li
+                a(href="#") 
+                  i.fa-light.fa-circle-info
+                  span Informations de base
+              li
+                a(href="#") 
+                  i.fa-light.fa-pills
+                  span Posologie
+              li
+                a(href="#") 
+                  i.fa-light.fa-triangle-exclamation
+                  span Contre-indications
+              li
+                a(href="#") 
+                  i.fa-light.fa-circle-exclamation
+                  span Avertissements
+              li
+                a(href="#") 
+                  i.fa-light.fa-arrows-rotate
+                  span Interactions
+              li
+                a(href="#") 
+                  i.fa-light.fa-person-pregnant
+                  span Grossesse
+              li
+                a(href="#") 
+                  i.fa-light.fa-car-side
+                  span Conduite
+              li
+                a(href="#") 
+                  i.fa-light.fa-face-frown
+                  span Effets indésirables
+              li
+                a(href="#") 
+                  i.fa-light.fa-bolt
+                  span Surdosage
+              li
+                a(href="#") 
+                  i.fa-light.fa-flask
+                  span Propriétés pharmacodynamiques
+              li
+                a(href="#") 
+                  i.fa-light.fa-syringe
+                  span Propriétés pharmacocinétiques
