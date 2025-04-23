@@ -699,4 +699,98 @@ body {
   .pharmacy-map {
     height: 300px;
   }
+}
+
+/* Incidents Section Styles */
+.incidents-section {
+  margin: 2rem 0;
+  background: white;
+  border-radius: 8px;
+}
+
+.incidents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.incident-item {
+  padding: 1rem;
+  border: 1px solid var(--grisclair);
+  border-radius: 8px;
+  background: var(--blanc);
+}
+
+.incident-header {
+  margin-bottom: 1rem;
+}
+
+.incident-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-tension {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-rupture {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.incident-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.incident-detail {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.detail-label {
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: var(--noir);
+  font-size: 0.9rem;
+}
+
+.incident-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.date-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-item i {
+  color: var(--gris);
+  font-size: 1rem;
+}
+
+.date-label {
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.date-value {
+  color: var(--noir);
+  font-size: 0.9rem;
 } 

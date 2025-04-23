@@ -134,32 +134,35 @@ app.get('/product/:id', async (req, res) => {
       ),
       cip_info AS (
         SELECT 
-          p.code_cip7,
-          p.code_cip13,
-          p.libelle_presentation
-        FROM dbpm.cis_cip_bdpm p
-        WHERE p.code_cis = $1
-        ORDER BY p.libelle_presentation
+          json_agg(json_build_object(
+            'code_cip7', code_cip7,
+            'code_cip13', code_cip13,
+            'libelle_presentation', libelle_presentation
+          ) ORDER BY libelle_presentation) as cip_products
+        FROM dbpm.cis_cip_bdpm
+        WHERE code_cis = $1
       ),
       incidents_info AS (
         SELECT 
-          i.status,
-          i.start_date,
-          i.end_date,
-          i.original_specialite
+          json_agg(
+            json_build_object(
+              'status', status,
+              'start_date', start_date,
+              'end_date', end_date,
+              'original_specialite', original_specialite
+            ) ORDER BY start_date DESC
+          ) FILTER (WHERE status IS NOT NULL) as incidents
         FROM incidents i
         JOIN produits p ON i.product_id = p.id
         WHERE p.cis_codes @> jsonb_build_array(($1)::numeric)
-        ORDER BY i.start_date DESC
       )
       SELECT 
         p.*,
-        json_agg(c.*) as cip_products,
-        json_agg(DISTINCT i.*) FILTER (WHERE i.status IS NOT NULL) as incidents
+        c.cip_products,
+        i.incidents
       FROM product_info p
       CROSS JOIN cip_info c
-      LEFT JOIN incidents_info i ON true
-      GROUP BY p.id, p.denomination_medicament, p.forme_pharmaceutique, p.active_ingredients, p.titulaires
+      CROSS JOIN incidents_info i
     `, [id]);
 
     if (productResult.rows.length === 0) {
