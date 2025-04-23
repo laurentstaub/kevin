@@ -40,12 +40,12 @@ html(lang="fr")
               a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
           .results
             if results && results.length > 0
-              each result in results
-                a.result-item(href=`/product/${result.id}`)
-                  div= result.denomination_medicament
-                  if result.active_ingredients
-                    div.result-active-ingredients
-                      span= result.active_ingredients
+            each result in results
+              a.result-item(href=`/product/${result.id}`)
+                div= result.denomination_medicament
+                if result.active_ingredients
+                  div.result-active-ingredients
+                    span= result.active_ingredients
             else
               .no-results Pas de résultat
 
@@ -59,7 +59,7 @@ html(lang="fr")
       
       let currentSuggestionIndex = -1;
       let suggestions = [];
-
+      
       // Function to show suggestions
       function showSuggestions() {
         suggestionsDropdown.style.display = 'block';

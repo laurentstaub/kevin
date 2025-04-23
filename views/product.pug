@@ -31,6 +31,33 @@ html(lang="fr")
                   .cip-item
                     p= `${cip.code_cip7} - ${cip.libelle_presentation}`
 
+          if product.incidents && product.incidents.length > 0
+            .incidents-section
+              h2.section-title État des tensions d'approvisionnement
+              .incidents-list
+                each incident in product.incidents
+                  .incident-item
+                    .incident-header
+                      .incident-status(class=`status-${incident.status.toLowerCase()}`)
+                        i.fa-light.fa-circle-exclamation
+                        span= incident.status
+                    .incident-content
+                      if incident.original_specialite
+                        .incident-detail
+                          span.detail-label Spécialité concernée:
+                          span.detail-value= incident.original_specialite
+                      .incident-dates
+                        if incident.start_date
+                          .date-item
+                            i.fa-light.fa-calendar-day
+                            span.date-label Début:
+                            span.date-value= new Date(incident.start_date).toLocaleDateString('fr-FR')
+                        if incident.end_date
+                          .date-item
+                            i.fa-light.fa-calendar-check
+                            span.date-label Fin prévue:
+                            span.date-value= new Date(incident.end_date).toLocaleDateString('fr-FR')
+
           .pharmacy-section
             h2.section-title Trouver en pharmacie
             .pharmacy-controls

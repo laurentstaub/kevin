@@ -140,12 +140,25 @@ app.get('/product/:id', async (req, res) => {
         FROM dbpm.cis_cip_bdpm p
         WHERE p.code_cis = $1
         ORDER BY p.libelle_presentation
+      ),
+      incidents_info AS (
+        SELECT 
+          i.status,
+          i.start_date,
+          i.end_date,
+          i.original_specialite
+        FROM incidents i
+        JOIN produits p ON i.product_id = p.id
+        WHERE p.cis_codes @> jsonb_build_array(($1)::numeric)
+        ORDER BY i.start_date DESC
       )
       SELECT 
         p.*,
-        json_agg(c.*) as cip_products
+        json_agg(c.*) as cip_products,
+        json_agg(DISTINCT i.*) FILTER (WHERE i.status IS NOT NULL) as incidents
       FROM product_info p
       CROSS JOIN cip_info c
+      LEFT JOIN incidents_info i ON true
       GROUP BY p.id, p.denomination_medicament, p.forme_pharmaceutique, p.active_ingredients, p.titulaires
     `, [id]);
 
