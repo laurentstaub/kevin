@@ -24,7 +24,7 @@ html(lang="fr")
       .product-content
         .main-content
           .presentations-section
-            h2.section-title Présentations disponibles
+            h2.section-title Présentations
             if product.cip_products && product.cip_products.length > 0
               .cip-list
                 each cip in product.cip_products
@@ -33,7 +33,7 @@ html(lang="fr")
 
           if product.incidents && product.incidents.length > 0
             .incidents-section
-              h2.section-title État des tensions d'approvisionnement
+              h2.section-title État de disponibilité
               .incidents-list
                 each incident in product.incidents
                   .incident-item
@@ -41,11 +41,6 @@ html(lang="fr")
                       .incident-status(class=`status-${incident.status.toLowerCase()}`)
                         i.fa-light.fa-circle-exclamation
                         span= incident.status
-                    .incident-content
-                      if incident.original_specialite
-                        .incident-detail
-                          span.detail-label Spécialité concernée:
-                          span.detail-value= incident.original_specialite
                       .incident-dates
                         if incident.start_date
                           .date-item
@@ -55,8 +50,13 @@ html(lang="fr")
                         if incident.end_date
                           .date-item
                             i.fa-light.fa-calendar-check
-                            span.date-label Fin prévue:
+                            span.date-label Fin:
                             span.date-value= new Date(incident.end_date).toLocaleDateString('fr-FR')
+                    .incident-content
+                      if incident.original_specialite
+                        .incident-detail
+                          span.detail-label Spécialité:
+                          span.detail-value= incident.original_specialite
 
           .pharmacy-section
             h2.section-title Trouver en pharmacie
@@ -71,7 +71,7 @@ html(lang="fr")
                         value=pharmacy.raison_sociale
                         data-lat=pharmacy.latitude
                         data-lng=pharmacy.longitude
-                        data-address=`${pharmacy.adresse}, ${pharmacy.code_postal} ${pharmacy.ville}`
+                        data-address=`${pharmacy.adresse}`
                         data-dept=pharmacy.departement
                         selected=(pharmacy.id === 9554)
                       )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
@@ -91,12 +91,15 @@ html(lang="fr")
                   )
                   span.unit-marker 100 km
 
+            #pharmacy-list.pharmacy-list
+              // This will be populated by JavaScript with filtered pharmacies
+
             .pharmacy-map-container
               #map.pharmacy-map
               #pharmacy-details.pharmacy-details(style="display: none;")
                 p#pharmacy-name.pharmacy-name
                 p#pharmacy-address.pharmacy-address
-                p#pharmacy-location
+
                 
                 .nearby-pharmacies
                   h3 Pharmacies à proximité
@@ -106,62 +109,25 @@ html(lang="fr")
             h2.section-title Autres informations
             .info-grid
               .info-item
-                h3 Nom du médicament
-                p= product.denomination_medicament
-
-              .info-item
-                h3 Forme pharmaceutique
-                p= product.forme_pharmaceutique
-
-              .info-item
                 h3 Titulaire de l'autorisation de mise sur le marché (AMM)
                 p= product.titulaires
 
         .side-content
-          .quick-links
-            h2.section-title Liens rapides
-            ul.links-list
-              li
-                a(href="#") 
-                  i.fa-light.fa-circle-info
-                  span Informations de base
-              li
-                a(href="#") 
-                  i.fa-light.fa-pills
-                  span Posologie
-              li
-                a(href="#") 
-                  i.fa-light.fa-triangle-exclamation
-                  span Contre-indications
-              li
-                a(href="#") 
-                  i.fa-light.fa-circle-exclamation
-                  span Avertissements
-              li
-                a(href="#") 
-                  i.fa-light.fa-arrows-rotate
-                  span Interactions
-              li
-                a(href="#") 
-                  i.fa-light.fa-person-pregnant
-                  span Grossesse
-              li
-                a(href="#") 
-                  i.fa-light.fa-car-side
-                  span Conduite
-              li
-                a(href="#") 
-                  i.fa-light.fa-face-frown
-                  span Effets indésirables
-              li
-                a(href="#") 
-                  i.fa-light.fa-bolt
-                  span Surdosage
-              li
-                a(href="#") 
-                  i.fa-light.fa-flask
-                  span Propriétés pharmacodynamiques
-              li
-                a(href="#") 
-                  i.fa-light.fa-syringe
-                  span Propriétés pharmacocinétiques
+          .chat-container
+            .chat-header
+              .chat-header-info
+                h3.chat-title Messages
+                p.chat-subtitle Communiquez avec la pharmacie
+              .status-indicator.status-online
+            
+            .chat-messages
+              // Messages will be added here dynamically
+            
+            .chat-input-container
+              textarea.chat-input(
+                placeholder="Écrivez votre message..."
+                rows="1"
+              )
+              button.send-button(disabled)
+                i.fas.fa-paper-plane
+

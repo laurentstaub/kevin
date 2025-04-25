@@ -175,7 +175,6 @@ body {
   font-size: 1rem;
   font-weight: 500;
   padding-bottom: 0.3rem;
-  /*border-bottom: 1px solid var(--grisclair);*/
 }
 
 .info-grid {
@@ -704,8 +703,6 @@ body {
 /* Incidents Section Styles */
 .incidents-section {
   margin: 2rem 0;
-  background: white;
-  border-radius: 8px;
 }
 
 .incidents-list {
@@ -715,14 +712,19 @@ body {
 }
 
 .incident-item {
-  padding: 1rem;
   border: 1px solid var(--grisclair);
   border-radius: 8px;
-  background: var(--blanc);
+  background: white;
+  overflow: hidden;
 }
 
 .incident-header {
-  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--blanc);
+  border-bottom: 1px solid var(--grisclair);
 }
 
 .incident-status {
@@ -745,39 +747,19 @@ body {
   color: #c62828;
 }
 
-.incident-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.incident-detail {
-  display: flex;
-  gap: 0.5rem;
-  align-items: baseline;
-}
-
-.detail-label {
-  color: var(--gris);
-  font-size: 0.9rem;
-}
-
-.detail-value {
-  color: var(--noir);
-  font-size: 0.9rem;
-}
-
 .incident-dates {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 1.5rem;
-  margin-top: 0.5rem;
+  color: var(--gris);
+  font-size: 0.9rem;
 }
 
 .date-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .date-item i {
@@ -793,4 +775,277 @@ body {
 .date-value {
   color: var(--noir);
   font-size: 0.9rem;
+}
+
+.incident-content {
+  padding: 0.5rem;
+}
+
+.incident-detail {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.detail-label {
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: var(--noir);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .incident-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .incident-dates {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Updated Pharmacy List Styles */
+.pharmacy-list {
+  margin-bottom: 1.5rem;
+  background: white;
+  border: 1px solid var(--grisclair);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pharmacy-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--grisclair);
+  transition: background-color 0.2s;
+}
+
+.pharmacy-item:last-child {
+  border-bottom: none;
+}
+
+.pharmacy-item:hover {
+  background-color: var(--blanc);
+}
+
+.pharmacy-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pharmacy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.pharmacy-name {
+  font-weight: 500;
+  color: var(--noir);
+  flex: 1;
+}
+
+.pharmacy-distance {
+  color: var(--bleu);
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.pharmacy-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pharmacy-address {
+  color: var(--grisfonce);
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.contact-button {
+  background-color: var(--blanc);
+  color: var(--grisfonce);
+  border: 1px solid var(--grisclair);
+  border-radius: 16px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.contact-button:hover {
+  background-color: var(--grisclair);
+  color: var(--noir);
+}
+
+.contact-button i {
+  font-size: 0.85rem;
+}
+
+/* Chat Interface Styles */
+.chat-container {
+  display: none;  /* Initially hidden until a pharmacy is selected */
+  background: white;
+  border-radius: 8px;
+  flex-direction: column;
+  height: 100%;
+  min-height: 300px;  /* Reduced from 500px */
+  max-height: 500px;
+}
+
+.chat-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--grisclair);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.chat-header-info {
+  flex: 1;
+}
+
+.chat-title {
+  font-weight: 500;
+  color: var(--noir);
+  margin: 0;
+}
+
+.chat-subtitle {
+  font-size: 0.85rem;
+  color: var(--gris);
+  margin: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 50px;  /* Ensure there's always some space for messages */
+  max-height: calc(100% - 140px);  /* Subtract header and input heights */
+}
+
+.message {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.message-sent {
+  background-color: var(--bleu);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message-received {
+  background-color: var(--grisclair);
+  color: var(--noir);
+  margin-right: auto;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: var(--gris);
+  margin-top: 0.25rem;
+  text-align: right;
+}
+
+.message-sent .message-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.chat-input-container {
+  padding: 1rem;
+  border-top: 1px solid var(--grisclair);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  background: white;
+  flex-shrink: 0;
+  margin-top: auto;  /* Push to bottom but right after messages */
+}
+
+.chat-input {
+  flex: 1;
+  border: 1px solid var(--grisclair);
+  border-radius: 1.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  outline: none;
+  resize: none;
+  max-height: 100px;
+  min-height: 20px;
+  line-height: 1.2;
+}
+
+.chat-input:focus {
+  border-color: var(--bleu);
+}
+
+.send-button {
+  background-color: var(--bleu);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.send-button:hover {
+  background-color: #0052a3;
+}
+
+.send-button:disabled {
+  background-color: var(--grisclair);
+  cursor: not-allowed;
+}
+
+.send-button i {
+  font-size: 1.2rem;
+}
+
+/* Status indicators */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.status-online {
+  background-color: var(--vert);
+}
+
+.status-offline {
+  background-color: var(--grisleger);
 } 
