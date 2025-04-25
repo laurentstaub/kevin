@@ -1,0 +1,74 @@
+{
+  "pharmacies": [
+    {
+      "id": 9554,
+      "name": "PHARMACIE CANTONALE",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 18630,
+      "name": "PHARMACIE LES QUATRE BANS",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 3548,
+      "name": "PHARMACIE SCHMUTZ",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 2313,
+      "name": "PHARMACIE SCHEFTEL",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 12350,
+      "name": "PHARMACIE JALLU",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 11297,
+      "name": "PHARMACIE ADREY",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 14134,
+      "name": "PHARMACIE PFISTER ANTOINE",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 7588,
+      "name": "PHARMACIE GEISSERT",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 460,
+      "name": "PHARMACIE ITALIANO",
+      "stock": {
+        "3717709": 10
+      }
+    },
+    {
+      "id": 5636,
+      "name": "PHARMACIE DE LAMPERTHEIM",
+      "stock": {
+        "3717709": 10
+      }
+    }
+  ]
+} 

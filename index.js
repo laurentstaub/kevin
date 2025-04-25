@@ -212,6 +212,8 @@ app.get('/product/:id', async (req, res) => {
 // Add endpoint to get nearby pharmacies
 app.get('/api/nearby-pharmacies', async (req, res) => {
   const { lat, lng, radius } = req.query;
+  console.log("Stock data:");
+  console.log(getPharmacyStockData());
   
   try {
     const nearbyPharmacies = await getNearbyPharmacies(
@@ -237,6 +239,21 @@ app.get('/api/data', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Function to get pharmacy stock data
+async function getPharmacyStockData() {
+  try {
+    const stocksData = await fs.readFile(path.join(__dirname, 'data', 'stocks.json'), 'utf8');
+    const { pharmacies } = JSON.parse(stocksData);
+    return pharmacies.reduce((acc, p) => {
+      acc[p.id] = p.stock;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Error reading stocks.json:', error);
+    return {};
+  }
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
