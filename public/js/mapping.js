@@ -66,41 +66,65 @@ document.addEventListener('DOMContentLoaded', function() {
     initialized: false
   };
 
+  function createPharmacyItem(pharmacy) {
+    const pharmacyItem = document.createElement('div');
+    pharmacyItem.className = 'pharmacy-item';
+    
+    // Get stock information for Befizal
+    const stockInfo = pharmacy.stock && pharmacy.stock['3717709']
+        ? `<div class="pharmacy-stock">
+             Stock: ${pharmacy.stock['3717709'].quantity} unités
+             <span class="stock-update">(mis à jour ${formatDate(pharmacy.stock['3717709'].lastUpdate)})</span>
+           </div>`
+        : '<div class="pharmacy-stock">Stock non disponible</div>';
+
+    pharmacyItem.innerHTML = `
+        <div class="pharmacy-info">
+            <div class="pharmacy-header">
+                <div class="pharmacy-name">${pharmacy.raison_sociale || pharmacy.name}</div>
+                <div class="pharmacy-distance">${(pharmacy.distance_km || pharmacy.distance).toFixed(1)} km</div>
+            </div>
+            <div class="pharmacy-address">${pharmacy.adresse || pharmacy.address}</div>
+            ${stockInfo}
+        </div>
+    `;
+
+    pharmacyItem.addEventListener('click', () => {
+        // Remove active class from all pharmacy items
+        document.querySelectorAll('.pharmacy-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Add active class to clicked item
+        pharmacyItem.classList.add('active');
+        
+        // Center map on this pharmacy
+        const lat = parseFloat(pharmacy.latitude || pharmacy.lat);
+        const lng = parseFloat(pharmacy.longitude || pharmacy.lng);
+        if (lat && lng) {
+            map.setView([lat, lng], 15);
+            pharmacy.marker && pharmacy.marker.openPopup();
+        }
+        
+        // Initialize chat for this pharmacy
+        initializePharmacyChat(pharmacy);
+    });
+
+    return pharmacyItem;
+  }
+
   function updatePharmacyList(nearbyPharmacies) {
     const pharmacyList = document.getElementById('pharmacy-list');
     pharmacyList.innerHTML = '';
     
+    if (!nearbyPharmacies || nearbyPharmacies.length === 0) {
+        pharmacyList.innerHTML = '<div class="no-pharmacies">Aucune pharmacie trouvée dans ce rayon</div>';
+        return;
+    }
+    
     nearbyPharmacies.forEach(pharmacy => {
-      const item = document.createElement('div');
-      item.className = 'pharmacy-item';
-      item.innerHTML = `
-        <div class="pharmacy-info">
-          <div class="pharmacy-header">
-            <div class="pharmacy-name">${pharmacy.name} (${pharmacy.dept})</div>
-            <div class="pharmacy-distance">${pharmacy.distance.toFixed(1)} km</div>
-          </div>
-          <div class="pharmacy-footer">
-            <div class="pharmacy-address">${pharmacy.address}</div>
-            <button class="contact-button" data-pharmacy-id="${pharmacy.name}">
-              <i class="fas fa-comment"></i> Contacter
-            </button>
-          </div>
-        </div>
-      `;
-      
-      // Add click handler to center map on this pharmacy
-      item.querySelector('.pharmacy-info').addEventListener('click', () => {
-        map.setView([pharmacy.lat, pharmacy.lng], 14);
-        pharmacy.marker.openPopup();
-      });
-
-      // Add click handler for contact button
-      item.querySelector('.contact-button').addEventListener('click', (e) => {
-        e.stopPropagation();  // Prevent triggering the pharmacy-info click
-        initializePharmacyChat(pharmacy);
-      });
-      
-      pharmacyList.appendChild(item);
+        const item = createPharmacyItem(pharmacy);
+        pharmacyList.appendChild(item);
     });
   }
 

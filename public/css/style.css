@@ -822,80 +822,55 @@ body {
 }
 
 .pharmacy-item {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--grisclair);
-  transition: background-color 0.2s;
-}
-
-.pharmacy-item:last-child {
-  border-bottom: none;
+  padding: 12px;
+  border-left: 3px solid transparent;
+  background-color: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .pharmacy-item:hover {
-  background-color: var(--blanc);
+  background-color: var(--grisclairplus);
+  border-left-color: var(--bleu);
 }
 
-.pharmacy-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.pharmacy-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+.pharmacy-item.active {
+  background-color: var(--grisclairplus);
+  border-left-color: var(--bleu);
+  box-shadow: inset 0 0 0 1px var(--grisclair);
 }
 
 .pharmacy-name {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--noir);
-  flex: 1;
-}
-
-.pharmacy-distance {
-  color: var(--bleu);
-  font-weight: 500;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.pharmacy-footer {
+  margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
 }
 
 .pharmacy-address {
-  color: var(--grisfonce);
-  font-size: 0.9rem;
-  flex: 1;
+  color: var(--gris);
+  font-size: 0.9em;
+  margin-bottom: 4px;
 }
 
-.contact-button {
-  background-color: var(--blanc);
-  color: var(--grisfonce);
-  border: 1px solid var(--grisclair);
-  border-radius: 16px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: all 0.2s;
-  white-space: nowrap;
+.pharmacy-stock {
+  font-size: 0.9em;
+  color: var(--gris);
+  margin-top: 4px;
 }
 
-.contact-button:hover {
-  background-color: var(--grisclair);
-  color: var(--noir);
+.stock-update {
+  font-size: 0.85em;
+  color: var(--grisclair);
+  margin-left: 4px;
 }
 
-.contact-button i {
-  font-size: 0.85rem;
+.distance {
+  font-size: 0.9em;
+  color: var(--gris);
+  font-weight: normal;
 }
 
 /* Chat Interface Styles */
@@ -995,11 +970,17 @@ body {
   border-radius: 1.5rem;
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   outline: none;
   resize: none;
   max-height: 100px;
   min-height: 20px;
   line-height: 1.2;
+}
+
+.chat-input::placeholder {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--grisleger);
 }
 
 .chat-input:focus {
