@@ -69,6 +69,7 @@ html(lang="fr")
                     each pharmacy in pharmacies
                       option(
                         value=pharmacy.raison_sociale
+                        data-id=pharmacy.id
                         data-lat=pharmacy.latitude
                         data-lng=pharmacy.longitude
                         data-address=`${pharmacy.adresse}`
@@ -92,14 +93,31 @@ html(lang="fr")
                   span.unit-marker 100 km
 
             #pharmacy-list.pharmacy-list
-              // This will be populated by JavaScript with filtered pharmacies
+              if pharmacies && pharmacies.length
+                each pharmacy in pharmacies
+                  li.pharmacy-item(
+                    data-pharmacy-id=pharmacy.id
+                    data-lat=pharmacy.latitude
+                    data-lng=pharmacy.longitude
+                  )
+                    .pharmacy-info
+                      .pharmacy-header
+                        h3.pharmacy-name= pharmacy.raison_sociale
+                        if pharmacy.distance_km
+                          span.pharmacy-distance= `${pharmacy.distance_km} km`
+                      p.pharmacy-address= pharmacy.adresse
+                      if pharmacy.stock
+                        .pharmacy-stock
+                          each stock in pharmacy.stock
+                            .stock-item
+                              span.stock-quantity= `${stock.quantity} unités`
+                              span.stock-update= `Mis à jour le ${new Date(stock.last_update).toLocaleDateString('fr-FR')}`
 
             .pharmacy-map-container
               #map.pharmacy-map
               #pharmacy-details.pharmacy-details(style="display: none;")
                 p#pharmacy-name.pharmacy-name
                 p#pharmacy-address.pharmacy-address
-
                 
                 .nearby-pharmacies
                   h3 Pharmacies à proximité

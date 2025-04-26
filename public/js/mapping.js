@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const stockInfo = pharmacy.stock && pharmacy.stock['3717709']
         ? `<div class="pharmacy-stock">
              Stock: ${pharmacy.stock['3717709'].quantity} unités
-             <span class="stock-update">(mis à jour ${formatDate(pharmacy.stock['3717709'].lastUpdate)})</span>
            </div>`
         : '<div class="pharmacy-stock">Stock non disponible</div>';
 
@@ -250,45 +249,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const pharmacySelect = document.getElementById('pharmacy');
     const selected = pharmacySelect.selectedOptions[0];
     
-    const nearbyPharmacies = Array.from(pharmacySelect.options)
-      .filter(option => option.value && option !== selected)
-      .map(option => {
-        console.log('Address from data attribute:', option.dataset.address);
-        return {
-          name: option.value,
-          lat: parseFloat(option.dataset.lat),
-          lng: parseFloat(option.dataset.lng),
-          address: option.dataset.address,
-          dept: option.dataset.dept,
-          distance: getDistance(
-            lat, 
-            lng, 
-            parseFloat(option.dataset.lat), 
-            parseFloat(option.dataset.lng)
-          )
-        };
+    // Get stock data
+    fetch(`/api/nearby-pharmacies?lat=${lat}&lng=${lng}&radius=${radius}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log('Pharmacy data received:', data);
+        
+        const nearbyPharmacies = Array.from(pharmacySelect.options)
+          .filter(option => option.value && option !== selected)
+          .map(option => {
+            const pharmacy = {
+              name: option.value,
+              lat: parseFloat(option.dataset.lat),
+              lng: parseFloat(option.dataset.lng),
+              address: option.dataset.address,
+              dept: option.dataset.dept,
+              distance: getDistance(
+                lat, 
+                lng, 
+                parseFloat(option.dataset.lat), 
+                parseFloat(option.dataset.lng)
+              )
+            };
+
+            // Add stock data if available
+            const stockData = data.find(p => p.id === parseInt(option.dataset.id));
+            if (stockData && stockData.stock) {
+              pharmacy.stock = stockData.stock;
+            }
+
+            return pharmacy;
+          })
+          .filter(pharmacy => pharmacy.distance <= radius)
+          .sort((a, b) => a.distance - b.distance);
+
+        // Update markers and list
+        nearbyPharmacies.forEach(pharmacy => {
+          const marker = L.marker([pharmacy.lat, pharmacy.lng], { icon: nearbyIcon })
+            .bindPopup(`
+              <strong>${pharmacy.name}</strong><br>
+              ${pharmacy.address}<br>
+              <em>${pharmacy.distance.toFixed(1)} km</em>
+            `)
+            .addTo(markers);
+          pharmacy.marker = marker;
+        });
+
+        updatePharmacyList(nearbyPharmacies);
+        
+        // Fit map bounds
+        const bounds = L.featureGroup(markers.getLayers()).getBounds();
+        map.fitBounds(bounds.pad(0.1));
       })
-      .filter(pharmacy => pharmacy.distance <= radius)
-      .sort((a, b) => a.distance - b.distance);
-
-    // Add markers for nearby pharmacies
-    nearbyPharmacies.forEach(pharmacy => {
-      const marker = L.marker([pharmacy.lat, pharmacy.lng], { icon: nearbyIcon })
-        .bindPopup(`
-          <strong>${pharmacy.name}</strong><br>
-          ${pharmacy.address}<br>
-          <em>${pharmacy.distance.toFixed(1)} km</em>
-        `)
-        .addTo(markers);
-      pharmacy.marker = marker;
-    });
-
-    // Update the pharmacy list with the new updatePharmacyList function
-    updatePharmacyList(nearbyPharmacies);
-    
-    // Fit map bounds to show all markers
-    const bounds = L.featureGroup(markers.getLayers()).getBounds();
-    map.fitBounds(bounds.pad(0.1));
+      .catch(error => {
+        console.error('Error fetching stock data:', error);
+      });
   }
 
   // Handle pharmacy selection

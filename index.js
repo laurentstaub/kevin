@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { searchMedications } from './src/search.js';
+import fs from 'fs/promises';
 
 const { Pool } = pg;
 const app = express();
@@ -73,6 +74,7 @@ const getNearbyPharmacies = async (pool, lat, lng, radiusKm) => {
   const result = await pool.query(`
     WITH selected_pharmacy AS (
       SELECT 
+        id,
         raison_sociale,
         adresse,
         code_postal,
@@ -86,6 +88,7 @@ const getNearbyPharmacies = async (pool, lat, lng, radiusKm) => {
     ),
     nearby_pharmacies AS (
       SELECT 
+        id,
         raison_sociale,
         adresse,
         code_postal,
@@ -93,7 +96,7 @@ const getNearbyPharmacies = async (pool, lat, lng, radiusKm) => {
         departement,
         latitude,
         longitude,
-        (point($2, $1) <-> point(longitude, latitude)) * 111.32 as distance_km
+        ROUND(CAST((point($2, $1) <-> point(longitude, latitude)) * 111.32 AS NUMERIC), 1) as distance_km
       FROM officines.etablissements
       WHERE (latitude != $1 OR longitude != $2)
         AND point($2, $1) <-> point(longitude, latitude) <= ($3 / 111.32)
@@ -212,22 +215,30 @@ app.get('/product/:id', async (req, res) => {
 // Add endpoint to get nearby pharmacies
 app.get('/api/nearby-pharmacies', async (req, res) => {
   const { lat, lng, radius } = req.query;
-  console.log("Stock data:");
-  console.log(getPharmacyStockData());
   
   try {
-    const nearbyPharmacies = await getNearbyPharmacies(
-      pool,
-      parseFloat(lat),
-      parseFloat(lng),
-      parseFloat(radius) || 5
-    );
-    res.json(nearbyPharmacies);
-  } catch (err) {
-    console.error('Error fetching nearby pharmacies:', err);
-    res.status(500).json({ 
-      error: 'Une erreur est survenue lors de la recherche des pharmacies'
+    const pharmacies = await getNearbyPharmacies(pool, lat, lng, radius);
+    
+    // 2. Get stock data
+    const stockData = await getPharmacyStockData();
+    console.log('Stock data from file:', stockData);
+    
+    // 3. Merge pharmacy data with stock data
+    const pharmaciesWithStock = pharmacies.map(pharmacy => {
+      // Convert pharmacy.id to number since it might be a string from the database
+      const pharmacyId = parseInt(pharmacy.id);
+      console.log('Looking for stock data for pharmacy:', pharmacyId);
+      return {
+        ...pharmacy,
+        stock: stockData[pharmacyId] || {}
+      };
     });
+    
+    console.log('Pharmacies with stock:', pharmaciesWithStock);
+    res.json(pharmaciesWithStock);
+  } catch (error) {
+    console.error('Error fetching nearby pharmacies:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -242,20 +253,33 @@ app.get('/api/data', async (req, res) => {
 
 // Function to get pharmacy stock data
 async function getPharmacyStockData() {
+  console.log('getPharmacyStockData called');
   try {
+    console.log('Reading file from:', path.join(__dirname, 'data', 'stocks.json'));
     const stocksData = await fs.readFile(path.join(__dirname, 'data', 'stocks.json'), 'utf8');
+    console.log('Raw file contents:', stocksData);
     const { pharmacies } = JSON.parse(stocksData);
-    return pharmacies.reduce((acc, p) => {
+    console.log('Parsed pharmacies:', pharmacies);
+    const result = pharmacies.reduce((acc, p) => {
       acc[p.id] = p.stock;
       return acc;
     }, {});
+    console.log('Final processed stock data:', result);
+    return result;
   } catch (error) {
     console.error('Error reading stocks.json:', error);
+    console.error('Stack trace:', error.stack);
     return {};
   }
 }
 
+app.get('/test', (req, res) => {
+  console.log('Test endpoint called');
+  res.json({ message: 'Test successful' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Test log - if you see this, logging works');
 });
 
