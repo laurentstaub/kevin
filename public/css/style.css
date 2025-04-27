@@ -335,6 +335,61 @@ body {
   }
 }
 
+/* Radius Control Styles */
+.radius-control {
+  margin: 16px 0;
+}
+
+.radius-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.radius-input-container label {
+  color: var(--grisfonce);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.radius-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 120px;
+}
+
+.radius-input-wrapper input[type="number"] {
+  width: 100%;
+  padding: 8px 40px 8px 12px;
+  border: 1px solid var(--grisclair);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--noir);
+  background-color: white;
+  -moz-appearance: textfield;
+}
+
+.radius-input-wrapper input[type="number"]::-webkit-inner-spin-button,
+.radius-input-wrapper input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 24px;
+}
+
+.radius-input-wrapper input[type="number"]:focus {
+  outline: none;
+  border-color: var(--bleu);
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.radius-input-wrapper .unit {
+  position: absolute;
+  right: 12px;
+  color: var(--gris);
+  font-size: 14px;
+  pointer-events: none;
+}
+
 /* Search Page Specific Styles */
 .search-wrapper {
   position: relative;
@@ -582,59 +637,6 @@ body {
   outline: none;
   border-color: var(--bleu);
   box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
-}
-
-.radius-control {
-  display: flex;
-  flex-direction: column;
-}
-
-.radius-control label {
-  margin-bottom: 0.5rem;
-  color: var(--grisfonce);
-  font-size: 0.9rem;
-}
-
-.slider-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.unit-marker {
-  color: var(--grisfonce);
-  font-size: 0.8rem;
-  min-width: 3rem;
-}
-
-#radius {
-  flex: 1;
-  -webkit-appearance: none;
-  height: 4px;
-  background: var(--grisclair);
-  border-radius: 2px;
-  outline: none;
-}
-
-#radius::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--bleu);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-#radius::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: var(--bleu);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .pharmacy-map-container {

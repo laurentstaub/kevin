@@ -325,8 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Handle radius change
   document.getElementById('radius').addEventListener('input', function() {
-    document.getElementById('radius-value').textContent = this.value;
-    
     const selectedOption = document.getElementById('pharmacy').options[
       document.getElementById('pharmacy').selectedIndex
     ];

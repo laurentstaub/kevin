@@ -78,19 +78,17 @@ html(lang="fr")
                       )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
               
               .radius-control
-                label(for="radius") Rayon de recherche : 
-                  span#radius-value 5
-                  |  km
-                .slider-container
-                  span.unit-marker 1 km
-                  input#radius(
-                    type="range"
-                    min="1"
-                    max="100"
-                    value="5"
-                    step="1"
-                  )
-                  span.unit-marker 100 km
+                .radius-input-container
+                  label(for="radius") Rayon de recherche :
+                  .radius-input-wrapper
+                    input#radius(
+                      type="number"
+                      min="1"
+                      max="100"
+                      value="6"
+                      step="1"
+                    )
+                    span.unit km
 
             #pharmacy-list.pharmacy-list
               if pharmacies && pharmacies.length
