@@ -14,6 +14,22 @@ const PORT = 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Initialize database schema
+async function initializeDatabase() {
+  try {
+    const schemaSQL = await fs.readFile(path.join(__dirname, 'data', 'schema.sql'), 'utf8');
+    const client = await pool.connect();
+    try {
+      await client.query(schemaSQL);
+      console.log('Database schema initialized successfully');
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error initializing database schema:', error);
+  }
+}
+
 app.use(cors());
 app.use(express.json());
 
@@ -278,8 +294,108 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test successful' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Test log - if you see this, logging works');
+// Message API endpoints
+app.post('/api/messages', async (req, res) => {
+  try {
+    const { pharmacyId, productId, messageText, isSent } = req.body;
+    const conversationId = `${pharmacyId}_${productId}`;
+    
+    // Start a transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Ensure conversation exists
+      await client.query(`
+        INSERT INTO chat.conversations (id, pharmacy_id, product_id)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (id) DO UPDATE
+        SET updated_at = CURRENT_TIMESTAMP
+        RETURNING id
+      `, [conversationId, pharmacyId, productId]);
+      
+      // Insert message
+      const result = await client.query(`
+        INSERT INTO chat.messages (conversation_id, pharmacy_id, product_id, message_text, is_sent)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, created_at
+      `, [conversationId, pharmacyId, productId, messageText, isSent]);
+      
+      // Update unread count if message is received
+      if (!isSent) {
+        await client.query(`
+          UPDATE chat.conversations
+          SET unread_count = unread_count + 1
+          WHERE id = $1
+        `, [conversationId]);
+      }
+      
+      await client.query('COMMIT');
+      res.json(result.rows[0]);
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error saving message:', error);
+    res.status(500).json({ error: 'Failed to save message' });
+  }
 });
+
+app.get('/api/conversations/:pharmacyId/:productId', async (req, res) => {
+  try {
+    const { pharmacyId, productId } = req.params;
+    const conversationId = `${pharmacyId}_${productId}`;
+    
+    const result = await pool.query(`
+      SELECT m.*, c.unread_count
+      FROM chat.messages m
+      LEFT JOIN chat.conversations c ON c.id = m.conversation_id
+      WHERE m.conversation_id = $1
+      ORDER BY m.created_at DESC
+      LIMIT 50
+    `, [conversationId]);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+app.put('/api/conversations/:conversationId/read', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    
+    await pool.query(`
+      UPDATE chat.conversations
+      SET unread_count = 0
+      WHERE id = $1
+    `, [conversationId]);
+    
+    await pool.query(`
+      UPDATE chat.messages
+      SET status = 'read'
+      WHERE conversation_id = $1 AND NOT is_sent
+    `, [conversationId]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking conversation as read:', error);
+    res.status(500).json({ error: 'Failed to update conversation' });
+  }
+});
+
+// Start server after initializing database
+async function startServer() {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Test log - if you see this, logging works');
+  });
+}
+
+startServer();
 

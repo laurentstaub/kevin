@@ -62,13 +62,63 @@ document.addEventListener('DOMContentLoaded', function() {
   // Chat state management
   const chatState = {
     currentPharmacy: null,
-    messages: {},  // Store messages for each pharmacy
+    currentProduct: null,
+    messages: {},
     initialized: false
   };
+
+  async function loadMessages(pharmacyId, productId) {
+    try {
+      const response = await fetch(`/api/conversations/${pharmacyId}/${productId}`);
+      const messages = await response.json();
+      
+      // Sort messages by date and add them to the chat
+      messages
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(msg => {
+          addMessage(msg.message_text, msg.is_sent, false);
+        });
+        
+      // Mark conversation as read
+      const conversationId = `${pharmacyId}_${productId}`;
+      await fetch(`/api/conversations/${conversationId}/read`, {
+        method: 'PUT'
+      });
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  }
+
+  async function saveMessage(message, isSent) {
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pharmacyId: chatState.currentPharmacy.id,
+          productId: chatState.currentProduct.id,
+          messageText: message,
+          isSent
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save message');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving message:', error);
+      throw error;
+    }
+  }
 
   function createPharmacyItem(pharmacy) {
     const pharmacyItem = document.createElement('div');
     pharmacyItem.className = 'pharmacy-item';
+    pharmacyItem.dataset.id = pharmacy.id;  // Store ID in dataset
     
     // Get stock information for Befizal
     const stockInfo = pharmacy.stock && pharmacy.stock['3717709']
@@ -105,8 +155,14 @@ document.addEventListener('DOMContentLoaded', function() {
             pharmacy.marker && pharmacy.marker.openPopup();
         }
         
-        // Initialize chat for this pharmacy
-        initializePharmacyChat(pharmacy);
+        // Initialize chat for this pharmacy with complete data
+        initializePharmacyChat({
+          id: pharmacy.id,
+          raison_sociale: pharmacy.raison_sociale || pharmacy.name,
+          adresse: pharmacy.adresse || pharmacy.address,
+          latitude: lat,
+          longitude: lng
+        });
     });
 
     return pharmacyItem;
@@ -128,29 +184,39 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function initializePharmacyChat(pharmacy) {
-    chatState.currentPharmacy = pharmacy;
+    // Store pharmacy data with proper ID
+    chatState.currentPharmacy = {
+      id: pharmacy.id || pharmacy.dataset?.id,  // Get ID from pharmacy object or dataset
+      name: pharmacy.raison_sociale || pharmacy.name,
+      address: pharmacy.adresse || pharmacy.address
+    };
+    
+    chatState.currentProduct = {
+      id: '3717709',  // Get this from the product page context
+      name: document.querySelector('.product-title').textContent
+    };
     
     // Update chat header
     const chatTitle = document.querySelector('.chat-title');
     const chatSubtitle = document.querySelector('.chat-subtitle');
     const chatContainer = document.querySelector('.chat-container');
     
-    chatTitle.textContent = pharmacy.name;
-    chatSubtitle.textContent = pharmacy.address;
+    chatTitle.textContent = chatState.currentPharmacy.name;
+    chatSubtitle.textContent = chatState.currentPharmacy.address;
     chatContainer.style.display = 'flex';
 
-    // Load existing messages for this pharmacy
+    // Clear existing messages
     const chatMessages = document.querySelector('.chat-messages');
     chatMessages.innerHTML = '';
     
-    if (chatState.messages[pharmacy.name]) {
-      chatState.messages[pharmacy.name].forEach(msg => {
-        addMessage(msg.text, msg.isSent, false);
-      });
+    // Load messages for this conversation
+    if (chatState.currentPharmacy.id) {
+      loadMessages(chatState.currentPharmacy.id, chatState.currentProduct.id);
+    } else {
+      console.error('No pharmacy ID available');
+      // Show error to user
+      chatMessages.innerHTML = '<div class="error-message">Impossible de charger les messages</div>';
     }
-
-    // Scroll to bottom of messages
-    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   function addMessage(message, isSent = true, store = true) {
@@ -173,14 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Store the message if needed
     if (store) {
-      const pharmacyName = chatState.currentPharmacy.name;
-      if (!chatState.messages[pharmacyName]) {
-        chatState.messages[pharmacyName] = [];
-      }
-      chatState.messages[pharmacyName].push({
-        text: message,
-        isSent,
-        timestamp: now
+      saveMessage(message, isSent).catch(error => {
+        messageElement.classList.add('error');
+        console.error('Failed to save message:', error);
       });
     }
   }
@@ -195,16 +256,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initially hide the chat container until a pharmacy is selected
     chatContainer.style.display = 'none';
 
-    function handleSendMessage() {
+    async function handleSendMessage() {
       const message = chatInput.value.trim();
       if (message && chatState.currentPharmacy) {
-        addMessage(message, true);
-        chatInput.value = '';
-        
-        // Simulate received message (remove in production)
-        setTimeout(() => {
-          addMessage(`Message bien reçu. La pharmacie ${chatState.currentPharmacy.name} reviendra vers vous dans les plus brefs délais.`, false);
-        }, 1000);
+        try {
+          await saveMessage(message, true);
+          addMessage(message, true, false);
+          chatInput.value = '';
+          
+          // Simulate received message (remove in production)
+          setTimeout(async () => {
+            const response = `Message bien reçu. La pharmacie ${chatState.currentPharmacy.name} reviendra vers vous dans les plus brefs délais.`;
+            await saveMessage(response, false);
+            addMessage(response, false, false);
+          }, 1000);
+        } catch (error) {
+          console.error('Error sending message:', error);
+          // Show error to user
+        }
       }
     }
 
@@ -259,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .filter(option => option.value && option !== selected)
           .map(option => {
             const pharmacy = {
+              id: parseInt(option.dataset.id),  // Add pharmacy ID
               name: option.value,
               lat: parseFloat(option.dataset.lat),
               lng: parseFloat(option.dataset.lng),
@@ -314,6 +384,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const lat = parseFloat(selectedOption.dataset.lat);
       const lng = parseFloat(selectedOption.dataset.lng);
       const radius = document.getElementById('radius').value;
+      
+      // Initialize chat for selected pharmacy
+      initializePharmacyChat({
+        id: parseInt(selectedOption.dataset.id),
+        raison_sociale: selectedOption.value,
+        adresse: selectedOption.dataset.address,
+        latitude: lat,
+        longitude: lng
+      });
+      
       updateNearbyPharmacies(lat, lng, radius);
     } else {
       markers.clearLayers();
