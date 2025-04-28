@@ -5,6 +5,7 @@ html(lang="fr")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title #{product.denomination_medicament} - Détails du médicament
     link(rel="stylesheet", href="/css/style.css")
+    link(rel="stylesheet", href="/css/product.css")
     link(rel="stylesheet", href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")
     link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
     script(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js")
@@ -129,6 +130,54 @@ html(lang="fr")
                 p= product.titulaires
 
         .side-content
+
+          .reservation-container
+            .reservation-header
+              h3.reservation-title Réserver un médicament
+            
+            form.reservation-form
+              .form-group.horizontal
+                label(for="quantity") Quantité
+                .quantity-input-wrapper
+                  input#quantity(
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    required
+                  )
+                  span.unit unités
+              .form-group.horizontal
+                label(for="cip") Code CIP7
+                select#cip(
+                  name="cip"
+                  required
+                )
+                  option(value="") Sélectionnez
+                  if product.cip_products && product.cip_products.length > 0
+                    each cip in product.cip_products
+                      option(value=cip.code_cip7)= cip.code_cip7
+              .form-group.horizontal
+                label(for="pickup-date") Date de retrait
+                input#pickup-date(
+                  type="date"
+                  name="pickup-date"
+                  required
+                )
+              .form-group
+                label(for="delivery-type") Type de livraison
+                select#delivery-type(
+                  name="delivery-type"
+                  required
+                )
+                  option(value="") Sélectionnez un type de livraison
+                  option(value="pickup") Retrait en pharmacie
+                  option(value="delivery") Livraison à domicile
+                  option(value="emergency") Livraison d'urgence
+
+              button.submit-reservation(type="submit")
+                i.fas.fa-check
+                span Confirmer la réservation
+
           .chat-container
             .chat-header
               .chat-header-info
@@ -146,4 +195,3 @@ html(lang="fr")
               )
               button.send-button(disabled)
                 i.fas.fa-paper-plane
-
