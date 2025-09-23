@@ -55,13 +55,13 @@ app.get('/search', async (req, res) => {
   const query = req.query.q;
   const filter = req.query.filter || 'all';
   const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
-  
+
   try {
-    let results = [];
+    let results = { brandMatches: [], activeIngredientMatches: [], relatedProducts: [] };
     if (query) {
       results = await searchMedications(pool, query, filter);
     }
-    
+
     if (wantsJson) {
       res.json({ results, query });
     } else {
@@ -69,17 +69,17 @@ app.get('/search', async (req, res) => {
     }
   } catch (err) {
     console.error('Error executing query', err);
-    
+
     if (wantsJson) {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Une erreur est survenue lors de la recherche'
       });
     } else {
-      res.render('search_page', { 
+      res.render('search_page', {
         error: 'Une erreur est survenue lors de la recherche',
         query,
         filter,
-        results: []
+        results: { brandMatches: [], activeIngredientMatches: [], relatedProducts: [] }
       });
     }
   }

@@ -39,13 +39,49 @@ html(lang="fr")
               a.filter-tab(class=(filter === 'specialty' ? 'active' : ''), href=`/search?q=${query}&filter=specialty`) Spécialités
               a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
           .results
-            if results && results.length > 0
-            each result in results
-              a.result-item(href=`/product/${result.id}`)
-                div= result.denomination_medicament
-                if result.active_ingredients
-                  div.result-active-ingredients
-                    span= result.active_ingredients
+            if results && (results.brandMatches.length > 0 || results.activeIngredientMatches.length > 0 || results.relatedProducts.length > 0)
+
+              if results.brandMatches && results.brandMatches.length > 0
+                .result-category
+                  h3.category-title
+                    i.fa-light.fa-tag
+                    span Spécialités pharmaceutiques
+                    span.result-count (#{results.brandMatches.length})
+                  .category-results
+                    each result in results.brandMatches
+                      a.result-item(href=`/product/${result.id}`)
+                        div.result-name= result.denomination_medicament
+                        if result.active_ingredients
+                          div.result-active-ingredients
+                            span= result.active_ingredients
+
+              if results.activeIngredientMatches && results.activeIngredientMatches.length > 0
+                .result-category
+                  h3.category-title
+                    i.fa-light.fa-flask
+                    span Principes actifs
+                    span.result-count (#{results.activeIngredientMatches.length})
+                  .category-results
+                    each result in results.activeIngredientMatches
+                      a.result-item(href=`/product/${result.id}`)
+                        div.result-name= result.denomination_medicament
+                        if result.active_ingredients
+                          div.result-active-ingredients
+                            span= result.active_ingredients
+
+              if results.relatedProducts && results.relatedProducts.length > 0
+                .result-category
+                  h3.category-title
+                    i.fa-light.fa-pills
+                    span Génériques et alternatives
+                    span.result-count (#{results.relatedProducts.length})
+                  .category-results
+                    each result in results.relatedProducts
+                      a.result-item(href=`/product/${result.id}`)
+                        div.result-name= result.denomination_medicament
+                        if result.active_ingredients
+                          div.result-active-ingredients
+                            span= result.active_ingredients
             else
               .no-results Pas de résultat
 
@@ -158,10 +194,18 @@ html(lang="fr")
             }
           });
           const data = await response.json();
-          
-          if (data.results && data.results.length > 0) {
-            suggestions = data.results;
-            displaySuggestions(data.results);
+
+          // Flatten categorized results for suggestions
+          const allResults = [];
+          if (data.results) {
+            if (data.results.brandMatches) allResults.push(...data.results.brandMatches);
+            if (data.results.activeIngredientMatches) allResults.push(...data.results.activeIngredientMatches);
+            if (data.results.relatedProducts) allResults.push(...data.results.relatedProducts.slice(0, 3));
+          }
+
+          if (allResults.length > 0) {
+            suggestions = allResults;
+            displaySuggestions(allResults);
           } else {
             hideSuggestions();
           }

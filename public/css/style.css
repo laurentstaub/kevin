@@ -545,7 +545,48 @@ body {
   border-radius: 3px 3px 0 0;
 }
 
+/* Categorized Search Results */
+.result-category {
+  margin-bottom: 2rem;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--grisfonce);
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--grisclair);
+}
+
+.category-title i {
+  font-size: 1.2rem;
+  color: var(--vert);
+}
+
+.result-count {
+  color: var(--grisleger);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.category-results {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e1e1e1;
+  overflow: hidden;
+}
+
 /* Result item enhancements */
+.result-name {
+  font-weight: 500;
+  color: var(--noir);
+  margin-bottom: 4px;
+}
+
 .result-active-ingredients {
   display: flex;
   align-items: center;
