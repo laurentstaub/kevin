@@ -6,10 +6,7 @@ html(lang="fr")
     title #{product.denomination_medicament} - Détails du médicament
     link(rel="stylesheet", href="/css/style.css")
     link(rel="stylesheet", href="/css/product.css")
-    link(rel="stylesheet", href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")
     link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
-    script(src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js")
-    script(src="/js/mapping.js")
 
   body
     .product-container
@@ -59,68 +56,6 @@ html(lang="fr")
                           span.detail-label Spécialité:
                           span.detail-value= incident.original_specialite
 
-          .pharmacy-section
-            h2.section-title Trouver en pharmacie
-            .pharmacy-controls
-              .pharmacy-selector
-                label(for="pharmacy") Sélectionner une pharmacie :
-                select#pharmacy.pharmacy-select(name="pharmacy")
-                  option(value="") -- Choisir une pharmacie --
-                  if pharmacies && pharmacies.length
-                    each pharmacy in pharmacies
-                      option(
-                        value=pharmacy.raison_sociale
-                        data-id=pharmacy.id
-                        data-lat=pharmacy.latitude
-                        data-lng=pharmacy.longitude
-                        data-address=`${pharmacy.adresse}`
-                        data-dept=pharmacy.departement
-                        selected=(pharmacy.id === 9554)
-                      )= `${pharmacy.raison_sociale} (${pharmacy.departement})`
-              
-              .radius-control
-                .radius-input-container
-                  label(for="radius") Rayon de recherche :
-                  .radius-input-wrapper
-                    input#radius(
-                      type="number"
-                      min="1"
-                      max="100"
-                      value="6"
-                      step="1"
-                    )
-                    span.unit km
-
-            #pharmacy-list.pharmacy-list
-              if pharmacies && pharmacies.length
-                each pharmacy in pharmacies
-                  li.pharmacy-item(
-                    data-pharmacy-id=pharmacy.id
-                    data-lat=pharmacy.latitude
-                    data-lng=pharmacy.longitude
-                  )
-                    .pharmacy-info
-                      .pharmacy-header
-                        h3.pharmacy-name= pharmacy.raison_sociale
-                        if pharmacy.distance_km
-                          span.pharmacy-distance= `${pharmacy.distance_km} km`
-                      p.pharmacy-address= pharmacy.adresse
-                      if pharmacy.stock
-                        .pharmacy-stock
-                          each stock in pharmacy.stock
-                            .stock-item
-                              span.stock-quantity= `${stock.quantity} unités`
-                              span.stock-update= `Mis à jour le ${new Date(stock.last_update).toLocaleDateString('fr-FR')}`
-
-            .pharmacy-map-container
-              #map.pharmacy-map
-              #pharmacy-details.pharmacy-details(style="display: none;")
-                p#pharmacy-name.pharmacy-name
-                p#pharmacy-address.pharmacy-address
-                
-                .nearby-pharmacies
-                  h3 Pharmacies à proximité
-                  #nearby-list.nearby-list
 
           .other-info-section
             h2.section-title Autres informations
@@ -129,69 +64,3 @@ html(lang="fr")
                 h3 Titulaire de l'autorisation de mise sur le marché (AMM)
                 p= product.titulaires
 
-        .side-content
-
-          .reservation-container
-            .reservation-header
-              h3.reservation-title Réserver un médicament
-            
-            form.reservation-form
-              .form-group.horizontal
-                label(for="quantity") Quantité
-                .quantity-input-wrapper
-                  input#quantity(
-                    type="number"
-                    name="quantity"
-                    min="1"
-                    required
-                  )
-                  span.unit unités
-              .form-group.horizontal
-                label(for="cip") Code CIP7
-                select#cip(
-                  name="cip"
-                  required
-                )
-                  option(value="") Sélectionnez
-                  if product.cip_products && product.cip_products.length > 0
-                    each cip in product.cip_products
-                      option(value=cip.code_cip7)= cip.code_cip7
-              .form-group.horizontal
-                label(for="pickup-date") Date de retrait
-                input#pickup-date(
-                  type="date"
-                  name="pickup-date"
-                  required
-                )
-              .form-group
-                label(for="delivery-type") Type de livraison
-                select#delivery-type(
-                  name="delivery-type"
-                  required
-                )
-                  option(value="") Sélectionnez un type de livraison
-                  option(value="pickup") Retrait en pharmacie
-                  option(value="delivery") Livraison à domicile
-                  option(value="emergency") Livraison d'urgence
-
-              button.submit-reservation(type="submit")
-                i.fas.fa-check
-                span Confirmer la réservation
-
-          .chat-container
-            .chat-header
-              .chat-header-info
-                h3.chat-title Messages
-                p.chat-subtitle Communiquez avec la pharmacie
-              .status-indicator.status-online
-            
-            .chat-messages
-              // Messages will be added here dynamically
-            
-            .chat-input-container
-              textarea.chat-input(
-                placeholder="Écrivez ici..."
-                rows="1"
-              )
-              button.send-button(disabled)
-                i.fas.fa-paper-plane
