@@ -7,6 +7,7 @@ html(lang="fr")
     link(rel="stylesheet", href="/css/style.css")
     link(rel="stylesheet", href="/css/product.css")
     link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
+    link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet")
 
   body
     .product-container
@@ -57,10 +58,166 @@ html(lang="fr")
                           span.detail-value= incident.original_specialite
 
 
+          if relatedProducts && relatedProducts.length > 0
+            - const generics = relatedProducts.filter(p => p.match_type === 'generic')
+            - const relatedByIngredients = relatedProducts.filter(p => p.match_type === 'related')
+
+            if generics && generics.length > 0
+              .related-products-section
+                h2.section-title Médicaments génériques
+                .related-products-list
+                  each genericProduct in generics
+                    a.related-product-item.generic-product(href=`/product/${genericProduct.id}`)
+                      .product-name= genericProduct.denomination_medicament
+                      if genericProduct.active_ingredients
+                        .product-ingredients= genericProduct.active_ingredients
+                      if genericProduct.type_generique
+                        .product-type= genericProduct.type_generique === '0' ? 'Princeps' : 'Générique'
+
+            if relatedByIngredients && relatedByIngredients.length > 0
+              .related-products-section
+                h2.section-title Produits contenant les mêmes principes actifs
+                .related-products-list
+                  each relatedProduct in relatedByIngredients
+                    a.related-product-item(href=`/product/${relatedProduct.id}`)
+                      .product-name= relatedProduct.denomination_medicament
+                      if relatedProduct.active_ingredients
+                        .product-ingredients= relatedProduct.active_ingredients
+
+          // Documents section
+          if documents && (documents.rcp.length > 0 || documents.notice.length > 0 || documents.main.length > 0)
+            .documents-section
+              h2.section-title Documents officiels
+              
+              .document-tabs
+                ul.nav.nav-tabs(role="tablist")
+                  if documents.rcp && documents.rcp.length > 0
+                    li.nav-item
+                      a.nav-link.active(data-bs-toggle="tab" href="#rcp-tab" role="tab") RCP
+                  if documents.notice && documents.notice.length > 0
+                    li.nav-item
+                      a.nav-link(class=(documents.rcp.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#notice-tab" role="tab") Notice
+                  if documents.main && documents.main.length > 0
+                    li.nav-item
+                      a.nav-link(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#main-tab" role="tab") Principal
+                
+                .tab-content
+                  if documents.rcp && documents.rcp.length > 0
+                    .tab-pane.fade.show.active#rcp-tab(role="tabpanel")
+                      each doc in documents.rcp
+                        .document-item
+                          .document-header
+                            h4 Résumé des Caractéristiques du Produit
+                            if doc.date_maj
+                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
+                          .document-content
+                            .document-link
+                              a.btn.btn-primary(href=`/api/document/${product.id}/rcp` target="_blank")
+                                i.fas.fa-external-link-alt
+                                | Consulter le document
+                  
+                  if documents.notice && documents.notice.length > 0
+                    .tab-pane.fade(class=(documents.rcp.length === 0 ? 'show active' : '') id="notice-tab" role="tabpanel")
+                      each doc in documents.notice
+                        .document-item
+                          .document-header
+                            h4 Notice Patient
+                            if doc.date_maj
+                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
+                          .document-content
+                            .document-link
+                              a.btn.btn-primary(href=`/api/document/${product.id}/notice` target="_blank")
+                                i.fas.fa-external-link-alt
+                                | Consulter le document
+                  
+                  if documents.main && documents.main.length > 0
+                    .tab-pane.fade(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'show active' : '') id="main-tab" role="tabpanel")
+                      each doc in documents.main
+                        .document-item
+                          .document-header
+                            h4 Document Principal
+                            if doc.date_maj
+                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
+                          .document-content
+                            .document-link
+                              a.btn.btn-primary(href=`/api/document/${product.id}/main` target="_blank")
+                                i.fas.fa-external-link-alt
+                                | Consulter le document
+
           .other-info-section
             h2.section-title Autres informations
             .info-grid
               .info-item
                 h3 Titulaire de l'autorisation de mise sur le marché (AMM)
                 p= product.titulaires
+
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
+    
+    style.
+      .documents-section {
+        margin-bottom: 2rem;
+      }
+      
+      .document-tabs .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 1rem;
+      }
+      
+      .document-tabs .nav-link {
+        color: #495057;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+      }
+      
+      .document-tabs .nav-link:hover {
+        border-color: #dee2e6;
+        background-color: #f8f9fa;
+      }
+      
+      .document-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        background-color: transparent;
+      }
+      
+      .document-item {
+        margin-bottom: 1.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+      }
+      
+      .document-header {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .document-header h4 {
+        margin: 0;
+        color: #212529;
+        font-size: 1.1rem;
+      }
+      
+      .document-content .document-link {
+        text-align: center;
+      }
+      
+      .document-link .btn {
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        text-decoration: none;
+      }
+      
+      .document-link .btn i {
+        margin-right: 0.5rem;
+      }
+      
+      .text-muted {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
 

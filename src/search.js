@@ -100,7 +100,7 @@ const getDirectMatches = async (pool, terms, params, filter) => {
 };
 
 /**
- * Find related products based on shared active ingredients
+ * Find related products based on shared active ingredients and generics
  */
 const getRelatedProducts = async (pool, brandMatches, activeIngredientMatches) => {
   const allMatches = [...brandMatches, ...activeIngredientMatches];
@@ -109,7 +109,33 @@ const getRelatedProducts = async (pool, brandMatches, activeIngredientMatches) =
   // Extract all CIS codes from direct matches to exclude them from related products
   const directMatchCodes = allMatches.map(match => match.id);
 
-  // Get unique active ingredients from all matches
+  // Get related products through two methods: generics and active ingredients
+  const relatedProducts = new Map(); // Use Map to avoid duplicates
+
+  // Method 1: Find generics using cis_gener_bdpm table
+  for (const match of allMatches) {
+    // Find all products in the same generic group(s) as this product
+    const genericResult = await pool.query(`
+      SELECT DISTINCT
+        m.code_cis as id,
+        m.denomination_medicament,
+        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
+        'generic' as match_type
+      FROM dbpm.cis_gener_bdpm cg1
+      JOIN dbpm.cis_gener_bdpm cg2 ON cg1.identifiant_groupe_generique = cg2.identifiant_groupe_generique
+      JOIN dbpm.cis_bdpm m ON cg2.code_cis = m.code_cis
+      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
+      WHERE cg1.code_cis = $1
+        AND m.code_cis != $1
+      GROUP BY m.code_cis, m.denomination_medicament
+    `, [match.id]);
+
+    genericResult.rows.forEach(row => {
+      relatedProducts.set(row.id, row);
+    });
+  }
+
+  // Method 2: Find products with same active ingredients (existing logic)
   const activeIngredients = new Set();
   allMatches.forEach(match => {
     if (match.active_ingredients) {
@@ -119,33 +145,46 @@ const getRelatedProducts = async (pool, brandMatches, activeIngredientMatches) =
     }
   });
 
-  if (activeIngredients.size === 0) return [];
+  if (activeIngredients.size > 0) {
+    // Create placeholders for excluding direct match CIS codes and already found generics
+    const existingCodes = [...directMatchCodes, ...Array.from(relatedProducts.keys())];
+    const excludePlaceholders = existingCodes.length > 0 ?
+      `AND m.code_cis NOT IN (${existingCodes.map((_, i) => `$${Array.from(activeIngredients).length + i + 1}`).join(', ')})` :
+      '';
 
-  // Create placeholders for excluding direct match CIS codes
-  const excludePlaceholders = directMatchCodes.length > 0 ?
-    `AND m.code_cis NOT IN (${directMatchCodes.map((_, i) => `$${Array.from(activeIngredients).length + i + 1}`).join(', ')})` :
-    '';
+    // Find products that contain any of these active ingredients
+    const ingredientParams = Array.from(activeIngredients).map(ingredient => `%${ingredient}%`);
+    const placeholders = ingredientParams.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' OR ');
 
-  // Find products that contain any of these active ingredients but weren't direct matches
-  const ingredientParams = Array.from(activeIngredients).map(ingredient => `%${ingredient}%`);
-  const placeholders = ingredientParams.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' OR ');
+    const ingredientResult = await pool.query(`
+      SELECT DISTINCT
+        m.code_cis as id,
+        m.denomination_medicament,
+        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
+        'related' as match_type
+      FROM dbpm.cis_bdpm m
+      JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
+      WHERE (${placeholders})
+        ${excludePlaceholders}
+      GROUP BY m.code_cis, m.denomination_medicament
+      ORDER BY m.denomination_medicament
+      LIMIT 30
+    `, [...ingredientParams, ...existingCodes]);
 
-  const result = await pool.query(`
-    SELECT DISTINCT
-      m.code_cis as id,
-      m.denomination_medicament,
-      string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
-      'related' as match_type
-    FROM dbpm.cis_bdpm m
-    JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-    WHERE (${placeholders})
-      ${excludePlaceholders}
-    GROUP BY m.code_cis, m.denomination_medicament
-    ORDER BY m.denomination_medicament
-    LIMIT 50
-  `, [...ingredientParams, ...directMatchCodes]);
+    ingredientResult.rows.forEach(row => {
+      relatedProducts.set(row.id, row);
+    });
+  }
 
-  return result.rows;
+  // Convert Map back to array and sort
+  return Array.from(relatedProducts.values())
+    .sort((a, b) => {
+      // Put generics first, then related products
+      if (a.match_type === 'generic' && b.match_type !== 'generic') return -1;
+      if (a.match_type !== 'generic' && b.match_type === 'generic') return 1;
+      return a.denomination_medicament.localeCompare(b.denomination_medicament);
+    })
+    .slice(0, 50);
 };
 
 export { searchMedications }; 

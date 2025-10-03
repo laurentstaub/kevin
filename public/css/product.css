@@ -179,6 +179,61 @@
   line-height: 1.5;
 }
 
+/* Related products section */
+.related-products-section {
+  background: var(--blanc);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--grisclair);
+}
+
+.related-products-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.related-product-item {
+  display: block;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.related-product-item:hover {
+  background: #f1f3f4;
+  border-color: var(--bleu);
+  text-decoration: none;
+}
+
+.related-product-item .product-name {
+  font-weight: 500;
+  color: var(--noir);
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.related-product-item .product-ingredients {
+  color: var(--gris);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.related-product-item .product-type {
+  color: var(--vert);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+.related-product-item.generic-product {
+  border-left: 3px solid var(--vert);
+}
+
 /* Status color variations */
 .status-rupture {
   color: #e53e3e;

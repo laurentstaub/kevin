@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { searchMedications } from './src/search.js';
+import Document from './models/Document.js';
 import fs from 'fs/promises';
 
 const { Pool } = pg;
@@ -144,14 +145,147 @@ app.get('/product/:id', async (req, res) => {
       });
     }
 
+    const product = productResult.rows[0];
+
+    // Get related products with generics and same active ingredients
+    let relatedProducts = [];
+    const relatedProductsMap = new Map();
+
+    // Method 1: Find generics using cis_gener_bdpm table
+    const genericResult = await pool.query(`
+      SELECT DISTINCT
+        m.code_cis as id,
+        m.denomination_medicament,
+        string_agg(DISTINCT c.denomination_substance, ', ' ORDER BY c.denomination_substance) as active_ingredients,
+        'generic' as match_type,
+        cg.type_generique,
+        cg.libelle_groupe_generique
+      FROM dbpm.cis_gener_bdpm cg1
+      JOIN dbpm.cis_gener_bdpm cg2 ON cg1.identifiant_groupe_generique = cg2.identifiant_groupe_generique
+      JOIN dbpm.cis_bdpm m ON cg2.code_cis = m.code_cis
+      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
+      LEFT JOIN dbpm.cis_gener_bdpm cg ON m.code_cis = cg.code_cis
+      WHERE cg1.code_cis = $1
+        AND m.code_cis != $1
+      GROUP BY m.code_cis, m.denomination_medicament, cg.type_generique, cg.libelle_groupe_generique
+      ORDER BY cg.type_generique, m.denomination_medicament
+    `, [id]);
+
+    genericResult.rows.forEach(row => {
+      relatedProductsMap.set(row.id, row);
+    });
+
+    // Method 2: Find products with same active ingredients (if no generics found or to supplement)
+    if (product.active_ingredients) {
+      const activeIngredientsArray = product.active_ingredients.split(', ').map(ingredient => ingredient.trim());
+
+      if (activeIngredientsArray.length > 0) {
+        const existingIds = [id, ...Array.from(relatedProductsMap.keys())];
+        const excludePlaceholders = existingIds.map((_, i) => `$${activeIngredientsArray.length + i + 1}`).join(', ');
+        const ingredientPlaceholders = activeIngredientsArray.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' OR ');
+        const ingredientParams = activeIngredientsArray.map(ingredient => `%${ingredient}%`);
+
+        const relatedResult = await pool.query(`
+          SELECT DISTINCT
+            m.code_cis as id,
+            m.denomination_medicament,
+            string_agg(DISTINCT c.denomination_substance, ', ' ORDER BY c.denomination_substance) as active_ingredients,
+            'related' as match_type,
+            NULL as type_generique,
+            NULL as libelle_groupe_generique
+          FROM dbpm.cis_bdpm m
+          JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
+          WHERE (${ingredientPlaceholders})
+            AND m.code_cis NOT IN (${excludePlaceholders})
+          GROUP BY m.code_cis, m.denomination_medicament
+          ORDER BY m.denomination_medicament
+          LIMIT 15
+        `, [...ingredientParams, ...existingIds]);
+
+        relatedResult.rows.forEach(row => {
+          relatedProductsMap.set(row.id, row);
+        });
+      }
+    }
+
+    // Convert to array and sort (generics first, then by name)
+    relatedProducts = Array.from(relatedProductsMap.values())
+      .sort((a, b) => {
+        if (a.match_type === 'generic' && b.match_type !== 'generic') return -1;
+        if (a.match_type !== 'generic' && b.match_type === 'generic') return 1;
+        if (a.match_type === 'generic' && b.match_type === 'generic') {
+          // Sort generics by type_generique (0 = princeps, 1 = generic)
+          if (a.type_generique !== b.type_generique) return a.type_generique - b.type_generique;
+        }
+        return a.denomination_medicament.localeCompare(b.denomination_medicament);
+      });
+
+    // Get documents for the product
+    let documents = { rcp: [], notice: [], main: [] };
+    try {
+      const productDocuments = await Document.getDocumentsByProductId(pool, id);
+      documents = Document.organizeDocumentsByType(productDocuments);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      // Continue without documents if there's an error
+    }
+
     res.render('product', {
-      product: productResult.rows[0]
+      product: product,
+      relatedProducts: relatedProducts,
+      documents: documents
     });
   } catch (err) {
     console.error('Error fetching product:', err);
     res.status(500).render('search_page', {
       error: 'Une erreur est survenue lors de la récupération du médicament'
     });
+  }
+});
+
+// API route to serve documents
+app.get('/api/document/:cisCode/:type', async (req, res) => {
+  const { cisCode, type } = req.params;
+
+  try {
+    const documents = await Document.getDocumentsByProductId(pool, cisCode);
+    const document = documents.find(doc => doc.document_type === type);
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document non trouvé' });
+    }
+
+    // If we have a file_path, redirect to it
+    if (document.file_path) {
+      return res.redirect(document.file_path);
+    }
+
+    // If we have html_content, serve it as HTML
+    if (document.html_content) {
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.send(document.html_content);
+    }
+
+    // No content available
+    return res.status(404).json({ error: 'Document non trouvé' });
+
+  } catch (error) {
+    console.error('Error serving document:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// API route to get documents for a product
+app.get('/api/product/:id/documents', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const documents = await Document.getDocumentsByProductId(pool, id);
+    const organizedDocs = Document.organizeDocumentsByType(documents);
+    res.json(organizedDocs);
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des documents' });
   }
 });
 
