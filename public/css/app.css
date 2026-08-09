@@ -1,0 +1,264 @@
+/* Page de recherche et éléments communs. Tokens dans tokens.css. */
+
+.recherche {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-3) var(--sp-8);
+}
+
+.recherche-tete {
+  border-bottom: 2px solid var(--rule-strong);
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.titre-site {
+  font-size: var(--fs-xl);
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Champ de recherche ---------- */
+
+.search-wrapper {
+  position: relative;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: stretch;
+  border: var(--rule-width) solid var(--ink);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-base);
+  font-family: inherit;
+  color: var(--ink);
+  border: none;
+  outline: none;
+  background: transparent;
+  appearance: none;
+}
+
+.search-input::placeholder {
+  color: var(--faint);
+}
+
+.input-wrapper:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.search-button {
+  border: none;
+  border-left: var(--rule-width) solid var(--rule);
+  background: transparent;
+  padding: 0 var(--sp-3);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background: var(--bg-alt);
+}
+
+/* ---------- Suggestions ---------- */
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg);
+  border: var(--rule-width) solid var(--ink);
+  border-top: none;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestion-item {
+  padding: var(--sp-1) var(--sp-2);
+  cursor: pointer;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+  background: var(--bg-alt);
+}
+
+.suggestion-name {
+  font-size: var(--fs-sm);
+}
+
+.suggestion-active-ingredients {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* ---------- États ---------- */
+
+.loading {
+  display: none;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  padding-top: var(--sp-1);
+}
+
+.notice,
+.vide {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding: var(--sp-3) 0;
+  border-top: var(--rule-width) solid var(--rule);
+  margin: var(--sp-3) 0 0;
+}
+
+/* ---------- Filtres ---------- */
+
+.filtres {
+  display: flex;
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 0;
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.filtre {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-decoration: none;
+  padding-bottom: var(--sp-1);
+  margin-bottom: calc(-1 * var(--sp-1) - 1px);
+  border-bottom: 2px solid transparent;
+}
+
+.filtre:hover {
+  color: var(--ink);
+}
+
+.filtre.actif {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Résultats ---------- */
+
+.groupe {
+  margin-top: var(--sp-6);
+}
+
+.groupe-titre {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-strong);
+}
+
+.compte {
+  font-variant-numeric: tabular-nums;
+}
+
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.liste li {
+  border-bottom: var(--rule-width) solid var(--rule);
+  max-width: none;
+}
+
+.resultat {
+  display: block;
+  padding: var(--sp-2) 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.resultat:hover .resultat-nom {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.resultat-nom {
+  display: block;
+}
+
+.resultat-dci {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.15em;
+}
+
+/* Ce que le regroupement recouvre. En retrait typographique : c'est une
+   précision sur la ligne, pas une deuxième information à lire. */
+.resultat-etendue {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin-top: 0.15em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 40rem) {
+  .recherche {
+    padding: var(--sp-4) var(--sp-2) var(--sp-6);
+  }
+
+  .titre-site {
+    font-size: var(--fs-lg);
+  }
+
+  .filtres {
+    gap: var(--sp-2);
+  }
+}
+
+/* ---------- Importation parallèle ---------- */
+
+/* Une marque, pas une pastille : filet fin, capitales étroites, aucune
+   couleur. Elle signale un statut réglementaire, elle n'alerte pas. */
+.marque {
+  display: inline-block;
+  margin-left: var(--sp-1);
+  padding: 0 0.35em;
+  border: var(--rule-width) solid var(--rule-strong);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 0.15em;
+  white-space: nowrap;
+}
+
+.suggestion-variantes {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}

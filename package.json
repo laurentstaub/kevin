@@ -1,25 +1,32 @@
 {
-  "name": "00_kevin",
-  "version": "1.0.0",
+  "name": "dr-kevin",
+  "version": "2.0.0",
+  "description": "Recherche BDPM — spécialités, principes actifs, groupes génériques et documents officiels",
   "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.12"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:setup": "node scripts/db-setup.js",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:unit": "node --test \"tests/unit/**/*.test.js\"",
+    "diagnostic": "node scripts/diagnostic.js",
+    "db:sections": "node -e \"import('./src/db.js').then(async m=>{const p=m.createPool();const fs=await import('node:fs/promises');await p.query(await fs.readFile('sql/sections.sql','utf8'));console.log('schéma docs en place');await p.end()})\"",
+    "build-sections": "node scripts/build-sections.js",
+    "build-pdf-sections": "node scripts/build-pdf-sections.js",
+    "reparer-encodage": "node scripts/reparer-encodage.js"
+  },
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^5.1.0",
     "pg": "^8.14.1",
-    "pug": "^3.0.3"
+    "pug": "^3.0.3",
+    "sanitize-html": "^2.17.6"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.0"
-  }
+    "supertest": "^7.0.0"
+  },
+  "license": "ISC"
 }

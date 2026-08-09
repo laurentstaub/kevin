@@ -1,275 +1,117 @@
-doctype html
-html(lang="fr")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title Demander à Kevin
-    link(rel="stylesheet", href="/css/style.css")
-    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
+extends layout.pug
 
-  body
-    .search-container
-      h1.page-title Demander à Kevin
-      .search-wrapper
-        form.search-form(method="GET" action="/search")
-          .input-wrapper
-            input.search-input(
-              type="text"
-              name="q"
-              placeholder="Rechercher un médicament..."
-              value=query
-              autocomplete="off"
-            )
-            button.search-button(type="submit")
-              i.fa-light.fa-magnifying-glass
-        
-        #suggestions.suggestions-dropdown
-          .suggestions-list
+//- Une ligne = un produit, pas un code CIS.
+//-
+//- DOLIPRANE compte dix-sept CIS : les lister, c'est remplir l'écran d'un seul
+//- médicament. La ligne porte donc la racine de marque, et dit ce que le
+//- regroupement recouvre — combien de présentations, combien d'importations —
+//- pour que le lecteur sache qu'il n'a rien perdu en chemin.
+mixin produit(result)
+  li
+    a.resultat(href=`/product/${result.id}`)
+      span.resultat-nom
+        = result.libelle
+        //- Dire pourquoi la ligne est là où elle est : sur une recherche de
+        //- molécule, le princeps passe devant ses génériques, et le lecteur
+        //- doit pouvoir le constater plutôt que le deviner.
+        if result.princeps
+          span.marque Princeps
+        if result.importation
+          span.marque Importation parallèle
+        if result.commercialise === false
+          span.marque Non commercialisé
+      span.resultat-dci
+        if result.active_ingredients
+          = result.active_ingredients
+        if result.active_ingredients && result.forme_pharmaceutique
+          span.sep
+        if result.forme_pharmaceutique
+          = result.forme_pharmaceutique
+      if result.presentations > 1 || result.importations > 0
+        span.resultat-etendue
+          //- « dosages et formes » et non « présentations » : la fiche produit
+          //- réserve ce mot aux conditionnements CIP, qui sont autre chose.
+          if result.presentations > 1
+            = `${result.presentations} dosages et formes`
+          if result.presentations > 1 && result.importations > 0
+            span.sep
+          if result.importations > 0
+            = `${result.importations} importation${result.importations > 1 ? 's' : ''} parallèle${result.importations > 1 ? 's' : ''}`
 
-      #loading.loading Recherche en cours...
+block content
+  .recherche
+    header.recherche-tete
+      h1.titre-site Demander à Kevin
+      p.page-meta Base de données publique des médicaments · spécialités, principes actifs, groupes génériques
 
-      if error
-        .error= error
+    .search-wrapper
+      form.search-form(method="GET" action="/search" role="search")
+        .input-wrapper
+          input.search-input(
+            type="search"
+            name="q"
+            placeholder="Dénomination ou principe actif"
+            value=query
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-label="Rechercher un médicament"
+            aria-autocomplete="list"
+            aria-controls="suggestions"
+          )
+          button.search-button(type="submit") Chercher
 
-      #results
-        if query
-          .search-filters
-            .filter-tabs
-              a.filter-tab(class=(!filter || filter === 'all' ? 'active' : ''), href=`/search?q=${query}`) Tous
-              a.filter-tab(class=(filter === 'specialty' ? 'active' : ''), href=`/search?q=${query}&filter=specialty`) Spécialités
-              a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
-          .results
-            if results && (results.brandMatches.length > 0 || results.activeIngredientMatches.length > 0 || results.relatedProducts.length > 0)
+      #suggestions.suggestions(role="listbox" hidden)
+        .suggestions-list
 
-              if results.brandMatches && results.brandMatches.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-tag
-                    span Spécialités pharmaceutiques
-                    span.result-count (#{results.brandMatches.length})
-                  .category-results
-                    each result in results.brandMatches
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
+    #loading.loading(role="status" aria-live="polite") Recherche…
 
-              if results.activeIngredientMatches && results.activeIngredientMatches.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-flask
-                    span Principes actifs
-                    span.result-count (#{results.activeIngredientMatches.length})
-                  .category-results
-                    each result in results.activeIngredientMatches
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
+    if notice
+      p.notice= notice
 
-              if results.relatedProducts && results.relatedProducts.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-pills
-                    span Génériques et alternatives
-                    span.result-count (#{results.relatedProducts.length})
-                  .category-results
-                    each result in results.relatedProducts
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
-            else
-              .no-results Pas de résultat
+    #results
+      if results
+        //- Les filtres pilotent la liste : ils sont au-dessus d'elle.
+        nav.filtres(aria-label="Filtrer les résultats")
+          a.filtre(class=(filter === 'all' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}`) Tous
+          a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=specialty`) Dénomination
+          a.filtre(class=(filter === 'active' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=active`) Principe actif
 
-    script.
-      const searchForm = document.querySelector('.search-form');
-      const searchWrapper = document.querySelector('.search-wrapper');
-      const searchInput = searchForm.querySelector('.search-input');
-      const suggestionsDropdown = document.getElementById('suggestions');
-      const suggestionsList = suggestionsDropdown.querySelector('.suggestions-list');
-      const loadingIndicator = document.getElementById('loading');
-      
-      let currentSuggestionIndex = -1;
-      let suggestions = [];
-      
-      // Function to show suggestions
-      function showSuggestions() {
-        suggestionsDropdown.style.display = 'block';
-        searchWrapper.classList.add('suggestions-visible');
-      }
+        if results.total > 0
+          //- Le terme désigne une molécule : une seule liste.
+          //-
+          //- Séparer selon que le mot figure ou non dans la dénomination n'a de
+          //- sens que pour une marque. Sur « oxazépam », cela mettait les trois
+          //- OXAZEPAM <labo> au-dessus, et SERESTA — le princeps, celui qu'on
+          //- cherche — dans une seconde section, sous eux.
+          if results.dci
+            section.groupe
+              h2.groupe-titre
+                | Médicaments contenant #{results.substance || query}
+                span.compte #{results.produits.length}
+              ul.liste
+                each result in results.produits
+                  +produit(result)
+          else
+            if results.brandMatches.length > 0
+              section.groupe
+                h2.groupe-titre
+                  | Trouvés par dénomination
+                  span.compte #{results.brandMatches.length}
+                ul.liste
+                  each result in results.brandMatches
+                    +produit(result)
 
-      // Function to hide suggestions
-      function hideSuggestions() {
-        suggestionsDropdown.style.display = 'none';
-        searchWrapper.classList.remove('suggestions-visible');
-        currentSuggestionIndex = -1;
-        updateSelectedSuggestion();
-      }
+            if results.activeIngredientMatches.length > 0
+              section.groupe
+                h2.groupe-titre
+                  | Trouvés par principe actif
+                  span.compte #{results.activeIngredientMatches.length}
+                ul.liste
+                  each result in results.activeIngredientMatches
+                    +produit(result)
+        else
+          p.vide Aucun résultat pour « #{query} ».
 
-      // Function to update the visual selection of suggestions
-      function updateSelectedSuggestion() {
-        const items = suggestionsList.querySelectorAll('.suggestion-item');
-        items.forEach((item, index) => {
-          if (index === currentSuggestionIndex) {
-            item.classList.add('selected');
-          } else {
-            item.classList.remove('selected');
-          }
-        });
-      }
-
-      // Function to handle keyboard navigation
-      function handleKeyboardNavigation(e) {
-        const items = suggestionsList.querySelectorAll('.suggestion-item');
-        
-        if (!items.length) return;
-
-        switch (e.key) {
-          case 'ArrowDown':
-            e.preventDefault();
-            currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, items.length - 1);
-            updateSelectedSuggestion();
-            break;
-
-          case 'ArrowUp':
-            e.preventDefault();
-            currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
-            updateSelectedSuggestion();
-            if (currentSuggestionIndex === -1) {
-              searchInput.value = searchInput.dataset.originalValue || searchInput.value;
-            }
-            break;
-
-          case 'Enter':
-            if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
-              e.preventDefault();
-              const selectedItem = items[currentSuggestionIndex];
-              window.location.href = `/product/${suggestions[currentSuggestionIndex].id}`;
-            }
-            break;
-
-          case 'Escape':
-            hideSuggestions();
-            searchInput.blur();
-            break;
-        }
-
-        // Update input value when navigating through suggestions
-        if (currentSuggestionIndex >= 0 && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-          const selectedItem = suggestions[currentSuggestionIndex];
-          if (selectedItem) {
-            if (!searchInput.dataset.originalValue) {
-              searchInput.dataset.originalValue = searchInput.value;
-            }
-            searchInput.value = selectedItem.denomination_medicament;
-          }
-        }
-      }
-
-      // Debounce function
-      function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-      }
-
-      // Function to fetch suggestions
-      async function fetchSuggestions(query) {
-        if (query.length < 3) {
-          hideSuggestions();
-          return;
-        }
-
-        loadingIndicator.style.display = 'block';
-        try {
-          const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          const data = await response.json();
-
-          // Flatten categorized results for suggestions
-          const allResults = [];
-          if (data.results) {
-            if (data.results.brandMatches) allResults.push(...data.results.brandMatches);
-            if (data.results.activeIngredientMatches) allResults.push(...data.results.activeIngredientMatches);
-            if (data.results.relatedProducts) allResults.push(...data.results.relatedProducts.slice(0, 3));
-          }
-
-          if (allResults.length > 0) {
-            suggestions = allResults;
-            displaySuggestions(allResults);
-          } else {
-            hideSuggestions();
-          }
-        } catch (error) {
-          console.error('Error fetching suggestions:', error);
-          hideSuggestions();
-        } finally {
-          loadingIndicator.style.display = 'none';
-        }
-      }
-
-      // Function to display suggestions
-      function displaySuggestions(results) {
-        suggestionsList.innerHTML = '';
-        currentSuggestionIndex = -1;
-        
-        results.slice(0, 5).forEach(result => {
-          const div = document.createElement('div');
-          div.className = 'suggestion-item';
-          
-          const activeIngredientsHtml = result.active_ingredients ? 
-            `<div class="suggestion-active-ingredients">
-              <span>${result.active_ingredients}</span>
-            </div>` : '';
-          
-          div.innerHTML = `
-            <div class="suggestion-name">${result.denomination_medicament}</div>
-            ${activeIngredientsHtml}
-          `;
-          
-          div.addEventListener('click', () => {
-            window.location.href = `/product/${result.id}`;
-          });
-
-          div.addEventListener('mouseenter', () => {
-            currentSuggestionIndex = Array.from(suggestionsList.children).indexOf(div);
-            updateSelectedSuggestion();
-          });
-          
-          suggestionsList.appendChild(div);
-        });
-        
-        showSuggestions();
-      }
-
-      // Event listeners
-      const debouncedFetch = debounce(fetchSuggestions, 300);
-      
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        searchInput.dataset.originalValue = query;
-        debouncedFetch(query);
-      });
-
-      searchInput.addEventListener('keydown', handleKeyboardNavigation);
-
-      // Close suggestions when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!searchForm.contains(e.target)) {
-          hideSuggestions();
-        }
-      });
-
-      // Handle form submission
-      searchForm.addEventListener('submit', () => {
-        hideSuggestions();
-      });
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

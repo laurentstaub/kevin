@@ -1,223 +1,215 @@
-doctype html
-html(lang="fr")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title #{product.denomination_medicament} - Détails du médicament
-    link(rel="stylesheet", href="/css/style.css")
-    link(rel="stylesheet", href="/css/product.css")
-    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
-    link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet")
+extends layout.pug
 
-  body
-    .product-container
-      .product-header
-        a.back-button(href="/") 
-          i.fa-light.fa-arrow-left
-          span Retour à la recherche
-        h1.product-title= product.denomination_medicament
-        .product-subtitle
-          if product.active_ingredients
-            a.product-category(href="#")= product.active_ingredients.toUpperCase()
+block styles
+  link(rel="stylesheet", href=`/css/product.css?v=${v}`)
 
-      .product-content
-        .main-content
-          .presentations-section
-            h2.section-title Présentations
-            if product.cip_products && product.cip_products.length > 0
-              .cip-list
-                each cip in product.cip_products
-                  .cip-item
-                    p= `${cip.code_cip7} - ${cip.libelle_presentation}`
+block content
+  //- Identité : dénomination + toutes les métadonnées en une seule ligne,
+  //- jamais répétées plus bas. Le bandeau déborde de la colonne de contenu.
+  header.identite
+    .identite-inner
+      a.retour(href="/") ← Recherche
+      h1.produit-titre= product.denomination_medicament
+      p.page-meta
+        if product.active_ingredients
+          span.dci= product.active_ingredients
+          span.sep
+        if product.forme_pharmaceutique
+          span= product.forme_pharmaceutique
+          span.sep
+        if product.titulaires
+          span= product.titulaires
+          span.sep
+        span CIS #{product.id}
+        //- La procédure d'AMM change la lecture de la fiche : ce produit est le
+        //- même médicament, importé et redistribué, sans documentation propre.
+        if importation
+          span.sep
+          span.marque Importation parallèle
 
-          if product.incidents && product.incidents.length > 0
-            .incidents-section
-              h2.section-title État de disponibilité
-              .incidents-list
-                each incident in product.incidents
-                  .incident-item
-                    .incident-header
-                      .incident-status(class=`status-${incident.status.toLowerCase()}`)
-                        i.fa-light.fa-circle-exclamation
-                        span= incident.status
-                      .incident-dates
-                        if incident.start_date
-                          .date-item
-                            i.fa-light.fa-calendar-day
-                            span.date-label Début:
-                            span.date-value= new Date(incident.start_date).toLocaleDateString('fr-FR')
-                        if incident.end_date
-                          .date-item
-                            i.fa-light.fa-calendar-check
-                            span.date-label Fin:
-                            span.date-value= new Date(incident.end_date).toLocaleDateString('fr-FR')
-                    .incident-content
-                      if incident.original_specialite
-                        .incident-detail
-                          span.detail-label Spécialité:
-                          span.detail-value= incident.original_specialite
+      //- Choisir son dosage et sa forme.
+      //-
+      //- La recherche rend un produit par ligne — DOLIPRANE, pas ses dix-sept
+      //- codes CIS. Le choix du dosage se fait donc ici, sur la fiche, sinon il
+      //- ne se fait nulle part : on arrive sur la présentation que le
+      //- regroupement a désignée, et rien ne dit que c'est celle qu'on cherche.
+      if variantes && variantes.length > 1
+        nav.formes(aria-label="Dosages et formes de ce produit")
+          ul.formes-liste
+            each v in variantes
+              li
+                if v.courante
+                  span.forme-choix.actif(aria-current="true")= v.variante
+                else
+                  a.forme-choix(
+                    href=`/product/${v.id}`
+                    class=(v.commercialise === false ? 'forme-retiree' : '')
+                    title=(v.commercialise === false ? 'Non commercialisé' : null)
+                  )= v.variante
 
+  .corps
+    nav.rail(aria-label="Sommaire de la fiche")
+      ul.rail-plan
+        each section in sections
+          li
+            a.rail-lien(href=`#${section.id}`)= section.label
+            //- Le document ouvert affiche son plan complet : le rail ne le
+            //- répète pas, il donne l'accès direct à ce qu'on ouvre au comptoir.
+            if section.children
+              each doc in section.children
+                p.rail-doc-titre= doc.titre
+                ol.rail-rubriques
+                  each entry in doc.sections
+                    li(class=`rub-n${entry.depth}`)
+                      a.rail-lien(href=`#${entry.id}`)
+                        span.num= entry.number
+                        span(class=entry.canonical || entry.label !== entry.label.toUpperCase() ? 'lab' : 'lab lab-brut')= entry.label
 
-          if relatedProducts && relatedProducts.length > 0
-            - const generics = relatedProducts.filter(p => p.match_type === 'generic')
-            - const relatedByIngredients = relatedProducts.filter(p => p.match_type === 'related')
+      .rail-ailleurs
+        h2.rail-titre Ce produit ailleurs
+        ul
+          each link in links.official
+            li
+              a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
 
-            if generics && generics.length > 0
-              .related-products-section
-                h2.section-title Médicaments génériques
-                .related-products-list
-                  each genericProduct in generics
-                    a.related-product-item.generic-product(href=`/product/${genericProduct.id}`)
-                      .product-name= genericProduct.denomination_medicament
-                      if genericProduct.active_ingredients
-                        .product-ingredients= genericProduct.active_ingredients
-                      if genericProduct.type_generique
-                        .product-type= genericProduct.type_generique === '0' ? 'Princeps' : 'Générique'
+    main.contenu
 
-            if relatedByIngredients && relatedByIngredients.length > 0
-              .related-products-section
-                h2.section-title Produits contenant les mêmes principes actifs
-                .related-products-list
-                  each relatedProduct in relatedByIngredients
-                    a.related-product-item(href=`/product/${relatedProduct.id}`)
-                      .product-name= relatedProduct.denomination_medicament
-                      if relatedProduct.active_ingredients
-                        .product-ingredients= relatedProduct.active_ingredients
+      //- Chaque section est un bloc repliable, fermé au chargement : la fiche
+      //- s'ouvre sur son plan, pas sur trois tableaux qu'il faut dépasser.
+      if product.cip_products && product.cip_products.length > 0
+        details.bloc#presentations
+          summary.bloc-tete
+            h2.section-titre Présentations
+            span.bloc-compte #{product.cip_products.length} conditionnement#{product.cip_products.length > 1 ? 's' : ''}
+          table.t-presentations
+            thead
+              tr
+                th(scope="col") CIP 13
+                th(scope="col") Conditionnement
+            tbody
+              each cip in product.cip_products
+                tr
+                  td.code= cip.code_cip13 || cip.code_cip7
+                  td= cip.libelle_presentation
 
-          // Documents section
-          if documents && (documents.rcp.length > 0 || documents.notice.length > 0 || documents.main.length > 0)
-            .documents-section
-              h2.section-title Documents officiels
-              
-              .document-tabs
-                ul.nav.nav-tabs(role="tablist")
-                  if documents.rcp && documents.rcp.length > 0
-                    li.nav-item
-                      a.nav-link.active(data-bs-toggle="tab" href="#rcp-tab" role="tab") RCP
-                  if documents.notice && documents.notice.length > 0
-                    li.nav-item
-                      a.nav-link(class=(documents.rcp.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#notice-tab" role="tab") Notice
-                  if documents.main && documents.main.length > 0
-                    li.nav-item
-                      a.nav-link(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#main-tab" role="tab") Principal
-                
-                .tab-content
-                  if documents.rcp && documents.rcp.length > 0
-                    .tab-pane.fade.show.active#rcp-tab(role="tabpanel")
-                      each doc in documents.rcp
-                        .document-item
-                          .document-header
-                            h4 Résumé des Caractéristiques du Produit
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/rcp` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
-                  
-                  if documents.notice && documents.notice.length > 0
-                    .tab-pane.fade(class=(documents.rcp.length === 0 ? 'show active' : '') id="notice-tab" role="tabpanel")
-                      each doc in documents.notice
-                        .document-item
-                          .document-header
-                            h4 Notice Patient
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/notice` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
-                  
-                  if documents.main && documents.main.length > 0
-                    .tab-pane.fade(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'show active' : '') id="main-tab" role="tabpanel")
-                      each doc in documents.main
-                        .document-item
-                          .document-header
-                            h4 Document Principal
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/main` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
+      if hasDocuments
+        details.bloc#documents(open)
+          summary.bloc-tete
+            h2.section-titre Documents
+            span.bloc-compte= documents.map((d) => d.label).join(' · ')
 
-          .other-info-section
-            h2.section-title Autres informations
-            .info-grid
-              .info-item
-                h3 Titulaire de l'autorisation de mise sur le marché (AMM)
-                p= product.titulaires
+          //- Onglets : le RCP répond au professionnel, la notice au patient.
+          //- Même page, même sommaire — on change d'interlocuteur, pas de fiche.
+          if documents.length > 1
+            .onglets(role="tablist" aria-label="Documents officiels")
+              each doc, i in documents
+                button.onglet(
+                  type="button"
+                  role="tab"
+                  id=`onglet-${doc.type}`
+                  aria-controls=doc.anchor
+                  aria-selected=(i === 0 ? 'true' : 'false')
+                  tabindex=(i === 0 ? 0 : -1)
+                )= doc.label
 
-    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
-    
-    style.
-      .documents-section {
-        margin-bottom: 2rem;
-      }
-      
-      .document-tabs .nav-tabs {
-        border-bottom: 2px solid #dee2e6;
-        margin-bottom: 1rem;
-      }
-      
-      .document-tabs .nav-link {
-        color: #495057;
-        border: none;
-        border-bottom: 2px solid transparent;
-        padding: 0.75rem 1rem;
-        font-weight: 500;
-      }
-      
-      .document-tabs .nav-link:hover {
-        border-color: #dee2e6;
-        background-color: #f8f9fa;
-      }
-      
-      .document-tabs .nav-link.active {
-        color: #0d6efd;
-        border-bottom-color: #0d6efd;
-        background-color: transparent;
-      }
-      
-      .document-item {
-        margin-bottom: 1.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        background-color: #f8f9fa;
-      }
-      
-      .document-header {
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
-      }
-      
-      .document-header h4 {
-        margin: 0;
-        color: #212529;
-        font-size: 1.1rem;
-      }
-      
-      .document-content .document-link {
-        text-align: center;
-      }
-      
-      .document-link .btn {
-        padding: 0.75rem 2rem;
-        font-weight: 500;
-        text-decoration: none;
-      }
-      
-      .document-link .btn i {
-        margin-right: 0.5rem;
-      }
-      
-      .text-muted {
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-      }
+          each doc, i in documents
+            article.document(
+              id=doc.anchor
+              role=(documents.length > 1 ? 'tabpanel' : null)
+              aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
+              hidden=(documents.length > 1 && i > 0)
+            )
+              .document-tete
+                if documents.length === 1
+                  h3.document-titre= doc.label
+                p.document-meta
+                  if doc.lastUpdated
+                    span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
+                  if doc.lastUpdated && (doc.source || doc.url)
+                    span.sep
+                  if doc.source === 'bdpm_pdf'
+                    span Texte reconstruit depuis le PDF européen
+                    if doc.url
+                      span.sep
+                  if doc.url
+                    a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
 
+              if doc.emprunte
+                p.emprunt
+                  strong Texte emprunté.
+                  |  Cette spécialité est une importation parallèle : la base publique ne lui attribue ni RCP ni notice. Le document ci-dessous est celui de&nbsp;
+                  a(href=`/product/${doc.emprunte.id}`)= doc.emprunte.denomination_medicament
+                  if doc.emprunte.titulaires
+                    |  (#{doc.emprunte.titulaires.trim()})
+                  | , dont ce produit est la copie distribuée en France.
+
+              if doc.rubriques && doc.rubriques.length > 0
+                //- Le contrôle est au-dessus de ce qu'il pilote.
+                p.rubriques-controle
+                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
+                  if doc.manquantes && doc.manquantes.length > 0
+                    span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
+
+                .rubriques
+                  each r in doc.rubriques
+                    if r.charniere
+                      h4.charniere(id=r.id)
+                        span.num= r.numero
+                        span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
+                    else
+                      details.rubrique(id=r.id class=`rub-n${r.profondeur}` class=(r.essentielle ? 'essentielle' : null))
+                        summary.rubrique-tete
+                          span.num= r.numero
+                          span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
+                          span.signes #{r.signes.toLocaleString('fr-FR')} signes
+                        .rubrique-corps!= r.html
+
+              else if doc.html
+                .document-corps!= doc.html
+
+              else if doc.url
+                p.doc-externe
+                  | Ce document n'est disponible qu'au format PDF sur le site officiel.
+
+      if substitutions.length > 0
+        details.bloc#substituer
+          summary.bloc-tete
+            h2.section-titre Substituer
+            span.bloc-compte #{substitutions.length} produit#{substitutions.length > 1 ? 's' : ''}
+          if genericGroup
+            p.section-meta Groupe générique · #{genericGroup}
+          table.t-substitution
+            caption.sr-only Produits substituables ou partageant le principe actif
+            thead
+              tr
+                th(scope="col") Dénomination
+                th(scope="col") Forme
+                th(scope="col") Rôle
+            tbody
+              each item in substitutions
+                tr
+                  td
+                    a(href=`/product/${item.id}`)= item.denomination_medicament
+                    if item.active_ingredients && item.active_ingredients !== product.active_ingredients
+                      .ligne-dci= item.active_ingredients
+                  td.forme= item.forme_pharmaceutique || '—'
+                  td
+                    span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
+
+      details.bloc#references
+        summary.bloc-tete
+          h2.section-titre Références
+          if links.scientific.length > 0
+            span.bloc-compte Littérature et registres
+        if links.scientific.length > 0
+          p.section-meta Sur #{links.scientific[0].hint}
+          ul.liens
+            each link in links.scientific
+              li
+                a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
+        else
+          p.vide Aucun principe actif renseigné pour interroger la littérature.
+
+block scripts
+  script(src=`/js/rail.js?v=${v}` defer)
+  script(src=`/js/documents.js?v=${v}` defer)
