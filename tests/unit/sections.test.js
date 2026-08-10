@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { organiser, planDe, raccourcis } from '../../src/sections.js';
+import { organiser, planDe } from '../../src/sections.js';
 import { withSections } from '../../src/documents.js';
 
 const rubrique = (type, position, numero, libelle, texte, profondeur = 2) => ({
@@ -92,25 +92,61 @@ describe('planDe', () => {
   });
 });
 
-describe('raccourcis', () => {
-  it('ne retient que les rubriques du comptoir', () => {
-    const rcp = organiser(
+describe('rubriques ouvertes', () => {
+  const RCP = organiser(
+    [
+      rubrique('rcp', 0, '1', 'Dénomination', 'D', 1),
+      rubrique('rcp', 1, '4', 'Données cliniques', '', 1),
+      rubrique('rcp', 2, '4.1', 'Indications', 'a'),
+      rubrique('rcp', 3, '4.2', 'Posologie', 'b'),
+      rubrique('rcp', 4, '4.8', 'Effets indésirables', 'c'),
+      rubrique('rcp', 5, '5.1', 'Pharmacodynamie', 'd'),
+      rubrique('rcp', 6, '6.1', 'Excipients', 'e'),
+    ],
+    [],
+  ).get('rcp');
+
+  const par = (n) => RCP.rubriques.find((r) => r.numero === n);
+
+  it('conserve l’ordre du document', () => {
+    assert.deepEqual(
+      RCP.rubriques.map((r) => r.numero),
+      ['1', '4', '4.1', '4.2', '4.8', '5.1', '6.1'],
+    );
+  });
+
+  it('déplie toute la rubrique 4, chapeau compris', () => {
+    for (const n of ['4', '4.1', '4.2', '4.8']) {
+      assert.equal(par(n).clinique, true, n);
+    }
+  });
+
+  it('laisse fermé tout ce qui n’est pas la 4, socle compris', () => {
+    assert.equal(par('1').clinique, false, 'dénomination');
+    assert.equal(par('5.1').clinique, false, 'pharmacodynamie');
+    assert.equal(par('6.1').clinique, false, 'excipients');
+  });
+
+  it('ne confond pas la 4 avec ce qui commence par 4', () => {
+    const doc = organiser(
       [
-        rubrique('rcp', 0, '1', 'Dénomination', 'K', 1),
-        rubrique('rcp', 1, '4.1', 'Indications', 'a'),
-        rubrique('rcp', 2, '4.2', 'Posologie', 'b'),
-        rubrique('rcp', 3, '5.1', 'Pharmacodynamie', 'c'),
-        rubrique('rcp', 4, '6.1', 'Excipients', 'd'),
+        rubrique('rcp', 0, '4', 'Données cliniques', '', 1),
+        rubrique('rcp', 1, '4.9', 'Surdosage', 'a'),
+        rubrique('rcp', 2, '40', 'Rubrique absurde', 'b'),
       ],
       [],
     ).get('rcp');
 
-    assert.deepEqual(raccourcis(rcp).map((e) => e.number), ['4.1', '4.2']);
+    const trouve = (n) => doc.rubriques.find((r) => r.numero === n);
+    assert.equal(trouve('4.9').clinique, true);
+    assert.equal(trouve('40').clinique, false);
   });
 
-  it('laisse la notice sans raccourci : son plan tient en six lignes', () => {
-    const notice = organiser(RUBRIQUES, ETATS).get('notice');
-    assert.deepEqual(raccourcis(notice), []);
+  it('ne confond pas socle et partie clinique', () => {
+    // « 1 » et « 6.1 » sont du socle — un RCP complet les a toujours — mais
+    // personne ne vient les lire devant un patient.
+    assert.equal(par('1').essentielle, true);
+    assert.equal(par('1').clinique, false);
   });
 });
 

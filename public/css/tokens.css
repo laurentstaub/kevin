@@ -8,6 +8,12 @@
   --muted: #767676;
   --faint: #9a9a9a;
   --rule: #e6e6e6;
+  /* Filet de structure. Il séparait les sections en 2 px d'encre pleine : sur
+     une page où l'on lit quarante mille signes, chaque trait noir arrête l'œil
+     et hache la lecture. Un gris moyen sur un seul pixel marque la même
+     articulation sans la barrer. --rule-strong reste pour ce qui doit trancher
+     — l'état actif d'un onglet, le contour d'une marque. */
+  --rule-medium: #bdbdbd;
   --rule-strong: #1a1a1a;
   --bg: #ffffff;
   --bg-alt: #fafafa;

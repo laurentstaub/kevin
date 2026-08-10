@@ -13,10 +13,13 @@ import { socle } from './rcp-plan.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 5 : conduite reposée en vrais points, et reconnue à travers les retours
+//     à la ligne du HTML indenté de la BDPM.
+// 4 : conduites de points de la rubrique 2 rendues à la largeur.
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 3;
+export const PARSER_VERSION = 5;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -35,6 +38,58 @@ export function detaguer(html) {
   return decode(String(html ?? '').replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Recompose les lignes de composition en conduite de points.
+ *
+ * La BDPM écrit la rubrique 2 comme dans un document imprimé :
+ * « Anastrozole........................... 1,00 mg », les points servant à
+ * mener l'œil du nom jusqu'au dosage. Une conduite de points a une longueur
+ * fixe, calculée pour une largeur de page ; dans un navigateur elle déborde,
+ * se replie, et la substance, les points et la dose finissent sur trois lignes
+ * séparées, ce qui rompt précisément le lien qu'elle devait établir.
+ *
+ * On rend donc le rôle à sa forme : le nom à gauche, la dose à droite, et
+ * entre les deux un filet qui prend la place qui reste, quelle que soit la
+ * largeur.
+ */
+const PARAGRAPHE = /<p([^>]*)>([\s\S]*?)<\/p>/gi;
+// Le nom s'arrête au dernier signe qui n'est ni un point ni une espace, et la
+// dose commence au premier : sans quoi un paragraphe fait de points seuls se
+// couperait en « . » et « . » de part et d'autre de la conduite.
+//
+// Les blancs autour des points englobent les retours à la ligne : le HTML de
+// la BDPM est indenté, la dose se trouve donc sur la ligne suivante.
+const HORS_CONDUITE = '[^\\s.\\u00b7\\u2026]';
+const CONDUITE = new RegExp(
+  `^([\\s\\S]*?${HORS_CONDUITE})\\s*[.\\u00b7\\u2026]{4,}\\s*(${HORS_CONDUITE}[\\s\\S]*?)$`,
+);
+
+// Une conduite assez longue pour la plus large des mesures ; le conteneur la
+// coupe à la largeur exacte. Ce sont de vrais points, dans la police du texte,
+// et non un pointillé dessiné par le navigateur — c'est la conduite du
+// document, pas son imitation.
+const POINTS = '.'.repeat(160);
+
+export function composerDoses(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, contenu) => {
+    const trouve = contenu.match(CONDUITE);
+    if (!trouve) return bloc;
+
+    const [, nom, dose] = trouve;
+    // Une conduite mène d'un nom à une valeur : s'il manque l'un des deux,
+    // ce n'est pas une composition mais une ligne de points.
+    if (!nom.trim() || !dose.trim()) return bloc;
+
+    return (
+      `<p${attrs} class="dose">` +
+      `<span class="dose-nom">${nom.trim()}</span>` +
+      `<span class="dose-liaison" aria-hidden="true">${POINTS}</span>` +
+      `<span class="dose-valeur">${dose.trim()}</span>` +
+      '</p>'
+    );
+  });
 }
 
 /**
@@ -71,7 +126,7 @@ export function splitDocument(html, type = 'doc') {
       libelle: titre.label,
       profondeur: titre.depth,
       canonical: titre.canonical,
-      html: contenu.trim(),
+      html: composerDoses(contenu.trim()),
       texte: detaguer(contenu),
     };
   });

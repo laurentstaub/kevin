@@ -10,7 +10,7 @@ import {
   genericGroupLabel,
 } from '../products.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
-import { getSections, raccourcis } from '../sections.js';
+import { getSections } from '../sections.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
 
@@ -109,16 +109,12 @@ export function pageRoutes(pool) {
       // Plan de la page : ce qui existe réellement pour ce produit. Les
       // rubriques des documents s'y imbriquent — le rail est le seul sommaire.
       const sections = [
-        product.cip_products?.length > 0 && { id: 'presentations', label: 'Présentations' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
-          children: documents.flatMap((doc) => {
-            const plan = raccourcis(doc);
-            return plan.length > 0
-              ? [{ id: doc.anchor, titre: 'Au comptoir', sections: plan }]
-              : [];
-          }),
+          // Le document sert désormais les rubriques du comptoir en tête : les
+          // répéter dans le rail ferait un troisième sommaire pour rien.
+          children: [],
         },
         // Après les documents : on substitue une fois qu'on sait ce qu'on
         // substitue. Le rail suit l'ordre de la page, sans quoi le sommaire

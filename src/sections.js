@@ -1,4 +1,4 @@
-import { socle, RUBRIQUES_COMPTOIR } from './rcp-plan.js';
+import { socle } from './rcp-plan.js';
 
 /**
  * Lecture des rubriques déjà découpées (schéma `docs`).
@@ -59,13 +59,17 @@ export function organiser(rubriques, etats) {
       profondeur: r.profondeur,
       canonical: r.canonical,
       html: r.html,
-      signes: texte.length,
       // « 4. Données cliniques » n'a pas de contenu propre : c'est une
       // charnière avant 4.1. Elle sépare, elle ne se déplie pas.
       charniere: texte.trim() === '',
-      // Ce qu'on vient chercher au comptoir. Rien ne s'ouvre d'office — la
-      // distinction sert à hiérarchiser le plan, pas à préjuger de la lecture.
+      // Le socle : ce qu'un RCP complet comporte toujours. Sert au contraste
+      // du libellé, pas à l'ouverture.
       essentielle: essentielles.includes(r.numero),
+      // La rubrique 4 est la partie clinique du RCP : indications, posologie,
+      // contre-indications, mises en garde, interactions, grossesse, conduite,
+      // effets indésirables, surdosage. C'est tout ce qu'on vient lire devant
+      // un patient — elle est dépliée d'office, à sa place dans le document.
+      clinique: /^4(\.|$)/.test(r.numero),
     });
   }
 
@@ -110,17 +114,4 @@ export function planDe(doc) {
     depth: r.profondeur,
     canonical: r.canonical,
   }));
-}
-
-/**
- * Raccourcis du rail.
- *
- * Le document ouvert affiche déjà son plan complet, une rubrique par ligne :
- * le répéter dans le rail ne donne rien de plus et allonge la page de trente
- * entrées. Le rail garde donc ce que le plan ne donne pas — l'accès direct aux
- * six rubriques qu'on ouvre devant un patient.
- */
-export function raccourcis(doc) {
-  if (doc.type === 'notice' || doc.type === 'main') return [];
-  return planDe(doc).filter((e) => RUBRIQUES_COMPTOIR.includes(e.number));
 }

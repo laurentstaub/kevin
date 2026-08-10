@@ -7,7 +7,7 @@
 }
 
 .recherche-tete {
-  border-bottom: 2px solid var(--rule-strong);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
   padding-bottom: var(--sp-2);
   margin-bottom: var(--sp-4);
 }

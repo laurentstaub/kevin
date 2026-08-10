@@ -4,6 +4,28 @@ block styles
   link(rel="stylesheet", href=`/css/product.css?v=${v}`)
 
 block content
+  mixin choixForme(v)
+    if v.courante
+      span.forme-choix.actif(aria-current="true")= v.variante
+    else
+      a.forme-choix(
+        href=`/product/${v.id}`
+        class=(v.commercialise === false ? 'forme-retiree' : '')
+        title=(v.commercialise === false ? 'Non commercialisé' : null)
+      )= v.variante
+
+  mixin rubrique(r, ouverte)
+    if r.charniere
+      h4.charniere(id=r.id)
+        span.num= r.numero
+        span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
+    else
+      details.rubrique(id=r.id open=ouverte class=`rub-n${r.profondeur}` class=(r.essentielle ? 'essentielle' : null))
+        summary.rubrique-tete
+          span.num= r.numero
+          span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
+        .rubrique-corps!= r.html
+
   //- Identité : dénomination + toutes les métadonnées en une seule ligne,
   //- jamais répétées plus bas. Le bandeau déborde de la colonne de contenu.
   header.identite
@@ -33,19 +55,54 @@ block content
       //- codes CIS. Le choix du dosage se fait donc ici, sur la fiche, sinon il
       //- ne se fait nulle part : on arrive sur la présentation que le
       //- regroupement a désignée, et rien ne dit que c'est celle qu'on cherche.
-      if variantes && variantes.length > 1
-        nav.formes(aria-label="Dosages et formes de ce produit")
+      //- Dosages, formes et conditionnements : un seul rang. Trois lignes
+      //- empilées pour deux dosages et deux boîtes, c'était trois lignes de
+      //- trop. Le repli ne sert qu'aux produits qui débordent vraiment — un
+      //- Doliprane a dix-sept présentations, un Seresta en a deux.
+      - var SEUIL_REPLI = 8
+      - var forme = product.forme_pharmaceutique
+      - var soeurs = variantes || []
+      - var memeForme = soeurs.filter(function (v) { return v.forme_pharmaceutique === forme })
+      - var autresFormes = soeurs.filter(function (v) { return v.forme_pharmaceutique !== forme })
+      - var replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
+      - var enTete = replier ? memeForme : soeurs
+      - var conditionnements = (product.cip_products || []).length
+
+      if soeurs.length > 1 || conditionnements > 0
+        nav.formes(aria-label="Dosages, formes et conditionnements")
           ul.formes-liste
-            each v in variantes
+            if soeurs.length > 1
+              each v in enTete
+                li
+                  +choixForme(v)
+
+              if replier
+                li
+                  details.formes-autres
+                    summary.formes-plus #{autresFormes.length} autre#{autresFormes.length > 1 ? 's' : ''} forme#{autresFormes.length > 1 ? 's' : ''}
+                    ul.formes-liste
+                      each v in autresFormes
+                        li
+                          +choixForme(v)
+
+            //- Les présentations sont les codes CIP rattachés au CIS affiché :
+            //- elles décrivent la boîte, pas le médicament. Leur place est donc
+            //- auprès du sélecteur de dosages, sur le même rang.
+            if conditionnements > 0
               li
-                if v.courante
-                  span.forme-choix.actif(aria-current="true")= v.variante
-                else
-                  a.forme-choix(
-                    href=`/product/${v.id}`
-                    class=(v.commercialise === false ? 'forme-retiree' : '')
-                    title=(v.commercialise === false ? 'Non commercialisé' : null)
-                  )= v.variante
+                details.presentations#presentations
+                  summary.presentations-tete
+                    | #{conditionnements} conditionnement#{conditionnements > 1 ? 's' : ''}
+                  table.t-presentations
+                    thead
+                      tr
+                        th(scope="col") CIP 13
+                        th(scope="col") Conditionnement
+                    tbody
+                      each cip in product.cip_products
+                        tr
+                          td.code= cip.code_cip13 || cip.code_cip7
+                          td= cip.libelle_presentation
 
   .corps
     nav.rail(aria-label="Sommaire de la fiche")
@@ -76,27 +133,10 @@ block content
 
       //- Chaque section est un bloc repliable, fermé au chargement : la fiche
       //- s'ouvre sur son plan, pas sur trois tableaux qu'il faut dépasser.
-      if product.cip_products && product.cip_products.length > 0
-        details.bloc#presentations
-          summary.bloc-tete
-            h2.section-titre Présentations
-            span.bloc-compte #{product.cip_products.length} conditionnement#{product.cip_products.length > 1 ? 's' : ''}
-          table.t-presentations
-            thead
-              tr
-                th(scope="col") CIP 13
-                th(scope="col") Conditionnement
-            tbody
-              each cip in product.cip_products
-                tr
-                  td.code= cip.code_cip13 || cip.code_cip7
-                  td= cip.libelle_presentation
-
       if hasDocuments
         details.bloc#documents(open)
           summary.bloc-tete
             h2.section-titre Documents
-            span.bloc-compte= documents.map((d) => d.label).join(' · ')
 
           //- Onglets : le RCP répond au professionnel, la notice au patient.
           //- Même page, même sommaire — on change d'interlocuteur, pas de fiche.
@@ -119,20 +159,21 @@ block content
               aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
               hidden=(documents.length > 1 && i > 0)
             )
-              .document-tete
+              //- Une seule ligne de service : la date, la provenance, le lien
+              //- officiel et la commande. Empilées, elles coûtaient trois lignes.
+              p.document-meta
                 if documents.length === 1
-                  h3.document-titre= doc.label
-                p.document-meta
-                  if doc.lastUpdated
-                    span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
-                  if doc.lastUpdated && (doc.source || doc.url)
-                    span.sep
-                  if doc.source === 'bdpm_pdf'
-                    span Texte reconstruit depuis le PDF européen
-                    if doc.url
-                      span.sep
-                  if doc.url
-                    a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
+                  span= doc.label
+                if doc.lastUpdated
+                  span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
+                if doc.source === 'bdpm_pdf'
+                  span Texte reconstruit depuis le PDF européen
+                if doc.url
+                  a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
+                if doc.rubriques && doc.rubriques.length > 0
+                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
+                if doc.manquantes && doc.manquantes.length > 0
+                  span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
 
               if doc.emprunte
                 p.emprunt
@@ -144,25 +185,13 @@ block content
                   | , dont ce produit est la copie distribuée en France.
 
               if doc.rubriques && doc.rubriques.length > 0
-                //- Le contrôle est au-dessus de ce qu'il pilote.
-                p.rubriques-controle
-                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
-                  if doc.manquantes && doc.manquantes.length > 0
-                    span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
-
                 .rubriques
+                  //- Le document garde sa numérotation : 1, 2, 3, 4, 4.1… Un
+                  //- RCP se cite par ses rubriques, et l'ordre officiel est
+                  //- celui que le lecteur connaît. Seule l'ouverture est
+                  //- dirigée — toute la rubrique 4 est dépliée, le reste attend.
                   each r in doc.rubriques
-                    if r.charniere
-                      h4.charniere(id=r.id)
-                        span.num= r.numero
-                        span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
-                    else
-                      details.rubrique(id=r.id class=`rub-n${r.profondeur}` class=(r.essentielle ? 'essentielle' : null))
-                        summary.rubrique-tete
-                          span.num= r.numero
-                          span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
-                          span.signes #{r.signes.toLocaleString('fr-FR')} signes
-                        .rubrique-corps!= r.html
+                    +rubrique(r, r.clinique === true)
 
               else if doc.html
                 .document-corps!= doc.html

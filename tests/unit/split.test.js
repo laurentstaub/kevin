@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitDocument, detaguer, PARSER_VERSION } from '../../src/split.js';
+import { splitDocument, detaguer, PARSER_VERSION, composerDoses } from '../../src/split.js';
 import { socle } from '../../src/rcp-plan.js';
 
 const rubrique = (numero, titre, ...corps) =>
@@ -116,5 +116,69 @@ describe('socle', () => {
 describe('PARSER_VERSION', () => {
   it('est un entier — il pilote le rejeu après amélioration du découpeur', () => {
     assert.ok(Number.isInteger(PARSER_VERSION) && PARSER_VERSION >= 1);
+  });
+});
+
+describe('composerDoses', () => {
+  // La BDPM compose la rubrique 2 comme un document imprimé :
+  // « Anastrozole..................... 1,00 mg ». La conduite de points a une
+  // longueur fixe, calculée pour une largeur de page ; dans un navigateur elle
+  // déborde et casse en trois lignes.
+  it('sépare le nom de la dose', () => {
+    const rendu = composerDoses('<p>Anastrozole.......................... 1,00 mg</p>');
+    assert.match(rendu, /^<p class="dose"><span class="dose-nom">Anastrozole<\/span>/);
+    assert.match(rendu, /<span class="dose-valeur">1,00 mg<\/span><\/p>$/);
+  });
+
+  // Le HTML de la BDPM est indenté : la dose se trouve sur la ligne suivante.
+  it('reconnaît une conduite coupée par un retour à la ligne', () => {
+    const indente = '<p>\n  Anastrozole..........................\n  1,00 mg\n</p>';
+    assert.match(composerDoses(indente), /dose-valeur">1,00 mg</);
+  });
+
+  it('pose de vrais points, coupés par le conteneur', () => {
+    const rendu = composerDoses('<p>Oxazépam..... 10 mg</p>');
+    const conduite = rendu.match(/dose-liaison"[^>]*>(\.+)<\/span>/);
+    assert.ok(conduite, 'la conduite est posée');
+    assert.ok(conduite[1].length > 100, 'assez longue pour la plus large des mesures');
+    assert.match(rendu, /aria-hidden="true"/, 'muette pour un lecteur d’écran');
+  });
+
+  it('accepte les points de suspension', () => {
+    assert.match(composerDoses('<p>Oxazépam……………… 10 mg</p>'), /dose-valeur">10 mg</);
+  });
+
+  it('garde ce qui suit la dose', () => {
+    assert.match(
+      composerDoses('<p>Amoxicilline............ 500 mg (sous forme de trihydrate)</p>'),
+      /dose-valeur">500 mg \(sous forme de trihydrate\)</,
+    );
+  });
+
+  it('conserve le balisage du nom', () => {
+    assert.match(
+      composerDoses('<p><a>Chlorhydrate de métformine</a>....... 500 mg</p>'),
+      /dose-nom"><a>Chlorhydrate de métformine<\/a><\/span>/,
+    );
+  });
+
+  it('ne touche pas à un paragraphe fait de points seuls', () => {
+    const points = '<p>..............</p>';
+    assert.equal(composerDoses(points), points);
+  });
+
+  it('ne coupe pas une phrase sur des points de suspension', () => {
+    const phrase = '<p>Suite... du texte normal</p>';
+    assert.equal(composerDoses(phrase), phrase);
+  });
+
+  it('laisse intacte une phrase qui se termine par un point', () => {
+    const phrase = '<p>Pour la liste complète des excipients, voir rubrique 6.1.</p>';
+    assert.equal(composerDoses(phrase), phrase);
+  });
+
+  it('supporte le vide', () => {
+    assert.equal(composerDoses(''), '');
+    assert.equal(composerDoses(null), '');
   });
 });

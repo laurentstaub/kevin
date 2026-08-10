@@ -5,31 +5,79 @@
  */
 
 .identite {
-  border-bottom: 2px solid var(--rule-strong);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
 
+/* Le retour partage la ligne du titre : seul sur la sienne, il coûtait une
+   ligne entière pour deux mots. Il est à droite plutôt qu'à gauche, sinon il
+   décalerait le titre et romprait l'aplomb avec la colonne de contenu. */
 .identite-inner {
   max-width: 64rem;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: var(--sp-3);
 }
 
 .retour {
-  display: inline-block;
+  grid-column: 2;
+  grid-row: 1;
   font-size: var(--fs-xs);
   color: var(--muted);
   text-decoration: none;
-  margin-bottom: var(--sp-2);
+  white-space: nowrap;
 }
 
 .retour:hover {
   color: var(--accent);
 }
 
+/* Tout le reste occupe la colonne du titre. */
+.produit-titre,
+.identite .page-meta,
+.formes {
+  grid-column: 1;
+}
+
+/* Une dénomination fait couramment soixante signes — « DOLIPRANE 300 mg,
+   poudre pour solution buvable en sachet-dose ». Au corps de titre le plus
+   grand elle en occupe trois lignes ; d'un cran en dessous elle tient sur une.
+   Les dénominations très longues passeront à deux, ce qui reste lisible :
+   tronquer un nom de médicament, non. */
 .produit-titre {
-  font-size: var(--fs-xl);
+  grid-column: 1;
+  grid-row: 1;
+  font-size: var(--fs-lg);
   letter-spacing: -0.01em;
-  max-width: 24ch;
+  text-wrap: balance;
+}
+
+/* Présentations : les codes CIP du dosage affiché. Une ligne dans le bandeau
+   d'identité, dépliable — c'est un détail de conditionnement, pas une section
+   de la fiche. */
+.presentations {
+  max-width: var(--measure);
+}
+
+.presentations-tete {
+  display: inline-block;
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.presentations-tete::-webkit-details-marker {
+  display: none;
+}
+
+.presentations .t-presentations {
+  margin-bottom: var(--sp-1);
 }
 
 /* ---------- Dosages et formes ---------- */
@@ -38,7 +86,8 @@
    et du blanc, comme partout ailleurs : ce sont des liens alignés, pas des
    boutons. Le dosage courant est plein, les autres sont cliquables. */
 .formes {
-  margin-top: var(--sp-3);
+  grid-column: 1;
+  margin-top: var(--sp-2);
 }
 
 .formes-liste {
@@ -47,7 +96,15 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+/* Un dépliant ouvert prend le rang entier : la table des conditionnements n'a
+   rien à faire coincée entre deux puces de dosage. */
+.formes-liste > li:has(> details[open]) {
+  flex: 1 0 100%;
+  margin-top: var(--sp-1);
 }
 
 .forme-choix {
@@ -65,11 +122,16 @@ a.forme-choix:hover {
   color: var(--ink);
 }
 
+/* Le dosage affiché. Il portait `color: var(--paper)` — un token qui n'existe
+   pas : la déclaration était écartée, la précédente (`var(--ink)`) tenait, et
+   il ne restait qu'un rectangle noir sur fond noir. Le fond est nommé `--bg`.
+   L'aplat se fait en accent plutôt qu'en encre : il faut que la présentation
+   courante saute aux yeux parmi dix-sept, sans ajouter un carré noir de plus à
+   une page qu'on vient d'alléger. */
 .forme-choix.actif {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
 }
 
 /* Encore autorisé, plus distribué : lisible, mais en retrait. */
@@ -229,7 +291,7 @@ a.forme-choix:hover {
   gap: var(--sp-2);
   cursor: pointer;
   list-style: none;
-  border-bottom: 2px solid var(--rule-strong);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
 .bloc-tete::-webkit-details-marker {
@@ -243,7 +305,7 @@ a.forme-choix:hover {
 
 /* Le titre porte son filet quand il n'est pas dans un bloc repliable. */
 .contenu > section > .section-titre {
-  border-bottom: 2px solid var(--rule-strong);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
 /* Ce que le bloc contient, lisible fermé : sans ce compte, replier revient à
@@ -330,10 +392,22 @@ td.forme {
 }
 
 .document-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
   font-size: var(--fs-xs);
   color: var(--muted);
-  margin: 0;
+  margin: var(--sp-2) 0 0;
   max-width: none;
+}
+
+/* Les filets viennent du CSS : le gabarit n'a pas à savoir quel élément est
+   présent pour décider où poser une barre. */
+.document-meta > * + *::before {
+  content: '|';
+  color: var(--rule);
+  margin-right: 0.6em;
 }
 
 /* ---------- Découpe des titres : numéro / libellé ---------- */
@@ -369,6 +443,22 @@ td.forme {
 .emprunt strong {
   color: var(--ink);
   font-weight: 600;
+}
+
+/* Autres formes galéniques : le même repli, en plus discret. */
+.formes-plus {
+  display: inline-block;
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.formes-plus::-webkit-details-marker {
+  display: none;
 }
 
 /* ---------- Onglets RCP / Notice ---------- */
@@ -446,15 +536,19 @@ td.forme {
 
 .rubrique-tete {
   display: grid;
-  grid-template-columns: 2.4rem 1fr auto;
+  grid-template-columns: 2.4rem 1fr;
   gap: 0.5rem;
   align-items: baseline;
-  padding: var(--sp-1) 0;
+  padding: 0.35rem 0;
   font-size: var(--fs-sm);
   font-weight: 600;
   cursor: pointer;
   list-style: none;
   scroll-margin-top: var(--sp-3);
+}
+
+.rubrique[open] > .rubrique-tete {
+  padding-bottom: var(--sp-1);
 }
 
 .rubrique-tete::-webkit-details-marker {
@@ -495,16 +589,19 @@ td.forme {
   font-weight: 400;
 }
 
+/* Le blanc entre deux rubriques repliées est du blanc perdu : une rubrique
+   fermée n'est qu'un titre, et vingt-huit titres espacés d'un interligne et
+   demi font une page de titres. Un filet sépare déjà — il n'a pas besoin
+   d'être escorté. */
 .rubrique.rub-n1 {
-  border-top: 2px solid var(--rule-strong);
-  margin-top: var(--sp-3);
+  border-top: var(--rule-width) solid var(--rule-medium);
+  margin-top: var(--sp-1);
 }
 
-.signes {
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
+/* Une rubrique ouverte reprend de l'air : c'est là qu'on lit. */
+.rubrique[open] {
+  margin-top: var(--sp-3);
+  padding-bottom: var(--sp-2);
 }
 
 /* Titre sans contenu propre — « 4. Données cliniques » avant « 4.1 ». */
@@ -518,7 +615,7 @@ td.forme {
   font-weight: 400;
   margin: var(--sp-4) 0 0;
   padding-top: var(--sp-1);
-  border-top: 2px solid var(--rule-strong);
+  border-top: var(--rule-width) solid var(--rule-medium);
   scroll-margin-top: var(--sp-3);
 }
 
@@ -538,13 +635,48 @@ td.forme {
   font-size: 1.0625rem;
   line-height: 1.6;
   max-width: 66ch;
-  padding: var(--sp-1) 0 var(--sp-3) 2.9rem;
+  padding: var(--sp-1) 0 0 2.9rem;
   hyphens: none;
   text-wrap: pretty;
 }
 
 .rubrique-corps > :first-child {
   margin-top: 0;
+}
+
+/* Le dernier paragraphe ne pousse pas : le blanc de fin appartient à la
+   rubrique, pas au texte. Trois épaisseurs se cumulaient ici. */
+.rubrique-corps > :last-child {
+  margin-bottom: 0;
+}
+
+/* Composition : nom à gauche, dose à droite, filet entre les deux. Le filet
+   prend la place qui reste — c'est ce que la conduite de points du document
+   imprimé faisait, avec une longueur fixe qui ne survit pas au navigateur. */
+.rubrique-corps .dose,
+.document-corps .dose {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  margin: 0 0 0.75em;
+}
+
+/* La conduite est une chaîne de points volontairement trop longue, coupée à la
+   largeur restante par le conteneur. Le moteur de rendu refait la coupe à
+   chaque redimensionnement — aucune mesure à faire en JavaScript. */
+.dose-liaison {
+  flex: 1 1 auto;
+  min-width: 2em;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--faint);
+  user-select: none;
+}
+
+.dose-valeur {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Un interligne complet entre deux paragraphes fait des trous ; trois quarts
@@ -590,10 +722,6 @@ td.forme {
     grid-template-columns: 2rem 1fr;
   }
 
-  .signes {
-    display: none;
-  }
-
   .rubrique-corps {
     padding-left: 0;
   }
@@ -631,7 +759,7 @@ td.forme {
   font-size: var(--fs-base);
   margin-top: var(--sp-6);
   padding-top: var(--sp-2);
-  border-top: 2px solid var(--rule-strong);
+  border-top: var(--rule-width) solid var(--rule-medium);
 }
 
 .document-corps .doc-heading .num {
@@ -687,6 +815,7 @@ td.forme {
   }
 
   .produit-titre {
+  text-wrap: balance;
     font-size: var(--fs-lg);
     max-width: none;
   }

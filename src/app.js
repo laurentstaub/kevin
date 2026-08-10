@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
-import { ROOT } from './config.js';
+import { ROOT, config } from './config.js';
 import { securityHeaders, cors, notFound, errorHandler } from './middleware.js';
 import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
@@ -45,8 +45,30 @@ export function createApp(pool) {
   app.use(cors);
   app.use(express.json({ limit: '64kb' }));
   const publics = path.join(ROOT, 'public');
-  app.locals.v = empreinteAssets(publics);
-  app.use(express.static(publics, { maxAge: '1h' }));
+  const production = config.env === 'production';
+
+  if (production) {
+    app.locals.v = empreinteAssets(publics);
+  } else {
+    // En développement, l'empreinte se recalcule à chaque rendu.
+    //
+    // Calculée une seule fois au démarrage, elle ne bougeait pas quand on
+    // modifiait une feuille pendant que le serveur tournait : l'URL restait la
+    // même, le navigateur gardait sa copie une heure, et la correction semblait
+    // sans effet — on la refaisait, on la cherchait ailleurs, alors qu'elle
+    // était déjà en place. C'est précisément ce que l'empreinte devait éviter.
+    //
+    // Le parcours ne coûte rien : une dizaine de fichiers. Et `node --watch` ne
+    // redémarre pas sur du CSS, qui n'est jamais importé par le serveur.
+    app.use((req, res, next) => {
+      res.locals.v = empreinteAssets(publics);
+      next();
+    });
+  }
+
+  // Pas de cache en développement : l'empreinte suffit en production, mais elle
+  // ne protège de rien si le navigateur ne revient pas demander le fichier.
+  app.use(express.static(publics, { maxAge: production ? '1h' : 0 }));
 
   app.use('/api', apiRoutes(pool));
   app.use('/', pageRoutes(pool));

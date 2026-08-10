@@ -71,13 +71,6 @@ export const RUBRIQUES_SOCLE = [
 ];
 
 /**
- * Ce qu'on vient chercher devant un patient. Sous-ensemble du socle : la
- * dénomination, la composition et les excipients servent au contrôle qualité
- * du découpage, pas à répondre à une question posée au comptoir.
- */
-export const RUBRIQUES_COMPTOIR = ['4.1', '4.2', '4.3', '4.4', '4.5', '4.8'];
-
-/**
  * La notice suit un plan différent — six rubriques, dont les libellés
  * contiennent le nom du produit et ne peuvent donc pas être normalisés.
  * Seule la numérotation fait foi.
