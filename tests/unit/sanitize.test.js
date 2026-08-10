@@ -88,3 +88,27 @@ describe('safeDocumentUrl', () => {
     assert.equal(safeDocumentUrl('pas une url'), null);
   });
 });
+
+describe('ancres sans href', () => {
+  // Le document source balise ses rubriques avec des « <a name="…"> ». Le nom
+  // n'étant pas dans la liste blanche, il ne reste qu'une coquille : peinte
+  // comme un lien, et assez encombrante pour empêcher de découper la ligne
+  // qu'elle enveloppe.
+  it('déballe l’ancre et garde son texte', () => {
+    assert.equal(
+      sanitizeDocument('<p><a name="RcpCompo">Sulfate de morphine</a></p>'),
+      '<p>Sulfate de morphine</p>',
+    );
+  });
+
+  it('laisse intact un vrai lien', () => {
+    const rendu = sanitizeDocument('<p><a href="https://ansm.fr">Voir</a></p>');
+    assert.match(rendu, /href="https:\/\/ansm\.fr"/);
+    assert.match(rendu, />Voir<\/a>/);
+  });
+
+  it('n’avale pas ce qui suit l’ancre', () => {
+    const rendu = sanitizeDocument('<p><a name="x">Nom</a> puis <a href="https://a.fr">lien</a></p>');
+    assert.match(rendu, /^<p>Nom puis <a href/);
+  });
+});

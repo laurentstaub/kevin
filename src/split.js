@@ -19,7 +19,7 @@ import { socle } from './rcp-plan.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 5;
+export const PARSER_VERSION = 6;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -55,16 +55,8 @@ export function detaguer(html) {
  * largeur.
  */
 const PARAGRAPHE = /<p([^>]*)>([\s\S]*?)<\/p>/gi;
-// Le nom s'arrête au dernier signe qui n'est ni un point ni une espace, et la
-// dose commence au premier : sans quoi un paragraphe fait de points seuls se
-// couperait en « . » et « . » de part et d'autre de la conduite.
-//
-// Les blancs autour des points englobent les retours à la ligne : le HTML de
-// la BDPM est indenté, la dose se trouve donc sur la ligne suivante.
-const HORS_CONDUITE = '[^\\s.\\u00b7\\u2026]';
-const CONDUITE = new RegExp(
-  `^([\\s\\S]*?${HORS_CONDUITE})\\s*[.\\u00b7\\u2026]{4,}\\s*(${HORS_CONDUITE}[\\s\\S]*?)$`,
-);
+const LEADER = '[.\\u00b7\\u2026]';
+const CONDUITE = new RegExp(`${LEADER}{4,}`, 'g');
 
 // Une conduite assez longue pour la plus large des mesures ; le conteneur la
 // coupe à la largeur exacte. Ce sont de vrais points, dans la police du texte,
@@ -72,15 +64,67 @@ const CONDUITE = new RegExp(
 // document, pas son imitation.
 const POINTS = '.'.repeat(160);
 
+// Balises sans contenu : elles n'ouvrent rien, donc elles ne comptent pas.
+const VIDES = new Set(['br', 'hr', 'img', 'wbr']);
+const BALISE = /<(\/?)([a-z][a-z0-9]*)\b[^>]*?(\/?)>/gi;
+
+/**
+ * Portions de texte situées hors de toute balise.
+ *
+ * On ne coupe qu'à la profondeur zéro. Le document de l'ANSM enveloppe parfois
+ * la ligne entière — nom, points et dose — dans un seul élément ; y trancher
+ * laissait une balise ouverte d'un côté et une fermante de l'autre. Le
+ * navigateur répare comme il l'entend, en clonant l'ouvrante, et les trois
+ * cases se retrouvent chacune dans un élément intercalé qui n'a aucune de nos
+ * règles : le nom s'écrase, le filet déborde. Mieux vaut renoncer à la
+ * conduite que rendre un document déchiré.
+ *
+ * @returns {[number, number][]} intervalles [début, fin) hors balise
+ */
+function horsBalise(contenu) {
+  const segments = [];
+  let depuis = 0;
+  let profondeur = 0;
+
+  BALISE.lastIndex = 0;
+  let m;
+  while ((m = BALISE.exec(contenu))) {
+    if (profondeur === 0 && m.index > depuis) segments.push([depuis, m.index]);
+    const autonome = m[3] === '/' || VIDES.has(m[2].toLowerCase());
+    if (!autonome) profondeur = Math.max(0, profondeur + (m[1] === '/' ? -1 : 1));
+    depuis = BALISE.lastIndex;
+  }
+  if (profondeur === 0 && depuis < contenu.length) segments.push([depuis, contenu.length]);
+
+  return segments;
+}
+
+/**
+ * Où couper : la première conduite qui laisse un nom et une dose.
+ *
+ * Un paragraphe fait de points seuls n'est pas une composition, et une ligne
+ * qui se termine par des points non plus — d'où l'exigence des deux côtés.
+ */
+function coupure(contenu) {
+  for (const [debut, fin] of horsBalise(contenu)) {
+    const segment = contenu.slice(debut, fin);
+    CONDUITE.lastIndex = 0;
+    let m;
+    while ((m = CONDUITE.exec(segment))) {
+      const nom = contenu.slice(0, debut + m.index);
+      const dose = contenu.slice(debut + m.index + m[0].length);
+      if (detaguer(nom).trim() && detaguer(dose).trim()) return [nom, dose];
+    }
+  }
+  return null;
+}
+
 export function composerDoses(html) {
   return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, contenu) => {
-    const trouve = contenu.match(CONDUITE);
+    const trouve = coupure(contenu);
     if (!trouve) return bloc;
 
-    const [, nom, dose] = trouve;
-    // Une conduite mène d'un nom à une valeur : s'il manque l'un des deux,
-    // ce n'est pas une composition mais une ligne de points.
-    if (!nom.trim() || !dose.trim()) return bloc;
+    const [nom, dose] = trouve;
 
     return (
       `<p${attrs} class="dose">` +

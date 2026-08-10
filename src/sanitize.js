@@ -31,9 +31,21 @@ const OPTIONS = {
   nonTextTags: ['script', 'style', 'textarea', 'noscript', 'iframe', 'object', 'embed', 'title'],
 };
 
+/**
+ * Ancres sans href.
+ *
+ * Le document source balise ses rubriques avec des « <a name="…"> », et
+ * l'ancre enveloppe parfois le texte entier de la ligne. « name » n'étant pas
+ * dans la liste blanche, il n'en reste qu'une coquille : un élément qui n'est
+ * pas un lien, mais que la feuille de style peint comme tel, et qui interdit
+ * de découper la ligne qu'il enveloppe. On garde le texte, on jette la
+ * coquille. Les ancres ne s'imbriquent pas : une paire suffit à les décrire.
+ */
+const ANCRE_SANS_LIEN = /<a\b(?![^>]*\shref=)[^>]*>([\s\S]*?)<\/a>/gi;
+
 export function sanitizeDocument(html) {
   if (!html) return '';
-  return sanitizeHtml(String(html), OPTIONS);
+  return sanitizeHtml(String(html), OPTIONS).replace(ANCRE_SANS_LIEN, '$1');
 }
 
 /**

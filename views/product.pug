@@ -131,6 +131,51 @@ block content
 
     main.contenu
 
+      //- Délivrance.
+      //-
+      //- Le RCP répond à « que fait ce médicament ». Au comptoir, la question
+      //- qui vient d'abord est l'autre : « puis-je le délivrer, et à quelles
+      //- conditions ». Elle se règle en une ligne, lisible bloc fermé — liste,
+      //- support d'ordonnance, durée maximale, fractionnement. Tout vient de
+      //- `cis_cpd_bdpm`, donnée publique. Meddispar, édité par l'Ordre, rédige
+      //- la conduite à tenir : il n'est pas ouvert, on y renvoie sans le copier.
+      - var nbConditions = delivrance.groupes.reduce(function (n, g) { return n + g.conditions.length }, 0)
+      details.bloc#delivrance
+        summary.bloc-tete
+          h2.section-titre Délivrance
+          if delivrance.resume.length > 0
+            //- Mentions plutôt que phrase : « Stupéfiant · Ordo sécurisée ·
+            //- 4 sem. max » se saisit d'un regard, la phrase entière prenait
+            //- deux lignes dans l'en-tête. Le libellé exact de la BDPM reste
+            //- en infobulle et, mot pour mot, dans le corps du bloc.
+            span.mentions
+              each m in delivrance.resume
+                span.mention(
+                  class=(m.cle === 'classement' ? 'mention-classement' : null)
+                  title=(m.long !== m.court ? m.long : null)
+                )= m.court
+          else if nbConditions > 0
+            span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
+          else
+            span.bloc-compte Aucune condition enregistrée
+
+        if nbConditions > 0
+          dl.axes
+            each g in delivrance.groupes
+              dt.axe-titre= g.titre
+              dd.axe-valeur
+                each c in g.conditions
+                  p= c
+
+          if delivrance.liens.length > 0
+            p.section-meta Conduite à tenir détaillée sur Meddispar, édité par l'Ordre national des pharmaciens :
+            ul.liens
+              each lien in delivrance.liens
+                li
+                  a(href=lien.url target="_blank" rel="noopener noreferrer")= lien.label
+        else
+          p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
+
       //- Chaque section est un bloc repliable, fermé au chargement : la fiche
       //- s'ouvre sur son plan, pas sur trois tableaux qu'il faut dépasser.
       if hasDocuments

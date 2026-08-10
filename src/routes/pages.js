@@ -11,6 +11,7 @@ import {
 } from '../products.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
+import { getDelivrance } from '../delivrance.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
 
@@ -52,7 +53,7 @@ export function pageRoutes(pool) {
       const product = await getProduct(pool, cis);
       if (!product) return next();
 
-      const [substitutions, variantes, bruts, decoupe] = await Promise.all([
+      const [substitutions, variantes, bruts, decoupe, delivrance] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
           // Le sélecteur de dosage est un confort : son absence ne doit pas
@@ -69,6 +70,12 @@ export function pageRoutes(pool) {
           // Découpage indisponible : la fiche retombe sur le texte d'un bloc.
           console.error('[rubriques] indisponibles pour', cis, err.message);
           return new Map();
+        }),
+        getDelivrance(pool, cis).catch((err) => {
+          // Une condition de délivrance absente vaut mieux qu'une condition
+          // inventée : on rend un classement vide, le bloc le dira.
+          console.error('[délivrance] indisponible pour', cis, err.message);
+          return { resume: [], groupes: [], liens: [] };
         }),
       ]);
 
@@ -109,6 +116,9 @@ export function pageRoutes(pool) {
       // Plan de la page : ce qui existe réellement pour ce produit. Les
       // rubriques des documents s'y imbriquent — le rail est le seul sommaire.
       const sections = [
+        // Avant les documents : « puis-je le délivrer » se règle en une ligne,
+        // « que fait ce médicament » demande d'ouvrir un RCP.
+        { id: 'delivrance', label: 'Délivrance' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
@@ -132,6 +142,7 @@ export function pageRoutes(pool) {
         genericGroup: genericGroupLabel(substitutions),
         documents,
         hasDocuments,
+        delivrance,
         links: productLinks(product),
         sections,
       });

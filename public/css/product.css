@@ -663,9 +663,14 @@ td.forme {
 
 /* La conduite est une chaîne de points volontairement trop longue, coupée à la
    largeur restante par le conteneur. Le moteur de rendu refait la coupe à
-   chaque redimensionnement — aucune mesure à faire en JavaScript. */
+   chaque redimensionnement — aucune mesure à faire en JavaScript.
+ *
+ * La base est à zéro, pas à « auto » : avec « auto », les cent soixante points
+ * comptent dans la largeur demandée par la ligne, le navigateur répartit le
+ * manque entre les trois cases et écrase le nom pour un filet qui déborde
+ * quand même. À zéro, la conduite ne réclame rien et se contente du reste. */
 .dose-liaison {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 2em;
   overflow: hidden;
   white-space: nowrap;
@@ -861,5 +866,87 @@ td.forme {
   .t-substitution td:nth-child(2),
   .t-substitution thead th:nth-child(2) {
     display: none;
+  }
+}
+
+/* ---------- Délivrance ---------- */
+
+/* Le résumé est la réponse, pas un compte : il se lit bloc fermé. Écrit en
+   toutes lettres il occupait deux lignes et écrasait l'en-tête ; abrégé en
+   mentions, il tient sur une. Mêmes filets que les dosages du bandeau — ce
+   sont des étiquettes, pas des boutons, et surtout pas des alertes : un
+   stupéfiant n'est pas une erreur, c'est un cadre de délivrance. */
+.mentions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--sp-1);
+}
+
+.mention {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  border: var(--rule-width) solid var(--rule);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Le classement commande tout le reste — support d'ordonnance, durée,
+   registre. Un filet noir suffit à le détacher : ni couleur, ni fond. */
+.mention-classement {
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+
+/* Une condition réglementaire se lit par axe : le libellé de la BDPM est
+   long, l'axe qui le range est court. Deux colonnes, pas de fond, pas de
+   pastille — c'est du texte de loi, pas un indicateur. */
+.axes {
+  display: grid;
+  grid-template-columns: minmax(5rem, 9rem) 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  max-width: var(--measure);
+}
+
+.axe-titre {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.axe-valeur {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.axe-valeur p {
+  margin: 0;
+  max-width: none;
+}
+
+.axe-valeur p + p {
+  margin-top: 0.15em;
+}
+
+#delivrance .liens {
+  margin-top: var(--sp-1);
+}
+
+@media (max-width: 40rem) {
+  .mentions {
+    justify-content: flex-start;
+  }
+
+  .axes {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .axe-titre {
+    margin-top: var(--sp-2);
   }
 }

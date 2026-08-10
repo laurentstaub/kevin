@@ -162,6 +162,38 @@ describe('composerDoses', () => {
     );
   });
 
+  // Le document de l'ANSM enveloppe parfois la ligne entière — nom, points et
+  // dose — dans un seul élément. Couper au milieu laissait une balise ouverte
+  // d'un côté et une fermante de l'autre ; le navigateur réparait en clonant
+  // l'ouvrante, et les trois cases se retrouvaient chacune dans un élément
+  // intercalé, hors de portée de la feuille de style. Le nom s'écrasait sur
+  // trois lignes, le filet débordait de la page.
+  it('renonce plutôt que de couper à l’intérieur d’une balise', () => {
+    const enveloppe = '<p><a name="x">Sulfate de morphine ........... 5 mg</a></p>';
+    assert.equal(composerDoses(enveloppe), enveloppe);
+  });
+
+  it('coupe quand même si la conduite est hors de la balise', () => {
+    const rendu = composerDoses('<p><em>Sulfate de morphine</em> ........... 5 mg</p>');
+    assert.match(rendu, /dose-nom"><em>Sulfate de morphine<\/em><\/span>/);
+    assert.match(rendu, /dose-valeur">5 mg</);
+  });
+
+  it('ne rend jamais de balisage déséquilibré', () => {
+    for (const cas of [
+      '<p><a name="x">Sulfate de morphine ........... 5 mg</a></p>',
+      '<p><em>Sulfate</em> ........... <strong>5 mg</strong></p>',
+      '<p>Sulfate <em>de morphine ...........</em> 5 mg</p>',
+    ]) {
+      const rendu = composerDoses(cas);
+      for (const balise of ['a', 'em', 'strong', 'span', 'p']) {
+        const ouvre = (rendu.match(new RegExp(`<${balise}\\b`, 'g')) || []).length;
+        const ferme = (rendu.match(new RegExp(`</${balise}>`, 'g')) || []).length;
+        assert.equal(ouvre, ferme, `${balise} dans ${cas}`);
+      }
+    }
+  });
+
   it('ne touche pas à un paragraphe fait de points seuls', () => {
     const points = '<p>..............</p>';
     assert.equal(composerDoses(points), points);
