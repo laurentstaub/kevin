@@ -1,9 +1,50 @@
-/* Page de recherche et éléments communs. Tokens dans tokens.css. */
+/* Page de recherche et éléments communs. Tokens dans tokens.css, règles dans
+   DESIGN.md. */
 
+/* ---------- Bandeau d'accueil ---------- */
+
+/* Le vert profond d'antheosdata, employé une fois et à un seul endroit : la
+   page où l'on n'a rien à lire. Sur la fiche produit il serait une faute — on
+   n'impose pas un aplat sombre à quelqu'un qui traverse quarante mille signes. */
+.accueil {
+  background: var(--bg-fonce);
+  padding: var(--sp-8) var(--sp-3) var(--sp-6);
+}
+
+.accueil-inner {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.accueil .titre-site {
+  color: #fff;
+}
+
+.accueil-champ {
+  font-size: var(--fs-sm);
+  color: var(--accent-soft);
+  margin: var(--sp-1) 0 var(--sp-4);
+  max-width: var(--measure);
+}
+
+/* Le champ posé sur l'aplat n'a pas besoin de contour : le fond blanc suffit
+   à le détacher, et un filet de plus ferait un cadre dans un cadre. */
+.accueil .input-wrapper {
+  border-color: transparent;
+  background: var(--bg);
+}
+
+/* Le titre et le champ ayant migré dans le bandeau, la colonne n'a plus à
+   ménager la place d'un en-tête : elle reprend juste sous l'aplat. */
 .recherche {
   max-width: 46rem;
   margin: 0 auto;
-  padding: var(--sp-8) var(--sp-3) var(--sp-8);
+  padding: var(--sp-4) var(--sp-3) var(--sp-8);
+}
+
+.recherche > .classes:first-child,
+.recherche > #results:first-child {
+  margin-top: 0;
 }
 
 .recherche-tete {
@@ -23,10 +64,14 @@
   position: relative;
 }
 
+/* Le rayon est porté par l'enveloppe et non par ses pièces : `overflow` taille
+   le bouton au même arrondi, sans qu'il ait à le connaître. */
 .input-wrapper {
   display: flex;
   align-items: stretch;
   border: var(--rule-width) solid var(--ink);
+  border-radius: var(--radius-control);
+  overflow: hidden;
 }
 
 .search-input {
@@ -51,34 +96,120 @@
   outline-offset: 1px;
 }
 
+/* La seule action franche de la page, et donc le seul aplat vif du site. Le
+   vert clair ne porte jamais de texte ailleurs : à 1,66 de contraste sur blanc
+   il serait illisible. Ici il est un fond, et l'encre qui s'y pose est celle
+   du site — 9,09, largement au-dessus du seuil. */
 .search-button {
   border: none;
-  border-left: var(--rule-width) solid var(--rule);
-  background: transparent;
+  border-radius: 0;
+  background: var(--accent-vif);
   padding: 0 var(--sp-3);
   font-family: inherit;
   font-size: var(--fs-sm);
-  color: var(--accent);
+  color: var(--ink);
   cursor: pointer;
 }
 
 .search-button:hover {
-  background: var(--bg-alt);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Version d'en-tête : le même champ, posé dans une ligne de navigation.
+   Il doit se remarquer sans peser — c'est un outil disponible, pas l'objet de
+   la page, contrairement à l'accueil où il est le seul contenu. */
+.search-compacte {
+  flex: 1 1 16rem;
+  max-width: 26rem;
+}
+
+/* Posé sur le bandeau teinté, le champ doit rester blanc : transparent, il
+   prenait la couleur du bandeau et cessait de se lire comme une saisie. */
+.search-compacte .input-wrapper {
+  border-color: var(--rule-medium);
+  background: var(--bg);
+}
+
+.search-compacte .input-wrapper:focus-within {
+  border-color: var(--ink);
+}
+
+.search-compacte .search-input {
+  padding: 0.15em 0.5em;
+  font-size: var(--fs-xs);
+}
+
+.search-compacte .search-button {
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+}
+
+/* Le compte rendu d'attente n'a pas sa place dans une ligne de navigation :
+   il y pousserait tout le reste à chaque frappe. */
+.search-compacte .loading {
+  display: none !important;
+}
+
+/* ---------- Ligne de situation ---------- */
+
+/* D'où l'on vient, de quoi chercher, où l'on se trouve : les trois repères de
+   navigation tiennent une ligne, au-dessus du contenu de la page.
+
+   Elle règle ici et non dans product.css, que seule la fiche charge. Les pages
+   de classe reprenaient le balisage sans la mise en forme, et « Accueil » se
+   retrouvait empilé au-dessus du champ de recherche.
+
+   D'un seul tenant à gauche : aux deux extrémités de la ligne, ces repères se
+   lisaient comme des éléments sans rapport, et l'œil devait traverser le vide
+   pour relier l'un à l'autre.
+
+   Ce sont des repères de navigation, non de l'identité du produit — celle-ci
+   commence au titre. Les tenir sur leur propre ligne évite deux défauts qu'on a
+   eus tour à tour : le retour seul sur sa ligne coûtait une ligne entière pour
+   deux mots, et le fil ATC glissé entre l'identité et les dosages coupait le
+   bandeau en son milieu. */
+.identite-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) 0.4em;
+  padding-bottom: var(--sp-2);
+}
+
+/* Le trait qui sépare la provenance de la classification. */
+.tete-sep {
+  color: var(--faint);
+  font-size: var(--fs-xs);
+}
+
+.retour {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.retour:hover {
+  color: var(--accent);
 }
 
 /* ---------- Suggestions ---------- */
 
+/* Objet posé sur la page, donc arrondi et porté par une ombre courte — c'est
+   le seul endroit du site où une surface flotte au-dessus d'une autre. */
 .suggestions {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 10;
   background: var(--bg);
-  border: var(--rule-width) solid var(--ink);
-  border-top: none;
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-surface);
+  box-shadow: 0 6px 20px rgb(18 59 34 / 12%);
   max-height: 22rem;
-  overflow-y: auto;
+  overflow: hidden auto;
 }
 
 .suggestions[hidden] {
@@ -346,6 +477,10 @@
 }
 
 @media (max-width: 40rem) {
+  .accueil {
+    padding: var(--sp-4) var(--sp-2) var(--sp-4);
+  }
+
   .recherche {
     padding: var(--sp-4) var(--sp-2) var(--sp-6);
   }
@@ -367,7 +502,8 @@
   display: inline-block;
   margin-left: var(--sp-1);
   padding: 0 0.35em;
-  border: var(--rule-width) solid var(--rule-strong);
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
   font-family: var(--font-body);
   font-size: var(--fs-xs);
   font-weight: 400;

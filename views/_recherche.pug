@@ -1,0 +1,33 @@
+//- Champ de recherche, partagé par l'accueil, la fiche produit et les classes.
+//-
+//- La fiche n'offrait qu'un lien vers l'accueil : chercher un autre médicament
+//- imposait un aller-retour, alors qu'au comptoir on enchaîne les recherches.
+//-
+//- Un seul balisage pour les trois pages, parce que `public/js/search.js`
+//- s'accroche à ces classes et à ces identifiants — deux copies divergeraient,
+//- et l'autocomplétion cesserait de fonctionner d'un côté sans qu'on le voie.
+//-
+//- @param {string} valeur   ce que porte le champ au chargement
+//- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
+mixin champRecherche(valeur, compact)
+  .search-wrapper(class=compact ? 'search-compacte' : null)
+    form.search-form(method="GET" action="/search" role="search")
+      .input-wrapper
+        input.search-input(
+          type="search"
+          name="q"
+          placeholder=compact ? 'Rechercher…' : 'Dénomination ou principe actif'
+          value=valeur
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Rechercher un médicament"
+          aria-autocomplete="list"
+          aria-controls="suggestions"
+        )
+        button.search-button(type="submit")= compact ? '→' : 'Chercher'
+
+    #suggestions.suggestions(role="listbox" hidden)
+      .suggestions-list
+
+    #loading.loading(role="status" aria-live="polite") Recherche…

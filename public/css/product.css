@@ -4,42 +4,18 @@
  * aucun encadré — les filets et le blanc portent la hiérarchie.
  */
 
+/* Le bandeau prend la teinte claire de la famille : il se détache de la
+   surface de lecture sans qu'on ait à l'encadrer, et rappelle l'aplat de
+   l'accueil à une valeur qui ne gêne pas la lecture qui suit. */
 .identite {
-  border-bottom: var(--rule-width) solid var(--rule-medium);
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
 
 .identite-inner {
   max-width: 64rem;
   margin: 0 auto;
-}
-
-/* Ligne de situation, au-dessus de tout le reste : d'où l'on vient à gauche,
-   où l'on se trouve dans la classification à droite.
-
-   Ce sont deux repères de navigation, et non de l'identité du produit — celle-ci
-   commence au titre. Les tenir sur leur propre ligne évite deux défauts qu'on a
-   eus tour à tour : le retour seul sur sa ligne coûtait une ligne entière pour
-   deux mots, et le fil ATC glissé entre l'identité et les dosages coupait le
-   bandeau en son milieu. */
-.identite-tete {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--sp-1) var(--sp-3);
-  padding-bottom: var(--sp-2);
-}
-
-.retour {
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.retour:hover {
-  color: var(--accent);
 }
 
 /* Une dénomination fait couramment soixante signes — « DOLIPRANE 300 mg,
@@ -108,7 +84,9 @@
 .forme-choix {
   display: inline-block;
   padding: 0.15em 0.5em;
-  border: var(--rule-width) solid var(--rule);
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  background: var(--bg);
   font-size: var(--fs-xs);
   color: var(--muted);
   text-decoration: none;
@@ -828,29 +806,33 @@ td.forme {
     gap: 0;
   }
 
-  /* Écran étroit : le rail redevient un sommaire replié en tête de page. */
+  /* Écran étroit : le sommaire s'efface, ses liens sortants restent.
+   *
+   * En une colonne, le rail s'intercalait entre l'identité et le contenu :
+   * quatre mots annonçant les quatre titres qui suivaient immédiatement, et
+   * qui repoussaient sous la ligne de flottaison la seule chose qu'on vient
+   * chercher au comptoir — les mentions de délivrance. Un sommaire ne se
+   * justifie que s'il évite un parcours ; ici il en imposait un.
+   *
+   * « Ce produit ailleurs » n'est pas de la navigation interne : ce sont deux
+   * liens qui n'existent nulle part ailleurs sur la page. Ils passent donc
+   * après le contenu, à la place qu'occupent des références. */
   .rail {
     position: static;
+    order: 2;
     max-height: none;
     overflow: visible;
-    padding: var(--sp-2) 0;
-    border-bottom: var(--rule-width) solid var(--rule);
-  }
-
-  .rail-plan > li {
+    padding: var(--sp-4) 0 0;
+    border-top: var(--rule-width) solid var(--rule);
     border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 0;
   }
 
-  .rail-rubriques {
-    columns: 2;
-    column-gap: var(--sp-2);
-    margin-bottom: var(--sp-2);
+  .contenu {
+    order: 1;
   }
 
-  .rail-rubriques li {
-    break-inside: avoid;
+  .rail-plan {
+    display: none;
   }
 
   .rail-ailleurs ul {
@@ -886,6 +868,7 @@ td.forme {
   display: inline-block;
   padding: 0.15em 0.5em;
   border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-control);
   font-size: var(--fs-xs);
   color: var(--muted);
   white-space: nowrap;
@@ -894,8 +877,8 @@ td.forme {
 /* Le classement commande tout le reste — support d'ordonnance, durée,
    registre. Un filet noir suffit à le détacher : ni couleur, ni fond. */
 .mention-classement {
-  border-color: var(--rule-strong);
-  color: var(--ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Une condition réglementaire se lit par axe : le libellé de la BDPM est

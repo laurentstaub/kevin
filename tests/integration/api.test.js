@@ -150,6 +150,39 @@ describe('API', { skip }, () => {
     });
   });
 
+  describe('Champ de recherche', () => {
+    /**
+     * La fiche et la page de classe n'offraient qu'un lien vers l'accueil :
+     * chercher un autre médicament imposait un aller-retour, alors qu'au
+     * comptoir on en enchaîne plusieurs.
+     */
+    for (const [page, url] of [
+      ['la fiche produit', '/product/61111114'],
+      ['la page de classe', '/classe/N02'],
+      ['l’accueil', '/'],
+    ]) {
+      it(`est présent sur ${page}, avec de quoi l’autocompléter`, async () => {
+        const res = await request(app).get(url).expect(200);
+
+        assert.match(res.text, /<form class="search-form"[^>]*action="\/search"/);
+        assert.match(res.text, /class="search-input"/);
+        // public/js/search.js s'accroche à ces identifiants : sans eux,
+        // l'autocomplétion se tait sans que rien ne le signale.
+        assert.match(res.text, /id="suggestions"/);
+        assert.match(res.text, /id="loading"/);
+        assert.match(res.text, /js\/search\.js/);
+      });
+    }
+
+    it('garde la version pleine sur l’accueil, compacte ailleurs', async () => {
+      const accueil = await request(app).get('/').expect(200);
+      const fiche = await request(app).get('/product/61111114').expect(200);
+
+      assert.doesNotMatch(accueil.text, /search-compacte/);
+      assert.match(fiche.text, /search-compacte/);
+    });
+  });
+
   describe('Classe thérapeutique (ATC)', () => {
     /**
      * L'en-tête ne porte que le contexte — les cinq niveaux en toutes lettres

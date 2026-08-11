@@ -17,3 +17,9 @@ npm-debug.log*
 
 # PDF téléchargés et liens résolus — reconstructibles, plusieurs centaines de Mo
 .cache/
+
+# Sauvegardes avant refonte visuelle
+*.avant_vert
+
+# Espace de travail de l assistant
+.claude/

@@ -1,4 +1,5 @@
 extends layout.pug
+include _recherche.pug
 
 //- Une classe thérapeutique : son fil, ses sous-classes, ses produits.
 //-
@@ -10,7 +11,10 @@ extends layout.pug
 block content
   .recherche
     header.recherche-tete
-      a.retour(href="/") ← Recherche
+      .identite-tete
+        a.retour(href="/") ← Accueil
+        span.tete-sep |
+        +champRecherche('', true)
       p.page-meta
         each niveau, i in classe.chaine
           if i > 0
@@ -66,3 +70,6 @@ block content
                   = produit.forme_pharmaceutique
               if produit.presentations > 1
                 span.resultat-etendue= `${produit.presentations} dosages et formes`
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

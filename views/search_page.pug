@@ -1,4 +1,5 @@
 extends layout.pug
+include _recherche.pug
 
 //- Une ligne = un produit, pas un code CIS.
 //-
@@ -39,33 +40,17 @@ mixin produit(result)
             = `${result.importations} importation${result.importations > 1 ? 's' : ''} parallèle${result.importations > 1 ? 's' : ''}`
 
 block content
-  .recherche
-    header.recherche-tete
+  //- Décision structurelle non-défaut de la page : le bandeau déborde de la
+  //- colonne, sans marge extérieure, et porte le champ de recherche. C'est la
+  //- seule page sans texte long — donc la seule où un aplat sombre ne coûte
+  //- rien à la lecture, et la seule où l'identité a sa place.
+  header.accueil
+    .accueil-inner
       h1.titre-site Demander à Kevin
-      p.page-meta Base de données publique des médicaments · spécialités, principes actifs, groupes génériques
+      p.accueil-champ Base de données publique des médicaments · spécialités, principes actifs, groupes génériques
+      +champRecherche(query, false)
 
-    .search-wrapper
-      form.search-form(method="GET" action="/search" role="search")
-        .input-wrapper
-          input.search-input(
-            type="search"
-            name="q"
-            placeholder="Dénomination ou principe actif"
-            value=query
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            aria-label="Rechercher un médicament"
-            aria-autocomplete="list"
-            aria-controls="suggestions"
-          )
-          button.search-button(type="submit") Chercher
-
-      #suggestions.suggestions(role="listbox" hidden)
-        .suggestions-list
-
-    #loading.loading(role="status" aria-live="polite") Recherche…
-
+  .recherche
     if notice
       p.notice= notice
 

@@ -1,28 +1,46 @@
-/* Socle visuel — Antheos, allégé.
- * Les valeurs structurelles (angles, échelle, filets) sont des contraintes.
+/* Socle visuel de Dr Kevin. Le guide qui l'explique est dans DESIGN.md.
+ *
+ * Deux familles seulement, et aucune n'est décorative : des gris qui portent
+ * le texte, un vert qui porte l'identité. Le vert vient d'antheosdata.com —
+ * même maison, même famille — mais il est employé autrement : là-bas il
+ * couvre des pages qu'on parcourt, ici il borde des pages qu'on lit. Un RCP
+ * fait quarante mille signes ; l'aplat sombre du site vitrine y deviendrait
+ * une épreuve. On garde donc la teinte et on renonce à la surface.
  */
 
 :root {
-  /* Encre et fonds — parti pris blanc, les filets font le travail des cadres */
-  --ink: #1a1a1a;
-  --muted: #767676;
-  --faint: #9a9a9a;
-  --rule: #e6e6e6;
-  /* Filet de structure. Il séparait les sections en 2 px d'encre pleine : sur
-     une page où l'on lit quarante mille signes, chaque trait noir arrête l'œil
-     et hache la lecture. Un gris moyen sur un seul pixel marque la même
-     articulation sans la barrer. --rule-strong reste pour ce qui doit trancher
-     — l'état actif d'un onglet, le contour d'une marque. */
-  --rule-medium: #bdbdbd;
-  --rule-strong: #1a1a1a;
+  /* Encre. Le noir tire légèrement au vert, assez pour s'accorder à l'accent
+     sans qu'on puisse le nommer. */
+  --ink: #14201a;
+  --muted: #5f6b62;
+  /* Relevé de #9a9a9a : à 2,85 sur blanc, l'ancien gris ne passait aucun seuil
+     WCAG alors qu'il portait des libellés de colonnes et des codes ATC. Sur une
+     base médicale, une mention illisible est une mention absente. */
+  --faint: #6b7770;
+  --rule: #e3e9e4;
+  --rule-medium: #b6c0b9;
+  --rule-strong: #14201a;
+
   --bg: #ffffff;
-  --bg-alt: #fafafa;
+  --bg-alt: #f7faf7;
+  /* Teinte de section. Le bandeau vert clair d'antheosdata, ramené à une
+     valeur qui ne fatigue pas sous quarante mille signes. */
+  --bg-tint: #f2f7f2;
+  /* Aplat profond, réservé à l'en-tête d'accueil : la seule page sans texte
+     long, donc la seule où un fond sombre ne coûte rien. */
+  --bg-fonce: #123b22;
 
-  /* Accent unique */
-  --accent: #1f4e5f;
-  --accent-soft: #7fa0aa;
+  /* Accent unique, décliné en deux emplois qui ne se croisent jamais.
+     --accent porte du texte : liens, codes, états actifs. 7,79 sur blanc.
+     --accent-vif ne porte jamais de texte : c'est la couleur de l'action, une
+     seule par écran — le bouton de recherche, le dosage courant. À 1,66 sur
+     blanc il serait illisible ; c'est un aplat, pas une encre. */
+  --accent: #1b5e33;
+  --accent-vif: #7bd44f;
+  --accent-soft: #a9cdb4;
 
-  /* Typographie */
+  /* Typographie — inchangée. Les empattements de la surface de lecture sont un
+     choix de confort documenté, pas un accident d'époque. */
   --font-head: Georgia, 'Times New Roman', serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -48,8 +66,17 @@
   --sp-6: 3rem;
   --sp-8: 4rem;
 
-  --radius: 0;
-  --radius-control: 2px;
+  /* Rayons. Écart assumé avec le socle Antheos, qui les interdit — les deux
+     sites de référence en posent, et une page entièrement à angles vifs
+     paraît aujourd'hui datée plutôt que rigoureuse. La règle de partage est
+     nette : ce qui se manipule s'arrondit, ce qui se lit reste droit.
+       --radius-control   ce qu'on clique ou saisit
+       --radius-surface   ce qui est vraiment un objet posé sur la page
+     La structure — sections, tableaux, rubriques — n'a pas de rayon, parce
+     qu'elle n'a pas de contour : ce sont des filets qui la portent, et un
+     filet ne s'arrondit pas. */
+  --radius-control: 6px;
+  --radius-surface: 10px;
   --rule-width: 1px;
   --measure: 68ch;
   --rail: 13rem;
@@ -59,9 +86,11 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  border-radius: var(--radius);
 }
 
+/* Ce qu'on saisit ou qu'on presse. Le rayon se pose ici et nulle part par
+   défaut : une règle universelle sur `*` interdisait tout arrondi local, ce
+   qui revenait à décider une fois pour toutes qu'aucun élément n'en mérite. */
 input,
 select,
 textarea,

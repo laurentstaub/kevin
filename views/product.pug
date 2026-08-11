@@ -1,4 +1,5 @@
 extends layout.pug
+include _recherche.pug
 
 block styles
   link(rel="stylesheet", href=`/css/product.css?v=${v}`)
@@ -34,14 +35,19 @@ block content
       //- classification. Deux repères de navigation, tenus à l'écart de
       //- l'identité du produit — qui commence au titre.
       .identite-tete
-        a.retour(href="/") ← Recherche
+        a.retour(href="/") ← Accueil
+        span.tete-sep |
+        //- Chercher depuis la fiche : au comptoir on enchaîne les médicaments,
+        //- et repasser par l'accueil pour chacun coûtait deux pages.
+        +champRecherche('', true)
         if resumeAtc
+          span.tete-sep |
           nav.atc(aria-label="Classe thérapeutique")
             span.atc-etiquette Classe
-            each niveau, i in resumeAtc.contexte
-              if i > 0
-                span.atc-sep ›
+            each niveau in resumeAtc.contexte
+              span.atc-sep ›
               a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${niveau.label}`)= niveau.label
+            span.atc-sep ›
             //- Le code porte la feuille sans l'écrire : « PARACETAMOL » répéterait
             //- la DCI affichée plus bas. Il mène au détail complet.
             a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${resumeAtc.feuille.label}`)= resumeAtc.feuille.code
@@ -300,5 +306,6 @@ block content
           p.vide Aucun principe actif renseigné pour interroger la littérature.
 
 block scripts
+  script(src=`/js/search.js?v=${v}` defer)
   script(src=`/js/rail.js?v=${v}` defer)
   script(src=`/js/documents.js?v=${v}` defer)
