@@ -38,6 +38,11 @@
   --accent: #1b5e33;
   --accent-vif: #7bd44f;
   --accent-soft: #a9cdb4;
+  /* Teinte d'état sélectionné. Plus soutenue que --bg-tint, qui sert de fond
+     de bandeau : posée dessus, elle doit encore se distinguer. L'encre y tient
+     14,31, l'accent 6,64 — un aplat d'état ne doit jamais coûter la lecture de
+     ce qu'il désigne. */
+  --accent-pale: #e4f0e6;
 
   /* Typographie — inchangée. Les empattements de la surface de lecture sont un
      choix de confort documenté, pas un accident d'époque. */

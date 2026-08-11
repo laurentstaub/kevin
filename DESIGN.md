@@ -27,6 +27,7 @@ Une seule famille, deux emplois qui ne se croisent jamais.
 | Accent — texte | `--accent` | `#1b5e33` | 7,79 |
 | Accent — action | `--accent-vif` | `#7bd44f` | 9,09 avec l'encre **posée dessus** |
 | Aplat sombre | `--bg-fonce` | `#123b22` | 12,5 avec du blanc |
+| État sélectionné | `--accent-pale` | `#e4f0e6` | 14,3 avec l'encre |
 | Teinte de section | `--bg-tint` | `#f2f7f2` | — |
 
 Le vert vient d'antheosdata.com — même maison, même famille. Il est employé
@@ -138,6 +139,13 @@ cadre de délivrance.
 
 **Tableaux** — filets horizontaux seuls. Pas de bordures verticales, pas de
 fond alterné, pas de rayon. L'en-tête en capitales petites, `--faint`.
+
+**Onglets** — l'état sélectionné se dit par un aplat `--accent-pale`, pas par
+un filet de soulignement. Un onglet est un `<button>` : il hérite du rayon des
+contrôles, et le filet épousait cet arrondi en se recourbant à ses deux
+extrémités — un trait qui se tord n'est plus un trait. L'aplat, lui, est ce que
+la forme arrondie porte naturellement, et il range l'onglet dans la même famille
+que les puces de dosage et les mentions de délivrance.
 
 **Blocs repliables** (`.bloc`) — le résumé doit rester informatif fermé. Un
 bloc qui ne dit rien quand il est replié cache au lieu de ranger : c'est la

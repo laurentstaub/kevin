@@ -328,18 +328,24 @@ td.forme {
    pas de bordure fermée — c'est le trait qui porte l'état. */
 .onglets {
   display: flex;
-  gap: var(--sp-3);
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-1);
   border-bottom: var(--rule-width) solid var(--rule);
   margin-bottom: var(--sp-2);
 }
 
+/* Un onglet est un bouton : il hérite du rayon des contrôles. Le filet de
+   soulignement qui marquait l'onglet actif épousait donc cet arrondi et se
+   recourbait à ses deux extrémités — un trait qui se tord n'est plus un trait.
+   L'état se dit maintenant par un aplat, ce que la forme arrondie porte
+   naturellement, et ce qui range l'onglet dans la même famille que les puces
+   de dosage et les mentions de délivrance. */
 .onglet {
   appearance: none;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: var(--sp-1) 0;
+  padding: var(--sp-1) var(--sp-2);
   font: inherit;
   font-size: var(--fs-sm);
   color: var(--muted);
@@ -348,11 +354,12 @@ td.forme {
 
 .onglet:hover {
   color: var(--ink);
+  background: var(--bg-alt);
 }
 
 .onglet[aria-selected='true'] {
   color: var(--ink);
-  border-bottom-color: var(--accent);
+  background: var(--accent-pale);
 }
 
 /* ---------- Rubriques repliables ---------- */
