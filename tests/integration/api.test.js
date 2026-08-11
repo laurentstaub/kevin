@@ -8,6 +8,7 @@ import { ROOT } from '../../src/config.js';
 import { createApp } from '../../src/app.js';
 import { searchMedications } from '../../src/search.js';
 import { parseQuery } from '../../src/validate.js';
+import { oublierClasses, getClasseAtc } from '../../src/atc.js';
 
 /**
  * Tests d'intégration sur un jeu de données figé (tests/fixtures.sql).
@@ -28,6 +29,9 @@ describe('API', { skip }, () => {
     pool = new pg.Pool({ connectionString: url });
     await pool.query(await readFile(path.join(ROOT, 'tests', 'fixtures.sql'), 'utf8'));
     await pool.query(await readFile(path.join(ROOT, 'sql', 'setup.sql'), 'utf8'));
+    // Le décompte des classes est gardé en mémoire une heure : sans cette
+    // remise à zéro, une suite hériterait du jeu de données de la précédente.
+    oublierClasses();
     app = createApp(pool);
   });
 
@@ -143,6 +147,98 @@ describe('API', { skip }, () => {
         assert.equal(resultats.substance, 'PARACETAMOL');
         assert.equal(resultats.produits[0].libelle, 'DOLIPRANE', `en tête pour « ${debut} »`);
       }
+    });
+  });
+
+  describe('Classe thérapeutique (ATC)', () => {
+    /**
+     * L'en-tête ne porte que le contexte — les cinq niveaux en toutes lettres
+     * font cent six signes en capitales et rompent le bandeau. La chaîne
+     * complète reste accessible : c'est le fil d'Ariane de la page de classe.
+     */
+    it('résume la classe dans l’en-tête, sans la chaîne entière', async () => {
+      const res = await request(app).get('/product/61111114').expect(200);
+      const fil = res.text.match(/<nav class="atc"[\s\S]*?<\/nav>/)?.[0] ?? '';
+      const maillons = [...fil.matchAll(/class="atc-maillon"[^>]*>([^<]+)</g)].map((m) => m[1]);
+
+      assert.deepEqual(maillons, ['Système nerveux', 'ANALGESIQUES']);
+
+      // La taxonomie chimique n'a pas sa place au comptoir.
+      assert.doesNotMatch(fil, /ANILIDES/);
+      assert.doesNotMatch(fil, /AUTRES ANALGESIQUES/);
+      // Ni la DCI, déjà affichée deux lignes plus haut.
+      assert.doesNotMatch(fil, />PARACETAMOL</);
+
+      // Le code identifie la feuille et y mène.
+      assert.match(fil, /class="atc-code"[^>]*>N02BE01</);
+      assert.match(fil, /href="\/classe\/N02BE01"/);
+    });
+
+    /**
+     * Vingt-quatre codes de niveau 5 n'ont pas de libellé dans la source : le
+     * leur recopie le code. Afficher « N02BE71 » à un pharmacien ne lui apprend
+     * rien — on reprend le libellé du parent.
+     */
+    it('reprend le libellé du parent quand le code n’en a pas', async () => {
+      const { rows } = await pool.query(
+        `SELECT atc_code, atc_label, atc_level FROM ref.atc_classification
+         WHERE 'N02BE71' LIKE atc_code || '%' ORDER BY atc_level`,
+      );
+      const chaine = rows.map((r) => ({
+        code: r.atc_code,
+        label: r.atc_label,
+        level: r.atc_level,
+      }));
+
+      // La feuille N02BE71 n'a pas de libellé : getClasseAtc reprend celui du
+      // parent, ANILIDES, plutôt que d'afficher le code en guise de nom.
+      const via = await getClasseAtc(pool, '61111116');
+      assert.equal(via.at(-1).code, 'N02BE71');
+      assert.equal(via.at(-1).label, 'ANILIDES');
+      assert.equal(chaine.at(-1).label, 'N02BE71', 'la source, elle, n’est pas modifiée');
+    });
+
+    it('n’affiche rien pour une spécialité sans classe', async () => {
+      // KARDEGIC n'est pas dans le mapping : un tiers de la base est dans ce cas.
+      const res = await request(app).get('/product/61111113').expect(200);
+      assert.doesNotMatch(res.text, /<nav class="atc"/);
+    });
+
+    it('propose les grandes classes sur la page d’accueil', async () => {
+      const res = await request(app).get('/').expect(200);
+      assert.match(res.text, /Parcourir par classe thérapeutique/);
+      assert.match(res.text, /href="\/classe\/N"/);
+      assert.match(res.text, /Système nerveux/);
+    });
+
+    it('parcourt une classe, ses sous-classes et ses produits', async () => {
+      const res = await request(app).get('/classe/N02B').expect(200);
+
+      // Sous-classes de N02B, avec leur décompte.
+      assert.match(res.text, /href="\/classe\/N02BE"/);
+      assert.match(res.text, /href="\/classe\/N02BA"/);
+      // Et les produits de la classe, DOLIPRANE compris.
+      assert.match(res.text, /DOLIPRANE/);
+    });
+
+    it('compte les produits, pas les codes CIS', async () => {
+      // Les deux DOLIPRANE et les deux PARACETAMOL <labo> partagent N02BE01 ;
+      // DAFALGAN aussi. Cinq CIS pour quatre produits.
+      const res = await request(app).get('/classe/N02BE01').expect(200);
+      const noms = [...res.text.matchAll(/<span class="resultat-nom">\s*([A-Z][^<\n]*)/g)]
+        .map((m) => m[1].trim());
+
+      assert.deepEqual(noms.sort(), [
+        'DAFALGAN',
+        'DOLIPRANE',
+        'PARACETAMOL ARROW',
+        'PARACETAMOL TEVA',
+      ]);
+    });
+
+    it('renvoie 404 sur une classe inexistante', async () => {
+      await request(app).get('/classe/ZZZZ').expect(404);
+      await request(app).get('/classe/N02BE99').expect(404);
     });
   });
 

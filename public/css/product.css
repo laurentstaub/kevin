@@ -9,21 +9,29 @@
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
 
-/* Le retour partage la ligne du titre : seul sur la sienne, il coûtait une
-   ligne entière pour deux mots. Il est à droite plutôt qu'à gauche, sinon il
-   décalerait le titre et romprait l'aplomb avec la colonne de contenu. */
 .identite-inner {
   max-width: 64rem;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto;
+}
+
+/* Ligne de situation, au-dessus de tout le reste : d'où l'on vient à gauche,
+   où l'on se trouve dans la classification à droite.
+
+   Ce sont deux repères de navigation, et non de l'identité du produit — celle-ci
+   commence au titre. Les tenir sur leur propre ligne évite deux défauts qu'on a
+   eus tour à tour : le retour seul sur sa ligne coûtait une ligne entière pour
+   deux mots, et le fil ATC glissé entre l'identité et les dosages coupait le
+   bandeau en son milieu. */
+.identite-tete {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: baseline;
-  column-gap: var(--sp-3);
+  gap: var(--sp-1) var(--sp-3);
+  padding-bottom: var(--sp-2);
 }
 
 .retour {
-  grid-column: 2;
-  grid-row: 1;
   font-size: var(--fs-xs);
   color: var(--muted);
   text-decoration: none;
@@ -34,21 +42,12 @@
   color: var(--accent);
 }
 
-/* Tout le reste occupe la colonne du titre. */
-.produit-titre,
-.identite .page-meta,
-.formes {
-  grid-column: 1;
-}
-
 /* Une dénomination fait couramment soixante signes — « DOLIPRANE 300 mg,
    poudre pour solution buvable en sachet-dose ». Au corps de titre le plus
    grand elle en occupe trois lignes ; d'un cran en dessous elle tient sur une.
    Les dénominations très longues passeront à deux, ce qui reste lisible :
    tronquer un nom de médicament, non. */
 .produit-titre {
-  grid-column: 1;
-  grid-row: 1;
   font-size: var(--fs-lg);
   letter-spacing: -0.01em;
   text-wrap: balance;
@@ -86,7 +85,6 @@
    et du blanc, comme partout ailleurs : ce sont des liens alignés, pas des
    boutons. Le dosage courant est plein, les autres sont cliquables. */
 .formes {
-  grid-column: 1;
   margin-top: var(--sp-2);
 }
 

@@ -69,6 +69,23 @@ block content
     if notice
       p.notice= notice
 
+    //- Parcourir quand on ne cherche pas un nom.
+    //-
+    //- La page d'accueil ne proposait qu'un champ vide : elle suppose qu'on
+    //- sait déjà quoi taper. Les quatorze groupes anatomiques de la
+    //- classification ATC donnent une entrée par le besoin plutôt que par le
+    //- nom — et rendent visible ce que la base contient.
+    if !results && classes && classes.length > 0
+      nav.classes(aria-label="Parcourir par classe thérapeutique")
+        h2.classes-titre Parcourir par classe thérapeutique
+        ul.classes-liste
+          each classe in classes
+            li
+              a.classe-lien(href=`/classe/${classe.code}`)
+                span.classe-code= classe.code
+                span.classe-label= classe.label
+                span.classe-compte #{classe.produits.toLocaleString('fr-FR')} produits
+
     #results
       if results
         //- Les filtres pilotent la liste : ils sont au-dessus d'elle.

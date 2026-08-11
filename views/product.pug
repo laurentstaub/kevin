@@ -30,7 +30,22 @@ block content
   //- jamais répétées plus bas. Le bandeau déborde de la colonne de contenu.
   header.identite
     .identite-inner
-      a.retour(href="/") ← Recherche
+      //- Ligne de situation : d'où l'on vient, et où l'on est dans la
+      //- classification. Deux repères de navigation, tenus à l'écart de
+      //- l'identité du produit — qui commence au titre.
+      .identite-tete
+        a.retour(href="/") ← Recherche
+        if resumeAtc
+          nav.atc(aria-label="Classe thérapeutique")
+            span.atc-etiquette Classe
+            each niveau, i in resumeAtc.contexte
+              if i > 0
+                span.atc-sep ›
+              a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${niveau.label}`)= niveau.label
+            //- Le code porte la feuille sans l'écrire : « PARACETAMOL » répéterait
+            //- la DCI affichée plus bas. Il mène au détail complet.
+            a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${resumeAtc.feuille.label}`)= resumeAtc.feuille.code
+
       h1.produit-titre= product.denomination_medicament
       p.page-meta
         if product.active_ingredients

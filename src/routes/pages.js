@@ -14,13 +14,57 @@ import { getSections } from '../sections.js';
 import { getDelivrance } from '../delivrance.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
+import {
+  getClasseAtc,
+  resumerClasse,
+  getClassesPrincipales,
+  getClasse,
+  getProduitsDeClasse,
+} from '../atc.js';
 
 export function pageRoutes(pool) {
   const router = Router();
 
-  router.get('/', (req, res) => {
-    res.render('search_page', { query: '', filter: 'all', results: null });
-  });
+  router.get(
+    '/',
+    wrap(async (req, res) => {
+      // Une porte d'entrée quand on ne cherche pas un nom précis. Un défaut de
+      // classification ne doit pas empêcher la page de recherche de s'afficher.
+      const classes = await getClassesPrincipales(pool).catch((err) => {
+        console.error('[atc] classes principales indisponibles :', err.message);
+        return [];
+      });
+
+      res.render('search_page', { query: '', filter: 'all', results: null, classes });
+    }),
+  );
+
+  /**
+   * Parcours par classe thérapeutique.
+   *
+   * Le code ATC est validé contre la base, pas contre une expression régulière :
+   * c'est la seule façon de distinguer une classe réelle d'une chaîne bien
+   * formée qui ne désigne rien.
+   */
+  router.get(
+    '/classe/:code',
+    wrap(async (req, res, next) => {
+      const code = String(req.params.code ?? '').toUpperCase();
+      if (!/^[A-Z][0-9A-Z]{0,6}$/.test(code)) return next();
+
+      const classe = await getClasse(pool, code);
+      if (!classe) return next();
+
+      const { produits, total } = await getProduitsDeClasse(pool, code);
+
+      res.render('classe', {
+        classe,
+        produits,
+        total,
+        tronque: total > produits.length,
+      });
+    }),
+  );
 
   router.get(
     '/search',
@@ -53,7 +97,7 @@ export function pageRoutes(pool) {
       const product = await getProduct(pool, cis);
       if (!product) return next();
 
-      const [substitutions, variantes, bruts, decoupe, delivrance] = await Promise.all([
+      const [substitutions, variantes, bruts, decoupe, delivrance, classeAtc] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
           // Le sélecteur de dosage est un confort : son absence ne doit pas
@@ -76,6 +120,12 @@ export function pageRoutes(pool) {
           // inventée : on rend un classement vide, le bloc le dira.
           console.error('[délivrance] indisponible pour', cis, err.message);
           return { resume: [], groupes: [], liens: [] };
+        }),
+        // 36,5 % des spécialités n'ont pas de classe ATC : l'absence est le cas
+        // normal, pas une panne.
+        getClasseAtc(pool, cis).catch((err) => {
+          console.error('[atc] classe indisponible pour', cis, err.message);
+          return [];
         }),
       ]);
 
@@ -139,6 +189,7 @@ export function pageRoutes(pool) {
         reference,
         substitutions,
         variantes,
+        resumeAtc: resumerClasse(classeAtc),
         genericGroup: genericGroupLabel(substitutions),
         documents,
         hasDocuments,

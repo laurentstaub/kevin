@@ -86,6 +86,53 @@ INSERT INTO dbpm.cis_gener_bdpm VALUES
   ('61111111', 101, '0', 'ACIDE ACETYLSALICYLIQUE 500 mg'),
   ('61111112', 101, '1', 'ACIDE ACETYLSALICYLIQUE 500 mg');
 
+-- Classification ATC (schéma ref). Dérivée des données CNAM : toutes les
+-- spécialités n'en ont pas, et la fixture reproduit ce trou — SIROP PÉDIATRIQUE
+-- et KARDEGIC n'ont pas de classe, comme 36,5 % de la base réelle.
+DROP SCHEMA IF EXISTS ref CASCADE;
+CREATE SCHEMA ref;
+
+CREATE TABLE ref.atc_classification (
+  atc_code        text PRIMARY KEY,
+  atc_label       text NOT NULL,
+  atc_level       integer NOT NULL,
+  parent_atc_code text
+);
+
+CREATE TABLE ref.cis_atc_mapping (
+  code_cis text PRIMARY KEY,
+  atc_code text NOT NULL,
+  source   text
+);
+
+INSERT INTO ref.atc_classification VALUES
+  ('N',        'Système nerveux',                       1, NULL),
+  ('N02',      'ANALGESIQUES',                          2, 'N'),
+  ('N02B',     'AUTRES ANALGESIQUES ET ANTIPYRETIQUES', 3, 'N02'),
+  ('N02BA',    'ACIDE SALICYLIQUE ET DERIVES',          4, 'N02B'),
+  ('N02BA01',  'ACIDE ACETYLSALICYLIQUE',               5, 'N02BA'),
+  ('N02BE',    'ANILIDES',                              4, 'N02B'),
+  ('N02BE01',  'PARACETAMOL',                           5, 'N02BE'),
+  -- Vingt-quatre codes réels n'ont pas de libellé : le leur recopie le code.
+  -- L'affichage doit alors reprendre celui du parent, pas montrer « N02BE71 ».
+  ('N02BE71',  'N02BE71',                               5, 'N02BE'),
+  ('B',        'Sang et organes hématopoiétiques',      1, NULL),
+  ('B01',      'ANTITHROMBOTIQUES',                     2, 'B'),
+  ('B01A',     'ANTITHROMBOTIQUES',                     3, 'B01'),
+  ('B01AC',    'INHIBITEURS AGREGATION PLAQUETTAIRE',   4, 'B01A'),
+  ('B01AC06',  'ACIDE ACETYLSALICYLIQUE',               5, 'B01AC');
+
+INSERT INTO ref.cis_atc_mapping VALUES
+  ('61111111', 'N02BA01', 'medicam'),
+  ('61111112', 'B01AC06', 'medicam'),
+  ('61111114', 'N02BE01', 'medicam'),
+  ('61111119', 'N02BE01', 'medicam'),
+  ('61111115', 'N02BE01', 'medicam'),
+  ('61111117', 'N02BE01', 'medicam'),
+  ('61111118', 'N02BE01', 'medicam'),
+  -- Code sans libellé : la fiche doit afficher « ANILIDES », pas « N02BE71 ».
+  ('61111116', 'N02BE71', 'medicine_sales_2023');
+
 INSERT INTO dbpm.cis_documents VALUES
   ('61111111', 'rcp',
    '<h2>4.2 Posologie</h2><p>1 comprimé.</p><script>alert(1)</script><a href="javascript:x()">piège</a>',

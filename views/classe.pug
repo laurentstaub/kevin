@@ -1,0 +1,68 @@
+extends layout.pug
+
+//- Une classe thérapeutique : son fil, ses sous-classes, ses produits.
+//-
+//- Les sous-classes viennent avant la liste : sur « N — Système nerveux »,
+//- neuf cent soixante produits ne se parcourent pas, mais douze sous-classes
+//- se lisent d'un coup d'œil. La liste sert de repère, la navigation se fait
+//- par l'arbre.
+
+block content
+  .recherche
+    header.recherche-tete
+      a.retour(href="/") ← Recherche
+      p.page-meta
+        each niveau, i in classe.chaine
+          if i > 0
+            span.atc-sep ›
+          if niveau.code === classe.code
+            span= niveau.code
+          else
+            a(href=`/classe/${niveau.code}`)= niveau.code
+      h1.titre-site= classe.label
+      p.page-meta
+        span.atc-etiquette= classe.code
+        span.sep
+        span #{total.toLocaleString('fr-FR')} produit#{total > 1 ? 's' : ''}
+
+    if classe.enfants.length > 0
+      nav.classes(aria-label="Sous-classes")
+        h2.classes-titre Sous-classes
+        ul.classes-liste
+          each enfant in classe.enfants
+            li
+              a.classe-lien(href=`/classe/${enfant.code}`)
+                span.classe-code= enfant.code
+                span.classe-label= enfant.label
+                span.classe-compte #{enfant.produits.toLocaleString('fr-FR')} produits
+
+    section.groupe
+      h2.groupe-titre
+        | Produits
+        span.compte #{produits.length.toLocaleString('fr-FR')}
+      //- Ne jamais laisser croire que la liste est complète quand elle est
+      //- bornée : un catalogue tronqué en silence se lit comme un catalogue.
+      if tronque
+        p.section-meta
+          | #{total.toLocaleString('fr-FR')} produits dans cette classe, #{produits.length} affichés.
+          if classe.enfants.length > 0
+            |  Affinez par sous-classe.
+      ul.liste
+        each produit in produits
+          li
+            a.resultat(href=`/product/${produit.id}`)
+              span.resultat-nom
+                = produit.racine
+                if produit.importation
+                  span.marque Importation parallèle
+                if produit.commercialise === false
+                  span.marque Non commercialisé
+              span.resultat-dci
+                if produit.active_ingredients
+                  = produit.active_ingredients
+                if produit.active_ingredients && produit.forme_pharmaceutique
+                  span.sep
+                if produit.forme_pharmaceutique
+                  = produit.forme_pharmaceutique
+              if produit.presentations > 1
+                span.resultat-etendue= `${produit.presentations} dosages et formes`
