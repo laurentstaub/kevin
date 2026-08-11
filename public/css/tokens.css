@@ -78,8 +78,15 @@
   --radius-control: 6px;
   --radius-surface: 10px;
   --rule-width: 1px;
+  /* Hauteur de la barre de situation. Elle sort d'ici et non du contenu :
+     les ancres et le rail collant doivent s'en écarter d'autant, sinon un lien
+     vers la rubrique 4.1 dépose son titre dessous. */
+  --barre-h: 2.75rem;
   --measure: 68ch;
-  --rail: 13rem;
+  /* Axe unique de la page : barre, bandeau d'identité et contenu s'y alignent.
+     Le sommaire latéral occupait la marge gauche ; sans lui, la colonne de
+     lecture revient au centre. */
+  --colonne: 46rem;
 }
 
 *,

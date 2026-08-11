@@ -1,0 +1,23 @@
+//- Barre de situation, collante en haut de page.
+//-
+//- Elle ne remplace pas un sommaire : elle répond à l'autre besoin, celui qui
+//- se présente constamment. Au comptoir on enchaîne les médicaments — le
+//- patient sort une seconde boîte pendant qu'on lit la première — et quatre
+//- écrans plus bas dans un RCP, le champ de recherche était hors de vue.
+//-
+//- Rien dedans ne pointe vers un bloc de la page. Le document replié est déjà
+//- sa propre table des matières, numérotée, dans la colonne de lecture ; la
+//- répéter ici en ferait une seconde copie, plus visible et tout aussi vaine.
+//-
+//- Toujours présente plutôt qu'apparaissant au défilement : un seuil, un état
+//- et une animation coûtent plus d'attention qu'ils n'économisent de place,
+//- sur une page qu'on lit.
+//-
+//- @param {string} titre  ce qu'on est en train de lire, à droite
+mixin barreSituation(titre)
+  header.barre
+    .barre-inner
+      a.retour(href="/") ← Accueil
+      +champRecherche('', true)
+      if titre
+        span.barre-titre= titre

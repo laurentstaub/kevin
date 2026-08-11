@@ -1,4 +1,5 @@
 extends layout.pug
+include _barre.pug
 include _recherche.pug
 
 //- Une classe thérapeutique : son fil, ses sous-classes, ses produits.
@@ -9,12 +10,10 @@ include _recherche.pug
 //- par l'arbre.
 
 block content
+  +barreSituation(classe.label)
+
   .recherche
     header.recherche-tete
-      .identite-tete
-        a.retour(href="/") ← Accueil
-        span.tete-sep |
-        +champRecherche('', true)
       p.page-meta
         each niveau, i in classe.chaine
           if i > 0

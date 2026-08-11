@@ -1,6 +1,6 @@
-// Sections repliables, onglets, et ouverture au bon endroit depuis le rail.
+// Sections repliables, onglets, et ouverture au bon endroit depuis une ancre.
 //
-// Toute la fiche est fermée au chargement. Le rail reste le sommaire de la
+// Toute la fiche est fermée au chargement. Le document replié est le sommaire de la
 // page entière : un lien qui mène à un contenu replié — section, onglet
 // inactif, rubrique — doit ouvrir ce qu'il faut avant que le navigateur
 // n'aille à l'ancre, sinon le lecteur atterrit sur du vide.
@@ -12,14 +12,26 @@ const documents = document.querySelector('#documents');
 const onglets = documents ? [...documents.querySelectorAll('.onglet')] : [];
 const panneaux = onglets.map((o) => document.getElementById(o.getAttribute('aria-controls')));
 
+// Un panneau replié reste « until-found » : caché, mais fouillé par la
+// recherche du navigateur, qui l'ouvrira si le mot cherché s'y trouve. Là où
+// la valeur n'est pas comprise, une chaîne non vide vaut `hidden` — le
+// comportement d'avant, sans rien casser.
 function activerOnglet(indice) {
   onglets.forEach((onglet, i) => {
     const actif = i === indice;
     onglet.setAttribute('aria-selected', actif ? 'true' : 'false');
     onglet.tabIndex = actif ? 0 : -1;
-    if (panneaux[i]) panneaux[i].hidden = !actif;
+    if (panneaux[i]) panneaux[i].hidden = actif ? false : 'until-found';
   });
 }
+
+// Quand le navigateur révèle un panneau parce qu'il y a trouvé le mot cherché,
+// il retire l'attribut lui-même. Sans ce relais, le panneau s'afficherait avec
+// l'onglet d'à côté marqué actif, et deux documents seraient visibles à la
+// fois : l'état du groupe d'onglets doit suivre ce que le navigateur a fait.
+panneaux.forEach((panneau, i) => {
+  if (panneau) panneau.addEventListener('beforematch', () => activerOnglet(i));
+});
 
 onglets.forEach((onglet, i) => {
   onglet.addEventListener('click', () => activerOnglet(i));

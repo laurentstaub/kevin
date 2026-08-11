@@ -9,6 +9,10 @@
 //-
 //- @param {string} valeur   ce que porte le champ au chargement
 //- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
+//-
+//- « Rechercher… », dans une barre collante, se lisait comme une recherche dans
+//- la page — le réflexe ⌘F. Ce champ cherche un autre médicament : il doit le
+//- dire, sinon il promet le contraire de ce qu'il fait.
 mixin champRecherche(valeur, compact)
   .search-wrapper(class=compact ? 'search-compacte' : null)
     form.search-form(method="GET" action="/search" role="search")
@@ -16,7 +20,7 @@ mixin champRecherche(valeur, compact)
         input.search-input(
           type="search"
           name="q"
-          placeholder=compact ? 'Rechercher…' : 'Dénomination ou principe actif'
+          placeholder=compact ? 'Chercher un médicament…' : 'Dénomination ou principe actif'
           value=valeur
           autocomplete="off"
           autocapitalize="off"

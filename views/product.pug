@@ -1,4 +1,5 @@
 extends layout.pug
+include _barre.pug
 include _recherche.pug
 
 block styles
@@ -27,21 +28,18 @@ block content
           span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
         .rubrique-corps!= r.html
 
+  +barreSituation(product.denomination_medicament)
+
   //- Identité : dénomination + toutes les métadonnées en une seule ligne,
   //- jamais répétées plus bas. Le bandeau déborde de la colonne de contenu.
   header.identite
     .identite-inner
-      //- Ligne de situation : d'où l'on vient, et où l'on est dans la
-      //- classification. Deux repères de navigation, tenus à l'écart de
-      //- l'identité du produit — qui commence au titre.
+      //- Où l'on est dans la classification. Le retour et la recherche sont
+      //- partis dans la barre collante : ce sont des repères d'application, ils
+      //- doivent rester sous la main jusqu'en bas du RCP. Le fil ATC, lui,
+      //- parle du produit — sa place est dans son bandeau.
       .identite-tete
-        a.retour(href="/") ← Accueil
-        span.tete-sep |
-        //- Chercher depuis la fiche : au comptoir on enchaîne les médicaments,
-        //- et repasser par l'accueil pour chacun coûtait deux pages.
-        +champRecherche('', true)
         if resumeAtc
-          span.tete-sep |
           nav.atc(aria-label="Classe thérapeutique")
             span.atc-etiquette Classe
             each niveau in resumeAtc.contexte
@@ -125,31 +123,16 @@ block content
                           td.code= cip.code_cip13 || cip.code_cip7
                           td= cip.libelle_presentation
 
+  //- Colonne unique, centrée sur l'axe de la page.
+  //-
+  //- Le sommaire latéral listait quatre blocs dont trois tiennent sur une
+  //- ligne repliée : il annonçait ce que l'œil voyait déjà. Et il ne coûtait
+  //- pas de la largeur — la colonne de lecture faisait sa mesure — mais du
+  //- centrage : le texte se lisait quatre-vingts pixels à droite de l'axe.
+  //-
+  //- Le sommaire qui reste est le document lui-même : rubriques repliées, il
+  //- affiche son plan numéroté dans la colonne de lecture, à sa vraie place.
   .corps
-    nav.rail(aria-label="Sommaire de la fiche")
-      ul.rail-plan
-        each section in sections
-          li
-            a.rail-lien(href=`#${section.id}`)= section.label
-            //- Le document ouvert affiche son plan complet : le rail ne le
-            //- répète pas, il donne l'accès direct à ce qu'on ouvre au comptoir.
-            if section.children
-              each doc in section.children
-                p.rail-doc-titre= doc.titre
-                ol.rail-rubriques
-                  each entry in doc.sections
-                    li(class=`rub-n${entry.depth}`)
-                      a.rail-lien(href=`#${entry.id}`)
-                        span.num= entry.number
-                        span(class=entry.canonical || entry.label !== entry.label.toUpperCase() ? 'lab' : 'lab lab-brut')= entry.label
-
-      .rail-ailleurs
-        h2.rail-titre Ce produit ailleurs
-        ul
-          each link in links.official
-            li
-              a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
-
     main.contenu
 
       //- Délivrance.
@@ -218,12 +201,20 @@ block content
                   tabindex=(i === 0 ? 0 : -1)
                 )= doc.label
 
+          //- Panneau replié : « until-found » plutôt que `hidden` sec. Le
+          //- document reste caché, mais la recherche du navigateur le fouille
+          //- et l'ouvre s'il y trouve le mot cherché. Sans cela ⌘F parcourait
+          //- le RCP et ratait la notice en silence — le pire des deux, puisque
+          //- l'on en concluait que le document n'en parlait pas. Là où
+          //- l'attribut n'est pas compris — Safari aujourd'hui — une valeur
+          //- non vide vaut `hidden` : on retombe sur le comportement d'avant,
+          //- sans rien casser.
           each doc, i in documents
             article.document(
               id=doc.anchor
               role=(documents.length > 1 ? 'tabpanel' : null)
               aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
-              hidden=(documents.length > 1 && i > 0)
+              hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
             )
               //- Une seule ligne de service : la date, la provenance, le lien
               //- officiel et la commande. Empilées, elles coûtaient trois lignes.
@@ -294,18 +285,21 @@ block content
       details.bloc#references
         summary.bloc-tete
           h2.section-titre Références
-          if links.scientific.length > 0
-            span.bloc-compte Littérature et registres
+          span.bloc-compte Ce produit ailleurs
+        //- Les liens officiels tenaient dans le sommaire latéral, où ils
+        //- n'avaient rien à faire : ce ne sont pas des ancres internes mais des
+        //- liens sortants, et le bloc des liens sortants est celui-ci.
+        ul.liens
+          each link in links.official
+            li
+              a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
         if links.scientific.length > 0
-          p.section-meta Sur #{links.scientific[0].hint}
+          p.section-meta Littérature et registres, sur #{links.scientific[0].hint}
           ul.liens
             each link in links.scientific
               li
                 a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
-        else
-          p.vide Aucun principe actif renseigné pour interroger la littérature.
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)
-  script(src=`/js/rail.js?v=${v}` defer)
   script(src=`/js/documents.js?v=${v}` defer)

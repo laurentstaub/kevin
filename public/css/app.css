@@ -1,6 +1,46 @@
 /* Page de recherche et éléments communs. Tokens dans tokens.css, règles dans
    DESIGN.md. */
 
+/* ---------- Barre de situation ---------- */
+
+/* Une ligne, collante, toujours là. Elle coûte 44 px sur chaque écran — le
+   poste le plus cher d'une page qu'on lit — et les rachète largement : c'est
+   elle qui a permis de retirer le sommaire latéral, ses 208 px, sa grille
+   asymétrique, et de ramener la colonne de lecture sur l'axe de la page.
+   Aucun seuil, aucune apparition au défilement : ce qui bouge pendant qu'on
+   lit coûte plus d'attention qu'il n'économise de place. */
+.barre {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: var(--barre-h);
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.barre-inner {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding: var(--sp-1) var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Ce qu'on est en train de lire. En retrait — c'est un repère, pas un titre :
+   le vrai est dans le bandeau, deux fois plus grand. Il cède la place au
+   champ de recherche plutôt que de le comprimer. */
+.barre-titre {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- Bandeau d'accueil ---------- */
 
 /* Le vert profond d'antheosdata, employé une fois et à un seul endroit : la
@@ -12,7 +52,7 @@
 }
 
 .accueil-inner {
-  max-width: 46rem;
+  max-width: var(--colonne);
   margin: 0 auto;
 }
 
@@ -37,7 +77,7 @@
 /* Le titre et le champ ayant migré dans le bandeau, la colonne n'a plus à
    ménager la place d'un en-tête : elle reprend juste sous l'aplat. */
 .recherche {
-  max-width: 46rem;
+  max-width: var(--colonne);
   margin: 0 auto;
   padding: var(--sp-4) var(--sp-3) var(--sp-8);
 }
@@ -474,6 +514,19 @@
   color: var(--muted);
   margin-top: 0.15em;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 52rem) {
+  .barre-inner {
+    padding: var(--sp-1) var(--sp-2);
+  }
+
+  /* Sur écran étroit, la dénomination et le champ ne tiennent pas ensemble.
+     C'est la dénomination qui cède : elle est écrite en toutes lettres deux
+     centimètres plus bas, le champ n'existe qu'ici. */
+  .barre-titre {
+    display: none;
+  }
 }
 
 @media (max-width: 40rem) {

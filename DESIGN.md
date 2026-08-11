@@ -99,9 +99,17 @@ produit répond à « que dois-je savoir sur ce médicament ». La page de class
 répond à « que contient cette aire thérapeutique ». Si la réponse ne se lit pas
 en dix secondes, la page est ratée — avant tout jugement esthétique.
 
-**Une décision structurelle non-défaut par page**, au moins. Sur l'accueil,
-c'est le bandeau qui déborde de la colonne. Sur la fiche, c'est la grille
-asymétrique rail / contenu et le bandeau d'identité pleine largeur.
+**Une décision structurelle non-défaut par page**, au moins. Sur l'accueil et
+sur la fiche, c'est le même parti : les bandeaux — barre de situation et
+identité — débordent de la colonne, sans marge extérieure, tandis que le
+contenu reste sur un axe unique de 46 rem (`--colonne`).
+
+**Pas de sommaire latéral.** Il en a existé un ; il listait quatre blocs dont
+trois tiennent sur une ligne repliée, c'est-à-dire qu'il annonçait ce que l'œil
+voyait déjà. Il ne coûtait pas de la largeur — la colonne faisait sa mesure —
+mais du centrage : le texte se lisait quatre-vingts pixels à droite de l'axe.
+Le sommaire de la fiche est le document lui-même : rubriques repliées, il
+affiche son plan numéroté dans la colonne de lecture, à sa vraie place.
 
 **Interdits.** Pas de grille de trois cartes en tête de page — deux ou quatre
 passent, trois est la signature d'une page générée. Pas de hero centré titre +
@@ -135,8 +143,13 @@ fond alterné, pas de rayon. L'en-tête en capitales petites, `--faint`.
 bloc qui ne dit rien quand il est replié cache au lieu de ranger : c'est la
 raison d'être des mentions de délivrance dans l'en-tête du bloc.
 
-**Rail** — sommaire unique de la page. Il ne répète jamais un plan que le
-contenu affiche déjà.
+**Barre de situation** — une ligne, collante, toujours présente. Elle porte le
+retour, le champ de recherche et ce qu'on est en train de lire. Rien qui pointe
+vers un bloc de la page : ce serait une seconde copie du plan que le document
+affiche déjà. Toujours là plutôt qu'apparaissant au défilement — un seuil, un
+état et une animation coûtent plus d'attention qu'ils n'économisent de place.
+Sa hauteur est un token, `--barre-h` : les cibles d'ancre s'en écartent d'autant
+en `scroll-margin-top`, sinon un lien vers 4.1 dépose son titre dessous.
 
 **Fil ATC** — dans la ligne de situation, en tête. Le code de la feuille en
 chasse fixe, les maillons en capitales de style, jamais dans la donnée.
@@ -167,4 +180,5 @@ métadonnées uniques — s'applique sans réserve.
 - [ ] Chaque contraste texte/fond ≥ 4,5
 - [ ] Filtres au-dessus de ce qu'ils pilotent
 - [ ] Date et périmètre affichés une seule fois
+- [ ] Aucune ancre interne dans la barre de situation
 - [ ] Rendu vérifié à 430 px de large

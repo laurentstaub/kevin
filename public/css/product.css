@@ -1,7 +1,7 @@
 /* Fiche produit.
  * Décision structurelle non-défaut : bandeau d'identité en pleine largeur,
- * sans marge extérieure, puis grille asymétrique rail / contenu. Aucune carte,
- * aucun encadré — les filets et le blanc portent la hiérarchie.
+ * sans marge extérieure, sur l'axe unique de la page. Aucune carte, aucun
+ * encadré — les filets et le blanc portent la hiérarchie.
  */
 
 /* Le bandeau prend la teinte claire de la famille : il se détache de la
@@ -14,7 +14,7 @@
 }
 
 .identite-inner {
-  max-width: 64rem;
+  max-width: var(--colonne);
   margin: 0 auto;
 }
 
@@ -129,135 +129,20 @@ a.forme-choix:hover {
 
 /* ---------- Grille asymétrique ---------- */
 
+/* Colonne unique. La barre, le bandeau d'identité et le contenu partagent
+   désormais la même largeur : un seul axe pour toute la page. */
 .corps {
-  max-width: 64rem;
+  max-width: var(--colonne);
   margin: 0 auto;
   padding: 0 var(--sp-4) var(--sp-8);
-  display: grid;
-  grid-template-columns: var(--rail) 1fr;
-  gap: var(--sp-6);
-  align-items: start;
 }
-
-/* Rail : sommaire unique de la page, rubriques du RCP comprises.
-   Il tient à l'écran et défile pour lui-même quand le plan est long. */
-.rail {
-  position: sticky;
-  top: 0;
-  max-height: 100vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--sp-4) var(--sp-1) var(--sp-4) 0;
-  font-size: var(--fs-sm);
-  scrollbar-width: thin;
-}
-
-.rail-plan {
-  list-style: none;
-  margin: 0 0 var(--sp-4);
-  padding: 0;
-}
-
-.rail-plan > li {
-  max-width: none;
-  border-bottom: var(--rule-width) solid var(--rule);
-  padding-bottom: var(--sp-1);
-  margin-bottom: var(--sp-1);
-}
-
-.rail-plan > li > .rail-lien {
-  display: block;
-  padding: var(--sp-1) 0;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.rail-lien:hover {
-  color: var(--accent);
-}
-
-/* Rubrique en cours de lecture : filet d'accent dans la marge, pas d'aplat. */
-.rail-lien.actif {
-  color: var(--accent);
-  box-shadow: -0.5rem 0 0 -0.35rem var(--accent);
-}
-
-.rail-doc-titre {
-  font-size: var(--fs-xs);
-  color: var(--faint);
-  margin: var(--sp-1) 0 0.15rem;
-  max-width: none;
-}
-
-.rail-rubriques {
-  list-style: none;
-  margin: 0 0 var(--sp-1);
-  padding: 0;
-}
-
-.rail-rubriques li {
-  max-width: none;
-}
-
-.rail-rubriques .rail-lien {
-  display: grid;
-  grid-template-columns: 1.8rem 1fr;
-  gap: 0.3rem;
-  padding: 0.18rem 0;
-  font-size: var(--fs-xs);
-  line-height: 1.35;
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.rail-rubriques .rub-n1 > .rail-lien {
-  color: var(--ink);
-  margin-top: 0.35rem;
-}
-
-.rail-rubriques .rub-n2 > .rail-lien,
-.rail-rubriques .rub-n3 > .rail-lien {
-  grid-template-columns: 0.6rem 1.8rem 1fr;
-}
-
-.rail-rubriques .rub-n2 > .rail-lien::before,
-.rail-rubriques .rub-n3 > .rail-lien::before {
-  content: '';
-}
-
-.rail-titre {
-  font-family: var(--font-body);
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--faint);
-  margin-bottom: var(--sp-1);
-}
-
-.rail-ailleurs ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.rail-ailleurs li {
-  max-width: none;
-  padding: 0.15rem 0;
-}
-
-.rail-ailleurs a {
-  font-size: var(--fs-xs);
-}
-
-/* ---------- Sections ---------- */
 
 /* Chaque section est un bloc repliable, fermé au chargement. La fiche s'ouvre
    sur son plan : quatre titres et leur volume, plutôt que trois écrans de
    tableaux qu'il faut dépasser pour atteindre le RCP. */
 .contenu > .bloc {
   padding-top: var(--sp-4);
-  scroll-margin-top: var(--sp-3);
+  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
 .bloc-tete {
@@ -520,7 +405,7 @@ td.forme {
   font-weight: 600;
   cursor: pointer;
   list-style: none;
-  scroll-margin-top: var(--sp-3);
+  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
 .rubrique[open] > .rubrique-tete {
@@ -592,7 +477,7 @@ td.forme {
   margin: var(--sp-4) 0 0;
   padding-top: var(--sp-1);
   border-top: var(--rule-width) solid var(--rule-medium);
-  scroll-margin-top: var(--sp-3);
+  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
 /* Surface de lecture d'un RCP : quarante mille signes lus à l'écran, souvent
@@ -731,7 +616,7 @@ td.forme {
   margin: var(--sp-4) 0 var(--sp-2);
   padding-top: var(--sp-1);
   border-top: var(--rule-width) solid var(--rule);
-  scroll-margin-top: var(--sp-3);
+  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
 /* Rubrique de premier niveau : c'est une charnière du document. */
@@ -786,7 +671,7 @@ td.forme {
   padding: var(--sp-1) 0;
 }
 
-/* ---------- Écran étroit : le rail passe au-dessus, en ligne ---------- */
+/* ---------- Écran étroit ---------- */
 
 @media (max-width: 52rem) {
   .identite,
@@ -796,49 +681,9 @@ td.forme {
   }
 
   .produit-titre {
-  text-wrap: balance;
+    text-wrap: balance;
     font-size: var(--fs-lg);
     max-width: none;
-  }
-
-  .corps {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  /* Écran étroit : le sommaire s'efface, ses liens sortants restent.
-   *
-   * En une colonne, le rail s'intercalait entre l'identité et le contenu :
-   * quatre mots annonçant les quatre titres qui suivaient immédiatement, et
-   * qui repoussaient sous la ligne de flottaison la seule chose qu'on vient
-   * chercher au comptoir — les mentions de délivrance. Un sommaire ne se
-   * justifie que s'il évite un parcours ; ici il en imposait un.
-   *
-   * « Ce produit ailleurs » n'est pas de la navigation interne : ce sont deux
-   * liens qui n'existent nulle part ailleurs sur la page. Ils passent donc
-   * après le contenu, à la place qu'occupent des références. */
-  .rail {
-    position: static;
-    order: 2;
-    max-height: none;
-    overflow: visible;
-    padding: var(--sp-4) 0 0;
-    border-top: var(--rule-width) solid var(--rule);
-    border-bottom: none;
-  }
-
-  .contenu {
-    order: 1;
-  }
-
-  .rail-plan {
-    display: none;
-  }
-
-  .rail-ailleurs ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
   }
 
   /* La forme disparaît sur écran étroit : la dénomination la contient
