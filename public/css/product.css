@@ -601,6 +601,23 @@ td.forme {
   color: var(--faint);
 }
 
+/* Le tableau d'une rubrique n'est pas un tableau d'interface : c'est le
+   document. Un tableau de posologie porte des doses — c'est même la ligne la
+   plus lue du RCP —, et il était épinglé à l'échelle de l'application, en rem
+   absolus : le corps du texte a grossi, lui non, et l'écart s'est vu. En em,
+   il suit la surface de lecture quelle que soit sa taille, et reste à peine en
+   dessous d'elle. Jamais loin en dessous : lire « 3000 mg par jour » plus
+   petit que la phrase qui l'introduit est la mauvaise hiérarchie. */
+.rubrique-corps table,
+.document-corps table {
+  font-size: 0.95em;
+}
+
+.rubrique-corps thead th,
+.document-corps thead th {
+  font-size: 0.8em;
+}
+
 .rubrique-corps table {
   margin: var(--sp-2) 0;
   font-family: var(--font-body);
