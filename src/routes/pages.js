@@ -20,6 +20,7 @@ import {
   getClassesPrincipales,
   getClasse,
   getProduitsDeClasse,
+  getMoleculesDeClasse,
   FEUILLE,
 } from '../atc.js';
 
@@ -61,11 +62,18 @@ export function pageRoutes(pool) {
       // de six cents produits, on n'en voyait que le début de l'alphabet, ce
       // qui n'apprend rien et laisse croire que la classe s'arrête à B.
       const feuille = classe.level === FEUILLE || classe.enfants.length === 0;
-      const { produits, total } = feuille
-        ? await getProduitsDeClasse(pool, code)
-        : { produits: [], total: null };
 
-      res.render('classe', { classe, produits, total, feuille });
+      // Les molécules ne sont rendues que si les sous-classes ne les sont pas
+      // déjà : sur « J05AF », les enfants directs *sont* les molécules, et la
+      // seconde liste répéterait la première mot pour mot.
+      const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
+
+      const [{ produits, total }, molecules] = await Promise.all([
+        feuille ? getProduitsDeClasse(pool, code) : { produits: [], total: null },
+        feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
+      ]);
+
+      res.render('classe', { classe, produits, total, feuille, molecules });
     }),
   );
 

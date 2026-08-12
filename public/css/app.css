@@ -393,6 +393,37 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* La gouttière du code est taillée pour « J05A », quatre signes ; un code de
+   molécule en fait sept — « J05AF06 » — et débordait sur le libellé. Les listes
+   de molécules ont donc la leur, sans élargir celle des sous-classes, qui n'en
+   a pas besoin et perdrait de la place. */
+.classes-molecules .classe-lien {
+  grid-template-columns: 4.2rem 1fr;
+}
+
+/* Le reste des molécules. Replié, parce qu'une liste écourtée en silence se
+   lit comme une liste complète — et déplié d'un clic, parce qu'aucune n'est
+   assez secondaire pour mériter une seconde page. */
+.classes-titre .compte {
+  float: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.molecules-plus {
+  display: inline-block;
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.molecules-plus::-webkit-details-marker {
+  display: none;
+}
+
 /* ---------- Fil ATC ---------- */
 
 /* Le fil siège dans la ligne de situation, en tête de page : aucune marge
@@ -433,6 +464,13 @@
 
 .atc-sep {
   color: var(--faint);
+}
+
+/* Dans le fil d'Ariane d'une page de classe, les maillons sont posés dans un
+   paragraphe et non dans le conteneur flex de la fiche : sans marge propre, le
+   chevron colle aux deux codes qu'il sépare. */
+.page-meta .atc-sep {
+  margin: 0 0.35em;
 }
 
 .atc-maillon {

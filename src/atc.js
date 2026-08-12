@@ -141,7 +141,7 @@ export async function getClasse(pool, code) {
   // n'apparaîtraient dans aucune liste, alors que leur code dit exactement d'où
   // elles descendent. On saute donc l'étage absent au lieu de buter dessus.
   const { rows: enfants } = await pool.query(
-    `SELECT c.atc_code AS code, c.atc_label AS label,
+    `SELECT c.atc_code AS code, c.atc_label AS label, c.atc_level AS level,
             count(DISTINCT ${racineSql('m')}) AS produits
      FROM ref.atc_classification c
      JOIN ref.cis_atc_mapping a ON a.atc_code LIKE c.atc_code || '%'
@@ -150,7 +150,7 @@ export async function getClasse(pool, code) {
        AND c.atc_code <> $1
        AND c.atc_level = (SELECT min(atc_level) FROM ref.atc_classification
                           WHERE atc_code LIKE $1 || '%' AND atc_code <> $1)
-     GROUP BY 1, 2
+     GROUP BY 1, 2, 3
      HAVING count(DISTINCT ${racineSql('m')}) > 0
      ORDER BY c.atc_code`,
     [code],
@@ -237,4 +237,39 @@ export async function getProduitsDeClasse(pool, code, { limit = config.search.li
     produits: rows.map(({ total, ...r }) => r),
     total: rows.length > 0 ? Number(rows[0].total) : 0,
   };
+}
+
+
+/**
+ * Molécules d'une classe, la plus répandue d'abord.
+ *
+ * Les sous-classes disent comment la classe est découpée ; elles ne disent pas
+ * ce qu'elle contient. « Antiviraux à action directe » n'apprend rien à qui
+ * cherche à savoir quels antiviraux existent — et redescendre quatre étages
+ * pour l'apprendre est un parcours, pas une réponse. Cette liste aplatit
+ * l'arbre : toutes les feuilles de la classe, d'un coup.
+ *
+ * L'ordre est le nombre de spécialités, faute de mieux. Ce n'est pas l'usage
+ * réel — pour cela il faudrait les volumes de l'Assurance Maladie, qui ne sont
+ * pas dans cette base — mais c'en est un indice honnête : une molécule qui
+ * porte quinze génériques est ancienne et répandue. Le défaut connu de ce
+ * classement est le produit récent sous brevet, une seule marque et gros
+ * volume, qui se retrouve plus bas qu'il ne le mérite. Le jour où les ventes
+ * seront joignables, seul l'ORDER BY change.
+ */
+export async function getMoleculesDeClasse(pool, code) {
+  const { rows } = await pool.query(
+    `SELECT c.atc_code AS code, c.atc_label AS label,
+            count(DISTINCT ${racineSql('m')})::int AS produits
+     FROM ref.atc_classification c
+     JOIN ref.cis_atc_mapping a ON a.atc_code = c.atc_code
+     JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
+     WHERE c.atc_level = $1 AND c.atc_code LIKE $2 || '%' AND c.atc_code <> $2
+     GROUP BY 1, 2
+     HAVING count(DISTINCT ${racineSql('m')}) > 0
+     ORDER BY count(DISTINCT ${racineSql('m')}) DESC, c.atc_label, c.atc_code`,
+    [FEUILLE, code],
+  );
+
+  return rows;
 }

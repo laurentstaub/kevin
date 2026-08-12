@@ -47,6 +47,40 @@ block content
                 span.classe-label= enfant.label
                 span.classe-compte #{enfant.produits.toLocaleString('fr-FR')} produits
 
+    //- Ce que la classe contient, et non comment elle se découpe.
+    //-
+    //- Les sous-classes disent le second ; « Antiviraux à action directe »
+    //- n'apprend rien à qui cherche quels antiviraux existent. Cette liste
+    //- aplatit l'arbre — toutes les feuilles de la classe, la plus répandue
+    //- d'abord. Vingt suffisent à donner la physionomie d'une classe ; le reste
+    //- est là, replié, parce qu'une liste écourtée en silence se lit comme une
+    //- liste complète.
+    if molecules && molecules.length > 0
+      - var TETE = 20
+      - var principales = molecules.slice(0, TETE)
+      - var reste = molecules.slice(TETE)
+      nav.classes.classes-molecules(aria-label="Molécules de la classe")
+        h2.classes-titre
+          | Molécules
+          span.compte= molecules.length.toLocaleString('fr-FR')
+        ul.classes-liste
+          each molecule in principales
+            li
+              a.classe-lien(href=`/classe/${molecule.code}`)
+                span.classe-code= molecule.code
+                span.classe-label= molecule.label
+                span.classe-compte #{molecule.produits.toLocaleString('fr-FR')} produit#{molecule.produits > 1 ? 's' : ''}
+        if reste.length > 0
+          details.molecules-reste
+            summary.molecules-plus #{reste.length.toLocaleString('fr-FR')} autre#{reste.length > 1 ? 's' : ''} molécule#{reste.length > 1 ? 's' : ''}
+            ul.classes-liste
+              each molecule in reste
+                li
+                  a.classe-lien(href=`/classe/${molecule.code}`)
+                    span.classe-code= molecule.code
+                    span.classe-label= molecule.label
+                    span.classe-compte #{molecule.produits.toLocaleString('fr-FR')} produit#{molecule.produits > 1 ? 's' : ''}
+
     if feuille
       section.groupe
         h2.groupe-titre
