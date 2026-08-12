@@ -631,3 +631,115 @@
   font-size: var(--fs-xs);
   color: var(--faint);
 }
+
+/* ---------- Rail de navigation ---------- */
+
+/* Il ne redit pas le plan de la page — celui-ci est dans la colonne de
+   lecture, numéroté, et l'accordéon replié le montre en entier. Il répond au
+   besoin qui traverse toutes les pages : sortir de la fiche qu'on lit. C'est
+   le seul endroit du site où la classification est visible sans l'avoir
+   cherchée.
+ *
+ * Fixe et non collant : il défile pour son compte, indépendamment de la
+ * lecture. Le corps de page se décale d'autant, si bien que rien n'est
+ * recouvert et que les colonnes centrées le restent — dans l'espace qui
+ * demeure. */
+.rail {
+  display: none;
+}
+
+@media (min-width: 75rem) {
+  :root {
+    --rail-l: 15rem;
+  }
+
+  body {
+    padding-left: var(--rail-l);
+  }
+
+  .rail {
+    display: block;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--rail-l);
+    overflow-y: auto;
+    /* Arrivé en bas du rail, la molette ne doit pas emporter la page : on lit
+       d'un côté, on navigue de l'autre, et les deux ne se poussent pas. */
+    overscroll-behavior: contain;
+    padding: var(--sp-3) var(--sp-2) var(--sp-6);
+    border-right: var(--rule-width) solid var(--rule);
+    /* Même fond que la page, séparé par un filet. Un aplat de couleur ferait
+       du rail un panneau posé sur la page ; ce n'en est pas un, c'est une
+       marge qui porte des liens. Et un survol doit s'assombrir, pas
+       s'éclaircir — impossible sur un fond déjà teinté. */
+    background: var(--bg);
+  }
+}
+
+.rail-groupe {
+  display: flex;
+  flex-direction: column;
+}
+
+.rail-titre {
+  margin: var(--sp-4) 0 var(--sp-1);
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  /* --muted et non --faint : ces libellés sont du texte de navigation, pas
+     une métadonnée en retrait, et --faint passe sous 4,5 dès que le fond
+     n'est plus le blanc pur — au survol, par exemple. */
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Cible de clic pleine largeur : dans une liste verticale, viser le texte
+   plutôt que la ligne est une exigence gratuite. */
+.rail-lien {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0 var(--sp-1);
+  align-items: baseline;
+  padding: 0.4rem var(--sp-1);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+/* Un lien sans code n'a pas de gouttière à respecter. */
+.rail-seul {
+  display: block;
+}
+
+.rail-lien:hover {
+  background: var(--bg-tint);
+  color: var(--ink);
+}
+
+/* Même aplat que l'onglet sélectionné : un seul vocabulaire pour dire « vous
+   êtes ici », qu'il s'agisse d'un document ou d'une branche. */
+.rail-actif,
+.rail-actif:hover {
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.rail-code {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.rail-actif .rail-code {
+  color: var(--accent);
+}
+
+/* Le libellé CNAM arrive en capitales sans accents. Quatorze fois de suite, il
+   crie ; en bas de casse il se lit, et l'initiale reprend sa majuscule. */
+.rail-label {
+  text-transform: lowercase;
+  line-height: 1.35;
+}
+
+.rail-label::first-letter {
+  text-transform: uppercase;
+}

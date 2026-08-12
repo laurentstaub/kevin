@@ -1,0 +1,32 @@
+//- Rail de navigation, à gauche, indépendant de la lecture.
+//-
+//- Il ne redit pas le plan de la page : celui-ci est déjà dans la colonne de
+//- lecture, numéroté, et l'accordéon replié le montre en entier. Ce rail-là
+//- répond à l'autre besoin, celui qui traverse toutes les pages — sortir de la
+//- fiche qu'on lit pour aller ailleurs dans la base. C'est le seul endroit du
+//- site où la classification est visible sans l'avoir cherchée.
+//-
+//- Il disparaît sous 1200 px. En dessous, l'espace appartient au texte, et la
+//- barre collante porte déjà le retour et la recherche.
+//-
+//- @param {Array}  classes  classes ATC de niveau 1, les plus fournies d'abord
+//- @param {string} actif    'accueil' ou la lettre ATC de la page en cours
+mixin rail(classes, actif)
+  aside.rail(aria-label="Navigation générale")
+    nav.rail-groupe
+      a.rail-lien.rail-seul(href="/" class=(actif === 'accueil' ? 'rail-actif' : null)
+        aria-current=(actif === 'accueil' ? 'page' : null)) Accueil
+
+    if classes && classes.length
+      p.rail-titre Classes thérapeutiques
+      nav.rail-groupe
+        each c in classes
+          //- Le libellé CNAM arrive en capitales sans accents. Composé tel
+          //- quel, quatorze fois de suite, il crie ; en bas de casse il se
+          //- lit. Le code reste en clair : c'est lui qu'on retient.
+          a.rail-lien(href=`/classe/${c.code}`
+            class=(actif === c.code ? 'rail-actif' : null)
+            aria-current=(actif === c.code ? 'page' : null)
+            title=`${c.code} — ${c.label}`)
+            span.rail-code= c.code
+            span.rail-label= c.label

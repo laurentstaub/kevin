@@ -27,6 +27,24 @@ import {
 export function pageRoutes(pool) {
   const router = Router();
 
+  /**
+   * Le rail est sur toutes les pages, il se charge donc une fois pour toutes.
+   *
+   * `getClassesPrincipales` garde son résultat en mémoire — quatorze lignes
+   * qui ne changent qu'au rechargement mensuel de la BDPM. Un défaut de
+   * classification ne doit rien empêcher : le rail rend alors le seul lien
+   * d'accueil, et la page s'affiche comme avant qu'il existe.
+   */
+  router.use(
+    wrap(async (req, res, next) => {
+      res.locals.rail = await getClassesPrincipales(pool).catch((err) => {
+        console.error('[rail] classes indisponibles :', err.message);
+        return [];
+      });
+      next();
+    }),
+  );
+
   router.get(
     '/',
     wrap(async (req, res) => {
@@ -37,7 +55,9 @@ export function pageRoutes(pool) {
         return [];
       });
 
-      res.render('search_page', { query: '', filter: 'all', results: null, classes });
+      res.render('search_page', {
+        query: '', filter: 'all', results: null, classes, railActif: 'accueil',
+      });
     }),
   );
 
@@ -73,7 +93,9 @@ export function pageRoutes(pool) {
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
       ]);
 
-      res.render('classe', { classe, produits, total, feuille, molecules });
+      res.render('classe', {
+        classe, produits, total, feuille, molecules, railActif: code[0],
+      });
     }),
   );
 
@@ -194,13 +216,18 @@ export function pageRoutes(pool) {
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
 
+      const resumeAtc = resumerClasse(classeAtc);
+
       res.render('product', {
         product,
         importation,
         reference,
         substitutions,
         variantes,
-        resumeAtc: resumerClasse(classeAtc),
+        resumeAtc,
+        // La branche à laquelle appartient le produit lu — le rail montre où
+        // l'on se trouve dans la classification, pas seulement où aller.
+        railActif: resumeAtc?.feuille?.code?.[0] ?? null,
         genericGroup: genericGroupLabel(substitutions),
         documents,
         hasDocuments,

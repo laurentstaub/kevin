@@ -1,3 +1,4 @@
+include _rail.pug
 doctype html
 html(lang="fr")
   head
@@ -8,5 +9,6 @@ html(lang="fr")
     link(rel="stylesheet", href=`/css/app.css?v=${v}`)
     block styles
   body
+    +rail(rail, railActif)
     block content
     block scripts
