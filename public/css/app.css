@@ -733,13 +733,41 @@
   color: var(--accent);
 }
 
-/* Le libellé CNAM arrive en capitales sans accents. Quatorze fois de suite, il
-   crie ; en bas de casse il se lit, et l'initiale reprend sa majuscule. */
 .rail-label {
-  text-transform: lowercase;
   line-height: 1.35;
 }
 
-.rail-label::first-letter {
+/* Le libellé CNAM arrive en capitales sans accents. Quatorze fois de suite, il
+   crie ; en bas de casse il se lit, et l'initiale reprend sa majuscule. Les
+   libellés de rubriques, eux, sont déjà composés — on n'y touche pas. */
+.rail-label-crie {
+  text-transform: lowercase;
+}
+
+.rail-label-crie::first-letter {
   text-transform: uppercase;
+}
+
+/* ---------- Plan de la fiche ---------- */
+
+/* Les rubriques sont en retrait de la section qui les porte : le décalage dit
+   l'imbrication mieux qu'un filet ou une puce, et ne coûte aucune encre.
+   Composées un cran plus petit, elles se lisent comme un détail du plan et non
+   comme son deuxième étage. */
+.rail-rubrique {
+  padding-left: var(--sp-2);
+  font-size: var(--fs-xs);
+}
+
+.rail-rubrique .rail-code {
+  font-size: 0.95em;
+}
+
+/* Repère de lecture posé par documents.js : la rubrique qu'on est en train de
+   lire. Un trait à gauche plutôt qu'un aplat — l'aplat dit « vous êtes sur
+   cette page », le trait dit « vous en êtes là », et les deux coexistent sur
+   la fiche produit. */
+.rail-ici {
+  color: var(--ink);
+  box-shadow: inset 2px 0 0 var(--accent);
 }

@@ -1,21 +1,59 @@
 //- Rail de navigation, à gauche, indépendant de la lecture.
 //-
-//- Il ne redit pas le plan de la page : celui-ci est déjà dans la colonne de
-//- lecture, numéroté, et l'accordéon replié le montre en entier. Ce rail-là
-//- répond à l'autre besoin, celui qui traverse toutes les pages — sortir de la
-//- fiche qu'on lit pour aller ailleurs dans la base. C'est le seul endroit du
-//- site où la classification est visible sans l'avoir cherchée.
+//- Deux blocs, toujours dans cet ordre : « où je suis » puis « où je peux
+//- aller ». Le premier change de page en page et c'est celui dont on se sert
+//- maintenant, d'où sa place en tête ; le second ne bouge jamais et se
+//- mémorise par sa position, d'où sa place en pied. Il reste déplié même
+//- quand le plan au-dessus est long : un bloc qui se replie tout seul sur
+//- certaines pages détruit la prévisibilité qu'on cherchait, et le rail
+//- défile pour son compte — sa longueur ne coûte rien à la lecture.
+//-
+//- Règle qui tient tout le reste : **le rail est une vue de la page, jamais un
+//- second modèle**. L'accordéon sait ce qui est ouvert, quel onglet est actif,
+//- quelles rubriques manquent. Le rail le reflète et ne décide de rien ; les
+//- liens sont de simples ancres, que documents.js sait déjà déplier avant d'y
+//- conduire. Sans JavaScript, ils fonctionnent quand même.
 //-
 //- Il disparaît sous 1200 px. En dessous, l'espace appartient au texte, et la
-//- barre collante porte déjà le retour et la recherche.
+//- barre collante porte déjà le retour, la recherche et le repère de lecture.
+
+//- Plan de la fiche : les sections de la page, et sous « Documents » les
+//- rubriques de tête du document affiché.
 //-
-//- @param {Array}  classes  classes ATC de niveau 1, les plus fournies d'abord
-//- @param {string} actif    'accueil' ou la lettre ATC de la page en cours
-mixin rail(classes, actif)
-  aside.rail(aria-label="Navigation générale")
+//- Niveau 1 seulement. Un RCP porte douze rubriques de tête et une quarantaine
+//- de sous-rubriques ; les afficher toutes ferait un rail plus long que la
+//- colonne de lecture, pour un plan qu'on ne lirait plus.
+mixin railPlan(sections, documents)
+  p.rail-titre Cette fiche
+  nav.rail-groupe.rail-plan
+    each s in sections
+      a.rail-lien.rail-seul(href=`#${s.id}`)= s.label
+
+      //- Les rubriques s'imbriquent sous la section qui les porte. Un jeu par
+      //- document : documents.js révèle celui de l'onglet actif, comme il le
+      //- fait déjà des panneaux.
+      if s.id === 'documents' && documents
+        each doc, i in documents
+          if doc.rubriques && doc.rubriques.length > 0
+            .rail-sous(data-doc=doc.type hidden=(i > 0))
+              each r in doc.rubriques
+                if r.profondeur === 1
+                  a.rail-lien.rail-rubrique(href=`#${r.id}`)
+                    span.rail-code= r.numero
+                    span.rail-label= r.libelle
+
+//- @param {Array}  classes    classes ATC de niveau 1, les plus fournies d'abord
+//- @param {string} actif      'accueil' ou la lettre ATC de la page en cours
+//- @param {Array}  sections   plan de la fiche produit, absent ailleurs
+//- @param {Array}  documents  documents découpés de la fiche, absents ailleurs
+mixin rail(classes, actif, sections, documents)
+  aside.rail(aria-label="Navigation")
     nav.rail-groupe
       a.rail-lien.rail-seul(href="/" class=(actif === 'accueil' ? 'rail-actif' : null)
         aria-current=(actif === 'accueil' ? 'page' : null)) Accueil
+
+    if sections && sections.length
+      +railPlan(sections, documents)
 
     if classes && classes.length
       p.rail-titre Classes thérapeutiques
@@ -29,4 +67,4 @@ mixin rail(classes, actif)
             aria-current=(actif === c.code ? 'page' : null)
             title=`${c.code} — ${c.label}`)
             span.rail-code= c.code
-            span.rail-label= c.label
+            span.rail-label.rail-label-crie= c.label

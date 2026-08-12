@@ -241,3 +241,89 @@ if (enveloppes.length > 0) {
   for (const onglet of onglets) onglet.addEventListener('click', bientot);
   bientot();
 }
+
+// ---------------------------------------------------------------------------
+// Rail : reflet de la page, jamais un second modèle.
+//
+// Deux liens seulement entre le rail et l'accordéon, et ils vont dans le même
+// sens : le rail montre le plan du document affiché, et surligne la rubrique
+// en cours de lecture. Il ne décide de rien — ses liens sont des ancres, que
+// `reveler` sait déjà déplier avant d'y conduire.
+
+const rail = document.querySelector('.rail');
+
+if (rail && documents) {
+  const jeux = [...rail.querySelectorAll('.rail-sous')];
+
+  // Le plan suit l'onglet. Sans ça, le rail nommerait les rubriques d'un
+  // document caché — le pire défaut possible pour un sommaire.
+  const suivreOnglet = () => {
+    const actif = onglets.findIndex((o) => o.getAttribute('aria-selected') === 'true');
+    const type = panneaux[actif]?.dataset.type;
+    for (const jeu of jeux) jeu.hidden = type ? jeu.dataset.doc !== type : false;
+  };
+
+  for (const onglet of onglets) onglet.addEventListener('click', suivreOnglet);
+  for (const panneau of panneaux) panneau?.addEventListener('beforematch', suivreOnglet);
+  if (jeux.length > 1) suivreOnglet();
+
+  // --- Repère de lecture ---------------------------------------------------
+
+  // Le rail n'existe qu'au-delà de 1200 px : inutile de mesurer quoi que ce
+  // soit sur un téléphone, où la barre collante fait déjà ce travail.
+  const large = matchMedia('(min-width: 75rem)');
+  let cibles = null;
+  const perimerCibles = () => { cibles = null; };
+
+  const paires = () => {
+    if (!cibles) {
+      cibles = [];
+      for (const lien of rail.querySelectorAll('.rail-plan .rail-lien[href^="#"]')) {
+        if (lien.closest('[hidden]')) continue;
+        const cible = document.getElementById(decodeURIComponent(lien.hash.slice(1)));
+        if (cible) cibles.push({ lien, cible });
+      }
+      // Ordre du document, et non celui du balisage : les rubriques sont
+      // imbriquées sous « Documents » alors qu'elles le suivent dans la page.
+      cibles.sort((a, b) => (
+        a.cible.compareDocumentPosition(b.cible) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+      ));
+    }
+    return cibles;
+  };
+
+  let marque = null;
+
+  const peindre = () => {
+    if (!large.matches) return;
+    const seuil = (barre?.getBoundingClientRect().bottom ?? 0) + 8;
+
+    let trouve = null;
+    for (const { lien, cible } of paires()) {
+      if (cible.getBoundingClientRect().top > seuil) break;
+      trouve = lien;
+    }
+
+    if (trouve === marque) return;
+    marque?.classList.remove('rail-ici');
+    trouve?.classList.add('rail-ici');
+    marque = trouve;
+  };
+
+  let differe = false;
+  const bientot = () => {
+    if (differe) return;
+    differe = true;
+    requestAnimationFrame(() => { differe = false; peindre(); });
+  };
+
+  const rafraichir = () => { perimerCibles(); bientot(); };
+
+  addEventListener('scroll', bientot, { passive: true });
+  addEventListener('resize', rafraichir, { passive: true });
+  large.addEventListener('change', rafraichir);
+  documents.addEventListener('toggle', rafraichir, true);
+  for (const onglet of onglets) onglet.addEventListener('click', rafraichir);
+
+  peindre();
+}
