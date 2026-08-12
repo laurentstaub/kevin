@@ -507,6 +507,43 @@ td.forme {
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
+/* Une charnière porteuse d'un groupe devient le contrôle de ce groupe. Le
+   bouton reprend la grille du titre — la gouttière de numérotation doit rester
+   alignée sur celle des rubriques, sinon la colonne des numéros ondule. */
+.charniere:has(> .charniere-bascule) {
+  display: block;
+}
+
+.charniere-bascule {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  width: 100%;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Même « + / − » que les rubriques : un seul vocabulaire pour « ceci
+   s'ouvre ». Sans lui, rien ne disait que 6.1 à 6.6 formaient un groupe, et
+   les refermer demandait six clics. */
+.charniere .num::after {
+  content: '+';
+  color: var(--faint);
+  font-weight: 400;
+  margin-left: 0.35em;
+}
+
+.charniere.ouverte .num::after {
+  content: '−';
+}
+
 /* Une charnière et la rubrique qu'elle introduit forment un seul bloc : « 4 »
    ne veut rien dire sans « 4.1 ». Pas d'air entre les deux, donc — et comme
    4.1 est ouverte par défaut, l'air placé au-dessus de la charnière se voyait

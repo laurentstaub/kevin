@@ -398,3 +398,46 @@ if (rail && documents) {
 
   peindre();
 }
+
+// ---------------------------------------------------------------------------
+// Charnières : ouvrir et refermer une rubrique entière d'un geste.
+//
+// « 6. Données pharmaceutiques » n'a pas de contenu propre — son contenu, ce
+// sont 6.1 à 6.6. Une fois les six ouvertes, il fallait six clics pour revenir
+// en arrière, et rien à l'écran ne disait qu'elles formaient un groupe. La
+// charnière devient donc le contrôle de son groupe, avec le même « + / − » que
+// les rubriques : un seul vocabulaire pour « ceci s'ouvre ».
+//
+// Construit ici et non dans le gabarit : sans JavaScript, un bouton serait un
+// contrôle mort, focalisable et sans effet. Sans lui, la charnière reste le
+// titre qu'elle était.
+
+for (const charniere of document.querySelectorAll('.charniere')) {
+  const groupe = sousRubriques(charniere);
+  if (groupe.length === 0) continue;
+
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className = 'charniere-bascule';
+  bouton.append(...charniere.childNodes);
+  charniere.append(bouton);
+
+  const etat = () => {
+    const ouvert = groupe.some((d) => d.open);
+    charniere.classList.toggle('ouverte', ouvert);
+    bouton.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+    return ouvert;
+  };
+
+  bouton.addEventListener('click', () => {
+    const fermer = etat();
+    for (const d of groupe) d.open = !fermer;
+    etat();
+  });
+
+  // Ouvrir ou fermer une sous-rubrique à la main doit se voir sur la
+  // charnière : deux états qui se contredisent valent moins que pas d'état.
+  for (const d of groupe) d.addEventListener('toggle', etat);
+
+  etat();
+}
