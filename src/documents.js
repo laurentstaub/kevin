@@ -27,8 +27,12 @@ export const DOCUMENT_LABELS = {
  * scraper n'a jamais rempli, et qui rend 404 une fois résolu contre la BDPM.
  * La fiche document du site, elle, est stable et porte le vrai lien.
  */
+// L'ancienne forme — affichageDoc.php?specid=…&typedoc=R — répond encore, par
+// une redirection 301 vers celle-ci. Autant viser l'arrivée : un aller-retour
+// de moins pour le lecteur, et le lien survit au jour où la redirection sera
+// retirée.
 const ficheDocument = (cis) =>
-  `${config.documentBaseUrl}/affichageDoc.php?specid=${encodeURIComponent(cis)}&typedoc=R`;
+  `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`;
 
 function lienOfficiel(cis, filePath) {
   if (!filePath) return null;

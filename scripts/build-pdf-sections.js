@@ -117,9 +117,12 @@ const soucis = [];
 
 // -------------------------------------------------- résolution du lien réel
 
-/** Fiche document de la BDPM : c'est elle qui porte le lien vers le PDF. */
+/** Fiche document de la BDPM : c'est elle qui porte le lien vers le PDF.
+ *  L'ancienne forme — affichageDoc.php?specid=…&typedoc=R — n'y mène plus que
+ *  par une redirection 301. Deux mille et une spécialités, deux mille et un
+ *  aller-retours inutiles : on vise l'arrivée. */
 const fiche = (cis) =>
-  `${config.documentBaseUrl}/affichageDoc.php?specid=${encodeURIComponent(cis)}&typedoc=R`;
+  `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`;
 
 const PDF_DANS_PAGE = /https?:\/\/[^\s"'<>]+?\.pdf/gi;
 

@@ -133,3 +133,42 @@ describe('equilibrer', () => {
     assert.equal(equilibrer(sain), sain);
   });
 });
+
+// Depuis la refonte, affichageDoc.php redirige vers /medicament/<CIS>/extrait :
+// une seule page qui porte le RCP *puis* la notice.
+describe('page unique portant les deux documents', () => {
+  const DEUX = page(`<div class="doc">
+    <p>1. DENOMINATION DU MEDICAMENT</p><p>AMOXICILLINE ALMUS 1 g</p>
+    <p>2. COMPOSITION QUALITATIVE ET QUANTITATIVE</p><p>${'Composition. '.repeat(40)}</p>
+    <p>3. FORME PHARMACEUTIQUE</p><p>${'Forme. '.repeat(40)}</p>
+    <p>4. DONNEES CLINIQUES</p><p>${'Clinique. '.repeat(60)}</p>
+    <p>NOTICE : INFORMATION DE L'UTILISATEUR</p>
+    <p>1. Qu'est-ce que AMOXICILLINE ALMUS et dans quels cas est-il utilisé</p>
+    <p>${'Patient. '.repeat(80)}</p>
+    <p>2. Quelles sont les informations à connaître</p><p>${'Patient. '.repeat(50)}</p>
+    <p>3. Comment prendre AMOXICILLINE ALMUS</p><p>${'Patient. '.repeat(50)}</p>
+    <p>4. Quels sont les effets indésirables éventuels</p><p>${'Patient. '.repeat(40)}</p>
+    <p>5. Comment conserver AMOXICILLINE ALMUS</p><p>${'Patient. '.repeat(30)}</p>
+    <p>6. Contenu de l'emballage et autres informations</p><p>${'Patient. '.repeat(30)}</p>
+  </div>`);
+
+  it('le RCP s’arrête où la notice commence', () => {
+    const rcp = extraireDocument(DEUX, 'rcp');
+    assert.doesNotMatch(rcp.html, /INFORMATION DE L'UTILISATEUR/);
+    assert.doesNotMatch(rcp.html, /Patient\./);
+  });
+
+  it('la notice ne reprend pas le RCP', () => {
+    const notice = extraireDocument(DEUX, 'notice');
+    assert.doesNotMatch(notice.html, /DENOMINATION DU MEDICAMENT/);
+    assert.match(notice.html, /INFORMATION DE L'UTILISATEUR/);
+  });
+
+  it('les deux mis bout à bout font le document entier, sans recouvrement', () => {
+    const rcp = extraireDocument(DEUX, 'rcp');
+    const notice = extraireDocument(DEUX, 'notice');
+    assert.ok(rcp.signes > 0 && notice.signes > 0);
+    // Avant la borne, le RCP faisait à lui seul la somme des deux.
+    assert.ok(rcp.signes < notice.signes * 3, `rcp ${rcp.signes} / notice ${notice.signes}`);
+  });
+});

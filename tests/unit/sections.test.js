@@ -185,7 +185,7 @@ describe('withSections', () => {
         label: 'Résumé des caractéristiques et notice',
         html: '',
         sections: [],
-        url: 'https://base-donnees-publique.medicaments.gouv.fr/affichageDoc.php?specid=60966449&typedoc=R',
+        url: 'https://base-donnees-publique.medicaments.gouv.fr/medicament/60966449/extrait',
         lastUpdated: '2025-05-06',
       },
       { cis: '60966449', type: 'main', anchor: 'doc-main', label: 'Fiche info', html: '<p>i</p>', sections: [], url: null },
@@ -206,7 +206,7 @@ describe('withSections', () => {
 
     it('leur transmet le lien et la date du document porteur', () => {
       const rcp = fusion().find((d) => d.type === 'rcp');
-      assert.match(rcp.url, /affichageDoc\.php\?specid=60966449/);
+      assert.match(rcp.url, /\/medicament\/60966449\/extrait$/);
       assert.equal(rcp.lastUpdated, '2025-05-06');
     });
 

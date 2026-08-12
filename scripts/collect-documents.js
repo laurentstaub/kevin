@@ -44,9 +44,13 @@ const VUS = path.join(CACHE, 'vus.json');
 const UA = { 'User-Agent': 'dr-kevin/2.0 (collecte de RCP, usage interne)' };
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Depuis la refonte, affichageDoc.php redirige vers /medicament/<CIS>/extrait,
+// une seule page qui porte le RCP puis la notice — quel que soit `typedoc`. On
+// ne demande donc qu'une fois, et l'on n'insiste avec « N » que si la notice
+// manque à l'appel, au cas où une fiche suivrait encore l'ancienne forme.
 const TYPES = [
-  { typedoc: 'R', document_type: 'rcp', plan: 'rcp' },
-  { typedoc: 'N', document_type: 'notice', plan: 'notice' },
+  { document_type: 'rcp', plan: 'rcp' },
+  { document_type: 'notice', plan: 'notice' },
 ];
 
 await mkdir(CACHE, { recursive: true });
@@ -82,8 +86,11 @@ console.log(`\n${cibles.length.toLocaleString('fr-FR')} spécialité(s) sans doc
 const bilan = { html: 0, pdf: 0, absents: 0, erreurs: 0, redirections: 0 };
 const soucis = [];
 
-const fiche = (cis, typedoc) =>
-  `${config.documentBaseUrl}/affichageDoc.php?specid=${encodeURIComponent(cis)}&typedoc=${typedoc}`;
+// La forme d'arrivée d'abord ; l'ancienne ne sert qu'au repli « notice à part »,
+// pour les fiches qui n'auraient pas encore migré.
+const fiche = (cis, typedoc) => (typedoc === 'R'
+  ? `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`
+  : `${config.documentBaseUrl}/affichageDoc.php?specid=${encodeURIComponent(cis)}&typedoc=${typedoc}`);
 
 // --------------------------------------------------------------- collecte
 
@@ -93,42 +100,51 @@ for (const [i, cible] of restants.entries()) {
   let pdf = null;
   let absent = false;
 
+  /** Récupère une page et signale une redirection plutôt que de l'avaler. */
+  const demander = async (typedoc) => {
+    const url = fiche(cis, typedoc);
+    const reponse = await fetch(url, { headers: UA, redirect: 'follow' });
+    await dormir(PAUSE);
+
+    // Une redirection n'est pas un succès : c'est le signe que la source a
+    // bougé. L'ancien collecteur est probablement mort d'une migration d'URL
+    // qu'il a suivie sans rien dire.
+    if (reponse.redirected && reponse.url !== url) {
+      bilan.redirections += 1;
+      if (bilan.redirections === 1) {
+        console.log(`  redirection : ${url}\n             -> ${reponse.url}\n`);
+      }
+    }
+
+    if (reponse.status === 404) return null;
+    if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+    return reponse.text();
+  };
+
   try {
-    for (const t of TYPES) {
-      const url = fiche(cis, t.typedoc);
-      const reponse = await fetch(url, { headers: UA, redirect: 'follow' });
-      await dormir(PAUSE);
-
-      // Une redirection n'est pas un succès : c'est le signe que la source a
-      // bougé. L'ancien collecteur est probablement mort d'une migration
-      // d'URL qu'il a suivie sans rien dire.
-      if (reponse.redirected && reponse.url !== url) {
-        bilan.redirections += 1;
-        if (bilan.redirections === 1) {
-          console.log(`  redirection : ${url}\n             -> ${reponse.url}\n`);
-        }
+    const page = await demander('R');
+    if (page === null) absent = true;
+    else if (pageSansDocument(page)) absent = true;
+    else {
+      for (const t of TYPES) {
+        const doc = extraireDocument(page, t.plan);
+        if (doc) trouves.push({ ...t, ...doc });
       }
 
-      if (reponse.status === 404) { absent = true; continue; }
-      if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
-
-      const page = await reponse.text();
-
-      if (pageSansDocument(page)) { absent = true; continue; }
-
-      const doc = extraireDocument(page, t.plan);
-      if (doc) {
-        trouves.push({ ...t, ...doc });
-        continue;
+      // Une fiche restée à l'ancienne forme peut servir la notice à part.
+      if (!trouves.some((d) => d.document_type === 'notice')) {
+        const autre = await demander('N');
+        const doc = autre && extraireDocument(autre, 'notice');
+        if (doc) trouves.push({ document_type: 'notice', plan: 'notice', ...doc });
       }
 
-      // Pas de texte : c'est peut-être une centralisée, dont la BDPM ne sert
+      // Rien d'extrait : c'est peut-être une centralisée, dont la BDPM ne sert
       // qu'un lien vers le PDF de l'EMA. On note l'adresse, build-pdf-sections
       // fera le reste — il sait déjà.
-      pdf = pdf ?? lienPdf(page);
+      if (trouves.length === 0) pdf = lienPdf(page);
 
-      if (MONTRER) {
-        console.log(`\n--- ${cis} ${t.typedoc} : rien d'extrait, ${page.length} signes de page ---`);
+      if (MONTRER && trouves.length === 0) {
+        console.log(`\n--- ${cis} : rien d'extrait, ${page.length} signes de page ---`);
         console.log(page.replace(/\s+/g, ' ').slice(0, 1200));
       }
     }

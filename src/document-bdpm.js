@@ -27,6 +27,19 @@ const DEBUT = {
   notice: /(?:^|>)\s*NOTICE\s*:|1\s*\.?\s*QU[’'`]?EST[- ]CE\s+QU/i,
 };
 
+/**
+ * Où s'arrête un document.
+ *
+ * Depuis la refonte du site, `affichageDoc.php` redirige vers
+ * `/medicament/<CIS>/extrait`, **une seule page qui porte le RCP puis la
+ * notice**. Sans cette borne, le RCP extrait emportait la notice avec lui —
+ * trente-huit mille signes au lieu de vingt mille, et le lecteur aurait trouvé
+ * la notice patient à la suite de la rubrique 12.
+ *
+ * La notice, elle, va jusqu'au bout : rien ne la suit.
+ */
+const FIN = { rcp: DEBUT.notice };
+
 /** Un titre de rubrique numéroté : « 4.2 Posologie », « 10. DATE DE MISE À JOUR ». */
 const RUBRIQUE = /(?:^|>)\s*(\d{1,2}(?:\.\d{1,2})*)\s*\.?\s+[A-ZÀ-Þ«"(]/gm;
 
@@ -121,11 +134,17 @@ export function extraireDocument(page, type = 'rcp') {
   const depart = corps.search(motif);
   if (depart === -1) return null;
 
+  // La borne se cherche après le début, sinon une mention de la notice dans
+  // l'en-tête du RCP couperait le document à sa première ligne.
+  const borne = FIN[type];
+  const apres = borne ? corps.slice(depart + 1).search(borne) : -1;
+  const arret = apres === -1 ? corps.length : depart + 1 + apres;
+
   // Reculer jusqu'à l'ouverture de la balise qui porte ce titre : couper au
   // milieu d'un élément laisserait une balise fermante orpheline, et le
   // navigateur recollerait les morceaux à sa façon.
   const ouverture = corps.lastIndexOf('<', depart);
-  const html = equilibrer(corps.slice(ouverture === -1 ? depart : ouverture).trim());
+  const html = equilibrer(corps.slice(ouverture === -1 ? depart : ouverture, arret).trim());
 
   const rubriques = rubriquesVues(html);
   const signes = texteNu(html).length;
