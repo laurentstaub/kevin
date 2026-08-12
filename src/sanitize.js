@@ -21,15 +21,78 @@ const OPTIONS = {
     '*': ['lang'],
   },
   allowedSchemes: ['http', 'https', 'mailto'],
-  // Tout lien externe s'ouvre isolé de la page appelante.
-  transformTags: {
-    a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer nofollow', target: '_blank' }),
-  },
+  // « //ailleurs.fr/x » n'est pas un chemin : c'est une adresse absolue qui
+  // emprunte notre protocole. Sans ce verrou, `resoudreLien` la prendrait
+  // pour un chemin de la BDPM et la laisserait passer.
+  allowProtocolRelative: false,
+  transformTags: { a: transformerLien },
   disallowedTagsMode: 'discard',
   // « title » est là parce que le scraping conserve la balise de la page :
   // sans cela son texte se retrouverait en tête du document.
   nonTextTags: ['script', 'style', 'textarea', 'noscript', 'iframe', 'object', 'embed', 'title'],
 };
+
+/**
+ * Résout le lien d'un document contre le site dont il provient.
+ *
+ * Les fiches de la BDPM renvoient les unes aux autres par des chemins relatifs
+ * — « ?searchGroupeGenerique=… », « /medicament/… ». Servis tels quels depuis
+ * notre origine, ils désignent des pages qui n'existent pas chez nous : le
+ * lecteur cliquait sur un groupe générique et tombait sur notre 404. C'est le
+ * même défaut que celui déjà corrigé pour les `file_path` des PDF, à un autre
+ * endroit du même document.
+ *
+ * @returns {string|null} l'adresse résolue, ou null si le lien ne mène nulle
+ *   part de légitime — auquel cas on garde le texte et on jette le lien.
+ */
+export function resoudreLien(href) {
+  const valeur = String(href ?? '').trim();
+  if (!valeur) return null;
+
+  // Une ancre reste dans la page : c'est le seul cas où « relatif » ne veut
+  // pas dire « chez la BDPM ».
+  if (valeur.startsWith('#')) return valeur;
+
+  // Déjà absolu : la liste des schémas s'en charge après nous.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(valeur)) return valeur;
+
+  // Reste un chemin — sauf « //hôte/… », qui est une adresse absolue déguisée.
+  if (valeur.startsWith('//')) return null;
+
+  try {
+    return new URL(valeur, config.documentBaseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Un lien de document : résolu, et ouvert à part s'il sort de la page.
+ *
+ * Une ancre interne garde son comportement : lui coller `target="_blank"`
+ * ouvrirait un onglet pour descendre de trois paragraphes.
+ */
+function transformerLien(tagName, attribs) {
+  const href = resoudreLien(attribs.href);
+
+  // Lien mort — ancre de rubrique « <a name=…> », chemin illisible, adresse
+  // absolue déguisée. On le rend sans href : le déballage qui suit s'en
+  // charge, comme il le fait déjà des ancres du document source. Une seule
+  // règle pour « ceci n'est pas un lien », au lieu de deux qui se croisent.
+  if (!href) return { tagName: 'a', attribs: {} };
+
+  if (href.startsWith('#')) return { tagName: 'a', attribs: { ...attribs, href } };
+
+  return {
+    tagName: 'a',
+    attribs: {
+      ...attribs,
+      href,
+      rel: 'noopener noreferrer nofollow',
+      target: '_blank',
+    },
+  };
+}
 
 /**
  * Ancres sans href.
