@@ -17,7 +17,8 @@
     "db:sections": "node -e \"import('./src/db.js').then(async m=>{const p=m.createPool();const fs=await import('node:fs/promises');await p.query(await fs.readFile('sql/sections.sql','utf8'));console.log('schéma docs en place');await p.end()})\"",
     "build-sections": "node scripts/build-sections.js",
     "build-pdf-sections": "node scripts/build-pdf-sections.js",
-    "reparer-encodage": "node scripts/reparer-encodage.js"
+    "reparer-encodage": "node scripts/reparer-encodage.js",
+    "audit-atc": "psql \"$DATABASE_URL\" -f sql/audit_atc.sql"
   },
   "dependencies": {
     "express": "^5.1.0",
