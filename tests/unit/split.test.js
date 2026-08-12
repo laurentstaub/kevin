@@ -214,3 +214,47 @@ describe('composerDoses', () => {
     assert.equal(composerDoses(null), '');
   });
 });
+
+// Dix-huit notices échouaient à chaque passe de build-sections sur la
+// contrainte NOT NULL de `numero`, et le document entier était perdu — sans
+// que rien d'autre qu'une ligne d'erreur ne le signale.
+describe('titre sans numéro', () => {
+  // Deux conditions pour reproduire le cas : au moins trois titres numérotés —
+  // sinon `outline` bascule sur les blocs, qui les exigent tous numérotés — et
+  // un titre sans numéro **après** le premier numéroté. Ceux qui précèdent sont
+  // retirés comme titre de document ; c'est celui du milieu qui passait, et qui
+  // faisait échouer l'insertion.
+  const NOTICE = `<h3>NOTICE : INFORMATION DE L'UTILISATEUR</h3>
+    <p>Veuillez lire attentivement cette notice avant de prendre ce médicament.</p>
+    <h3>1. Qu'est-ce que KEYVAX et dans quels cas est-il utilisé ?</h3>
+    <p>Antiviral.</p>
+    <h3>2. Quelles sont les informations à connaître ?</h3>
+    <p>Ne prenez jamais KEYVAX si vous êtes allergique.</p>
+    <h3>Enfants et adolescents</h3>
+    <p>KEYVAX n'est pas recommandé avant douze ans.</p>
+    <h3>3. Comment prendre KEYVAX ?</h3>
+    <p>Un comprimé par jour.</p>
+    <h3>4. Quels sont les effets indésirables éventuels ?</h3>
+    <p>Nausées fréquentes.</p>`;
+
+  it('lui donne une chaîne vide, jamais null', () => {
+    const { sections } = splitDocument(NOTICE, 'notice');
+    for (const s of sections) {
+      assert.notEqual(s.numero, null, `« ${s.libelle} » sans numéro`);
+      assert.equal(typeof s.numero, 'string');
+    }
+  });
+
+  it('ne perd pas le texte qui suit le titre non numéroté', () => {
+    const { sections } = splitDocument(NOTICE, 'notice');
+    const intercalaire = sections.find((s) => s.numero === '');
+    assert.ok(intercalaire, 'le titre intercalaire est conservé');
+    assert.equal(intercalaire.libelle, 'Enfants et adolescents');
+    assert.match(intercalaire.texte, /pas recommandé avant douze ans/);
+  });
+
+  it('ne compte pas la chaîne vide comme une rubrique du socle', () => {
+    const { manquantes } = splitDocument(NOTICE, 'notice');
+    assert.ok(!manquantes.includes(''), 'le socle ne réclame que des numéros réels');
+  });
+});

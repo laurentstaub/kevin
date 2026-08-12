@@ -19,7 +19,7 @@ import { socle } from './rcp-plan.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 6;
+export const PARSER_VERSION = 7;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -166,7 +166,14 @@ export function splitDocument(html, type = 'doc') {
 
     return {
       position: i,
-      numero: titre.number,
+      // Un titre sans numéro reste un titre : « NOTICE : INFORMATION DE
+      // L'UTILISATEUR » ouvre le document, et le texte qui la suit lui
+      // appartient. La colonne est NOT NULL — jusqu'ici l'insertion échouait
+      // et le document entier était perdu, dix-huit notices à chaque passe,
+      // en silence. Une chaîne vide dit « pas de numéro » sans rien coûter :
+      // le contrôle du socle porte sur des numéros réels, et la vue n'affiche
+      // qu'une gouttière vide devant le libellé.
+      numero: titre.number ?? '',
       libelle: titre.label,
       profondeur: titre.depth,
       canonical: titre.canonical,
