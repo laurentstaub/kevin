@@ -100,9 +100,22 @@ export function rubriquesVues(html) {
  * page qui l'explique en toutes lettres. Sans ce contrôle, on stockerait le
  * message comme s'il était le RCP.
  */
-const ABSENT = /n['’]existe pas ou n['’]entre pas dans le p[ée]rim[èe]tre|aucun document|pas de document/i;
+const ABSENT = [
+  // Le CIS n'existe pas, ou sort du périmètre publié.
+  /n['’]existe pas ou n['’]entre pas dans le p[ée]rim[èe]tre|aucun document|pas de document/i,
 
-export const pageSansDocument = (html) => ABSENT.test(texteNu(sansHabillage(html)));
+  // Les homéopathiques à nom commun n'ont **jamais** de RCP ni de notice : la
+  // loi ne leur en impose pas. La BDPM sert alors une phrase d'explication à
+  // la place du document. Sans cette ligne, ces fiches ressortaient en « page
+  // non reconnue », c'est-à-dire mêlées aux vraies pannes de lecture — et une
+  // absence normale déguisée en anomalie finit par masquer les anomalies.
+  /hom[ée]opathiques?\s+[àa]\s+nom\s+commun/i,
+];
+
+export const pageSansDocument = (html) => {
+  const texte = texteNu(sansHabillage(html));
+  return ABSENT.some((motif) => motif.test(texte));
+};
 
 /**
  * Lien vers le PDF européen, quand la fiche n'a pas de texte en HTML.

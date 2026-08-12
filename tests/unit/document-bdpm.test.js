@@ -83,6 +83,15 @@ describe('pageSansDocument', () => {
       "<p>Le médicament demandé n'existe pas ou n'entre pas dans le périmètre.</p>")), true);
   });
 
+  // Cas majoritaire en pratique : les homéopathiques à nom commun, qui n'ont
+  // légalement ni RCP ni notice. Ils ressortaient en « page non reconnue »,
+  // c'est-à-dire confondus avec les vraies pannes de lecture.
+  it('reconnaît l’absence propre aux homéopathiques à nom commun', () => {
+    assert.equal(pageSansDocument(page(
+      '<p>Aucune indication thérapeutique, aucune posologie et aucune notice ne '
+      + 'sont attribuées aux médicaments homéopathiques à nom commun.</p>')), true);
+  });
+
   it('ne confond pas un document avec une absence', () => {
     assert.equal(pageSansDocument(RCP), false);
   });

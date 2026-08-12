@@ -83,7 +83,7 @@ console.log(`\n${cibles.length.toLocaleString('fr-FR')} spécialité(s) sans doc
   + `${restants.length !== cibles.length ? `, ${cibles.length - restants.length} déjà constatée(s) sans` : ''}`
   + `${SEC ? ' — à blanc' : ''}\n`);
 
-const bilan = { html: 0, pdf: 0, absents: 0, erreurs: 0, redirections: 0 };
+const bilan = { html: 0, pdf: 0, absents: 0, illisibles: 0, erreurs: 0, redirections: 0 };
 const soucis = [];
 
 // La forme d'arrivée d'abord ; l'ancienne ne sert qu'au repli « notice à part »,
@@ -181,9 +181,20 @@ for (const [i, cible] of restants.entries()) {
     }
     console.log(`  ${cis}  PDF européen — build-pdf-sections prendra la suite`);
   } else {
-    bilan.absents += 1;
-    vus[cis] = absent ? 'absent' : 'illisible';
-    console.log(`  ${cis}  ${absent ? 'aucun document publié' : 'page non reconnue'}`);
+    // Deux situations qu'il ne faut surtout pas confondre. Une absence dite
+    // par la BDPM est définitive : on la retient pour ne plus la redemander.
+    // Une page non reconnue est un défaut de lecture **de notre côté** ; la
+    // mettre en cache la rendrait invisible à la passe suivante, corrigée ou
+    // non. On la laisse donc revenir, et on la nomme dans le bilan.
+    if (absent) {
+      bilan.absents += 1;
+      vus[cis] = 'absent';
+      console.log(`  ${cis}  aucun document publié`);
+    } else {
+      bilan.illisibles += 1;
+      soucis.push(`${cis} — page non reconnue`);
+      console.log(`  ${cis}  page non reconnue`);
+    }
   }
 
   if ((i + 1) % 25 === 0 && !SEC) await writeFile(VUS, JSON.stringify(vus, null, 1));
@@ -192,7 +203,8 @@ for (const [i, cible] of restants.entries()) {
 if (!SEC) await writeFile(VUS, JSON.stringify(vus, null, 1));
 
 console.log(`\n${bilan.html} document(s) en HTML, ${bilan.pdf} renvoi(s) vers un PDF, `
-  + `${bilan.absents} sans document, ${bilan.erreurs} erreur(s)`);
+  + `${bilan.absents} sans document, ${bilan.illisibles} page(s) non reconnue(s), `
+  + `${bilan.erreurs} erreur(s)`);
 if (bilan.redirections > 0) {
   console.log(`${bilan.redirections} redirection(s) — vérifier config.documentBaseUrl`);
 }
