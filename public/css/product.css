@@ -487,8 +487,8 @@ td.forme {
 
 /* Titre sans contenu propre — « 4. Données cliniques » avant « 4.1 ».
    Dans une liste fermée, la charnière n'annonce rien encore : elle n'est
-   qu'une ligne de plus, et se règle comme telle. Elle ne prend de l'air que
-   lorsque ce qu'elle introduit est effectivement ouvert. */
+   qu'une ligne de plus, et se règle comme telle : même filet, même
+   interligne, même rythme que les rubriques qui l'entourent. */
 .charniere {
   display: grid;
   grid-template-columns: 2.4rem 1fr;
@@ -498,14 +498,18 @@ td.forme {
   font-size: var(--fs-base);
   font-weight: 400;
   margin: var(--sp-1) 0 0;
-  padding: 0.35rem 0 0;
+  padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
-.charniere:has(+ .rubrique[open]) {
-  margin-top: var(--sp-3);
-  border-top-color: var(--rule-medium);
+/* Une charnière et la rubrique qu'elle introduit forment un seul bloc : « 4 »
+   ne veut rien dire sans « 4.1 ». Pas d'air entre les deux, donc — et comme
+   4.1 est ouverte par défaut, l'air placé au-dessus de la charnière se voyait
+   sur toutes les fiches et rendait la ligne 3 plus haute que les lignes 1 et
+   2, sans qu'aucune donnée ne justifie l'écart. */
+.charniere + .rubrique[open] {
+  margin-top: 0;
 }
 
 /* Surface de lecture d'un RCP : quarante mille signes lus à l'écran, souvent
