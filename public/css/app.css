@@ -30,7 +30,8 @@
 /* Ce qu'on est en train de lire. En retrait — c'est un repère, pas un titre :
    le vrai est dans le bandeau, deux fois plus grand. Il cède la place au
    champ de recherche plutôt que de le comprimer. */
-.barre-titre {
+.barre-titre,
+.barre-repere {
   flex: 0 1 auto;
   min-width: 0;
   margin-left: auto;
@@ -39,6 +40,27 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* La rubrique en cours, quand son titre est sorti par le haut. Elle occupe la
+   même fente que le nom du produit — jamais les deux ensemble : deux repères
+   côte à côte, c'est un fil d'Ariane, et un fil d'Ariane sur une page unique
+   ne renseigne personne. Cliquable parce qu'un repère qui indique où l'on est
+   sans permettre d'en sortir est une décoration. */
+.barre-repere {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: right;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.barre-repere:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ---------- Bandeau d'accueil ---------- */

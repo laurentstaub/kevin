@@ -5,9 +5,17 @@
 //- patient sort une seconde boîte pendant qu'on lit la première — et quatre
 //- écrans plus bas dans un RCP, le champ de recherche était hors de vue.
 //-
-//- Rien dedans ne pointe vers un bloc de la page. Le document replié est déjà
-//- sa propre table des matières, numérotée, dans la colonne de lecture ; la
-//- répéter ici en ferait une seconde copie, plus visible et tout aussi vaine.
+//- Rien dedans ne pointe vers un bloc de la page tant que la page est repliée :
+//- le document fermé est déjà sa propre table des matières, numérotée, dans la
+//- colonne de lecture ; la répéter ici en ferait une seconde copie, plus
+//- visible et tout aussi vaine.
+//-
+//- Il en va autrement dès qu'une rubrique est ouverte. Une rubrique de RCP fait
+//- couramment quatre écrans ; passé le premier, son titre est sorti par le haut
+//- et le plan avec lui. C'est le seul moment où le repère manque — le titre de
+//- la rubrique prend alors la place du nom du produit, qui lui n'a pas bougé
+//- depuis le chargement, et ramène au plan d'un clic. Une seule information à
+//- la fois, toujours la plus locale.
 //-
 //- Toujours présente plutôt qu'apparaissant au défilement : un seuil, un état
 //- et une animation coûtent plus d'attention qu'ils n'économisent de place,
@@ -21,3 +29,6 @@ mixin barreSituation(titre)
       +champRecherche('', true)
       if titre
         span.barre-titre= titre
+        //- Rempli et révélé par documents.js ; sans JavaScript il n'apparaît
+        //- jamais, et la barre reste ce qu'elle était.
+        button.barre-repere(type="button" hidden)

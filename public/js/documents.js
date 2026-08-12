@@ -83,3 +83,99 @@ for (const bouton of document.querySelectorAll('.deplier')) {
     bouton.textContent = ouvrir ? 'Tout replier' : 'Tout déplier';
   });
 }
+
+// ---------------------------------------------------------------------------
+// Repère de lecture dans la barre collante.
+//
+// Une rubrique de RCP fait couramment quatre écrans. Passé le premier, son
+// titre est sorti par le haut et le plan avec lui : c'est le seul moment de la
+// page où l'on ne sait plus où l'on est. Le titre de la rubrique prend alors la
+// place du nom du produit — qui, lui, n'a pas changé depuis le chargement — et
+// la rend au défilement inverse. Une fente, une information, toujours la plus
+// locale.
+//
+// Tant que tout est replié, rien ne s'affiche : la liste fermée tient sur un
+// écran et se suffit.
+
+const repere = document.querySelector('.barre-repere');
+const barreTitre = document.querySelector('.barre-titre');
+const barre = document.querySelector('.barre');
+
+if (repere && barre && documents) {
+  // La liste des titres candidats ne change qu'à l'ouverture d'une rubrique ou
+  // au changement d'onglet. La recalculer à chaque image de défilement serait
+  // une requête DOM par frame pour un résultat presque toujours identique.
+  let candidats = null;
+  const perimer = () => { candidats = null; };
+
+  const titres = () => {
+    if (!candidats) {
+      candidats = [...documents.querySelectorAll(
+        '[role="tabpanel"]:not([hidden]) details.rubrique[open] > .rubrique-tete',
+      )];
+    }
+    return candidats;
+  };
+
+  documents.addEventListener('toggle', perimer, true);
+
+  let courant = null;
+
+  const montrer = (titre) => {
+    if (titre === courant) return;
+    courant = titre;
+
+    if (!titre) {
+      repere.hidden = true;
+      if (barreTitre) barreTitre.hidden = false;
+      return;
+    }
+
+    const num = titre.querySelector('.num');
+    const lab = titre.querySelector('.lab');
+    repere.textContent = [num?.textContent, lab?.textContent]
+      .filter(Boolean).join(' ').trim();
+    repere.hidden = false;
+    if (barreTitre) barreTitre.hidden = true;
+  };
+
+  const situer = () => {
+    const seuil = barre.getBoundingClientRect().bottom;
+    let trouve = null;
+
+    for (const titre of titres()) {
+      const haut = titre.getBoundingClientRect().top;
+      if (haut > seuil) break;
+      // Le titre est passé sous la barre, mais sa rubrique peut être finie :
+      // dans ce cas on ne lit plus dedans, et le repère mentirait.
+      if (titre.parentElement.getBoundingClientRect().bottom > seuil) trouve = titre;
+    }
+
+    montrer(trouve);
+  };
+
+  let attend = false;
+  const auProchainRendu = () => {
+    if (attend) return;
+    attend = true;
+    requestAnimationFrame(() => { attend = false; situer(); });
+  };
+
+  addEventListener('scroll', auProchainRendu, { passive: true });
+  addEventListener('resize', auProchainRendu, { passive: true });
+  documents.addEventListener('toggle', auProchainRendu, true);
+
+  // Changer d'onglet ne fait pas défiler la page, mais change ce qu'elle
+  // montre : le repère doit suivre, sous peine de nommer une rubrique cachée.
+  for (const onglet of onglets) {
+    onglet.addEventListener('click', () => { perimer(); auProchainRendu(); });
+  }
+
+  // Un repère qui dit où l'on est sans permettre d'en sortir est une
+  // décoration : le clic remonte au titre, donc au plan, sans quitter la page.
+  repere.addEventListener('click', () => {
+    courant?.scrollIntoView({ block: 'start' });
+  });
+
+  situer();
+}
