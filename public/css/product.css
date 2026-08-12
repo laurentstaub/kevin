@@ -333,6 +333,7 @@ td.forme {
   flex-wrap: wrap;
   gap: var(--sp-1);
   margin-bottom: var(--sp-1);
+  max-width: var(--lecture);
 }
 
 /* Un onglet est un bouton : il hérite du rayon des contrôles. Le filet de
@@ -364,7 +365,9 @@ td.forme {
 
 /* ---------- Rubriques repliables ---------- */
 
-/* Le contrôle est au-dessus de ce qu'il pilote. */
+/* Le contrôle est au-dessus de ce qu'il pilote, et à sa largeur : « Tout
+   déplier » est aligné au fer à droite, donc sur la fin des filets — les deux
+   doivent tomber au même endroit. */
 .rubriques-controle {
   display: flex;
   justify-content: space-between;
@@ -372,6 +375,7 @@ td.forme {
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-2);
   margin: var(--sp-2) 0 0;
+  max-width: var(--lecture);
   font-size: var(--fs-xs);
 }
 
@@ -393,7 +397,7 @@ td.forme {
 }
 
 .rubriques {
-  max-width: var(--measure);
+  max-width: var(--lecture);
 }
 
 /* Une rubrique = un filet et un titre. Aucun cadre : la page reste blanche,
@@ -525,10 +529,10 @@ td.forme {
    lézardes d'un texte justifié sans moteur de césure. */
 .rubrique-corps {
   font-family: var(--font-lecture);
-  font-size: 1.0625rem;
+  font-size: 1.1875rem;
   line-height: 1.6;
-  max-width: 66ch;
-  padding: var(--sp-1) 0 0 2.9rem;
+  max-width: var(--lecture);
+  padding: var(--sp-1) 0 0 var(--gouttiere);
   hyphens: none;
   text-wrap: pretty;
 }
@@ -627,9 +631,9 @@ td.forme {
 
 .document-corps {
   font-family: var(--font-lecture);
-  font-size: 1.0625rem;
+  font-size: 1.1875rem;
   line-height: 1.6;
-  max-width: 66ch;
+  max-width: var(--lecture);
   hyphens: none;
   text-wrap: pretty;
 }

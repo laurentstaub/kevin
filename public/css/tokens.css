@@ -89,10 +89,26 @@
   --barre-h: 2.75rem;
   /* Longueur de ligne du texte suivi. Le plancher de 45 signes et le plafond
      de 75 ne sont pas une préférence : en deçà l'œil revient trop souvent à la
-     ligne, au-delà il perd le début de la suivante. On monte à 70, ce qui reste
-     dans la bande — un RCP est fait de paragraphes longs et denses, pas de
-     répliques de trois lignes, et c'est justement là que le plafond mord. */
-  --measure: 70ch;
+     ligne, au-delà il perd le début de la suivante. Mesurée sur une ligne
+     rendue, la colonne actuelle en porte 73 — elle est déjà au plafond, et
+     c'est pour ça qu'on l'élargit en grossissant le corps plutôt qu'en
+     allongeant la ligne : le nombre de signes ne bouge pas, les pixels si.
+
+     En rem et non en ch. `ch` vaut la chasse du zéro de la police de
+     l'élément : le même token donnait une largeur ici et une autre là, selon
+     qu'on était dans le serif de lecture ou dans la sans de l'interface — d'où
+     des filets qui ne tombaient jamais où finit le texte. */
+  --measure: 40.5rem;
+
+  /* Gouttière de numérotation : « 4.1 » à gauche, le texte à droite. Elle vaut
+     la colonne de la grille des titres plus son écart, sinon les deux ne
+     s'alignent plus. */
+  --gouttiere: 2.9rem;
+
+  /* Ce que doit mesurer tout bloc qui porte la gouttière et le texte — filets
+     de rubriques compris. Un filet qui dépasse le texte de deux cents pixels
+     donne une page inachevée. */
+  --lecture: calc(var(--measure) + var(--gouttiere));
 
   /* Axe unique de la page : barre, bandeau d'identité et contenu s'y alignent.
      Le sommaire latéral occupait la marge gauche ; sans lui, la colonne de
