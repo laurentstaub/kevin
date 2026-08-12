@@ -668,6 +668,29 @@ td.forme {
   padding-right: 0;
 }
 
+/* Le vrai gouffre était là. La BDPM sert du Word exporté : dans une cellule,
+   « 2000 mg par jour », « soit 2 g » et « (4 gélules) » sont trois <p>
+   distincts, qui héritaient de l'interligne de séparation des paragraphes du
+   texte suivi — trois quarts de cadratin entre chacun. Ces trois lignes ne
+   sont pas trois paragraphes : c'est une valeur écrite sur trois lignes.
+   Elles se resserrent, et le blanc de la rangée redevient celui qu'on a
+   réglé. */
+.rubrique-corps td > p,
+.rubrique-corps th > p,
+.document-corps td > p,
+.document-corps th > p {
+  margin: 0;
+}
+
+/* Deux vrais paragraphes dans une cellule restent séparés — d'un souffle, pas
+   d'une ligne blanche. */
+.rubrique-corps td > p + p,
+.rubrique-corps th > p + p,
+.document-corps td > p + p,
+.document-corps th > p + p {
+  margin-top: 0.15em;
+}
+
 /* En-tête. La BDPM sert du Word exporté : la ligne de tête est presque
    toujours un <tr> ordinaire, sans <thead>, et n'héritait donc d'aucun
    traitement. On la reconnaît par sa position dans un tableau qui n'a pas
