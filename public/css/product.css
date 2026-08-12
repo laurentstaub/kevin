@@ -460,10 +460,23 @@ td.forme {
 /* Le blanc entre deux rubriques repliées est du blanc perdu : une rubrique
    fermée n'est qu'un titre, et vingt-huit titres espacés d'un interligne et
    demi font une page de titres. Un filet sépare déjà — il n'a pas besoin
-   d'être escorté. */
+   d'être escorté.
+
+   Une hiérarchie de filets n'a rien à dire tant que tout est fermé : en vue
+   repliée, toutes les lignes visibles sont de niveau 1, et le ton soutenu ne
+   distingue alors plus rien — il ne fait qu'assombrir douze fois la même
+   page. Le trait ne se renforce que là où il sépare vraiment quelque chose :
+   au bord d'une rubrique ouverte. */
 .rubrique.rub-n1 {
-  border-top: var(--rule-width) solid var(--rule-medium);
+  border-top: var(--rule-width) solid var(--rule);
   margin-top: var(--sp-1);
+}
+
+/* Les deux bords d'une rubrique ouverte : le sien, et celui de la ligne qui
+   la suit — un bloc de lecture se ferme des deux côtés. */
+.rubrique.rub-n1[open],
+.rubrique[open] + .rubrique.rub-n1 {
+  border-top-color: var(--rule-medium);
 }
 
 /* Une rubrique ouverte reprend de l'air : c'est là qu'on lit. */
@@ -472,7 +485,10 @@ td.forme {
   padding-bottom: var(--sp-2);
 }
 
-/* Titre sans contenu propre — « 4. Données cliniques » avant « 4.1 ». */
+/* Titre sans contenu propre — « 4. Données cliniques » avant « 4.1 ».
+   Dans une liste fermée, la charnière n'annonce rien encore : elle n'est
+   qu'une ligne de plus, et se règle comme telle. Elle ne prend de l'air que
+   lorsque ce qu'elle introduit est effectivement ouvert. */
 .charniere {
   display: grid;
   grid-template-columns: 2.4rem 1fr;
@@ -481,10 +497,15 @@ td.forme {
   font-family: var(--font-head);
   font-size: var(--fs-base);
   font-weight: 400;
-  margin: var(--sp-4) 0 0;
-  padding-top: var(--sp-1);
-  border-top: var(--rule-width) solid var(--rule-medium);
+  margin: var(--sp-1) 0 0;
+  padding: 0.35rem 0 0;
+  border-top: var(--rule-width) solid var(--rule);
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
+}
+
+.charniere:has(+ .rubrique[open]) {
+  margin-top: var(--sp-3);
+  border-top-color: var(--rule-medium);
 }
 
 /* Surface de lecture d'un RCP : quarante mille signes lus à l'écran, souvent
