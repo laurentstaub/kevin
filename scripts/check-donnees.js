@@ -101,10 +101,25 @@ try {
             (SELECT max(parsed_at)    FROM docs.document_parse) AS decoupage,
             (SELECT max(date_amm)     FROM dbpm.cis_bdpm)       AS amm`,
   );
+
+  // « AMM la plus récente en base » a été retirée des contrôles : elle mesurait
+  // le monde, pas notre chaîne.
+  //
+  // Une AMM octroyée le 2 avril reste la plus récente quel que soit le nombre
+  // de rechargements — les octrois sont rares et publiés avec du retard, si
+  // bien que l'indicateur vieillit tout seul et réclamerait un rechargement
+  // qui ne le rajeunirait pas. Il a fait perdre du temps une fois ; il ne le
+  // fera pas deux.
+  //
+  // La fraîcheur réelle se mesure ailleurs et autrement : le millésime du
+  // dernier fichier téléchargé, comparé à celui publié par la BDPM. Ce
+  // décompte-là vit dans incident_scraper (`.bdpm_version.json`,
+  // `npm run check-bdpm`), qui est le dépôt qui charge `dbpm.*`. On l'affiche
+  // ici pour mémoire, sans seuil, parce qu'un chiffre sans verdict ne peut pas
+  // se faire passer pour une panne.
   for (const [cle, libelle, alerte, rupture] of [
     ['collecte', 'Dernière collecte de document', 90, 365],
     ['decoupage', 'Dernier découpage', 90, 365],
-    ['amm', 'AMM la plus récente en base', 120, 365],
   ]) {
     const jours = age(dates[cle], MAINTENANT);
     const etat = jours === null ? 'indeterminable'
@@ -112,6 +127,13 @@ try {
     dire(etat, `${libelle} — ${jours === null ? 'date absente' : `il y a ${jours} jours`}`,
       etat === 'rupture' ? `au-delà de ${rupture} jours, la chaîne est à l'arrêt` : null);
   }
+
+  // Pour mémoire, sans verdict : c'est une propriété du monde pharmaceutique,
+  // pas de notre chaîne. La fraîcheur du chargement se contrôle avec
+  // `npm run check-bdpm`, dans incident_scraper.
+  console.log(`         AMM la plus récente octroyée — ${
+    dates.amm ? `${age(dates.amm, MAINTENANT)} jours` : 'date absente'
+  } (indicatif ; fraîcheur du chargement : check-bdpm)`);
 
   const ruptures = verdicts.filter((x) => x.etat === 'rupture');
   console.log(`\n${verdicts.length} contrôles — ${ruptures.length} en rupture, `
