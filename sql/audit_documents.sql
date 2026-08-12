@@ -125,3 +125,71 @@ WHERE EXISTS (SELECT 1 FROM dbpm.cis_cip_bdpm p WHERE p.code_cis = m.code_cis
   AND NOT EXISTS (SELECT 1 FROM docs.rcp_sections r WHERE r.code_cis = m.code_cis)
 ORDER BY m.denomination_medicament
 LIMIT 20;
+
+
+\echo ''
+\echo '=== 4. Les 971 sans document : lesquelles ont vraiment un RCP à aller chercher ? ==='
+\echo ''
+
+-- Deux populations très différentes se cachent dans ce chiffre. Un
+-- enregistrement homéopathique ne publie aucun RCP : rien à collecter, tout à
+-- énoncer. Une AMM ordinaire en a forcément un — vérifié à la main sur le CIS
+-- 60151544, dont la page BDPM publie bien RCP et notice quand la base n'en a
+-- aucun. C'est du travail de collecte, et il se chiffre ici.
+WITH manquantes AS (
+  SELECT m.code_cis, m.denomination_medicament, m.type_procedure_amm, m.date_amm
+  FROM dbpm.cis_bdpm m
+  WHERE EXISTS (SELECT 1 FROM dbpm.cis_cip_bdpm p WHERE p.code_cis = m.code_cis
+                  AND p.etat_commercialisation ILIKE 'Déclaration de commercialisation%')
+    AND coalesce(m.type_procedure_amm, '') !~* 'importation\s+parall'
+    AND NOT EXISTS (SELECT 1 FROM dbpm.cis_documents d WHERE d.code_cis = m.code_cis)
+)
+SELECT coalesce(type_procedure_amm, '(non renseigné)')  AS procedure,
+       count(*)                                        AS specialites,
+       min(date_amm)                                   AS amm_la_plus_ancienne,
+       max(date_amm)                                   AS amm_la_plus_recente
+FROM manquantes
+GROUP BY 1
+ORDER BY count(*) DESC;
+
+\echo ''
+\echo '--- Et par ancienneté de l’AMM, hors homéopathie ---'
+\echo ''
+
+-- Si la masse est récente, le collecteur n'a simplement jamais tourné depuis :
+-- une seule passe suffit. Si elle est étalée sur vingt ans, le trou est
+-- structurel et il faudra comprendre ce que la collecte laisse passer.
+WITH manquantes AS (
+  SELECT m.date_amm
+  FROM dbpm.cis_bdpm m
+  WHERE EXISTS (SELECT 1 FROM dbpm.cis_cip_bdpm p WHERE p.code_cis = m.code_cis
+                  AND p.etat_commercialisation ILIKE 'Déclaration de commercialisation%')
+    AND coalesce(m.type_procedure_amm, '') !~* 'importation\s+parall'
+    AND coalesce(m.type_procedure_amm, '') !~* 'hom[ée]o'
+    AND NOT EXISTS (SELECT 1 FROM dbpm.cis_documents d WHERE d.code_cis = m.code_cis)
+)
+SELECT extract(year FROM date_amm)::int AS annee_amm, count(*) AS specialites
+FROM manquantes
+GROUP BY 1
+ORDER BY 1 DESC NULLS LAST
+LIMIT 15;
+
+\echo ''
+\echo '--- Comparaison : la même répartition chez celles qui ONT un document ---'
+\echo ''
+
+-- Le témoin. Sans lui, on ne saurait pas si « beaucoup de 2024 » veut dire
+-- « la collecte s'est arrêtée en 2023 » ou simplement « il y a eu beaucoup
+-- d'AMM en 2024 ».
+SELECT extract(year FROM m.date_amm)::int AS annee_amm,
+       count(*) FILTER (WHERE EXISTS (SELECT 1 FROM dbpm.cis_documents d
+                                      WHERE d.code_cis = m.code_cis))  AS avec_document,
+       count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM dbpm.cis_documents d
+                                          WHERE d.code_cis = m.code_cis)) AS sans_document
+FROM dbpm.cis_bdpm m
+WHERE EXISTS (SELECT 1 FROM dbpm.cis_cip_bdpm p WHERE p.code_cis = m.code_cis
+                AND p.etat_commercialisation ILIKE 'Déclaration de commercialisation%')
+  AND coalesce(m.type_procedure_amm, '') !~* 'importation\s+parall|hom[ée]o'
+GROUP BY 1
+ORDER BY 1 DESC NULLS LAST
+LIMIT 15;
