@@ -115,6 +115,9 @@ export function oublierClasses() {
   cacheClasses = null;
 }
 
+/** Le dernier niveau de l'arbre : une molécule, ou une association. */
+export const FEUILLE = 5;
+
 /** Une classe, son fil d'Ariane et ses sous-classes. */
 export async function getClasse(pool, code) {
   const { rows: chaine } = await pool.query(
@@ -128,20 +131,49 @@ export async function getClasse(pool, code) {
   const classe = chaine.find((c) => c.code === code);
   if (!classe) return null;
 
+  // Les enfants se déduisent du code, pas de `parent_atc_code`. La hiérarchie
+  // ATC est un préfixe strict — 1, 3, 4, 5 puis 7 signes — donc la filiation
+  // est déjà écrite dans « J05AF06 » ; la colonne n'en est qu'un doublon.
+  //
+  // Et non pas « le niveau suivant » mais « le premier niveau qui existe » :
+  // l'arbre a des étages manquants, des molécules dont le sous-groupe chimique
+  // n'a jamais été inséré. Exiger `level + 1` les rendrait introuvables — elles
+  // n'apparaîtraient dans aucune liste, alors que leur code dit exactement d'où
+  // elles descendent. On saute donc l'étage absent au lieu de buter dessus.
   const { rows: enfants } = await pool.query(
     `SELECT c.atc_code AS code, c.atc_label AS label,
             count(DISTINCT ${racineSql('m')}) AS produits
      FROM ref.atc_classification c
      JOIN ref.cis_atc_mapping a ON a.atc_code LIKE c.atc_code || '%'
      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
-     WHERE c.parent_atc_code = $1
+     WHERE c.atc_code LIKE $1 || '%'
+       AND c.atc_code <> $1
+       AND c.atc_level = (SELECT min(atc_level) FROM ref.atc_classification
+                          WHERE atc_code LIKE $1 || '%' AND atc_code <> $1)
      GROUP BY 1, 2
      HAVING count(DISTINCT ${racineSql('m')}) > 0
      ORDER BY c.atc_code`,
     [code],
   );
 
-  return { ...classe, chaine, enfants: enfants.map((e) => ({ ...e, produits: Number(e.produits) })) };
+  // Le total de la classe est compté ici, et non additionné depuis les enfants :
+  // un produit dont les codes CIS se répartissent sur deux sous-classes serait
+  // compté deux fois par la somme. Le décompte porte sur la racine de marque —
+  // annoncer les CIS ferait attendre une liste quatre fois plus longue.
+  const { rows: compte } = await pool.query(
+    `SELECT count(DISTINCT ${racineSql('m')})::int AS produits
+     FROM ref.cis_atc_mapping a
+     JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
+     WHERE a.atc_code LIKE $1 || '%'`,
+    [code],
+  );
+
+  return {
+    ...classe,
+    chaine,
+    produits: compte[0]?.produits ?? 0,
+    enfants: enfants.map((e) => ({ ...e, produits: Number(e.produits) })),
+  };
 }
 
 /**

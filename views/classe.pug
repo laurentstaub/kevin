@@ -2,12 +2,16 @@ extends layout.pug
 include _barre.pug
 include _recherche.pug
 
-//- Une classe thérapeutique : son fil, ses sous-classes, ses produits.
+//- Une classe thérapeutique : son fil, et ce qu'elle contient.
 //-
-//- Les sous-classes viennent avant la liste : sur « N — Système nerveux »,
-//- neuf cent soixante produits ne se parcourent pas, mais douze sous-classes
-//- se lisent d'un coup d'œil. La liste sert de repère, la navigation se fait
-//- par l'arbre.
+//- Une classe montre ses enfants directs ; seule la feuille — la molécule, ou
+//- l'association — montre ses spécialités. Plus haut, la liste des spécialités
+//- doublait les sous-classes et devait être tronquée : sur six cents produits
+//- on n'en voyait que le début de l'alphabet, ce qui n'apprend rien et laisse
+//- croire que la classe s'arrête à B. Et douze ABACAVIR d'affilée ne disent
+//- qu'une chose, que l'abacavir existe chez douze laboratoires — un
+//- renseignement qui appartient à la page de l'abacavir, pas à celle de la
+//- classe.
 
 block content
   +barreSituation(classe.label)
@@ -23,10 +27,14 @@ block content
           else
             a(href=`/classe/${niveau.code}`)= niveau.code
       h1.titre-site= classe.label
+      //- Un seul chiffre. La page en portait deux — le total de la classe et
+      //- le nombre de lignes affichées — dont le second n'était pas un
+      //- décompte mais une troncature déguisée en information.
       p.page-meta
         span.atc-etiquette= classe.code
-        span.sep
-        span #{total.toLocaleString('fr-FR')} produit#{total > 1 ? 's' : ''}
+        if classe.produits
+          span.sep
+          span #{classe.produits.toLocaleString('fr-FR')} produit#{classe.produits > 1 ? 's' : ''}
 
     if classe.enfants.length > 0
       nav.classes(aria-label="Sous-classes")
@@ -39,36 +47,30 @@ block content
                 span.classe-label= enfant.label
                 span.classe-compte #{enfant.produits.toLocaleString('fr-FR')} produits
 
-    section.groupe
-      h2.groupe-titre
-        | Produits
-        span.compte #{produits.length.toLocaleString('fr-FR')}
-      //- Ne jamais laisser croire que la liste est complète quand elle est
-      //- bornée : un catalogue tronqué en silence se lit comme un catalogue.
-      if tronque
-        p.section-meta
-          | #{total.toLocaleString('fr-FR')} produits dans cette classe, #{produits.length} affichés.
-          if classe.enfants.length > 0
-            |  Affinez par sous-classe.
-      ul.liste
-        each produit in produits
-          li
-            a.resultat(href=`/product/${produit.id}`)
-              span.resultat-nom
-                = produit.racine
-                if produit.importation
-                  span.marque Importation parallèle
-                if produit.commercialise === false
-                  span.marque Non commercialisé
-              span.resultat-dci
-                if produit.active_ingredients
-                  = produit.active_ingredients
-                if produit.active_ingredients && produit.forme_pharmaceutique
-                  span.sep
-                if produit.forme_pharmaceutique
-                  = produit.forme_pharmaceutique
-              if produit.presentations > 1
-                span.resultat-etendue= `${produit.presentations} dosages et formes`
+    if feuille
+      section.groupe
+        h2.groupe-titre
+          | Produits
+          span.compte #{produits.length.toLocaleString('fr-FR')}
+        ul.liste
+          each produit in produits
+            li
+              a.resultat(href=`/product/${produit.id}`)
+                span.resultat-nom
+                  = produit.racine
+                  if produit.importation
+                    span.marque Importation parallèle
+                  if produit.commercialise === false
+                    span.marque Non commercialisé
+                span.resultat-dci
+                  if produit.active_ingredients
+                    = produit.active_ingredients
+                  if produit.active_ingredients && produit.forme_pharmaceutique
+                    span.sep
+                  if produit.forme_pharmaceutique
+                    = produit.forme_pharmaceutique
+                if produit.presentations > 1
+                  span.resultat-etendue= `${produit.presentations} dosages et formes`
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

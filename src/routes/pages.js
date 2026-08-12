@@ -20,6 +20,7 @@ import {
   getClassesPrincipales,
   getClasse,
   getProduitsDeClasse,
+  FEUILLE,
 } from '../atc.js';
 
 export function pageRoutes(pool) {
@@ -55,14 +56,16 @@ export function pageRoutes(pool) {
       const classe = await getClasse(pool, code);
       if (!classe) return next();
 
-      const { produits, total } = await getProduitsDeClasse(pool, code);
+      // Les spécialités n'apparaissent qu'à la feuille. Plus haut, elles
+      // doublaient les sous-classes et devaient être tronquées : sur une classe
+      // de six cents produits, on n'en voyait que le début de l'alphabet, ce
+      // qui n'apprend rien et laisse croire que la classe s'arrête à B.
+      const feuille = classe.level === FEUILLE || classe.enfants.length === 0;
+      const { produits, total } = feuille
+        ? await getProduitsDeClasse(pool, code)
+        : { produits: [], total: null };
 
-      res.render('classe', {
-        classe,
-        produits,
-        total,
-        tronque: total > produits.length,
-      });
+      res.render('classe', { classe, produits, total, feuille });
     }),
   );
 
