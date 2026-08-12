@@ -27,14 +27,13 @@ block content
           else
             a(href=`/classe/${niveau.code}`)= niveau.code
       h1.titre-site= classe.label
-      //- Un seul chiffre. La page en portait deux — le total de la classe et
-      //- le nombre de lignes affichées — dont le second n'était pas un
-      //- décompte mais une troncature déguisée en information.
-      p.page-meta
-        span.atc-etiquette= classe.code
-        if classe.produits
-          span.sep
-          span #{classe.produits.toLocaleString('fr-FR')} produit#{classe.produits > 1 ? 's' : ''}
+      //- Un seul chiffre, et le code une seule fois. La page en portait deux —
+      //- le total de la classe et le nombre de lignes affichées — dont le
+      //- second n'était pas un décompte mais une troncature déguisée en
+      //- information. Et le code figurait ici en plus du fil, qui se termine
+      //- déjà par lui : sur « J », la page affichait « J » deux fois de suite.
+      if classe.produits
+        p.page-meta #{classe.produits.toLocaleString('fr-FR')} produit#{classe.produits > 1 ? 's' : ''}
 
     if classe.enfants.length > 0
       nav.classes(aria-label="Sous-classes")
