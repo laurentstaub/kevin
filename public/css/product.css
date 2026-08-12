@@ -616,14 +616,97 @@ td.forme {
    il suit la surface de lecture quelle que soit sa taille, et reste à peine en
    dessous d'elle. Jamais loin en dessous : lire « 3000 mg par jour » plus
    petit que la phrase qui l'introduit est la mauvaise hiérarchie. */
+/* ---------- Tableaux du document ----------
+ *
+ * Ceux-ci ne sont pas des tableaux d'interface : ils viennent du RCP, et le
+ * tableau de posologie est la ligne la plus lue de la fiche. Ils sont donc
+ * réglés en em, pour suivre la surface de lecture, et traités comme un objet
+ * de lecture — pas comme une grille de données.
+ *
+ * Filets horizontaux seuls : pas de colonnes encadrées, pas de fond alterné.
+ * Ce qui donne sa forme au tableau, c'est l'alignement des colonnes et deux
+ * traits qui l'encadrent ; le reste est du bruit qui ne porte aucune donnée.
+ */
 .rubrique-corps table,
 .document-corps table {
   font-size: 0.82em;
+  /* Un tableau est un objet posé dans le texte : il se détache par du blanc,
+     pas par un cadre. */
+  margin: var(--sp-3) 0;
 }
 
+/* Les deux traits qui tiennent l'objet. Sans le trait de pied, un tableau
+   suivi d'un paragraphe se termine dans le vague ; sans celui de tête, la
+   première ligne flotte sous le texte qui l'annonce. */
+.rubrique-corps table,
+.document-corps table {
+  border-top: var(--rule-width) solid var(--rule-medium);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.rubrique-corps th,
+.rubrique-corps td,
+.document-corps th,
+.document-corps td {
+  /* Gouttière franche entre colonnes : c'est elle qui sépare, pas un filet
+     vertical. Verticalement au contraire on resserre — les lignes du RCP
+     tiennent en deux ou trois mots et n'ont pas besoin d'un interligne et
+     demi de blanc au-dessus. */
+  padding: 0.55em 1.6em 0.55em 0;
+  line-height: 1.45;
+}
+
+.rubrique-corps tr > :last-child,
+.document-corps tr > :last-child {
+  padding-right: 0;
+}
+
+/* En-tête. La BDPM sert du Word exporté : la ligne de tête est presque
+   toujours un <tr> ordinaire, sans <thead>, et n'héritait donc d'aucun
+   traitement. On la reconnaît par sa position dans un tableau qui n'a pas
+   d'en-tête déclaré — c'est la seule prise disponible, et le pire qui puisse
+   arriver si le document déroge est un trait un peu plus marqué sous la
+   première ligne. */
 .rubrique-corps thead th,
-.document-corps thead th {
-  font-size: 0.71em;
+.document-corps thead th,
+.rubrique-corps table:not(:has(thead)) tr:first-child > *,
+.document-corps table:not(:has(thead)) tr:first-child > * {
+  font-size: 0.88em;
+  font-weight: 400;
+  color: var(--muted);
+  border-bottom: var(--rule-width) solid var(--rule-strong);
+  padding-bottom: 0.7em;
+}
+
+/* La première colonne porte l'entrée — le poids, la tranche d'âge, la voie.
+   C'est par elle qu'on cherche sa ligne : elle reste à l'encre pleine quand
+   le reste peut respirer. */
+.rubrique-corps tbody tr > :first-child,
+.document-corps tbody tr > :first-child {
+  color: var(--ink);
+}
+
+/* Sur écran étroit, un tableau de posologie à quatre colonnes ne rentre pas.
+   On le fait défiler plutôt que de l'écraser : une dose illisible est pire
+   qu'une dose qu'il faut aller chercher. La colonne d'entrée reste visible
+   pendant le défilement, sinon on lit « 3000 mg » sans savoir pour qui.
+   L'enveloppe est posée par documents.js ; sans JavaScript le tableau se
+   comporte comme avant. */
+.table-defilante {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 40rem) {
+  .table-defilante table {
+    min-width: 34rem;
+  }
+
+  .table-defilante tr > :first-child {
+    position: sticky;
+    left: 0;
+    background: var(--bg);
+  }
 }
 
 .rubrique-corps table {

@@ -179,3 +179,65 @@ if (repere && barre && documents) {
 
   situer();
 }
+
+// ---------------------------------------------------------------------------
+// Tableaux du document : enveloppe de défilement.
+//
+// Un tableau de posologie a quatre colonnes ; sur un téléphone il ne rentre
+// pas. Écrasé, il rend une dose illisible — ce qui est pire qu'une dose qu'il
+// faut aller chercher en faisant glisser. On l'enveloppe donc dans un
+// conteneur qui défile, la première colonne restant collée à gauche pour
+// qu'on sache toujours à quel poids se rapporte le « 3000 mg » qu'on lit.
+//
+// Fait ici et non dans le gabarit : le HTML des rubriques vient de la BDPM,
+// on ne le réécrit pas au découpage pour un besoin d'affichage.
+
+const enveloppes = [];
+
+for (const table of document.querySelectorAll(
+  '.rubrique-corps table, .document-corps table',
+)) {
+  if (table.parentElement?.classList.contains('table-defilante')) continue;
+  const enveloppe = document.createElement('div');
+  enveloppe.className = 'table-defilante';
+  table.replaceWith(enveloppe);
+  enveloppe.append(table);
+  enveloppes.push(enveloppe);
+}
+
+// Un conteneur qui défile doit pouvoir être atteint au clavier, sinon son
+// contenu est hors de portée de qui ne se sert pas d'une souris. Mais on ne
+// pose l'arrêt de tabulation que s'il y a vraiment quelque chose à faire
+// défiler : sur un large écran, les onze tableaux d'un RCP ajouteraient onze
+// arrêts qui ne mènent nulle part.
+function reglerDefilement() {
+  for (const e of enveloppes) {
+    const deborde = e.scrollWidth > e.clientWidth + 1;
+    if (deborde === (e.tabIndex === 0)) continue;
+    if (deborde) {
+      e.tabIndex = 0;
+      e.setAttribute('role', 'region');
+      e.setAttribute('aria-label', 'Tableau, défilement horizontal');
+    } else {
+      e.removeAttribute('tabindex');
+      e.removeAttribute('role');
+      e.removeAttribute('aria-label');
+    }
+  }
+}
+
+if (enveloppes.length > 0) {
+  let enAttente = false;
+  const bientot = () => {
+    if (enAttente) return;
+    enAttente = true;
+    requestAnimationFrame(() => { enAttente = false; reglerDefilement(); });
+  };
+
+  addEventListener('resize', bientot, { passive: true });
+  // Une rubrique fermée mesure zéro : c'est à son ouverture qu'on peut savoir
+  // si son tableau déborde.
+  documents?.addEventListener('toggle', bientot, true);
+  for (const onglet of onglets) onglet.addEventListener('click', bientot);
+  bientot();
+}
