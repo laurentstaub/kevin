@@ -652,8 +652,15 @@ td.forme {
      vertical. Verticalement au contraire on resserre — les lignes du RCP
      tiennent en deux ou trois mots et n'ont pas besoin d'un interligne et
      demi de blanc au-dessus. */
-  padding: 0.55em 1.6em 0.55em 0;
+  padding: 0.4em 1.6em 0.4em 0;
   line-height: 1.45;
+  /* Centré et non aligné sur la ligne de base. Dans un tableau de posologie,
+     une cellule tient sur trois lignes — « 2000 mg par jour soit 2 g
+     (4 gélules) » — quand ses voisines en font une : alignées sur la base,
+     celles-ci restent accrochées en haut et la rangée paraît creuse par en
+     dessous. Centrées, les trois valeurs d'une même rangée se lisent sur le
+     même axe, ce qui est bien ce qu'on cherche à comparer. */
+  vertical-align: middle;
 }
 
 .rubrique-corps tr > :last-child,
@@ -673,9 +680,13 @@ td.forme {
 .document-corps table:not(:has(thead)) tr:first-child > * {
   font-size: 0.88em;
   font-weight: 400;
-  color: var(--muted);
+  /* L'accent, et lui seul, sur la seule ligne du tableau qui ne porte pas de
+     donnée : elle nomme les colonnes. En gris elle se confondait avec les
+     valeurs à peine plus foncées ; en vert elle se lit comme ce qu'elle est,
+     une étiquette. */
+  color: var(--accent);
   border-bottom: var(--rule-width) solid var(--rule-strong);
-  padding-bottom: 0.7em;
+  padding-bottom: 0.55em;
 }
 
 /* La première colonne porte l'entrée — le poids, la tranche d'âge, la voie.
