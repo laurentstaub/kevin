@@ -73,19 +73,34 @@ FROM substances;
 \echo '--- Le détail, pour juger sur pièces ---'
 \echo ''
 
+-- `nature_composant` distingue la substance active telle qu'elle est formulée
+-- ('SA' : TICARCILLINE SODIQUE) de sa fraction thérapeutique ('ST' : TICARCILLINE
+-- BASE). Sans ce tri, une bithérapie ressort en quatre noms — sel et base de
+-- chaque molécule — et l'intitulé reconstruit devient illisible. La fraction
+-- thérapeutique est ce qu'on veut nommer : c'est la molécule, pas son sel.
 WITH muettes AS (
   SELECT atc_code FROM ref.atc_classification
   WHERE atc_level = 5 AND atc_label = atc_code
+),
+composants AS (
+  SELECT DISTINCT ON (a.atc_code, coalesce(c.numero_liaison_saft, c.code_substance))
+         a.atc_code, c.code_cis, c.denomination_substance
+  FROM muettes m
+  JOIN ref.cis_atc_mapping a ON a.atc_code = m.atc_code
+  JOIN dbpm.cis_compo_bdpm c ON c.code_cis = a.code_cis
+  ORDER BY a.atc_code, coalesce(c.numero_liaison_saft, c.code_substance),
+           (c.nature_composant = 'ST') DESC, c.denomination_substance
 )
 SELECT m.atc_code,
-       count(DISTINCT a.code_cis)                                   AS specialites,
-       string_agg(DISTINCT c.denomination_substance, ' + '
-                  ORDER BY c.denomination_substance)                AS substances
+       (SELECT count(*) FROM ref.cis_atc_mapping a WHERE a.atc_code = m.atc_code)
+                                                                    AS specialites,
+       string_agg(DISTINCT k.denomination_substance, ' + '
+                  ORDER BY k.denomination_substance)                AS intitule_reconstruit
 FROM muettes m
-LEFT JOIN ref.cis_atc_mapping a ON a.atc_code = m.atc_code
-LEFT JOIN dbpm.cis_compo_bdpm c ON c.code_cis = a.code_cis
+LEFT JOIN composants k ON k.atc_code = m.atc_code
 GROUP BY m.atc_code
-ORDER BY m.atc_code;
+ORDER BY (SELECT count(*) FROM ref.cis_atc_mapping a WHERE a.atc_code = m.atc_code) DESC,
+         m.atc_code;
 
 \echo ''
 \echo '=== 2. Nœuds orphelins =================================================='
