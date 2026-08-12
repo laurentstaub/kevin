@@ -18,11 +18,15 @@
 //- barre collante porte déjà le retour, la recherche et le repère de lecture.
 
 //- Plan de la fiche : les sections de la page, et sous « Documents » les
-//- rubriques de tête du document affiché.
+//- rubriques du document affiché.
 //-
-//- Niveau 1 seulement. Un RCP porte douze rubriques de tête et une quarantaine
-//- de sous-rubriques ; les afficher toutes ferait un rail plus long que la
-//- colonne de lecture, pour un plan qu'on ne lirait plus.
+//- Toutes les rubriques, sous-rubriques comprises. Le plan complet fait une
+//- trentaine de lignes, ce qui est long — mais s'en tenir au niveau 1 rendait
+//- inatteignables depuis le rail les rubriques qu'on vient précisément
+//- chercher : 4.3 contre-indications, 4.5 interactions, 4.8 effets
+//- indésirables. Un sommaire qui n'atteint pas ce qu'on cherche ne sert à
+//- rien, et le rail défile pour son compte : sa longueur ne coûte pas de
+//- lecture.
 mixin railPlan(sections, documents)
   p.rail-titre Cette fiche
   nav.rail-groupe.rail-plan
@@ -37,10 +41,9 @@ mixin railPlan(sections, documents)
           if doc.rubriques && doc.rubriques.length > 0
             .rail-sous(data-doc=doc.type hidden=(i > 0))
               each r in doc.rubriques
-                if r.profondeur === 1
-                  a.rail-lien.rail-rubrique(href=`#${r.id}`)
-                    span.rail-code= r.numero
-                    span.rail-label= r.libelle
+                a.rail-lien.rail-rubrique(href=`#${r.id}` class=`rail-p${r.profondeur}`)
+                  span.rail-code= r.numero
+                  span.rail-label= r.libelle
 
 //- @param {Array}  classes    classes ATC de niveau 1, les plus fournies d'abord
 //- @param {string} actif      'accueil' ou la lettre ATC de la page en cours

@@ -657,10 +657,20 @@
     padding-left: var(--rail-l);
   }
 
+  /* La barre traverse toute la fenêtre, rail compris : c'est la barre de
+     l'application, pas celle de la colonne de lecture, et un rail qui monterait
+     à côté d'elle en ferait deux objets de même rang. Le décalage du corps est
+     annulé puis rendu en padding, si bien que le fond s'étend jusqu'au bord
+     tandis que le contenu reste où il était. */
+  .barre {
+    margin-left: calc(-1 * var(--rail-l));
+    padding-left: var(--rail-l);
+  }
+
   .rail {
     display: block;
     position: fixed;
-    inset: 0 auto 0 0;
+    inset: var(--barre-h) auto 0 0;
     width: var(--rail-l);
     overflow-y: auto;
     /* Arrivé en bas du rail, la molette ne doit pas emporter la page : on lit
@@ -681,9 +691,13 @@
   flex-direction: column;
 }
 
+/* Chaque bloc est annoncé par son titre et détaché par un filet : sans lui,
+   « Accueil », le plan et les classes formaient une seule liste de trente
+   lignes où l'on ne voyait plus les articulations. */
 .rail-titre {
-  margin: var(--sp-4) 0 var(--sp-1);
-  padding: 0 var(--sp-1);
+  margin: var(--sp-3) 0 var(--sp-1);
+  padding: var(--sp-3) var(--sp-1) 0;
+  border-top: var(--rule-width) solid var(--rule);
   font-size: var(--fs-xs);
   /* --muted et non --faint : ces libellés sont du texte de navigation, pas
      une métadonnée en retrait, et --faint passe sous 4,5 dès que le fond
@@ -750,14 +764,22 @@
 
 /* ---------- Plan de la fiche ---------- */
 
-/* Les rubriques sont en retrait de la section qui les porte : le décalage dit
-   l'imbrication mieux qu'un filet ou une puce, et ne coûte aucune encre.
-   Composées un cran plus petit, elles se lisent comme un détail du plan et non
-   comme son deuxième étage. */
+/* Les rubriques sont en retrait de la section qui les porte, et les
+   sous-rubriques d'un cran de plus : le décalage dit l'imbrication mieux qu'un
+   filet ou une puce, et ne coûte aucune encre. Composées un cran plus petit,
+   elles se lisent comme un détail du plan et non comme son deuxième étage. */
 .rail-rubrique {
   padding-left: var(--sp-2);
   font-size: var(--fs-xs);
 }
+
+/* Le code d'une sous-rubrique fait quatre signes — « 4.10 ». La gouttière
+   s'élargit d'autant, sinon le libellé se décale d'une ligne à l'autre. */
+.rail-p2 {
+  padding-left: var(--sp-3);
+  grid-template-columns: 2.1rem 1fr;
+}
+
 
 .rail-rubrique .rail-code {
   font-size: 0.95em;
