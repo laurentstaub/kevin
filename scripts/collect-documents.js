@@ -131,8 +131,11 @@ for (const [i, cible] of restants.entries()) {
         if (doc) trouves.push({ ...t, ...doc });
       }
 
-      // Une fiche restée à l'ancienne forme peut servir la notice à part.
-      if (!trouves.some((d) => d.document_type === 'notice')) {
+      // Une fiche restée à l'ancienne forme peut servir la notice à part. On
+      // n'insiste que si le RCP, lui, a bien été trouvé en HTML : sur une
+      // spécialité centralisée il n'y a aucun texte à espérer, et redemander
+      // la même page ne rapporte qu'une redirection de plus.
+      if (trouves.length > 0 && !trouves.some((d) => d.document_type === 'notice')) {
         const autre = await demander('N');
         const doc = autre && extraireDocument(autre, 'notice');
         if (doc) trouves.push({ document_type: 'notice', plan: 'notice', ...doc });
