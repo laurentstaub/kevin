@@ -18,7 +18,7 @@
     "build-sections": "node scripts/build-sections.js",
     "build-pdf-sections": "node scripts/build-pdf-sections.js",
     "reparer-encodage": "node scripts/reparer-encodage.js",
-    "audit-atc": "psql \"$DATABASE_URL\" -f sql/audit_atc.sql"
+    "audit-atc": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_atc.sql"
   },
   "dependencies": {
     "express": "^5.1.0",

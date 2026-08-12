@@ -9,7 +9,12 @@
 --      par `parent_atc_code` plutôt que par préfixe ?
 --   3. La liste aplatie des molécules d'une classe tient-elle sur une page ?
 --
--- Usage :  psql "$DATABASE_URL" -f sql/audit_atc.sql
+-- Usage :  npm run audit-atc          (depuis le dépôt 00_dr_kevin)
+--
+-- La base visée est celle que sert Dr Kevin : DATABASE_URL si elle est posée,
+-- sinon PGDATABASE, sinon `incidents_json` en local — le même repli que
+-- src/config.js. Les tables lues sont `ref.atc_classification` et
+-- `ref.cis_atc_mapping` : c'est le schéma que src/atc.js interroge.
 --
 -- La « racine de marque » reprend la définition de src/groupes.js : compter des
 -- codes CIS annoncerait des listes quatre fois plus longues qu'elles ne sont.
