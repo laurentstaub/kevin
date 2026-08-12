@@ -90,15 +90,18 @@
   /* Longueur de ligne du texte suivi. Le plancher de 45 signes et le plafond
      de 75 ne sont pas une préférence : en deçà l'œil revient trop souvent à la
      ligne, au-delà il perd le début de la suivante. Mesurée sur une ligne
-     rendue, la colonne actuelle en porte 73 — elle est déjà au plafond, et
-     c'est pour ça qu'on l'élargit en grossissant le corps plutôt qu'en
-     allongeant la ligne : le nombre de signes ne bouge pas, les pixels si.
+     rendue, la colonne en porte 73 — elle est déjà au plafond. Il n'y a donc
+     rien à gagner à l'allonger, et grossir le corps pour occuper la largeur
+     restante a été essayé : à 19 px le texte écrasait tout le reste de la page
+     et la conduite de points débordait. La colonne reste à sa largeur mesurée,
+     et le cadre est simplement plus large qu'elle — c'est un parti pris, pas
+     un manque.
 
      En rem et non en ch. `ch` vaut la chasse du zéro de la police de
      l'élément : le même token donnait une largeur ici et une autre là, selon
      qu'on était dans le serif de lecture ou dans la sans de l'interface — d'où
      des filets qui ne tombaient jamais où finit le texte. */
-  --measure: 40.5rem;
+  --measure: 36rem;
 
   /* Gouttière de numérotation : « 4.1 » à gauche, le texte à droite. Elle vaut
      la colonne de la grille des titres plus son écart, sinon les deux ne

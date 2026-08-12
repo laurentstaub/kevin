@@ -529,12 +529,17 @@ td.forme {
    lézardes d'un texte justifié sans moteur de césure. */
 .rubrique-corps {
   font-family: var(--font-lecture);
-  font-size: 1.1875rem;
+  font-size: 1.0625rem;
   line-height: 1.6;
   max-width: var(--lecture);
   padding: var(--sp-1) 0 0 var(--gouttiere);
   hyphens: none;
   text-wrap: pretty;
+  /* Un mot plus long que la colonne ne l'élargit pas, il se coupe. Sans cette
+     ligne, une suite ininterrompue — conduite de points d'un document pas
+     encore repassé au découpeur, adresse web, code — pousse la colonne au-delà
+     de sa mesure et emmène la mise en page avec elle. */
+  overflow-wrap: break-word;
 }
 
 .rubrique-corps > :first-child {
@@ -610,12 +615,12 @@ td.forme {
    petit que la phrase qui l'introduit est la mauvaise hiérarchie. */
 .rubrique-corps table,
 .document-corps table {
-  font-size: 0.95em;
+  font-size: 0.82em;
 }
 
 .rubrique-corps thead th,
 .document-corps thead th {
-  font-size: 0.8em;
+  font-size: 0.71em;
 }
 
 .rubrique-corps table {
@@ -648,11 +653,12 @@ td.forme {
 
 .document-corps {
   font-family: var(--font-lecture);
-  font-size: 1.1875rem;
+  font-size: 1.0625rem;
   line-height: 1.6;
   max-width: var(--lecture);
   hyphens: none;
   text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 /* Titres du document : même gouttière que le plan, pour que l'œil retrouve
