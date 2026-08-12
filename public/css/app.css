@@ -657,6 +657,9 @@
        qu'on ne parcourt plus du regard. Il reste 912 px au contenu au seuil de
        1200, pour une colonne qui en demande 736. */
     --rail-l: 18rem;
+
+    /* Hauteur du bandeau d'accueil, d'où part le rail sur cette page. */
+    --accueil-h: 17.5rem;
   }
 
   body {
@@ -671,6 +674,28 @@
   .barre {
     margin-left: calc(-1 * var(--rail-l));
     padding-left: var(--rail-l);
+  }
+
+  /* Le bandeau garde sa gouttière propre de chaque côté : rendre au décalage
+     exactement sa valeur laisserait 24 px à droite et rien à gauche, et le
+     titre se retrouverait de douze pixels à côté du contenu qui le suit. */
+  .accueil {
+    margin-left: calc(-1 * var(--rail-l));
+    padding-left: calc(var(--rail-l) + var(--sp-3));
+  }
+
+  /* L'accueil n'a pas de barre : c'est le bandeau vert qui lui sert d'en-tête,
+     et le rail doit donc commencer sous lui. Sa hauteur est fixée ici plutôt
+     que laissée au contenu, parce qu'elle sert deux fois — la sienne et le
+     départ du rail — et que deux valeurs tenues séparément finissent par
+     diverger. Le contenu du bandeau est du texte fixe : au-delà de 1200 px il
+     ne bouge pas. */
+  .accueil {
+    min-height: var(--accueil-h);
+  }
+
+  body:has(> .accueil) .rail {
+    top: var(--accueil-h);
   }
 
   .rail {
