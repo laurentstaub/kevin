@@ -521,8 +521,11 @@ td.forme {
 
    - Longueur de ligne 45–75 signes. En deçà l'œil revient trop souvent à la
      ligne, au-delà il perd le début de la suivante — d'où 66 signes ici.
-   - Interligne 1,6. Le WCAG 1.4.8 pose 1,5 comme plancher pour un bloc de
-     texte ; les lignes longues en demandent un peu plus.
+   - Interligne 1,75. Le WCAG 1.4.8 pose 1,5 comme plancher pour un bloc de
+     texte ; les lignes longues en demandent davantage, et celle-ci porte
+     87 signes. Ce que le plafond de 75 protège, c'est le retour à la ligne —
+     l'œil qui, arrivé à droite, ne retrouve pas le début de la suivante. Un
+     interlignage généreux fait le même travail par un autre moyen.
    - Corps 17 px. En dessous de 16 px la vitesse de lecture chute à l'écran.
 
    Composé au fer à gauche, sans césure : le drapeau vaut mieux que les
@@ -530,7 +533,7 @@ td.forme {
 .rubrique-corps {
   font-family: var(--font-lecture);
   font-size: 1.0625rem;
-  line-height: 1.6;
+  line-height: 1.75;
   max-width: var(--lecture);
   padding: var(--sp-1) 0 0 var(--gouttiere);
   hyphens: none;
@@ -654,7 +657,7 @@ td.forme {
 .document-corps {
   font-family: var(--font-lecture);
   font-size: 1.0625rem;
-  line-height: 1.6;
+  line-height: 1.75;
   max-width: var(--lecture);
   hyphens: none;
   text-wrap: pretty;
