@@ -87,11 +87,23 @@
      les ancres et le rail collant doivent s'en écarter d'autant, sinon un lien
      vers la rubrique 4.1 dépose son titre dessous. */
   --barre-h: 2.75rem;
-  --measure: 68ch;
+  /* Longueur de ligne du texte suivi. Le plancher de 45 signes et le plafond
+     de 75 ne sont pas une préférence : en deçà l'œil revient trop souvent à la
+     ligne, au-delà il perd le début de la suivante. On monte à 70, ce qui reste
+     dans la bande — un RCP est fait de paragraphes longs et denses, pas de
+     répliques de trois lignes, et c'est justement là que le plafond mord. */
+  --measure: 70ch;
+
   /* Axe unique de la page : barre, bandeau d'identité et contenu s'y alignent.
      Le sommaire latéral occupait la marge gauche ; sans lui, la colonne de
-     lecture revient au centre. */
-  --colonne: 46rem;
+     lecture revient au centre.
+
+     Le cadre et la surface de lecture ne se règlent pas ensemble. Le cadre
+     porte des lignes uniques — titres de rubriques, onglets, puces de dosage,
+     tableaux — qui n'ont aucune raison d'obéir à la mesure du texte suivi ;
+     les serrer à la largeur des paragraphes tasse la page sans rien gagner en
+     lisibilité. Il s'élargit donc seul. */
+  --colonne: 52rem;
 }
 
 *,
