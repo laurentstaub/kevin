@@ -19,7 +19,8 @@
     "build-pdf-sections": "node scripts/build-pdf-sections.js",
     "reparer-encodage": "node scripts/reparer-encodage.js",
     "audit-atc": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_atc.sql",
-    "diag-atc": "node scripts/diag-atc.js"
+    "diag-atc": "node scripts/diag-atc.js",
+    "audit-documents": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_documents.sql"
   },
   "dependencies": {
     "express": "^5.1.0",
