@@ -764,10 +764,16 @@
 }
 
 /* Repère de lecture posé par documents.js : la rubrique qu'on est en train de
-   lire. Un trait à gauche plutôt qu'un aplat — l'aplat dit « vous êtes sur
-   cette page », le trait dit « vous en êtes là », et les deux coexistent sur
-   la fiche produit. */
-.rail-ici {
-  color: var(--ink);
-  box-shadow: inset 2px 0 0 var(--accent);
+   lire. Même aplat que l'onglet sélectionné et que la classe courante — un
+   seul signe pour « vous êtes ici », quel que soit l'objet. Deux signes
+   distincts obligeaient à apprendre lequel veut dire quoi, pour une
+   distinction dont on n'a que faire en lisant. */
+.rail-ici,
+.rail-ici:hover {
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.rail-ici .rail-code {
+  color: var(--accent);
 }

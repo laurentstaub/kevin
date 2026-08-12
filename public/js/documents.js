@@ -45,10 +45,33 @@ onglets.forEach((onglet, i) => {
   });
 });
 
+/**
+ * Ce qu'il faut ouvrir pour qu'une charnière ait quelque chose à montrer.
+ *
+ * « 6. Données pharmaceutiques » n'a pas de contenu propre : son contenu, ce
+ * sont 6.1 à 6.6, qui la suivent comme frères. Cliquer dessus dans un sommaire
+ * veut dire « montre-moi la rubrique 6 » — sans quoi le clic ne fait rien de
+ * visible et l'on croit le lien mort. On s'arrête au premier titre de même
+ * rang, qui appartient déjà à la rubrique suivante.
+ */
+function sousRubriques(charniere) {
+  const suite = [];
+  for (let n = charniere.nextElementSibling; n; n = n.nextElementSibling) {
+    if (n.classList.contains('charniere') || n.classList.contains('rub-n1')) break;
+    if (n.tagName === 'DETAILS') suite.push(n);
+  }
+  return suite;
+}
+
+/** Le titre visible d'une cible : c'est lui qui porte la marge d'ancrage. */
+function titreDe(cible) {
+  return cible.tagName === 'DETAILS' ? cible.querySelector(':scope > summary') ?? cible : cible;
+}
+
 /** Rend visible ce que désigne une ancre : onglet, puis blocs englobants. */
 function reveler(id) {
   const cible = id && document.getElementById(id);
-  if (!cible) return;
+  if (!cible) return null;
 
   const panneau = cible.closest('[role="tabpanel"]');
   const indice = panneaux.indexOf(panneau);
@@ -58,6 +81,12 @@ function reveler(id) {
   for (let n = cible; n; n = n.parentElement) {
     if (n.tagName === 'DETAILS') n.open = true;
   }
+
+  if (cible.classList.contains('charniere')) {
+    for (const d of sousRubriques(cible)) d.open = true;
+  }
+
+  return cible;
 }
 
 document.addEventListener('click', (e) => {
@@ -294,20 +323,37 @@ if (rail && documents) {
 
   let marque = null;
 
+  const marquer = (lien) => {
+    if (lien === marque) return;
+    marque?.classList.remove('rail-ici');
+    lien?.classList.add('rail-ici');
+    marque = lien;
+  };
+
+  /**
+   * Le seuil doit tomber *sous* l'endroit où un titre ancré vient se poser.
+   *
+   * Les titres portent `scroll-margin-top: barre + sp-2`, soit une vingtaine de
+   * pixels de plus que le bas de la barre. Un seuil calé sur la barre plaçait
+   * donc le titre qu'on venait d'atteindre juste en dessous, et le repère
+   * restait sur le précédent : on cliquait sur 7, le rail marquait 5.
+   */
+  const seuilDeLecture = () => (barre?.getBoundingClientRect().bottom ?? 0) + 24;
+
   const peindre = () => {
     if (!large.matches) return;
-    const seuil = (barre?.getBoundingClientRect().bottom ?? 0) + 8;
+    const seuil = seuilDeLecture();
 
+    const liste = paires();
     let trouve = null;
-    for (const { lien, cible } of paires()) {
+    for (const { lien, cible } of liste) {
       if (cible.getBoundingClientRect().top > seuil) break;
       trouve = lien;
     }
 
-    if (trouve === marque) return;
-    marque?.classList.remove('rail-ici');
-    trouve?.classList.add('rail-ici');
-    marque = trouve;
+    // Tout est encore sous le seuil — on est en haut de page : c'est la
+    // première entrée qui vaut, pas aucune.
+    marquer(trouve ?? liste[0]?.lien ?? null);
   };
 
   let differe = false;
@@ -318,6 +364,31 @@ if (rail && documents) {
   };
 
   const rafraichir = () => { perimerCibles(); bientot(); };
+
+  /**
+   * Le clic du rail fait le déplacement lui-même.
+   *
+   * Laissé au navigateur, il calculait la position de l'ancre *avant* que
+   * `reveler` n'ouvre les blocs qui la précèdent : la page s'arrêtait là où la
+   * cible était au moment du clic, pas là où elle a fini. On ouvre d'abord, on
+   * se déplace ensuite, et le repère se pose sans attendre le défilement —
+   * cliquer sur une entrée doit la marquer, pas marquer la précédente.
+   */
+  rail.addEventListener('click', (e) => {
+    const lien = e.target.closest('.rail-plan .rail-lien[href^="#"]');
+    if (!lien) return;
+
+    const id = decodeURIComponent(lien.hash.slice(1));
+    const cible = reveler(id);
+    if (!cible) return;
+
+    e.preventDefault();
+    marquer(lien);
+    titreDe(cible).scrollIntoView({ block: 'start' });
+    // L'adresse suit, sans empiler une entrée d'historique par rubrique lue.
+    history.replaceState(null, '', `#${id}`);
+    perimerCibles();
+  });
 
   addEventListener('scroll', bientot, { passive: true });
   addEventListener('resize', rafraichir, { passive: true });
