@@ -324,15 +324,15 @@ td.forme {
 
 /* ---------- Onglets RCP / Notice ---------- */
 
-/* Barre d'onglets : un filet continu, l'onglet actif le rompt. Pas de fond,
-   pas de bordure fermée — c'est le trait qui porte l'état. */
+/* Le filet sous la barre a disparu avec la raison d'être qu'il avait : il
+   servait de rail à l'onglet actif, qui le rompait. L'état se disant
+   maintenant par un aplat, le trait ne portait plus rien — il ne faisait
+   qu'ajouter une ligne à un bloc qui en compte déjà une par rubrique. */
 .onglets {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-  padding-bottom: var(--sp-1);
-  border-bottom: var(--rule-width) solid var(--rule);
-  margin-bottom: var(--sp-2);
+  margin-bottom: var(--sp-1);
 }
 
 /* Un onglet est un bouton : il hérite du rayon des contrôles. Le filet de
