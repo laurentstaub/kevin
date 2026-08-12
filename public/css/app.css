@@ -650,7 +650,13 @@
 
 @media (min-width: 75rem) {
   :root {
-    --rail-l: 15rem;
+    /* 288 px, la largeur du rail de Reddit à quelques pixels près. Les libellés
+       du plan ne sont pas courts — « Composition qualitative et quantitative »,
+       « Précautions particulières de conservation » — et à 240 px ils passaient
+       tous à la ligne : trente entrées sur deux lignes chacune font un rail
+       qu'on ne parcourt plus du regard. Il reste 912 px au contenu au seuil de
+       1200, pour une colonne qui en demande 736. */
+    --rail-l: 18rem;
   }
 
   body {
