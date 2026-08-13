@@ -1040,3 +1040,112 @@ td.forme {
     margin-top: var(--sp-2);
   }
 }
+
+
+/* ---------- Impression de la fiche ---------- */
+
+@media print {
+  /* Tout s'ouvre.
+   *
+   * Une rubrique repliée est cachée par le navigateur lui-même, pas par nous :
+   * sans cette règle, on imprimait un sommaire de douze lignes en croyant
+   * imprimer un RCP. C'est le pire défaut possible pour un document qu'on sort
+   * afin de le lire ailleurs — il paraît complet et ne l'est pas. */
+  details > *:not(summary) {
+    display: block !important;
+  }
+
+  /* Les panneaux d'onglets restent `hidden` : on imprime le document affiché,
+     pas les trois. Sur papier, l'onglet actif devient son titre — sinon rien
+     ne dit si l'on tient le résumé des caractéristiques ou la notice. */
+  .onglets {
+    display: block;
+    margin: var(--sp-3) 0 var(--sp-1);
+    max-width: none;
+  }
+
+  .onglet[aria-selected='false'] {
+    display: none;
+  }
+
+  .onglet[aria-selected='true'] {
+    padding: 0;
+    background: none;
+    color: #000;
+    font-family: var(--font-head);
+    font-size: var(--fs-md);
+  }
+
+  /* Commandes : elles n'ont plus rien à commander. */
+  .rubriques-controle,
+  .barre-repere,
+  .formes-plus,
+  .presentations-tete {
+    display: none;
+  }
+
+  /* Le « + / − » annonce un pli qui n'existe plus sur papier. */
+  .rubrique-tete .num::after,
+  .charniere .num::after,
+  .bloc-tete::after {
+    content: none;
+  }
+
+  .charniere-bascule {
+    cursor: auto;
+  }
+
+  /* Un titre seul en bas de page est un titre perdu. */
+  .rubrique-tete,
+  .charniere,
+  .bloc-tete,
+  .sous-titre {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Une posologie coupée en deux se relit mal et se recopie mal. */
+  tr,
+  .dose,
+  li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Le défilement horizontal n'existe pas sur papier : le tableau tient dans
+     la largeur, quitte à se resserrer. */
+  .table-defilante {
+    overflow: visible;
+  }
+
+  .table-defilante table {
+    min-width: 0;
+  }
+
+  /* Les aplats d'état — onglet choisi, dosage courant, mention de délivrance —
+     ne disent plus rien une fois le choix figé, et coûtent du toner. Le filet
+     reste, il porte la même information sans l'encre. */
+  .mention,
+  .forme-choix.actif {
+    background: none;
+    color: #000;
+    border: var(--rule-width) solid #666;
+  }
+
+  /* La conduite de points est un artifice d'écran : elle se recalcule à chaque
+     largeur et n'a pas de largeur sur papier. Nom et dose se séparent d'une
+     espace. */
+  .dose-liaison {
+    display: none;
+  }
+
+  .dose {
+    gap: 0.6em;
+  }
+
+  .rubrique-corps,
+  .document-corps {
+    color: #000;
+    max-width: none;
+  }
+}

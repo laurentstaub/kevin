@@ -853,3 +853,61 @@
 .rail-ici .rail-code {
   color: var(--accent);
 }
+
+/* ---------- Impression ---------- */
+
+/* Ce qui s'imprime, c'est le document — pas l'application.
+ *
+ * Un RCP se sort pour être annoté, glissé dans un dossier, ou remis à un
+ * patient pour la rubrique qui le concerne. Sans cette feuille, la page
+ * partait sur papier avec son rail, sa barre collante, ses onglets et ses
+ * rubriques repliées : trois pages d'habillage autour d'un texte amputé de
+ * tout ce qui n'était pas ouvert à l'écran.
+ *
+ * Règle unique : tout ce qui sert à naviguer disparaît, tout ce qui porte du
+ * texte s'ouvre. */
+@media print {
+  :root {
+    /* Les marges sont celles de la page ; la colonne prend ce qui reste. Une
+       largeur de lecture réglée pour un écran n'a plus de sens quand c'est le
+       papier qui fixe la mesure. */
+    --colonne: 100%;
+  }
+
+  body {
+    padding-left: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  .rail,
+  .barre {
+    display: none;
+  }
+
+  /* Le fond teinté n'a plus d'objet : il désignait l'habillage, qui n'est plus
+     là. Et une encre d'aplat sur toute une page se paie en cartouche. */
+  .accueil {
+    background: none;
+    color: #000;
+    padding: 0 0 var(--sp-3);
+    margin: 0;
+  }
+
+  .accueil .titre-site {
+    color: #000;
+  }
+
+  /* Un lien imprimé ne mène nulle part : dans le corps du texte on le laisse
+     tel quel, mais la section des références n'existe que pour ses adresses. */
+  .liens a[href^="http"]::after {
+    content: ' — ' attr(href);
+    font-size: 0.85em;
+    color: #444;
+    word-break: break-all;
+  }
+}
