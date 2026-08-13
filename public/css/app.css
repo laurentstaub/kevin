@@ -383,7 +383,19 @@
 
 .classe-lien {
   display: grid;
-  grid-template-columns: 2.2rem 1fr;
+  /* Taillée pour sept signes — « R03DC01 » —, la longueur maximale d'un code
+     ATC, et non pour les quatre d'une sous-classe.
+     
+     La gouttière était doublée : étroite pour les sous-classes, large pour les
+     molécules, au motif qu'une sous-classe ne dépasse pas quatre signes. C'est
+     faux. Quand les enfants directs d'une classe *sont* les molécules — R03DC
+     n'a que R03DC01 sous lui — la page les rend dans la liste des
+     sous-classes, pour ne pas les afficher deux fois. Le code y débordait donc
+     sur le libellé.
+     
+     Une seule valeur, dimensionnée sur le pire cas possible, plutôt que deux
+     qui reposent sur une supposition à propos des données. */
+  grid-template-columns: 4.2rem 1fr;
   gap: 0 var(--sp-1);
   align-items: baseline;
   padding: var(--sp-1) var(--sp-1) var(--sp-1) 0;
@@ -413,14 +425,6 @@
   font-size: var(--fs-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-}
-
-/* La gouttière du code est taillée pour « J05A », quatre signes ; un code de
-   molécule en fait sept — « J05AF06 » — et débordait sur le libellé. Les listes
-   de molécules ont donc la leur, sans élargir celle des sous-classes, qui n'en
-   a pas besoin et perdrait de la place. */
-.classes-molecules .classe-lien {
-  grid-template-columns: 4.2rem 1fr;
 }
 
 /* Le reste des molécules. Replié, parce qu'une liste écourtée en silence se
