@@ -46,15 +46,14 @@ mixin railPlan(sections, documents)
                   span.rail-label= r.libelle
 
 //- @param {Array}  classes    classes ATC de niveau 1, les plus fournies d'abord
-//- @param {string} actif      'accueil' ou la lettre ATC de la page en cours
+//- @param {string} actif      la lettre ATC de la page en cours, s'il y en a une
 //- @param {Array}  sections   plan de la fiche produit, absent ailleurs
 //- @param {Array}  documents  documents découpés de la fiche, absents ailleurs
+//- Pas de lien « Accueil » ici : la barre collante en porte un, présent sur
+//- toutes les pages *et* sous 1200 px où le rail n'existe pas. Le doubler
+//- n'offrait pas un second chemin, seulement une seconde occasion d'hésiter.
 mixin rail(classes, actif, sections, documents)
   aside.rail(aria-label="Navigation")
-    nav.rail-groupe
-      a.rail-lien.rail-seul(href="/" class=(actif === 'accueil' ? 'rail-actif' : null)
-        aria-current=(actif === 'accueil' ? 'page' : null)) Accueil
-
     if sections && sections.length
       +railPlan(sections, documents)
 

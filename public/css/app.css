@@ -716,11 +716,18 @@
     overscroll-behavior: contain;
     padding: var(--sp-3) var(--sp-2) var(--sp-6);
     border-right: var(--rule-width) solid var(--rule);
-    /* Même fond que la page, séparé par un filet. Un aplat de couleur ferait
-       du rail un panneau posé sur la page ; ce n'en est pas un, c'est une
-       marge qui porte des liens. Et un survol doit s'assombrir, pas
-       s'éclaircir — impossible sur un fond déjà teinté. */
-    background: var(--bg);
+    /* Une seule teinte pour tout ce qui n'est pas le document.
+     
+       La barre collante et le bandeau d'identité sont déjà en --bg-tint : ce
+       sont les deux autres pièces de l'habillage. Le rail en est la troisième,
+       et il était resté blanc — d'où une couture verticale le long du bandeau,
+       là où deux surfaces de même fonction se touchent avec deux couleurs
+       différentes. Ce n'était pas un défaut de dosage mais une incohérence de
+       classement.
+     
+       La colonne de lecture, elle, reste blanche. C'est ce qui compte quand on
+       traverse quarante mille signes. */
+    background: var(--bg-tint);
   }
 }
 
@@ -736,12 +743,19 @@
   margin: var(--sp-3) 0 var(--sp-1);
   padding: var(--sp-3) var(--sp-1) 0;
   border-top: var(--rule-width) solid var(--rule);
+  /* Le filet sépare deux blocs ; en tête de rail il n'en sépare aucun. */
   font-size: var(--fs-xs);
   /* --muted et non --faint : ces libellés sont du texte de navigation, pas
      une métadonnée en retrait, et --faint passe sous 4,5 dès que le fond
      n'est plus le blanc pur — au survol, par exemple. */
   color: var(--muted);
   letter-spacing: 0.04em;
+}
+
+.rail-titre:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 /* Cible de clic pleine largeur : dans une liste verticale, viser le texte
@@ -763,8 +777,10 @@
   display: block;
 }
 
+/* Sur un fond teinté, le survol s'éclaircit : il soulève au lieu d'enfoncer.
+   L'état sélectionné garde son vert pâle, les trois états restent distincts. */
 .rail-lien:hover {
-  background: var(--bg-tint);
+  background: var(--bg);
   color: var(--ink);
 }
 
