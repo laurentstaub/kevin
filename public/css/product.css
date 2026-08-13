@@ -7,8 +7,18 @@
 /* Le bandeau prend la teinte claire de la famille : il se détache de la
    surface de lecture sans qu'on ait à l'encadrer, et rappelle l'aplat de
    l'accueil à une valeur qui ne gêne pas la lecture qui suit. */
+/* Le bandeau d'identité est blanc : il parle du produit, donc du document.
+ *
+ * La teinte marque l'habillage de l'application — la barre et le rail. Le
+ * bandeau n'en est pas : il porte la dénomination, la DCI, le titulaire, le
+ * CIS. Teinté, il faisait un troisième aplat vert sur le tiers supérieur de
+ * l'écran, et la frontière avec le rail changeait de couleur à mi-hauteur.
+ * Blanc, la frontière est la même du haut en bas de la page, et le vert ne
+ * dit plus qu'une chose : « ceci n'est pas le document ».
+ *
+ * Le filet du bas suffit à le délimiter — c'est ce que font déjà toutes les
+ * sections de la fiche. */
 .identite {
-  background: var(--bg-tint);
   border-bottom: var(--rule-width) solid var(--rule);
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
