@@ -632,14 +632,52 @@ td.forme {
   margin: 0 0 0.75em;
 }
 
+/* Les listes viennent du texte, pas du balisage : la BDPM les écrit en
+   caractères — « · », « o » — dans des paragraphes ordinaires, et le découpeur
+   leur rend la forme que leur typographie annonçait. D'où un réglage propre,
+   et non celui hérité des listes d'interface. */
 .rubrique-corps ul,
-.rubrique-corps ol {
+.rubrique-corps ol,
+.document-corps ul,
+.document-corps ol {
   margin: 0 0 0.75em;
-  padding-left: 1.2em;
+  /* Le retrait porte la puce hors du texte : la deuxième ligne d'un élément
+     s'aligne alors sous la première et non sous le signe. C'est ce débord qui
+     manquait — l'œil perdait l'entrée de chaque item. */
+  padding-left: 1.4em;
 }
 
-.rubrique-corps li {
-  margin-bottom: 0.3em;
+/* Les éléments d'une même liste sont une énumération, pas des paragraphes :
+   ils se serrent. L'interligne de séparation reste pour ce qui suit la liste. */
+.rubrique-corps li,
+.document-corps li {
+  margin-bottom: 0.2em;
+}
+
+/* Une liste imbriquée respire au-dessus, pas en dessous : elle appartient à
+   l'élément qui la porte et ne doit pas s'en détacher. */
+.rubrique-corps li > ul,
+.document-corps li > ul {
+  margin: 0.25em 0 0;
+}
+
+/* Intitulé du modèle QRD — « Posologie », « Personnes âgées ». Il articule la
+   rubrique sans prétendre à son rang : c'est la sans de l'interface qui le
+   distingue du texte suivi, pas une taille plus grande. Un titre plus gros
+   qu'un autre titre dans une rubrique déjà numérotée ferait un troisième
+   niveau de lecture pour rien. */
+.rubrique-corps .sous-titre,
+.document-corps .sous-titre {
+  font-family: var(--font-body);
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 1.4em 0 0.4em;
+}
+
+.rubrique-corps > .sous-titre:first-child,
+.document-corps > .sous-titre:first-child {
+  margin-top: 0;
 }
 
 .rubrique-corps li::marker {

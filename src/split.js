@@ -1,5 +1,6 @@
 import { outline } from './outline.js';
 import { socle } from './rcp-plan.js';
+import { structurer } from './typographie.js';
 
 /**
  * Découpe un document en rubriques exploitables.
@@ -13,13 +14,16 @@ import { socle } from './rcp-plan.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 8 : puces « · » et « o » rendues en vraies listes imbriquées, intitulés du
+//     modèle QRD promus en sous-titres, espaces insécables avant les signes
+//     doubles.
 // 5 : conduite reposée en vrais points, et reconnue à travers les retours
 //     à la ligne du HTML indenté de la BDPM.
 // 4 : conduites de points de la rubrique 2 rendues à la largeur.
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 7;
+export const PARSER_VERSION = 8;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -177,7 +181,10 @@ export function splitDocument(html, type = 'doc') {
       libelle: titre.label,
       profondeur: titre.depth,
       canonical: titre.canonical,
-      html: composerDoses(contenu.trim()),
+      // La structure d'abord, la conduite ensuite : une fois les puces
+      // devenues des <li>, la recherche de conduite ne voit plus que les
+      // paragraphes qui peuvent réellement en porter une.
+      html: composerDoses(structurer(contenu.trim())),
       texte: detaguer(contenu),
     };
   });
