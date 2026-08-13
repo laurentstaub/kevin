@@ -22,8 +22,25 @@ const pool = createPool({ statement_timeout: 0 });
 const pct = (x) => (x === null ? '—' : `${(x * 100).toFixed(1)} %`);
 const verdicts = [];
 
+/**
+ * Un état que la marque ne connaît pas n'est pas une rupture.
+ *
+ * `falaise` prend soin de distinguer « effondrement » de « je n'ai pas su
+ * juger » — norme introuvable, norme trop basse. L'appel écrasait la nuance
+ * d'un `etat === 'ok' ? … : 'rupture'`, et l'on a lu « RUPTURE — norme — »
+ * là où il fallait lire « pas de norme, donc pas de verdict ». Un contrôle qui
+ * crie faute de savoir est pire qu'un contrôle absent : on cherche la panne
+ * qu'il annonce au lieu de celle qui l'empêche de juger.
+ */
+const verdict = (etat) => (['ok', 'alerte', 'rupture'].includes(etat) ? etat : 'indeterminable');
+
 const dire = (etat, titre, detail) => {
-  const marque = { ok: '  ok   ', alerte: '  alerte', rupture: '  RUPTURE' }[etat] ?? '  ?    ';
+  const marque = {
+    ok: '  ok   ',
+    alerte: '  alerte',
+    rupture: '  RUPTURE',
+    indeterminable: '  ?    ',
+  }[etat] ?? '  ?    ';
   console.log(`${marque}  ${titre}`);
   if (detail) console.log(`          ${detail}`);
   verdicts.push({ etat, titre });
@@ -54,7 +71,7 @@ try {
     `EXISTS (SELECT 1 FROM dbpm.cis_documents d WHERE d.code_cis = m.code_cis)`,
   ));
   dire(
-    docs.etat === 'ok' ? 'ok' : docs.etat === 'alerte' ? 'alerte' : 'rupture',
+    verdict(docs.etat),
     `Collecte des documents — norme ${pct(docs.reference)}`,
     docs.ruptures.length > 0
       ? `effondrement sur ${docs.ruptures.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
@@ -72,7 +89,7 @@ try {
     { seuilRupture: 0.25, seuilAlerte: 0.7 },
   );
   dire(
-    atc.etat === 'ok' ? 'ok' : atc.etat === 'alerte' ? 'alerte' : 'rupture',
+    verdict(atc.etat),
     `Classification ATC — norme ${pct(atc.reference)}`,
     atc.ruptures.length > 0
       ? `effondrement sur ${atc.ruptures.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
@@ -136,8 +153,10 @@ try {
   } (indicatif ; fraîcheur du chargement : check-bdpm)`);
 
   const ruptures = verdicts.filter((x) => x.etat === 'rupture');
+  const flous = verdicts.filter((x) => x.etat === 'indeterminable');
   console.log(`\n${verdicts.length} contrôles — ${ruptures.length} en rupture, `
-    + `${verdicts.filter((x) => x.etat === 'alerte').length} en alerte\n`);
+    + `${verdicts.filter((x) => x.etat === 'alerte').length} en alerte`
+    + `${flous.length > 0 ? `, ${flous.length} sans verdict` : ''}\n`);
 
   if (ruptures.length > 0 && !TOLERANT) process.exitCode = 1;
 } finally {
