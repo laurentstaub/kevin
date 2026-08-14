@@ -121,6 +121,8 @@ block content
         //- la recherche par nom ne rend rien — « allongement du QT » n'est le
         //- nom d'aucun médicament —, ce bloc devient la réponse et prend toute
         //- la page, au lieu d'un vide poli sous un « aucun résultat ».
+        if panne
+          p.section-meta= panne
         if documents && documents.resultats.length > 0
           section.groupe
             h2.groupe-titre

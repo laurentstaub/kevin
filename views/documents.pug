@@ -27,7 +27,9 @@ block content
           href=`/documents?q=${encodeURIComponent(query)}&rubrique=${r[0]}`
           title=`Rubrique ${r[0]}`)= r[1]
 
-    if notice
+    if panne
+      p.vide= panne
+    else if notice
       p.vide= notice
     else if documents.resultats.length === 0
       p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.

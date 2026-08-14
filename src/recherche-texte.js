@@ -64,6 +64,22 @@ const TSQUERY = `websearch_to_tsquery('${LANGUE}', $1)`;
 const VECTEUR = `to_tsvector('${LANGUE}', s.texte)`;
 
 /**
+ * L'index de recherche n'est pas en place sur cette base.
+ *
+ * `sql/recherche.sql` n'a pas été exécuté : la configuration `french_nu`
+ * n'existe pas, et Postgres le dit par un `undefined_object`. La distinction
+ * compte, parce que les deux situations demandent des choses opposées — dans
+ * un cas il faut lancer une commande, dans l'autre attendre ou lire les
+ * journaux. Une panne annoncée « momentanée » alors qu'elle est définitive
+ * fait attendre pour rien.
+ */
+export function manqueIndex(err) {
+  // 42704 undefined_object, 42883 undefined_function
+  return err?.code === '42704' || err?.code === '42883'
+    || /french_nu|websearch_to_tsquery/i.test(err?.message ?? '');
+}
+
+/**
  * Rubriques dont le texte répond à la requête.
  *
  * @param {import('pg').Pool} pool

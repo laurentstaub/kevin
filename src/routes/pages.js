@@ -12,7 +12,9 @@ import {
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance } from '../delivrance.js';
-import { chercherDansDocuments, normaliserRubrique, PAR_PAGE } from '../recherche-texte.js';
+import {
+  chercherDansDocuments, manqueIndex, normaliserRubrique, PAR_PAGE,
+} from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
 import {
@@ -121,15 +123,25 @@ export function pageRoutes(pool) {
       // question par deux chemins, et rien ne justifie d'attendre l'une pour
       // lancer l'autre. Un défaut sur les documents ne doit pas emporter la
       // recherche par nom, qui est la plus demandée.
+      let panne = null;
       const [results, documents] = await Promise.all([
         searchMedications(pool, query, filter),
         chercherDansDocuments(pool, query.raw, { limite: 5 }).catch((err) => {
+          // Une fonctionnalité absente en silence est le pire des états : on
+          // cherche pourquoi elle ne trouve rien, alors qu'elle n'est pas
+          // installée. Le défaut ne casse pas la recherche par nom, mais il se
+          // dit — et il se distingue d'une absence de résultats.
           console.error('[recherche] plein texte indisponible :', err.message);
+          panne = manqueIndex(err)
+            ? 'La recherche dans les documents n’est pas encore installée sur cette base.'
+            : 'La recherche dans les documents est momentanément indisponible.';
           return null;
         }),
       ]);
 
-      res.render('search_page', { query: query.raw, filter, results, documents });
+      res.render('search_page', {
+        query: query.raw, filter, results, documents, panne,
+      });
     }),
   );
 
@@ -149,14 +161,24 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
+      let panne = null;
       const documents = query.tooShort
         ? { resultats: [], total: 0, borne: false }
-        : await chercherDansDocuments(pool, query.raw, { rubrique, limite: PAR_PAGE });
+        : await chercherDansDocuments(pool, query.raw, { rubrique, limite: PAR_PAGE })
+          .catch((err) => {
+            console.error('[recherche] plein texte indisponible :', err.message);
+            panne = manqueIndex(err)
+              ? 'La recherche dans les documents n’est pas encore installée sur cette base '
+                + '— exécuter « npm run db:recherche ».'
+              : 'La recherche dans les documents est momentanément indisponible.';
+            return { resultats: [], total: 0, borne: false };
+          });
 
       res.render('documents', {
         query: query.raw,
         rubrique,
         documents,
+        panne,
         notice: query.tooShort
           ? `Saisissez au moins ${config.search.minLength} caractères.`
           : null,
