@@ -288,7 +288,20 @@ export function interactions(html) {
  * Un renvoi vers une rubrique absente du document — cela arrive, la notice
  * cite le RCP — reste du texte. Un lien mort vaut moins que pas de lien.
  */
-const RENVOI = /\bvoir\s+(?:les\s+)?rubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
+/**
+ * L'ancre est le mot « rubrique », pas le verbe qui le précède.
+ *
+ * Première version calée sur « voir rubrique » : elle manquait « mentionnés à
+ * la rubrique 6.1 » et « voir la rubrique 4.4 ». Relevé sur un RCP entier —
+ * trente-six renvois — les tournures sont « voir rubrique X », « voir
+ * rubriques X et Y », « voir la rubrique X », « à la rubrique X », et même
+ * « voir rubrique 4.3 et 4.4 » au singulier avec deux numéros.
+ *
+ * Énumérer les verbes revenait à parier sur une liste qu'on ne connaît pas.
+ * Dans un RCP, « rubrique » suivi d'un numéro est toujours un renvoi : c'est
+ * le seul signal fiable, et il ne dépend d'aucune tournure.
+ */
+const RENVOI = /\brubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|ou|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
 const NUMERO = /\d{1,2}(?:\.\d{1,2})?/g;
 
 export function renvois(html, idParNumero) {

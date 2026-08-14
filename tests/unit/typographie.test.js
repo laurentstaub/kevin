@@ -170,6 +170,20 @@ describe('renvois entre rubriques', () => {
     assert.equal(renvois(html, ancres), html);
   });
 
+  // Relevées sur un RCP entier — trente-six renvois — plutôt que devinées.
+  // La première version, calée sur « voir rubrique », en manquait deux formes.
+  it('reconnaît toutes les tournures du corpus', () => {
+    const ancres = new Map([['4.4', 'rcp-1'], ['4.6', 'rcp-2'], ['6.1', 'rcp-9']]);
+    const lie = (t) => (renvois(`<p>${t}</p>`, ancres).match(/class="renvoi"/g) ?? []).length;
+
+    assert.equal(lie('mentionnés à la rubrique 6.1.'), 1, 'à la rubrique');
+    assert.equal(lie('Voir rubrique 4.4.'), 1, 'majuscule initiale');
+    assert.equal(lie('voir la rubrique 4.4'), 1, 'voir la rubrique');
+    assert.equal(lie('voir rubriques 4.4 et 4.6'), 2, 'pluriel, deux numéros');
+    assert.equal(lie('voir rubrique 4.4 et 4.6'), 2, 'singulier, deux numéros');
+    assert.equal(lie('voir rubriques 4.4'), 1, 'pluriel, un numéro');
+  });
+
   it('ne touche pas aux nombres qui ne sont pas des renvois', () => {
     const html = '<p>Une dose de 4.6 mg par jour.</p>';
     assert.equal(renvois(html, ancres), html);

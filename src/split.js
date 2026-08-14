@@ -14,6 +14,9 @@ import { structurer, renvois } from './typographie.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 12 : renvois ancrés sur le mot « rubrique » et non sur le verbe qui le
+//      précède — « à la rubrique 6.1 » et « voir la rubrique 4.4 » étaient
+//      manqués.
 // 11 : renvois « voir rubrique 4.6 » transformés en liens vers la rubrique
 //      citée, quand elle existe dans le même document.
 // 10 : niveaux du thésaurus des interactions et substances « + … » de la
@@ -29,7 +32,7 @@ import { structurer, renvois } from './typographie.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 11;
+export const PARSER_VERSION = 12;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
