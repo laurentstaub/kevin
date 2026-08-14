@@ -990,6 +990,20 @@ td.forme {
   color: var(--accent);
 }
 
+/* « Hôpital seulement », « Usage professionnel » : la spécialité ne sort pas
+   de la pharmacie. C'est la seule mention du bloc qui répond non, et elle doit
+   se voir avant d'être lue.
+ 
+   Distinguée par le poids — aplat plein, texte blanc — et non par la teinte.
+   Un code rouge contre vert est illisible pour une part notable des lecteurs,
+   et ce serait justement sur la mention qu'il ne faut pas manquer. */
+.mention-bloque {
+  background: var(--bg-fonce);
+  border-color: var(--bg-fonce);
+  color: #fff;
+  font-weight: 600;
+}
+
 /* Une condition réglementaire se lit par axe : le libellé de la BDPM est
    long, l'axe qui le range est court. Deux colonnes, pas de fond, pas de
    pastille — c'est du texte de loi, pas un indicateur. */

@@ -154,8 +154,13 @@ block content
             //- en infobulle et, mot pour mot, dans le corps du bloc.
             span.mentions
               each m in delivrance.resume
+                //- La mention qui empêche de délivrer se distingue par son
+                //- poids, pas par sa couleur : un code rouge/vert serait
+                //- illisible pour une part notable des lecteurs, et c'est
+                //- justement la mention qu'il ne faut pas manquer.
                 span.mention(
-                  class=(m.cle === 'classement' ? 'mention-classement' : null)
+                  class=(m.portee === 'bloque' ? 'mention-bloque'
+                    : m.cle === 'classement' ? 'mention-classement' : null)
                   title=(m.long !== m.court ? m.long : null)
                 )= m.court
           else if nbConditions > 0

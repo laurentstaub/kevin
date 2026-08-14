@@ -16,13 +16,15 @@ const courts = (c) => c.resume.map((m) => m.court);
 describe('classer', () => {
   // Écrit en toutes lettres, le résumé occupait deux lignes dans l'en-tête du
   // bloc. Abrégé, il tient sur une : c'est la seule raison d'être des mentions.
-  it('rend la réponse du comptoir en mentions courtes', () => {
+  // Ce qui conditionne le geste d'abord, ce qui le décrit ensuite : on lit la
+  // réponse avant d'en lire les modalités.
+  it('rend la réponse du comptoir en mentions courtes, la plus lourde d’abord', () => {
     assert.deepEqual(courts(classer(MORPHINE)), [
-      'Liste I',
-      'Stupéfiant',
       'Ordo sécurisée',
       '28 j max',
       'Fractionné 7 j',
+      'Stupéfiant',
+      'Liste I',
     ]);
   });
 
@@ -42,14 +44,13 @@ describe('classer', () => {
 
   it('porte l’axe de chaque mention, pour que la vue sache la détacher', () => {
     const classement = classer(MORPHINE).resume.filter((m) => m.cle === 'classement');
-    assert.deepEqual(classement.map((m) => m.court), ['Liste I', 'Stupéfiant']);
+    assert.deepEqual(classement.map((m) => m.court), ['Stupéfiant', 'Liste I']);
   });
 
-  it('suit l’ordre des axes, pas celui de la base', () => {
-    // La requête trie par libellé : « délivrance fractionnée » sort avant
-    // « liste I ». Le résumé doit malgré tout commencer par le classement.
+  it('suit l’ordre de la portée, pas celui de la base', () => {
+    // La requête trie par libellé : l'ordre d'arrivée est arbitraire et ne doit
+    // jamais transparaître dans la réponse.
     const desordre = classer([...MORPHINE].sort());
-    assert.equal(desordre.resume[0].court, 'Liste I');
     assert.deepEqual(courts(desordre), courts(classer(MORPHINE)));
   });
 
@@ -59,7 +60,47 @@ describe('classer', () => {
 
     assert.deepEqual(par('classement').conditions, ['liste I', 'stupéfiants']);
     assert.equal(par('duree').conditions.length, 1);
-    assert.equal(par('fractionnement').titre, 'Délivrance');
+    assert.equal(par('fractionnement').titre, 'Fractionnement');
+  });
+
+  // ---- Ce qui empêche de délivrer ----------------------------------------
+
+  // Le motif précédent, « réservé à l'usage », attrapait « réservé à l'usage
+  // professionnel DENTAIRE » et l'affichait « Usage hospitalier ». Faux, et
+  // faux sur la mention la plus lourde de conséquence du bloc.
+  it('ne confond pas l’usage hospitalier et l’usage professionnel', () => {
+    assert.deepEqual(courts(classer(["réservé à l'usage HOSPITALIER"])), ['Hôpital seulement']);
+    assert.deepEqual(courts(classer(["réservé à l'usage professionnel DENTAIRE"])), ['Usage professionnel']);
+  });
+
+  it('signale d’un seul drapeau ce qui ne sort pas de l’hôpital', () => {
+    assert.equal(classer(["réservé à l'usage HOSPITALIER"]).bloque, true);
+    assert.equal(classer(['liste I']).bloque, false);
+  });
+
+  // « Prescription hospitalière » ne veut pas dire « délivrance hospitalière » :
+  // l'ordonnance vient de l'hôpital, la boîte se délivre en ville. Les
+  // confondre, c'est refuser à tort.
+  it('ne bloque pas sur une prescription hospitalière', () => {
+    const c = classer(['prescription hospitalière']);
+    assert.equal(c.bloque, false);
+    assert.deepEqual(courts(c), ['Prescr. hosp.']);
+  });
+
+  it('remonte ce qui est à vérifier avant de délivrer', () => {
+    const c = classer([
+      "prescription nécessitant la signature annuelle par le médecin et la patiente d'une attestation d'information",
+      'prescription nécessitant la remise d’un carnet patient',
+      'délivrance après vérification du recueil de l’accord de soins',
+    ]);
+    assert.deepEqual(courts(c), ['Attestation', 'Accord de soins', 'Carnet patient']);
+  });
+
+  it('reconnaît la spécialité requise quelle qu’en soit la formule', () => {
+    const forme = (l) => courts(classer([l]));
+    assert.deepEqual(forme('prescription réservée aux spécialistes et services ONCOLOGIE MEDICALE'), ['Spécialiste']);
+    assert.deepEqual(forme('prescription réservée aux médecins compétents en CANCEROLOGIE'), ['Spécialiste']);
+    assert.deepEqual(forme('prescription initiale réservée à certains spécialistes'), ['Spécialiste']);
   });
 
   it('reprend la durée telle qu’elle est écrite', () => {
