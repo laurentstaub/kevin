@@ -1042,7 +1042,16 @@ td.forme {
 .axes {
   display: grid;
   grid-template-columns: minmax(5rem, 9rem) 1fr;
-  gap: var(--sp-1) var(--sp-3);
+  /* Mesuré : sept pixels séparaient deux conditions d'un même groupe, huit
+     deux groupes distincts. Un pixel d'écart — et comme la séparation interne
+     porte un filet et l'externe rien, la hiérarchie se lisait à l'envers : une
+     condition paraissait appartenir au groupe précédent, et son intitulé
+     semblait mal aligné alors qu'il l'était au pixel près.
+     
+     Le blanc entre deux groupes vaut donc maintenant trois fois celui qui
+     sépare deux conditions. C'est le rapport qui fait le groupe, pas la
+     valeur absolue. */
+  gap: var(--sp-3) var(--sp-3);
   margin: var(--sp-3) 0 0;
   max-width: var(--measure);
   /* L'intitulé et sa valeur n'ont pas le même corps : calées par le haut de
