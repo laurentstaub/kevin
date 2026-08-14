@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { listes, sousTitres, espaces, notes, interactions, structurer, rangDePuce } from '../../src/typographie.js';
+import { listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
   it('reconnaît le point médian et le tiret au premier rang', () => {
@@ -143,5 +143,46 @@ describe('substances en interaction', () => {
       "Associations faisant l'objet de précautions d'emploi", 'Associations à prendre en compte']) {
       assert.match(sousTitres(`<p>${n}</p>`), /^<h5 class="sous-titre">/, n);
     }
+  });
+});
+
+describe('renvois entre rubriques', () => {
+  const ancres = new Map([['4.3', 'rcp-5'], ['4.6', 'rcp-8']]);
+
+  // « voir rubrique » est du texte réglementaire, le numéro est la référence :
+  // seul le numéro devient cliquable.
+  it('ne rend cliquable que le numéro', () => {
+    assert.equal(
+      renvois('<p>Hypersensibilité (voir rubrique 4.6).</p>', ancres),
+      '<p>Hypersensibilité (voir rubrique <a class="renvoi" href="#rcp-8">4.6</a>).</p>',
+    );
+  });
+
+  it('traite une énumération de rubriques', () => {
+    const r = renvois('<p>Voir rubriques 4.3 et 4.6.</p>', ancres);
+    assert.match(r, /href="#rcp-5">4\.3<\/a> et <a class="renvoi" href="#rcp-8">4\.6<\/a>/);
+  });
+
+  // La notice cite parfois le RCP : la rubrique visée n'est pas dans le même
+  // document. Un lien mort vaut moins que pas de lien.
+  it('laisse en texte un renvoi vers une rubrique absente', () => {
+    const html = '<p>Voir rubrique 9.9.</p>';
+    assert.equal(renvois(html, ancres), html);
+  });
+
+  it('ne touche pas aux nombres qui ne sont pas des renvois', () => {
+    const html = '<p>Une dose de 4.6 mg par jour.</p>';
+    assert.equal(renvois(html, ancres), html);
+  });
+
+  it('ne touche pas aux attributs', () => {
+    const html = '<a href="/x?rubrique=4.6">voir rubrique 4.6</a>';
+    assert.match(renvois(html, ancres), /href="\/x\?rubrique=4\.6"/);
+  });
+
+  it('rend le document intact sans table d’ancres', () => {
+    const html = '<p>voir rubrique 4.6</p>';
+    assert.equal(renvois(html, new Map()), html);
+    assert.equal(renvois(html, null), html);
   });
 });

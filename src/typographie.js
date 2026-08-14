@@ -270,6 +270,49 @@ export function interactions(html) {
   });
 }
 
+// ------------------------------------------------------------ les renvois
+
+/**
+ * « (voir rubrique 4.6) » — un renvoi qui ne renvoie nulle part.
+ *
+ * Le modèle QRD veut que chaque rubrique cite les autres plutôt que de se
+ * répéter : un RCP en compte couramment quarante. À l'écran, ces renvois sont
+ * du texte mort — il faut retenir le numéro, replier, chercher, déplier,
+ * et retrouver ensuite d'où l'on venait. C'est précisément ce qu'un lien
+ * hypertexte fait sans qu'on y pense, et c'est ce que le document imprimé ne
+ * pouvait pas faire.
+ *
+ * Seul le numéro devient cliquable, pas la phrase : « voir rubrique » est du
+ * texte réglementaire, le numéro est la référence.
+ *
+ * Un renvoi vers une rubrique absente du document — cela arrive, la notice
+ * cite le RCP — reste du texte. Un lien mort vaut moins que pas de lien.
+ */
+const RENVOI = /\bvoir\s+(?:les\s+)?rubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
+const NUMERO = /\d{1,2}(?:\.\d{1,2})?/g;
+
+export function renvois(html, idParNumero) {
+  const source = String(html ?? '');
+  if (!(idParNumero instanceof Map) || idParNumero.size === 0) return source;
+
+  let sortie = '';
+  let depuis = 0;
+
+  // Hors balise seulement : un numéro dans un attribut n'est pas un renvoi, et
+  // une phrase coupée par une balise ne sera pas reconnue — elle restera du
+  // texte, ce qui est le bon échec.
+  for (const [debut, fin] of horsBalise(source)) {
+    sortie += source.slice(depuis, debut);
+    sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (n) => {
+      const id = idParNumero.get(n);
+      return id ? `<a class="renvoi" href="#${id}">${n}</a>` : n;
+    }));
+    depuis = fin;
+  }
+
+  return sortie + source.slice(depuis);
+}
+
 /** Les cinq passes, dans l'ordre où chacune a besoin de la précédente. */
 export function structurer(html) {
   return espaces(notes(interactions(sousTitres(listes(html)))));

@@ -1,6 +1,6 @@
 import { outline } from './outline.js';
 import { socle } from './rcp-plan.js';
-import { structurer } from './typographie.js';
+import { structurer, renvois } from './typographie.js';
 
 /**
  * Découpe un document en rubriques exploitables.
@@ -14,6 +14,8 @@ import { structurer } from './typographie.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 11 : renvois « voir rubrique 4.6 » transformés en liens vers la rubrique
+//      citée, quand elle existe dans le même document.
 // 10 : niveaux du thésaurus des interactions et substances « + … » de la
 //      rubrique 4.5 distingués du commentaire qui les suit.
 // 9 : notes de bas de rubrique — les renvois par astérisque du modèle QRD —
@@ -27,7 +29,7 @@ import { structurer } from './typographie.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 10;
+export const PARSER_VERSION = 11;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -197,6 +199,16 @@ export function splitDocument(html, type = 'doc') {
       texte: detaguer(contenu),
     };
   });
+
+  // Les renvois se posent en second temps : pour transformer « voir rubrique
+  // 4.6 » en lien, il faut connaître l'ancre de la rubrique 4.6, donc avoir
+  // découpé tout le document. L'identifiant est celui que `sections.js`
+  // reconstruira à la lecture — type et position, les deux seules choses qui
+  // ne bougent pas entre le découpage et l'affichage.
+  const ancres = new Map(
+    sections.filter((s) => s.numero).map((s) => [s.numero, `${type}-${s.position}`]),
+  );
+  for (const s of sections) s.html = renvois(s.html, ancres);
 
   // Une rubrique socle absente signale un découpage incomplet : son contenu a
   // silencieusement fusionné dans la précédente. Sur un RCP, « 4.3

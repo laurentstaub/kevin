@@ -674,6 +674,33 @@ td.forme {
   margin: 0 0 0.75em;
 }
 
+/* Renvoi vers une autre rubrique du même document.
+ 
+   Le modèle QRD veut que chaque rubrique cite les autres plutôt que de se
+   répéter ; un RCP en compte couramment quarante. Seul le numéro est
+   cliquable : « voir rubrique » est du texte réglementaire, le numéro est la
+   référence.
+ 
+   Discret par construction. Quarante liens verts dans une page de lecture
+   feraient un tapis, et ces renvois ne sont pas ce qu'on vient lire : ils
+   doivent se trouver quand on les cherche, pas se signaler quand on lit. Le
+   soulignement pointillé les dit cliquables sans les faire ressortir. */
+.rubrique-corps .renvoi,
+.document-corps .renvoi {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--rule-medium);
+  white-space: nowrap;
+}
+
+.rubrique-corps .renvoi:hover,
+.document-corps .renvoi:hover {
+  color: var(--accent);
+  text-decoration: underline solid;
+  text-decoration-color: var(--accent);
+}
+
 /* La substance avec laquelle l'interaction se produit.
  
    La rubrique 4.5 suit le thésaurus de l'ANSM : sous chacun des quatre niveaux
