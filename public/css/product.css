@@ -607,7 +607,10 @@ td.forme {
  * Quatre lignes composées à l'identique se lisaient comme un bloc gris. La
  * source portait pourtant sa structure : la population avant le deux-points,
  * la discipline en capitales. On la rend visible sans rien réécrire. */
-.condition + .condition {
+/* Portée sur `.axe-valeur`, faute de quoi `.axe-valeur p + p` — plus
+   spécifique d'un cran — ramenait l'écart à 0,15 em et les conditions se
+   touchaient malgré leur filet. */
+.axe-valeur .condition + .condition {
   margin-top: 0.5em;
   padding-top: 0.5em;
   border-top: var(--rule-width) solid var(--rule);
@@ -615,12 +618,13 @@ td.forme {
 
 /* À qui la condition s'applique — c'est ce qu'on lit en premier, parce que
    c'est ce qui décide si la ligne concerne le patient qu'on a en face. */
+/* La population garde le corps de la condition : deux tailles dans la même
+   colonne se lisaient comme un défaut de composition, alors que la couleur
+   suffit à dire que cette ligne désigne un public et non une règle. */
 .condition-population {
   display: block;
-  font-size: var(--fs-xs);
   color: var(--accent);
-  text-transform: none;
-  margin-bottom: 0.15em;
+  margin-bottom: 0.1em;
 }
 
 /* La discipline décide de la recevabilité de l'ordonnance : c'est le mot que
@@ -1041,6 +1045,11 @@ td.forme {
   gap: var(--sp-1) var(--sp-3);
   margin: var(--sp-3) 0 0;
   max-width: var(--measure);
+  /* L'intitulé et sa valeur n'ont pas le même corps : calées par le haut de
+     leur boîte, leurs premières lignes ne tombaient pas au même niveau — un
+     décalage de deux pixels, mais répété sur six rangées. La ligne de base est
+     la seule référence commune à deux corps différents. */
+  align-items: baseline;
 }
 
 .axe-titre {
