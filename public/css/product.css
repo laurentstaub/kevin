@@ -674,6 +674,42 @@ td.forme {
   margin: 0 0 0.75em;
 }
 
+/* La substance avec laquelle l'interaction se produit.
+ 
+   La rubrique 4.5 suit le thésaurus de l'ANSM : sous chacun des quatre niveaux
+   de gravité, chaque substance ouvre un paragraphe préfixé d'un plus. Composée
+   comme le commentaire qui la suit, elle s'y noyait — c'est pourtant le seul
+   mot qu'on cherche quand on tient deux boîtes à la main.
+ 
+   Elle prend donc le rang qu'elle a : un titre de troisième niveau, sous le
+   niveau de gravité. Pas plus grosse — le contraste et le blanc suffisent, et
+   la rubrique en compte parfois trente.
+ 
+   Le signe reste, en retrait négatif : dans le thésaurus il se lit « en
+   association avec ». En gris et hors du texte, il ponctue la liste sans
+   rivaliser avec le nom qu'il annonce. */
+.rubrique-corps .interaction,
+.document-corps .interaction {
+  margin: 1.2em 0 0.35em;
+  font-weight: 600;
+  color: var(--ink);
+  padding-left: 1.1em;
+  text-indent: -1.1em;
+}
+
+.rubrique-corps .interaction::first-letter,
+.document-corps .interaction::first-letter {
+  font-weight: 400;
+  color: var(--faint);
+}
+
+/* Le niveau de gravité qui l'introduit reprend l'air d'un titre de section :
+   trois substances peuvent le suivre, ou trente. */
+.rubrique-corps .sous-titre + .interaction,
+.document-corps .sous-titre + .interaction {
+  margin-top: 0.4em;
+}
+
 /* Renvoi de bas de rubrique — l'astérisque du modèle QRD. C'est un commentaire
    sur le texte, pas le texte : composé à l'identique, il pesait autant que ce
    qu'il commente. L'italique et le corps réduit le rangent d'eux-mêmes au

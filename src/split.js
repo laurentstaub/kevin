@@ -14,6 +14,8 @@ import { structurer } from './typographie.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 10 : niveaux du thésaurus des interactions et substances « + … » de la
+//      rubrique 4.5 distingués du commentaire qui les suit.
 // 9 : notes de bas de rubrique — les renvois par astérisque du modèle QRD —
 //     distinguées du texte qu'elles commentent.
 // 8 : puces « · » et « o » rendues en vraies listes imbriquées, intitulés du
@@ -25,7 +27,7 @@ import { structurer } from './typographie.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 9;
+export const PARSER_VERSION = 10;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;

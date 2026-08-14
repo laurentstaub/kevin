@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { listes, sousTitres, espaces, notes, structurer, rangDePuce } from '../../src/typographie.js';
+import { listes, sousTitres, espaces, notes, interactions, structurer, rangDePuce } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
   it('reconnaît le point médian et le tiret au premier rang', () => {
@@ -114,5 +114,34 @@ describe('notes de bas de rubrique', () => {
   it('laisse en paix un paragraphe déjà classé', () => {
     const html = '<p class="dose">*quelque chose</p>';
     assert.equal(notes(html), html);
+  });
+});
+
+describe('substances en interaction', () => {
+  // La rubrique 4.5 suit le thésaurus de l'ANSM : sous chaque niveau de
+  // gravité, chaque substance ouvre un paragraphe préfixé d'un plus.
+  it('reconnaît la ligne d’une substance', () => {
+    assert.match(interactions('<p>+ Millepertuis</p>'), /^<p class="interaction">/);
+    assert.match(interactions('<p>+ Pénems (carbapénèmes)</p>'), /^<p class="interaction">/);
+  });
+
+  // Le signe se lit « en association avec » : le retirer ferait dire à la
+  // ligne autre chose que ce qu'elle dit.
+  it('garde le signe', () => {
+    assert.match(interactions('<p>+ Millepertuis</p>'), /\+ Millepertuis/);
+  });
+
+  it('ne prend pas un plus arithmétique pour une substance', () => {
+    const html = '<p>Une dose de 500 mg + 30 mg par jour.</p>';
+    assert.equal(interactions(html), html);
+  });
+
+  // Les quatre niveaux du thésaurus sont un répertoire clos, comme les
+  // intitulés du modèle QRD.
+  it('promeut les niveaux de gravité en sous-titres', () => {
+    for (const n of ['Associations contre-indiquées', 'Associations déconseillées',
+      "Associations faisant l'objet de précautions d'emploi", 'Associations à prendre en compte']) {
+      assert.match(sousTitres(`<p>${n}</p>`), /^<h5 class="sous-titre">/, n);
+    }
   });
 });

@@ -177,6 +177,12 @@ export const SOUS_TITRES = new Set([
   'efficacite et securite cliniques',
   'absorption', 'distribution', 'biotransformation', 'metabolisme',
   'elimination', 'excretion', 'linearite/non-linearite',
+  // Les quatre niveaux du thésaurus des interactions de l'ANSM, tels que la
+  // rubrique 4.5 les reprend. Liste close elle aussi : le thésaurus n'en
+  // connaît pas d'autres.
+  'associations contre-indiquees', 'associations deconseillees',
+  "associations faisant l'objet de precautions d'emploi",
+  'associations a prendre en compte', 'a prendre en compte',
 ]);
 
 /** Un intitulé est court par nature : le garde-fou coûte moins qu'un faux. */
@@ -239,7 +245,32 @@ export function notes(html) {
   });
 }
 
-/** Les quatre passes, dans l'ordre où chacune a besoin de la précédente. */
+// -------------------------------------------------------- les interactions
+
+/**
+ * La substance avec laquelle l'interaction se produit.
+ *
+ * La rubrique 4.5 suit le thésaurus de l'ANSM : sous chacun des quatre niveaux
+ * de gravité, chaque substance ouvre un paragraphe préfixé d'un plus —
+ * « + Millepertuis », « + Pénems (carbapénèmes) ». Composée comme le
+ * commentaire qui la suit, elle s'y noyait ; c'est pourtant le seul mot qu'on
+ * cherche quand on tient deux boîtes à la main.
+ *
+ * Le signe reste : dans le thésaurus il se lit « en association avec », et le
+ * retirer ferait dire à la ligne autre chose que ce qu'elle dit.
+ */
+const INTERACTION = /^\+\s+(?=\S)/;
+
+export function interactions(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    const texte = detaguer(interieur);
+    if (!INTERACTION.test(texte)) return bloc;
+    return `<p class="interaction"${attrs}>${interieur}</p>`;
+  });
+}
+
+/** Les cinq passes, dans l'ordre où chacune a besoin de la précédente. */
 export function structurer(html) {
-  return espaces(notes(sousTitres(listes(html))));
+  return espaces(notes(interactions(sousTitres(listes(html)))));
 }
