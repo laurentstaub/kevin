@@ -15,6 +15,7 @@
     "test:unit": "node --test \"tests/unit/**/*.test.js\"",
     "diagnostic": "node scripts/diagnostic.js",
     "db:sections": "node -e \"import('./src/db.js').then(async m=>{const p=m.createPool();const fs=await import('node:fs/promises');await p.query(await fs.readFile('sql/sections.sql','utf8'));console.log('schéma docs en place');await p.end()})\"",
+    "db:recherche": "node -e \"import('./src/db.js').then(async m=>{const p=m.createPool();const fs=await import('node:fs/promises');await p.query(await fs.readFile('sql/recherche.sql','utf8'));console.log('index de recherche en place');await p.end()})\"",
     "build-sections": "node scripts/build-sections.js",
     "build-pdf-sections": "node scripts/build-pdf-sections.js",
     "reparer-encodage": "node scripts/reparer-encodage.js",

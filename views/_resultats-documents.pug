@@ -1,0 +1,38 @@
+//- Une trouvaille dans un document.
+//-
+//- La ligne dit trois choses dans l'ordre où on les lit : quel produit, quelle
+//- rubrique, et l'extrait où l'expression figure. Le lien conduit à la
+//- rubrique elle-même — l'ancre a été posée au découpage — et non à la fiche,
+//- où il faudrait la chercher.
+//-
+//- @param {object}  d       sortie de chercherDansDocuments
+//- @param {string}  q       la requête, pour le lien « tout voir »
+//- @param {boolean} resume  vue courte, au sein de la page de résultats
+mixin resultatsDocuments(d, q, resume)
+  ul.trouvailles
+    each r in d.resultats
+      li.trouvaille
+        a.trouvaille-lien(href=`/product/${r.code_cis}#${r.ancre}`)
+          span.trouvaille-produit= r.denomination
+          span.trouvaille-rubrique
+            span.num= r.numero
+            = r.libelle
+        //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
+        //- viennent de la base : le texte est celui du document.
+        p.trouvaille-extrait!= r.extrait
+        //- Une molécule a trente génériques dont les RCP sont souvent
+        //- identiques au mot près. On compte au lieu de répéter.
+        if r.specialites > 1
+          p.trouvaille-reprise
+            | Formulation identique dans #{r.specialites.toLocaleString('fr-FR')} spécialités
+
+  if resume && d.total > d.resultats.length
+    p.trouvailles-suite
+      a(href=`/documents?q=${encodeURIComponent(q)}`)
+        | Voir les #{d.borne ? 'plus de ' : ''}#{d.total.toLocaleString('fr-FR')} rubriques et filtrer →
+  else if d.borne
+    //- Un décompte plafonné doit se dire plafonné : annoncer « 3 000 » comme
+    //- un total ferait passer une borne pour une mesure.
+    p.section-meta
+      | Recherche arrêtée aux #{d.total.toLocaleString('fr-FR')} premières rubriques trouvées.
+      |  Affinez la requête ou choisissez une rubrique pour un décompte exact.

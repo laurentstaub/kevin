@@ -1,5 +1,6 @@
 extends layout.pug
 include _recherche.pug
+include _resultats-documents.pug
 
 //- Une ligne = un produit, pas un code CIS.
 //-
@@ -112,8 +113,20 @@ block content
                 ul.liste
                   each result in results.activeIngredientMatches
                     +produit(result)
-        else
+        else if !documents || documents.resultats.length === 0
           p.vide Aucun résultat pour « #{query} ».
+
+        //- Second bloc, sous les spécialités quand il y en a — c'est
+        //- l'intention la plus fréquente et la moins chère à servir. Mais quand
+        //- la recherche par nom ne rend rien — « allongement du QT » n'est le
+        //- nom d'aucun médicament —, ce bloc devient la réponse et prend toute
+        //- la page, au lieu d'un vide poli sous un « aucun résultat ».
+        if documents && documents.resultats.length > 0
+          section.groupe
+            h2.groupe-titre
+              | Dans les documents
+              span.compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
+            +resultatsDocuments(documents, query, true)
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

@@ -911,3 +911,84 @@
     word-break: break-all;
   }
 }
+
+/* ---------- Trouvailles dans les documents ---------- */
+
+/* Une ligne dit trois choses dans l'ordre où on les lit : quel produit,
+   quelle rubrique, et l'extrait. Filets horizontaux seuls, comme partout. */
+.trouvailles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: var(--measure);
+}
+
+.trouvaille {
+  padding: var(--sp-2) 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.trouvaille-lien {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.trouvaille-lien:hover .trouvaille-produit {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.trouvaille-produit {
+  display: block;
+  font-size: var(--fs-sm);
+}
+
+/* La rubrique est la moitié de la réponse : sans elle, on sait que le mot
+   figure quelque part, ce qui ne sert à rien. */
+.trouvaille-rubrique {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  margin-top: 0.15em;
+}
+
+.trouvaille-rubrique .num {
+  color: inherit;
+  margin-right: 0.5em;
+}
+
+/* L'extrait est du document, pas de l'interface : il reprend la police de
+   lecture, en plus petit. C'est ce qu'on lit pour décider si l'on ouvre. */
+.trouvaille-extrait {
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+}
+
+/* Le terme trouvé, posé par ts_headline. Un aplat pâle plutôt qu'une couleur
+   de texte : on doit le repérer sans le lire en premier. */
+.trouvaille-extrait mark {
+  background: var(--accent-pale);
+  color: var(--ink);
+  padding: 0 0.15em;
+}
+
+/* Une molécule a trente génériques dont les RCP sont souvent identiques au mot
+   près : on compte au lieu de répéter. */
+.trouvaille-reprise {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  margin: var(--sp-1) 0 0;
+}
+
+.trouvailles-suite {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.doc-entete {
+  margin: 0 0 var(--sp-3);
+}

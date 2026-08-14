@@ -12,6 +12,7 @@ import {
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance } from '../delivrance.js';
+import { chercherDansDocuments, normaliserRubrique, PAR_PAGE } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
 import {
@@ -116,8 +117,50 @@ export function pageRoutes(pool) {
         });
       }
 
-      const results = await searchMedications(pool, query, filter);
-      res.render('search_page', { query: query.raw, filter, results });
+      // Les deux recherches partent ensemble : elles répondent à la même
+      // question par deux chemins, et rien ne justifie d'attendre l'une pour
+      // lancer l'autre. Un défaut sur les documents ne doit pas emporter la
+      // recherche par nom, qui est la plus demandée.
+      const [results, documents] = await Promise.all([
+        searchMedications(pool, query, filter),
+        chercherDansDocuments(pool, query.raw, { limite: 5 }).catch((err) => {
+          console.error('[recherche] plein texte indisponible :', err.message);
+          return null;
+        }),
+      ]);
+
+      res.render('search_page', { query: query.raw, filter, results, documents });
+    }),
+  );
+
+  /**
+   * Recherche plein texte, vue complète.
+   *
+   * Elle existe séparément de `/search` parce qu'elle porte ses propres
+   * filtres — par rubrique — et que les mêler à ceux de la recherche par nom
+   * ferait une page qui pose deux questions. Ici, une seule : où cette
+   * expression figure-t-elle dans les documents.
+   */
+  router.get(
+    '/documents',
+    wrap(async (req, res) => {
+      const query = parseQuery(req.query.q);
+      const rubrique = normaliserRubrique(req.query.rubrique);
+
+      if (!query.raw) return res.redirect('/');
+
+      const documents = query.tooShort
+        ? { resultats: [], total: 0, borne: false }
+        : await chercherDansDocuments(pool, query.raw, { rubrique, limite: PAR_PAGE });
+
+      res.render('documents', {
+        query: query.raw,
+        rubrique,
+        documents,
+        notice: query.tooShort
+          ? `Saisissez au moins ${config.search.minLength} caractères.`
+          : null,
+      });
     }),
   );
 

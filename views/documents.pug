@@ -1,0 +1,38 @@
+extends layout.pug
+include _recherche.pug
+include _resultats-documents.pug
+
+//- Recherche plein texte, vue complète.
+//-
+//- Une page, une question : où cette expression figure-t-elle dans les
+//- documents. Les filtres par rubrique vivent ici et nulle part ailleurs —
+//- les mêler à ceux de la recherche par nom ferait une page qui en pose deux.
+
+block content
+  +barreSituation(`« ${query} » dans les documents`)
+
+  main.corps
+    header.doc-entete
+      h1.section-titre Dans les documents
+      p.page-meta
+        | Recherche du texte des résumés des caractéristiques et des notices,
+        |  rubrique par rubrique.
+
+    //- Les filtres pilotent la liste : ils sont au-dessus d'elle.
+    nav.filtres(aria-label="Filtrer par rubrique")
+      a.filtre(class=(rubrique ? '' : 'actif')
+        href=`/documents?q=${encodeURIComponent(query)}`) Tout le document
+      each r in [['4.1','Indications'],['4.2','Posologie'],['4.3','Contre-indications'],['4.4','Mises en garde'],['4.5','Interactions'],['4.6','Grossesse'],['4.8','Effets indésirables'],['5.1','Pharmacodynamie']]
+        a.filtre(class=(rubrique === r[0] ? 'actif' : '')
+          href=`/documents?q=${encodeURIComponent(query)}&rubrique=${r[0]}`
+          title=`Rubrique ${r[0]}`)= r[1]
+
+    if notice
+      p.vide= notice
+    else if documents.resultats.length === 0
+      p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
+    else
+      +resultatsDocuments(documents, query, false)
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
