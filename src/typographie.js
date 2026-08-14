@@ -215,7 +215,31 @@ export function espaces(html) {
   return sortie + source.slice(depuis);
 }
 
-/** Les trois passes, dans l'ordre où chacune a besoin de la précédente. */
+// -------------------------------------------------------------- les notes
+
+/**
+ * Les appels de note en bas de rubrique.
+ *
+ * Le modèle QRD renvoie hors du tableau d'effets indésirables par un
+ * astérisque, doublé au second renvoi : « prises de poids* » plus bas
+ * « *Les prises de poids étant un facteur de risque… ». La note est un commentaire
+ * sur le texte, pas le texte ; composée à l'identique, elle pèse autant que ce
+ * qu'elle commente et allonge la rubrique d'autant.
+ *
+ * L'appel reste en place : c'est lui qui relie la note à sa mention, et le
+ * retirer romprait le renvoi.
+ */
+const APPEL = /^[*†‡]{1,3}(?=\s*\S)/;
+
+export function notes(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    // Un paragraphe déjà classé a été pris en charge par une autre passe.
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    return APPEL.test(detaguer(interieur)) ? `<p class="note"${attrs}>${interieur}</p>` : bloc;
+  });
+}
+
+/** Les quatre passes, dans l'ordre où chacune a besoin de la précédente. */
 export function structurer(html) {
-  return espaces(sousTitres(listes(html)));
+  return espaces(notes(sousTitres(listes(html))));
 }

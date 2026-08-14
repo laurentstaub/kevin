@@ -14,6 +14,8 @@ import { structurer } from './typographie.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 9 : notes de bas de rubrique — les renvois par astérisque du modèle QRD —
+//     distinguées du texte qu'elles commentent.
 // 8 : puces « · » et « o » rendues en vraies listes imbriquées, intitulés du
 //     modèle QRD promus en sous-titres, espaces insécables avant les signes
 //     doubles.
@@ -23,7 +25,7 @@ import { structurer } from './typographie.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 8;
+export const PARSER_VERSION = 9;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -125,6 +127,11 @@ function coupure(contenu) {
 
 export function composerDoses(html) {
   return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, contenu) => {
+    // Un paragraphe déjà classé l'a été par `structurer` — note, sous-titre.
+    // Sans ce garde-fou, on lui ajouterait un second attribut `class` et le
+    // navigateur garderait le premier venu.
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+
     const trouve = coupure(contenu);
     if (!trouve) return bloc;
 

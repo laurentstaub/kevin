@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { listes, sousTitres, espaces, structurer, rangDePuce } from '../../src/typographie.js';
+import { listes, sousTitres, espaces, notes, structurer, rangDePuce } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
   it('reconnaît le point médian et le tiret au premier rang', () => {
@@ -87,5 +87,32 @@ describe('structurer', () => {
   it('ne corrige pas les fautes de la source', () => {
     const html = '<p>(1 à 2 gélule(s)))</p>';
     assert.match(structurer(html), /\(1 à 2 gélule\(s\)\)\)/);
+  });
+});
+
+describe('notes de bas de rubrique', () => {
+  // Le modèle QRD renvoie hors du tableau d'effets indésirables par un
+  // astérisque, doublé au second renvoi. La note commente le texte : composée
+  // à l'identique, elle pèse autant que ce qu'elle commente.
+  it('reconnaît un renvoi par astérisque', () => {
+    assert.match(notes('<p>*Les prises de poids sont un facteur de risque.</p>'), /^<p class="note">/);
+    assert.match(notes('<p>**Une anomalie a été rapportée.</p>'), /^<p class="note">/);
+  });
+
+  // L'appel relie la note à sa mention : le retirer romprait le renvoi.
+  it('garde l’appel en tête', () => {
+    assert.match(notes('<p>*Voir rubrique 4.4.</p>'), /\*Voir rubrique 4\.4\./);
+  });
+
+  it('ne prend pas une mention pour une note', () => {
+    const html = '<p>Fréquence indéterminée : anomalie de Pelger-Huët**.</p>';
+    assert.equal(notes(html), html, 'l’astérisque est en fin, pas en tête');
+  });
+
+  // `structurer` enchaîne les passes : un paragraphe déjà classé par l'une ne
+  // doit pas recevoir un second attribut `class` de la suivante.
+  it('laisse en paix un paragraphe déjà classé', () => {
+    const html = '<p class="dose">*quelque chose</p>';
+    assert.equal(notes(html), html);
   });
 });

@@ -674,6 +674,26 @@ td.forme {
   margin: 0 0 0.75em;
 }
 
+/* Renvoi de bas de rubrique — l'astérisque du modèle QRD. C'est un commentaire
+   sur le texte, pas le texte : composé à l'identique, il pesait autant que ce
+   qu'il commente. L'italique et le corps réduit le rangent d'eux-mêmes au
+   second plan, sans qu'on ait à le déplacer ni à l'escamoter.
+ 
+   L'appel reste en tête : c'est lui qui relie la note à sa mention. */
+.rubrique-corps .note,
+.document-corps .note {
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Deux notes de suite forment le pied de la rubrique : elles se serrent entre
+   elles et gardent leur blanc avant la première. */
+.rubrique-corps .note + .note,
+.document-corps .note + .note {
+  margin-top: -0.4em;
+}
+
 /* Les listes viennent du texte, pas du balisage : la BDPM les écrit en
    caractères — « · », « o » — dans des paragraphes ordinaires, et le découpeur
    leur rend la forme que leur typographie annonçait. D'où un réglage propre,
