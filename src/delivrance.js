@@ -222,6 +222,98 @@ const rang = (portee) => {
 };
 
 /**
+ * Met une condition en forme sans en changer un mot.
+ *
+ * La BDPM écrit ses 164 libellés d'un seul tenant, en bas de casse, la
+ * discipline en capitales et la population en tête suivie d'un deux-points :
+ *
+ *   « pour adolescents de sexe masculin et hommes susceptibles de procréer :
+ *     prescription initiale réservée à certains spécialistes »
+ *   « prescription réservée aux spécialistes et services NEUROLOGIE »
+ *
+ * La structure est donc déjà là, portée par la ponctuation et la casse. Quatre
+ * lignes composées à l'identique se lisent comme un bloc gris ; séparées selon
+ * leur propre grammaire, elles se parcourent.
+ *
+ * On ne déplace, n'ajoute ni ne retire aucun mot : on coupe où la source coupe
+ * et l'on rend la casse lisible. Le libellé d'origine reste accessible en
+ * entier — la vue le garde en infobulle.
+ *
+ * @returns {{population:string|null, texte:string, accent:string|null, brut:string}}
+ */
+const capitale = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+
+/**
+ * Les capitales de la source désignent une discipline — sauf trois sigles.
+ *
+ * Relevé sur les 164 libellés : soixante-dix-huit mots en capitales, tous des
+ * spécialités médicales, à l'exception de CSAPA, DPD et ETS. Un sigle mis en
+ * bas de casse cesse d'être un sigle : la liste est courte, elle est close.
+ */
+const SIGLES = new Set(['CSAPA', 'DPD', 'ETS']);
+
+/**
+ * Une locution en capitales, et non un mot.
+ *
+ * « CHIRURGIE THORACIQUE », « MALADIES INFECTIEUSES ET TROPICALES »,
+ * « ENDOCRINOLOGIE - DIABETOLOGIE - NUTRITION » désignent chacune une seule
+ * spécialité. Traitées mot à mot, elles ressortaient en « Maladies
+ * Infectieuses ET Tropicales » — trois emphases pour une notion, et un « ET »
+ * resté en capitales parce qu'il est trop court pour être vu.
+ *
+ * Le premier mot fait quatre lettres au moins — « ET », « DU », « II » ne sont
+ * pas des mots criés ; la suite prend tous les mots capitalisés qui
+ * l'enchaînent, quelle que soit leur longueur.
+ */
+const CRIE = /[A-ZÀ-Þ][A-ZÀ-Þ'’/-]{3,}(?:[\s/-]+[A-ZÀ-Þ][A-ZÀ-Þ'’/-]*)*/g;
+
+/**
+ * Met une condition en forme sans en changer un mot.
+ *
+ * La BDPM écrit ses libellés d'un seul tenant, en bas de casse, la discipline
+ * en capitales et la population en tête suivie d'un deux-points :
+ *
+ *   « pour adolescents de sexe masculin et hommes susceptibles de procréer :
+ *     prescription initiale réservée à certains spécialistes »
+ *   « prescription réservée aux spécialistes et services NEUROLOGIE »
+ *
+ * La structure est donc déjà là, portée par la ponctuation et par la casse.
+ * Quatre lignes composées à l'identique se lisent comme un bloc gris ;
+ * séparées selon leur propre grammaire, elles se parcourent.
+ *
+ * On ne déplace, n'ajoute ni ne retire aucun mot : on coupe où la source coupe,
+ * et l'on rend lisible une casse qui ne portait pas d'emphase mais un
+ * repérage. Le libellé d'origine reste entier — la vue le garde en infobulle.
+ *
+ * @returns {{population:string|null, segments:{texte:string,fort:boolean}[], brut:string}}
+ */
+export function presenter(condition) {
+  const brut = String(condition ?? '').trim();
+
+  // « population : condition ». Aucun autre libellé de la base ne porte de
+  // deux-points, la coupe ne peut donc pas se tromper de rôle.
+  const coupe = brut.match(/^\s*(pour [^:]{3,140}?)\s*:\s*(.+)$/i);
+  const population = coupe ? capitale(coupe[1].trim()) : null;
+  const texte = capitale((coupe ? coupe[2] : brut).trim());
+
+  // Chaque mot crié devient un mot lu — et se détache, parce que c'est lui qui
+  // décide si l'ordonnance est recevable.
+  const segments = [];
+  let depuis = 0;
+  CRIE.lastIndex = 0;
+  let m;
+  while ((m = CRIE.exec(texte))) {
+    if (SIGLES.has(m[0].trim())) continue;
+    if (m.index > depuis) segments.push({ texte: texte.slice(depuis, m.index), fort: false });
+    segments.push({ texte: capitale(m[0].toLowerCase()), fort: true });
+    depuis = m.index + m[0].length;
+  }
+  if (depuis < texte.length) segments.push({ texte: texte.slice(depuis), fort: false });
+
+  return { population, segments, brut };
+}
+
+/**
  * @param {string[]} libelles - conditions brutes de dbpm.cis_cpd_bdpm
  * @returns {{ resume: {cle,court,long}[], groupes: object[], liens: object[] }}
  */
@@ -237,7 +329,7 @@ export function classer(libelles) {
     const cle = regle?.cle ?? 'autres';
 
     if (!parAxe.has(cle)) parAxe.set(cle, []);
-    parAxe.get(cle).push(condition);
+    parAxe.get(cle).push(presenter(condition));
 
     if (regle?.resume) {
       // L'ordre de la règle, et non celui d'arrivée : la requête trie par

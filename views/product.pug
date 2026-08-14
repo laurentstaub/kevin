@@ -174,7 +174,17 @@ block content
               dt.axe-titre= g.titre
               dd.axe-valeur
                 each c in g.conditions
-                  p= c
+                  //- Le libellé entier reste en infobulle : on met en forme,
+                  //- on ne réécrit pas. La casse d'origine y est intacte.
+                  p.condition(title=c.brut)
+                    if c.population
+                      span.condition-population= c.population
+                    span.condition-texte
+                      each seg in c.segments
+                        if seg.fort
+                          strong= seg.texte
+                        else
+                          = seg.texte
 
           if delivrance.liens.length > 0
             p.section-meta Conduite à tenir détaillée sur Meddispar, édité par l'Ordre national des pharmaciens :

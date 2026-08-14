@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classer } from '../../src/delivrance.js';
+import { classer, presenter } from '../../src/delivrance.js';
 
 /** Les libellés sont ceux de dbpm.cis_cpd_bdpm, recopiés tels quels. */
 const MORPHINE = [
@@ -12,6 +12,9 @@ const MORPHINE = [
 ];
 
 const courts = (c) => c.resume.map((m) => m.court);
+
+/** Le libellé d'origine, tel que la vue le garde en infobulle. */
+const bruts = (groupe) => groupe.conditions.map((c) => c.brut);
 
 describe('classer', () => {
   // Écrit en toutes lettres, le résumé occupait deux lignes dans l'en-tête du
@@ -58,7 +61,7 @@ describe('classer', () => {
     const groupes = classer(MORPHINE).groupes;
     const par = (cle) => groupes.find((g) => g.cle === cle);
 
-    assert.deepEqual(par('classement').conditions, ['liste I', 'stupéfiants']);
+    assert.deepEqual(bruts(par('classement')), ['liste I', 'stupéfiants']);
     assert.equal(par('duree').conditions.length, 1);
     assert.equal(par('fractionnement').titre, 'Fractionnement');
   });
@@ -121,7 +124,7 @@ describe('classer', () => {
 
   it('dédoublonne les libellés répétés', () => {
     const c = classer(['liste I', 'liste I']);
-    assert.deepEqual(c.groupes[0].conditions, ['liste I']);
+    assert.deepEqual(bruts(c.groupes[0]), ['liste I']);
     assert.deepEqual(courts(c), ['Liste I']);
   });
 });
@@ -135,7 +138,7 @@ describe('conditions non reconnues', () => {
     const autres = c.groupes.find((g) => g.cle === 'autres');
 
     assert.equal(autres.titre, 'Autres conditions');
-    assert.deepEqual(autres.conditions, ['condition inédite de la BDPM 2027']);
+    assert.deepEqual(bruts(autres), ['condition inédite de la BDPM 2027']);
   });
 
   it('ne polluent pas le résumé', () => {
@@ -175,5 +178,57 @@ describe('liens Meddispar', () => {
 
   it('restent absents quand rien ne les appelle', () => {
     assert.deepEqual(classer(['liste II']).liens, []);
+  });
+});
+
+describe('presenter', () => {
+  const rendu = (c) => {
+    const r = presenter(c);
+    return (r.population ? `[${r.population}] ` : '')
+      + r.segments.map((s) => (s.fort ? `**${s.texte}**` : s.texte)).join('');
+  };
+
+  // La source porte sa structure dans la ponctuation : le deux-points sépare
+  // la population de la condition, et aucun autre libellé n'en contient.
+  it('détache la population de la condition', () => {
+    assert.equal(
+      rendu('pour adolescents de sexe masculin et hommes susceptibles de procréer : prescription initiale réservée à certains spécialistes'),
+      '[Pour adolescents de sexe masculin et hommes susceptibles de procréer] Prescription initiale réservée à certains spécialistes',
+    );
+  });
+
+  // Les capitales de la BDPM ne sont pas une emphase mais un repérage : c'est
+  // ainsi qu'elle isole la discipline dans une phrase d'un seul tenant.
+  it('rend lisible la discipline criée', () => {
+    assert.equal(
+      rendu('prescription réservée aux spécialistes et services NEUROLOGIE'),
+      'Prescription réservée aux spécialistes et services **Neurologie**',
+    );
+  });
+
+  // Une locution désigne une seule spécialité. Traitée mot à mot, elle sortait
+  // en « Maladies Infectieuses ET Tropicales » — trois emphases pour une
+  // notion, et un « ET » resté crié parce qu'il est trop court pour être vu.
+  it('tient une locution entière pour une seule notion', () => {
+    assert.equal(
+      rendu('prescription réservée aux spécialistes en MALADIES INFECTIEUSES ET TROPICALES'),
+      'Prescription réservée aux spécialistes en **Maladies infectieuses et tropicales**',
+    );
+    assert.equal(
+      rendu('prescription réservée aux spécialistes CHIRURGIE THORACIQUE et CARDIOVASCULAIRE'),
+      'Prescription réservée aux spécialistes **Chirurgie thoracique** et **Cardiovasculaire**',
+    );
+  });
+
+  // Un sigle mis en bas de casse cesse d'être un sigle. Relevé sur les 164
+  // libellés : trois seulement, la liste est close.
+  it('laisse les sigles en capitales', () => {
+    assert.equal(rendu('délivrance effectuée par un CSAPA'), 'Délivrance effectuée par un CSAPA');
+    assert.match(rendu("prescription et délivrance subordonnées à l'obtention du résultat du dépistage d'un déficit en DPD"), /DPD$/);
+  });
+
+  it('garde le libellé d’origine intact', () => {
+    const brut = 'prescription réservée aux spécialistes et services PEDIATRIE';
+    assert.equal(presenter(brut).brut, brut);
   });
 });
