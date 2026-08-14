@@ -14,6 +14,7 @@ import { structurer, renvois } from './typographie.js';
  * À incrémenter dès que la détection change : le suivi rejoue alors les
  * documents dont le contenu n'a pourtant pas bougé.
  */
+// 13 : le renvoi nomme sa destination en infobulle.
 // 12 : renvois ancrés sur le mot « rubrique » et non sur le verbe qui le
 //      précède — « à la rubrique 6.1 » et « voir la rubrique 4.4 » étaient
 //      manqués.
@@ -32,7 +33,7 @@ import { structurer, renvois } from './typographie.js';
 // 3 : lignes recollées en paragraphes, listes à puces reconnues.
 // 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
 //     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
-export const PARSER_VERSION = 12;
+export const PARSER_VERSION = 13;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -209,7 +210,9 @@ export function splitDocument(html, type = 'doc') {
   // reconstruira à la lecture — type et position, les deux seules choses qui
   // ne bougent pas entre le découpage et l'affichage.
   const ancres = new Map(
-    sections.filter((s) => s.numero).map((s) => [s.numero, `${type}-${s.position}`]),
+    sections
+      .filter((s) => s.numero)
+      .map((s) => [s.numero, { id: `${type}-${s.position}`, libelle: s.libelle }]),
   );
   for (const s of sections) s.html = renvois(s.html, ancres);
 

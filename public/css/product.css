@@ -688,6 +688,11 @@ td.forme {
 .rubrique-corps .renvoi,
 .document-corps .renvoi {
   color: inherit;
+  /* L'intitulé de la rubrique visée est en infobulle. Le curseur d'aide le
+     signale : c'est la convention qui dit « il y a quelque chose à lire ici
+     sans cliquer », et elle évite d'ajouter un signe dans un texte qui en
+     compte déjà assez. */
+  cursor: help;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
   text-decoration-color: var(--rule-medium);
@@ -696,6 +701,7 @@ td.forme {
 
 .rubrique-corps .renvoi:hover,
 .document-corps .renvoi:hover {
+  cursor: pointer;
   color: var(--accent);
   text-decoration: underline solid;
   text-decoration-color: var(--accent);

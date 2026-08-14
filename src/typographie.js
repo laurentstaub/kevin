@@ -287,7 +287,19 @@ export function interactions(html) {
  *
  * Un renvoi vers une rubrique absente du document — cela arrive, la notice
  * cite le RCP — reste du texte. Un lien mort vaut moins que pas de lien.
+ *
+ * Le lien porte l'intitulé de la rubrique visée en infobulle. « Voir rubrique
+ * 4.4 » ne dit pas où il mène : il faut y aller pour le savoir, et revenir si
+ * ce n'était pas ça. Nommer la destination avant le clic est tout ce qui
+ * distingue un renvoi d'une devinette.
+ *
+ * @param {Map<string, {id:string, libelle:string}>} cibles - par numéro
  */
+const echapper = (t) => String(t ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/"/g, '&quot;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
 /**
  * L'ancre est le mot « rubrique », pas le verbe qui le précède.
  *
@@ -304,9 +316,9 @@ export function interactions(html) {
 const RENVOI = /\brubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|ou|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
 const NUMERO = /\d{1,2}(?:\.\d{1,2})?/g;
 
-export function renvois(html, idParNumero) {
+export function renvois(html, cibles) {
   const source = String(html ?? '');
-  if (!(idParNumero instanceof Map) || idParNumero.size === 0) return source;
+  if (!(cibles instanceof Map) || cibles.size === 0) return source;
 
   let sortie = '';
   let depuis = 0;
@@ -317,8 +329,10 @@ export function renvois(html, idParNumero) {
   for (const [debut, fin] of horsBalise(source)) {
     sortie += source.slice(depuis, debut);
     sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (n) => {
-      const id = idParNumero.get(n);
-      return id ? `<a class="renvoi" href="#${id}">${n}</a>` : n;
+      const cible = cibles.get(n);
+      if (!cible?.id) return n;
+      const titre = cible.libelle ? ` title="${echapper(`${n} — ${cible.libelle}`)}"` : '';
+      return `<a class="renvoi" href="#${cible.id}"${titre}>${n}</a>`;
     }));
     depuis = fin;
   }

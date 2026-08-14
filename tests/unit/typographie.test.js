@@ -147,20 +147,24 @@ describe('substances en interaction', () => {
 });
 
 describe('renvois entre rubriques', () => {
-  const ancres = new Map([['4.3', 'rcp-5'], ['4.6', 'rcp-8']]);
+  const ancres = new Map([
+    ['4.3', { id: 'rcp-5', libelle: 'Contre-indications' }],
+    ['4.6', { id: 'rcp-8', libelle: 'Fertilité, grossesse et allaitement' }],
+  ]);
 
   // « voir rubrique » est du texte réglementaire, le numéro est la référence :
   // seul le numéro devient cliquable.
   it('ne rend cliquable que le numéro', () => {
     assert.equal(
       renvois('<p>Hypersensibilité (voir rubrique 4.6).</p>', ancres),
-      '<p>Hypersensibilité (voir rubrique <a class="renvoi" href="#rcp-8">4.6</a>).</p>',
+      '<p>Hypersensibilité (voir rubrique <a class="renvoi" href="#rcp-8"'
+        + ' title="4.6 — Fertilité, grossesse et allaitement">4.6</a>).</p>',
     );
   });
 
   it('traite une énumération de rubriques', () => {
     const r = renvois('<p>Voir rubriques 4.3 et 4.6.</p>', ancres);
-    assert.match(r, /href="#rcp-5">4\.3<\/a> et <a class="renvoi" href="#rcp-8">4\.6<\/a>/);
+    assert.match(r, /href="#rcp-5"[^>]*>4\.3<\/a> et <a class="renvoi" href="#rcp-8"[^>]*>4\.6<\/a>/);
   });
 
   // La notice cite parfois le RCP : la rubrique visée n'est pas dans le même
@@ -173,7 +177,11 @@ describe('renvois entre rubriques', () => {
   // Relevées sur un RCP entier — trente-six renvois — plutôt que devinées.
   // La première version, calée sur « voir rubrique », en manquait deux formes.
   it('reconnaît toutes les tournures du corpus', () => {
-    const ancres = new Map([['4.4', 'rcp-1'], ['4.6', 'rcp-2'], ['6.1', 'rcp-9']]);
+    const ancres = new Map([
+      ['4.4', { id: 'rcp-1', libelle: 'Mises en garde' }],
+      ['4.6', { id: 'rcp-2', libelle: 'Grossesse' }],
+      ['6.1', { id: 'rcp-9', libelle: 'Liste des excipients' }],
+    ]);
     const lie = (t) => (renvois(`<p>${t}</p>`, ancres).match(/class="renvoi"/g) ?? []).length;
 
     assert.equal(lie('mentionnés à la rubrique 6.1.'), 1, 'à la rubrique');
@@ -192,6 +200,26 @@ describe('renvois entre rubriques', () => {
   it('ne touche pas aux attributs', () => {
     const html = '<a href="/x?rubrique=4.6">voir rubrique 4.6</a>';
     assert.match(renvois(html, ancres), /href="\/x\?rubrique=4\.6"/);
+  });
+
+  // « Voir rubrique 4.4 » ne dit pas où il mène : il faut y aller pour le
+  // savoir, et revenir si ce n'était pas ça. Nommer la destination avant le
+  // clic est tout ce qui distingue un renvoi d'une devinette.
+  it('nomme sa destination en infobulle', () => {
+    const r = renvois('<p>voir rubrique 4.6</p>', ancres);
+    assert.match(r, /title="4\.6 — Fertilité, grossesse et allaitement"/);
+  });
+
+  it('échappe l’intitulé mis en attribut', () => {
+    const piege = new Map([['4.1', { id: 'rcp-0', libelle: 'Guillemet " et esperluette &' }]]);
+    const r = renvois('<p>voir rubrique 4.1</p>', piege);
+    assert.match(r, /title="4\.1 — Guillemet &quot; et esperluette &amp;"/);
+  });
+
+  it('lie sans infobulle quand l’intitulé manque', () => {
+    const sansLibelle = new Map([['4.1', { id: 'rcp-0' }]]);
+    const r = renvois('<p>voir rubrique 4.1</p>', sansLibelle);
+    assert.match(r, /<a class="renvoi" href="#rcp-0">4\.1<\/a>/);
   });
 
   it('rend le document intact sans table d’ancres', () => {
