@@ -19,6 +19,13 @@
 -- ce nom recouvre du français désaccentué ou du français simple — et qui le
 -- dit tout haut, plutôt que de laisser croire à une recherche insensible aux
 -- accents qui ne le serait pas.
+-- La construction de l'index prend des minutes sur trois cent mille rubriques.
+-- Le pool de l'application coupe à cinq secondes — juste pour une requête
+-- servie à un lecteur qui attend, absurde pour une migration. scripts/db-migrer
+-- passe déjà `statement_timeout: 0` ; cette ligne le garantit aussi lorsque le
+-- fichier est joué à la main, par psql ou par un administrateur.
+SET statement_timeout = 0;
+
 DO $$
 BEGIN
   BEGIN
