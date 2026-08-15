@@ -1298,3 +1298,41 @@ td.forme {
     max-width: none;
   }
 }
+
+/* ---------- Prise en charge limitée ---------- */
+
+/* Six cent soixante-douze spécialités n'ouvrent droit au remboursement que
+   pour certaines indications. Le texte vient de l'Assurance Maladie et se
+   donne mot pour mot — on ne le résume pas, un résumé de condition de prise
+   en charge engagerait plus qu'il n'aide. */
+.remboursement {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) 0 0;
+  border-top: var(--rule-width) solid var(--rule-medium);
+  max-width: var(--measure);
+}
+
+.remboursement-titre {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+/* Le taux est la première chose qu'on cherche ici. */
+.remboursement-taux {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* Le texte source porte ses propres <br> : c'est une énumération d'indications,
+   et chaque retour y sépare deux cas de prise en charge. */
+.remboursement-texte {
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink);
+}

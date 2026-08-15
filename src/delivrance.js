@@ -367,6 +367,38 @@ export function classer(libelles) {
   };
 }
 
+/**
+ * Prise en charge limitée à certaines indications.
+ *
+ * `cis_cip_bdpm.indications_remboursement` porte, pour 672 spécialités, le
+ * texte des seules indications ouvrant droit au remboursement. C'est le
+ * mécanisme qui, en pratique, va souvent de pair avec l'ordonnance de
+ * médicament d'exception.
+ *
+ * **On ne l'appelle pourtant pas ainsi.** Relevé sur les 800 présentations
+ * concernées : le champ ne contient le mot « exception » que deux fois, et
+ * toutes les restrictions de prise en charge ne relèvent pas de cette
+ * catégorie réglementaire. Nommer d'après la donnée, pas d'après ce qu'on en
+ * déduit — c'est la même règle qui a fait distinguer « usage hospitalier » et
+ * « usage professionnel ».
+ *
+ * Le texte est le même pour toutes les présentations d'une spécialité : on
+ * prend le premier non vide.
+ */
+export async function getRemboursement(pool, cis) {
+  const { rows } = await pool.query(
+    `SELECT indications_remboursement AS texte, taux_remboursement AS taux
+     FROM dbpm.cis_cip_bdpm
+     WHERE code_cis = $1
+       AND coalesce(indications_remboursement, '') <> ''
+     ORDER BY code_cip13
+     LIMIT 1`,
+    [cis],
+  );
+
+  return rows[0] ?? null;
+}
+
 /** Conditions d'une spécialité, classées. */
 export async function getDelivrance(pool, cis) {
   const { rows } = await pool.query(

@@ -11,7 +11,7 @@ import {
 } from '../products.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
-import { getDelivrance } from '../delivrance.js';
+import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
   chercherDansDocuments, manqueIndex, normaliserRubrique, PAR_PAGE,
 } from '../recherche-texte.js';
@@ -195,7 +195,9 @@ export function pageRoutes(pool) {
       const product = await getProduct(pool, cis);
       if (!product) return next();
 
-      const [substitutions, variantes, bruts, decoupe, delivrance, classeAtc] = await Promise.all([
+      const [
+        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc,
+      ] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
           // Le sélecteur de dosage est un confort : son absence ne doit pas
@@ -218,6 +220,12 @@ export function pageRoutes(pool) {
           // inventée : on rend un classement vide, le bloc le dira.
           console.error('[délivrance] indisponible pour', cis, err.message);
           return { resume: [], groupes: [], liens: [] };
+        }),
+        // Six cent soixante-douze spécialités seulement : l'absence est le cas
+        // normal, et un défaut ne doit pas emporter la fiche.
+        getRemboursement(pool, cis).catch((err) => {
+          console.error('[remboursement] indisponible pour', cis, err.message);
+          return null;
         }),
         // 36,5 % des spécialités n'ont pas de classe ATC : l'absence est le cas
         // normal, pas une panne.
@@ -289,6 +297,7 @@ export function pageRoutes(pool) {
         reference,
         substitutions,
         variantes,
+        remboursement,
         resumeAtc,
         // La branche à laquelle appartient le produit lu — le rail montre où
         // l'on se trouve dans la classification, pas seulement où aller.

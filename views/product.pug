@@ -147,12 +147,19 @@ block content
       details.bloc#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
-          if delivrance.resume.length > 0
+          if delivrance.resume.length > 0 || remboursement
             //- Mentions plutôt que phrase : « Stupéfiant · Ordo sécurisée ·
             //- 4 sem. max » se saisit d'un regard, la phrase entière prenait
             //- deux lignes dans l'en-tête. Le libellé exact de la BDPM reste
             //- en infobulle et, mot pour mot, dans le corps du bloc.
             span.mentions
+              //- Six cent soixante-douze spécialités ont une prise en charge
+              //- limitée à certaines indications. C'est une condition de
+              //- délivrance au même titre que les autres — le pharmacien la
+              //- vérifie avant de facturer — et elle vient d'une autre table,
+              //- d'où sa pose ici plutôt que dans `classer`.
+              if remboursement
+                span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
               each m in delivrance.resume
                 //- La mention qui empêche de délivrer se distingue par son
                 //- poids, pas par sa couleur : un code rouge/vert serait
@@ -168,23 +175,43 @@ block content
           else
             span.bloc-compte Aucune condition enregistrée
 
-        if nbConditions > 0
-          dl.axes
-            each g in delivrance.groupes
-              dt.axe-titre= g.titre
-              dd.axe-valeur
-                each c in g.conditions
-                  //- Le libellé entier reste en infobulle : on met en forme,
-                  //- on ne réécrit pas. La casse d'origine y est intacte.
-                  p.condition(title=c.brut)
-                    if c.population
-                      span.condition-population= c.population
-                    span.condition-texte
-                      each seg in c.segments
-                        if seg.fort
-                          strong= seg.texte
-                        else
-                          = seg.texte
+        if nbConditions > 0 || remboursement
+          if nbConditions > 0
+            dl.axes
+              each g in delivrance.groupes
+                dt.axe-titre= g.titre
+                dd.axe-valeur
+                  each c in g.conditions
+                    //- Le libellé entier reste en infobulle : on met en forme,
+                    //- on ne réécrit pas. La casse d'origine y est intacte.
+                    p.condition(title=c.brut)
+                      if c.population
+                        span.condition-population= c.population
+                      span.condition-texte
+                        each seg in c.segments
+                          if seg.fort
+                            strong= seg.texte
+                          else
+                            = seg.texte
+
+          //- Le texte de l'Assurance Maladie, mot pour mot.
+          //-
+          //- On ne l'appelle pas « médicament d'exception » : relevé sur les
+          //- 800 présentations concernées, le champ ne contient ce mot que deux
+          //- fois, et toutes les restrictions de prise en charge ne relèvent
+          //- pas de cette catégorie réglementaire. Le lien Meddispar est donné
+          //- comme référence de la catégorie, à charge au lecteur d'y
+          //- rattacher — ou non — la spécialité qu'il tient.
+          if remboursement
+            .remboursement
+              h3.remboursement-titre
+                | Prise en charge
+                if remboursement.taux
+                  span.remboursement-taux= remboursement.taux
+              .remboursement-texte!= remboursement.texte
+              p.section-meta
+                a(href="https://www.meddispar.fr/Medicaments-d-exception/Criteres"
+                  target="_blank" rel="noopener noreferrer") Médicaments d'exception — critères, sur Meddispar
 
           if delivrance.liens.length > 0
             p.section-meta Conduite à tenir détaillée sur Meddispar, édité par l'Ordre national des pharmaciens :

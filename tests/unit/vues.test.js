@@ -24,6 +24,52 @@ const rendre = (vue, locals) => pug.renderFile(
 
 const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false };
 
+// La fiche produit prend une quinzaine de variables. Les fournir toutes est le
+// prix du test : c'est précisément la page où une locale oubliée casse tout.
+const produit = (extra = {}) => ({
+  product: {
+    id: '66297965',
+    denomination_medicament: 'EDEX 20 microgrammes',
+    active_ingredients: 'ALPROSTADIL',
+    forme_pharmaceutique: 'poudre et solvant pour solution injectable',
+    titulaires: 'UCB PHARMA',
+    cip_products: [],
+  },
+  importation: false,
+  reference: null,
+  substitutions: [],
+  variantes: [],
+  remboursement: null,
+  resumeAtc: null,
+  railActif: null,
+  genericGroup: null,
+  documents: [],
+  hasDocuments: false,
+  delivrance: { resume: [], groupes: [], liens: [] },
+  links: { official: [], scientific: [] },
+  sections: [],
+  ...extra,
+});
+
+const REMBOURSEMENT = {
+  texte: '<p>Ce médicament peut être pris en charge dans le cas suivant : dysfonction érectile.</p>',
+  taux: '65 %',
+};
+
+const DELIVRANCE_PLEINE = {
+  resume: [{ cle: 'liste', court: 'Liste I', long: 'Liste I', portee: 'bloque' }],
+  groupes: [{
+    titre: 'Qui la prescrit',
+    conditions: [{
+      brut: 'Prescription initiale réservée aux spécialistes en urologie',
+      population: null,
+      segments: [{ texte: 'Prescription initiale réservée aux ', fort: false },
+        { texte: 'urologues', fort: true }],
+    }],
+  }],
+  liens: [],
+};
+
 const PAGES = [
   ['search_page', { query: '', filter: 'all', results: null, classes: [] }],
   ['search_page', {
@@ -34,6 +80,8 @@ const PAGES = [
   }],
   ['documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE }],
   ['documents', { query: 'QT', rubrique: '4.4', documents: RECHERCHE_VIDE, panne: 'indisponible' }],
+  ['product', produit()],
+  ['product', produit({ delivrance: DELIVRANCE_PLEINE, remboursement: REMBOURSEMENT })],
   ['error', { title: 'Erreur', message: 'Cette page n’existe pas.', status: 404 }],
 ];
 
@@ -50,5 +98,25 @@ describe('rendu des gabarits', () => {
   it('la page des documents dispose de la barre de situation', () => {
     const html = rendre('documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE });
     assert.match(html, /class="barre"/);
+  });
+
+  // La prise en charge restreinte vient d'une autre table que les conditions
+  // de délivrance : elle doit s'afficher même pour une spécialité sans aucune
+  // condition enregistrée, sinon la mention de l'en-tête annonce un bloc vide.
+  it('la prise en charge restreinte s’affiche sans condition de délivrance', () => {
+    const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));
+    assert.match(html, /Indications remboursées/);
+    assert.match(html, /dysfonction érectile/);
+    assert.match(html, /meddispar\.fr\/Medicaments-d-exception\/Criteres/);
+    assert.doesNotMatch(html, /aucune condition de prescription/);
+  });
+
+  // On rapporte la restriction, on ne qualifie pas la spécialité : le champ de
+  // l'Assurance Maladie ne dit pas « médicament d'exception », et deux
+  // présentations sur huit cents seulement emploient le mot.
+  it('la fiche ne qualifie pas le produit de médicament d’exception', () => {
+    const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));
+    const hors = html.replace(/<a[^>]*>[\s\S]*?<\/a>/g, '');
+    assert.doesNotMatch(hors, /médicament d.exception/i);
   });
 });
