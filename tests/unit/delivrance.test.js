@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classer, presenter } from '../../src/delivrance.js';
+import { classer, presenter, pourcentage } from '../../src/delivrance.js';
 
 /** Les libellés sont ceux de dbpm.cis_cpd_bdpm, recopiés tels quels. */
 const MORPHINE = [
@@ -230,5 +230,28 @@ describe('presenter', () => {
   it('garde le libellé d’origine intact', () => {
     const brut = 'prescription réservée aux spécialistes et services PEDIATRIE';
     assert.equal(presenter(brut).brut, brut);
+  });
+});
+
+describe('pourcentage', () => {
+  // Ce que la base rend vraiment : node-postgres sort un numeric en chaîne.
+  it('rend le taux avec son signe et sans ses décimales mortes', () => {
+    assert.equal(pourcentage('30.00'), '30\u00A0%');
+    assert.equal(pourcentage('65.00'), '65\u00A0%');
+    assert.equal(pourcentage(100), '100\u00A0%');
+  });
+
+  // Six spécialités sur six cent soixante-douze portent le texte sans le taux :
+  // l'absence est un cas normal, pas un « NaN\u00A0% » dans l'en-tête du bloc.
+  it('ne rend rien quand le taux manque', () => {
+    for (const vide of [null, undefined, '', 'non renseigné']) {
+      assert.equal(pourcentage(vide), null);
+    }
+  });
+
+  // La BDPM n'écrit que 15, 30, 65 et 100, mais rien dans le schéma ne
+  // l'impose : une décimale doit sortir à la française, pas en point anglais.
+  it('garde une décimale réelle, à la virgule', () => {
+    assert.equal(pourcentage('62.50'), '62,50\u00A0%');
   });
 });

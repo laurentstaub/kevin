@@ -385,18 +385,38 @@ export function classer(libelles) {
  * Le texte est le même pour toutes les présentations d'une spécialité : on
  * prend le premier non vide.
  */
+/**
+ * Le taux, en toutes lettres.
+ *
+ * La colonne est un `numeric(5,2)` et sort de la base en « 30.00 » : un nombre
+ * nu, sans unité, posé à côté du titre. Trente quoi ? La BDPM n'écrit que
+ * quatre valeurs — 15, 30, 65 et 100 %, relevées sur les 800 présentations
+ * concernées — donc les décimales ne portent rien et le signe manquait seul.
+ * L'espace avant le signe est insécable : le taux ne se coupe pas en fin de
+ * ligne.
+ */
+export function pourcentage(valeur) {
+  const n = Number(valeur);
+  if (valeur === null || valeur === undefined || valeur === '' || !Number.isFinite(n)) return null;
+  const chiffres = Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+  return `${chiffres}\u00A0%`;
+}
+
 export async function getRemboursement(pool, cis) {
   const { rows } = await pool.query(
     `SELECT indications_remboursement AS texte, taux_remboursement AS taux
      FROM dbpm.cis_cip_bdpm
      WHERE code_cis = $1
        AND coalesce(indications_remboursement, '') <> ''
-     ORDER BY code_cip13
+     -- Six spécialités portent le texte sans le taux : les présentations qui
+     -- l'ont passent devant, sans quoi l'ordre des CIP déciderait à leur place.
+     ORDER BY (taux_remboursement IS NULL), code_cip13
      LIMIT 1`,
     [cis],
   );
 
-  return rows[0] ?? null;
+  const ligne = rows[0];
+  return ligne ? { texte: ligne.texte, taux: pourcentage(ligne.taux) } : null;
 }
 
 /** Conditions d'une spécialité, classées. */

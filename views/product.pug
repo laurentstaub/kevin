@@ -207,7 +207,9 @@ block content
               h3.remboursement-titre
                 | Prise en charge
                 if remboursement.taux
-                  span.remboursement-taux= remboursement.taux
+                  //- Le taux porte son unité : « 30.00 » posé à côté du titre
+                  //- ne disait pas de quoi il parlait.
+                  span.remboursement-taux(title="Taux de remboursement par l’Assurance Maladie")= remboursement.taux
               .remboursement-texte!= remboursement.texte
               p.section-meta
                 a(href="https://www.meddispar.fr/Medicaments-d-exception/Criteres"
