@@ -70,6 +70,10 @@ export const config = {
     trials: process.env.LINK_TRIALS ?? 'https://clinicaltrials.gov/search?intr={q}',
     ema:
       process.env.LINK_EMA ?? 'https://www.ema.europa.eu/en/search?search_api_fulltext={q}',
+    // Index alphabétique de Meddispar. Le site est édité par l'Ordre national
+    // des pharmaciens : on y renvoie, on n'en recopie rien.
+    meddispar:
+      process.env.LINK_MEDDISPAR ?? 'https://www.meddispar.fr/content/search/?letter={lettre}',
     // Pont vers le projet ruptures d'approvisionnement.
     availability: process.env.LINK_AVAILABILITY ?? 'https://app.antheosdata.com/?q={q}',
   },

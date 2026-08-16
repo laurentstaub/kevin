@@ -306,7 +306,11 @@ export function pageRoutes(pool) {
         documents,
         hasDocuments,
         delivrance,
-        links: productLinks(product),
+        // Meddispar ne recense que les spécialités à dispensation particulière :
+        // le lien n'a de sens que si la BDPM enregistre au moins une condition.
+        links: productLinks(product, {
+          dispensationParticuliere: delivrance.groupes.length > 0,
+        }),
         sections,
       });
     }),

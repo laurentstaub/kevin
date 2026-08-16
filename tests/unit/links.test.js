@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { productLinks, primarySubstance } from '../../src/links.js';
+import { productLinks, primarySubstance, meddisparLettre } from '../../src/links.js';
 import { deaccent, truncate } from '../../src/text.js';
 
 describe('primarySubstance', () => {
@@ -70,5 +70,42 @@ describe('truncate', () => {
 
   it('coupe sur une limite de mot', () => {
     assert.equal(truncate('un deux trois quatre', 10), 'un deux…');
+  });
+});
+
+describe('lien Meddispar', () => {
+  const restreint = {
+    id: '66297965',
+    denomination_medicament: 'SKENAN L.P. 100 mg',
+    active_ingredients: 'MORPHINE',
+  };
+
+  it('prend l’initiale, accents ôtés', () => {
+    assert.equal(meddisparLettre('ÉLIQUIS 5 mg'), 'E');
+    assert.equal(meddisparLettre('skenan'), 'S');
+  });
+
+  // Le garde-fou : aucune des 15 857 spécialités ne commence par autre chose
+  // qu’une lettre, mais l’index Meddispar n’a pas d’entrée pour le reste.
+  it('ne fabrique pas de lettre à partir de rien', () => {
+    for (const sansLettre of [null, undefined, '', '  ', '5-FLUOROURACILE']) {
+      assert.equal(meddisparLettre(sansLettre), null);
+    }
+  });
+
+  it('renvoie vers l’index de la lettre quand la dispensation est particulière', () => {
+    const lien = productLinks(restreint, { dispensationParticuliere: true })
+      .official.find((l) => l.key === 'meddispar');
+    assert.match(lien.url, /meddispar\.fr/);
+    assert.match(lien.url, /letter=S/);
+  });
+
+  // Meddispar ne recense pas les spécialités sans condition : y renvoyer une
+  // boîte d’ibuprofène enverrait chercher une fiche qui n’existe pas.
+  it('se tait pour une spécialité sans condition de délivrance', () => {
+    for (const contexte of [{}, { dispensationParticuliere: false }]) {
+      const trouve = productLinks(restreint, contexte).official.find((l) => l.key === 'meddispar');
+      assert.equal(trouve, undefined);
+    }
   });
 });
