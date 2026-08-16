@@ -89,6 +89,32 @@
   max-width: var(--measure);
 }
 
+/* Sous le champ, deux requêtes cliquables. Elles ne décrivent pas la recherche
+   plein texte, elles la font — et aucune des deux n'est un nom de médicament,
+   ce qui est toute la démonstration. */
+.accueil-exemple {
+  font-size: var(--fs-sm);
+  color: var(--accent-soft);
+  margin: var(--sp-2) 0 0;
+}
+
+.accueil-exemple a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent-soft);
+}
+
+.accueil-exemple a:hover {
+  text-decoration-color: #fff;
+}
+
+.accueil-exemple .sep::before {
+  content: "·";
+  margin: 0 0.5em;
+  color: var(--accent-soft);
+}
+
 /* Le champ posé sur l'aplat n'a pas besoin de contour : le fond blanc suffit
    à le détacher, et un filet de plus ferait un cadre dans un cadre. */
 .accueil .input-wrapper {

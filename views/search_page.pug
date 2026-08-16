@@ -48,8 +48,24 @@ block content
   header.accueil
     .accueil-inner
       h1.titre-site Demander à Kevin
-      p.accueil-champ Base de données publique des médicaments · spécialités, principes actifs, groupes génériques
+      p.accueil-champ Base de données publique des médicaments · spécialités, principes actifs, groupes génériques, texte des RCP et des notices
       +champRecherche(query, false)
+
+      //- Un exemple vaut l'annonce.
+      //-
+      //- L'onglet « Dans les documents » ne paraît qu'une fois la recherche
+      //- lancée : sur la page de garde, rien ne disait qu'on pouvait chercher
+      //- autre chose qu'un nom. Une requête qu'on peut cliquer le montre au
+      //- lieu de le promettre — et « allongement QT » n'est le nom d'aucun
+      //- médicament, ce qui fait la démonstration entière.
+      if !results
+        p.accueil-exemple
+          | Cherchez aussi dans le texte des documents :
+          |
+          a(href="/documents?q=allongement+QT") allongement QT
+          |
+          span.sep
+          a(href="/documents?q=insuffisance+h%C3%A9patique+s%C3%A9v%C3%A8re") insuffisance hépatique sévère
 
   .recherche
     if notice

@@ -233,4 +233,24 @@ describe('rendu des gabarits', () => {
     assert.match(html, /intervalle QT<\/mark>/);
     assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
   });
+
+  // Sur la page de garde, le champ énumérait « Dénomination ou principe
+  // actif » : il ne laissait pas ignorer la recherche plein texte, il la
+  // niait. L'onglet, lui, ne paraît qu'une fois la recherche lancée.
+  it('la page de garde montre qu’on peut chercher une expression', () => {
+    const html = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
+    assert.match(html, /Dénomination, principe actif ou expression/);
+    assert.match(html, /href="\/documents\?q=allongement\+QT"/);
+  });
+
+  // L'exemple s'efface dès qu'on a cherché : il enseigne, il n'encombre pas.
+  it('l’exemple disparaît une fois la recherche faite', () => {
+    const html = rendre('search_page', {
+      query: 'aspirine',
+      filter: 'all',
+      results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
+      documents: RECHERCHE_VIDE,
+    });
+    assert.doesNotMatch(html, /accueil-exemple/);
+  });
 });
