@@ -947,34 +947,52 @@
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
-.trouvaille-lien {
-  display: block;
-  text-decoration: none;
-  color: var(--ink);
+/* Le titre et les rubriques sur une ligne, la molécule à gauche, les numéros
+   à droite. Ce sont les deux moitiés de la réponse : quoi, et où. */
+.trouvaille-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
-.trouvaille-lien:hover .trouvaille-produit {
+.trouvaille-molecule {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.trouvaille-molecule:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.trouvaille-produit {
-  display: block;
-  font-size: var(--fs-sm);
+/* Les numéros de rubrique. Chacun mène à son ancre, sur la spécialité où
+   l'occurrence est la mieux classée — le libellé complet reste en infobulle,
+   parce que « Mises en garde spéciales et précautions d'emploi » sur une ligne
+   de résultats coûterait la densité qu'on est venu chercher. */
+.puces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* La rubrique est la moitié de la réponse : sans elle, on sait que le mot
-   figure quelque part, ce qui ne sert à rien. */
-.trouvaille-rubrique {
-  display: block;
+.puce {
+  display: inline-block;
   font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
   color: var(--accent);
-  margin-top: 0.15em;
+  text-decoration: none;
+  padding: 0 0.35em;
+  border: var(--rule-width) solid var(--rule);
 }
 
-.trouvaille-rubrique .num {
-  color: inherit;
-  margin-right: 0.5em;
+.puce:hover {
+  border-color: var(--accent);
+  background: var(--accent-pale);
 }
 
 /* L'extrait est du document, pas de l'interface : il reprend la police de
@@ -995,9 +1013,35 @@
   padding: 0 0.15em;
 }
 
-/* Une molécule a trente génériques dont les RCP sont souvent identiques au mot
-   près : on compte au lieu de répéter. */
+/* Combien de spécialités le groupe recouvre : on compte au lieu de répéter. */
 .trouvaille-reprise {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  margin: 0.15em 0 0;
+}
+
+/* L'extrait est replié, parce qu'il coûte quatre lignes d'écran et qu'on ne le
+   lit qu'une fois sur dix. Mais il ne disparaît pas : « OLANZAPINE · 4.4 » ne
+   dit pas si le RCP énonce que le produit allonge le QT ou qu'il est
+   contre-indiqué en cas d'allongement, et c'est toute la réponse. */
+.preuve {
+  margin-top: var(--sp-1);
+}
+
+.preuve-tete {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.preuve-tete:hover {
+  color: var(--muted);
+}
+
+/* Une molécule n'a pas un seul RCP : la spécialité d'où vient l'extrait se
+   nomme, sans quoi on lui prêterait une phrase vraie d'une seule forme. */
+.preuve-source {
   font-size: var(--fs-xs);
   color: var(--faint);
   margin: var(--sp-1) 0 0;

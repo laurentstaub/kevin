@@ -1,9 +1,14 @@
-//- Une trouvaille dans un document.
+//- Une trouvaille dans les documents : une molécule, pas une spécialité.
 //-
-//- La ligne dit trois choses dans l'ordre où on les lit : quel produit, quelle
-//- rubrique, et l'extrait où l'expression figure. Le lien conduit à la
-//- rubrique elle-même — l'ancre a été posée au découpage — et non à la fiche,
-//- où il faudrait la chercher.
+//- La ligne dit trois choses dans l'ordre où on les lit : quelle molécule,
+//- dans quelles rubriques, et — à la demande — la phrase qui le prouve.
+//-
+//- Grouper par molécule plutôt que par empreinte de texte divise la liste par
+//- quatre en moyenne, et bien davantage sur ce qu'on cherche vraiment :
+//- olanzapine 66 spécialités, aripiprazole 63, rispéridone 62. Chaque numéro
+//- de rubrique porte sa propre ancre, prise sur sa meilleure occurrence — un
+//- numéro qui mènerait à une spécialité tirée au sort du groupe serait pire
+//- qu'absent.
 //-
 //- @param {object}  d       sortie de chercherDansDocuments
 //- @param {string}  q       la requête, pour le lien « tout voir »
@@ -12,19 +17,52 @@ mixin resultatsDocuments(d, q, resume)
   ul.trouvailles
     each r in d.resultats
       li.trouvaille
-        a.trouvaille-lien(href=`/product/${r.code_cis}#${r.ancre}`)
-          span.trouvaille-produit= r.denomination
-          span.trouvaille-rubrique
-            span.num= r.numero
-            = r.libelle
-        //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
-        //- viennent de la base : le texte est celui du document.
-        p.trouvaille-extrait!= r.extrait
-        //- Une molécule a trente génériques dont les RCP sont souvent
-        //- identiques au mot près. On compte au lieu de répéter.
+        .trouvaille-tete
+          //- Deux spécialités sur treize mille six cents n'ont pas de
+          //- composition enregistrée : leur dénomination tient lieu de titre,
+          //- et mène à leur fiche plutôt qu'à une recherche par principe actif
+          //- qui ne rendrait rien.
+          if r.sansMolecule
+            a.trouvaille-molecule(href=`/product/${r.code_cis}#${r.ancre}`)= r.molecule
+          else
+            a.trouvaille-molecule(
+              href=`/search?q=${encodeURIComponent(r.molecule)}&filter=active`
+              title="Toutes les spécialités contenant cette molécule"
+            )= r.molecule
+
+          if r.rubriques && r.rubriques.length > 0
+            ul.puces
+              each rub in r.rubriques
+                li
+                  a.puce(
+                    href=`/product/${rub.cis}#${rub.ancre}`
+                    title=`${rub.numero} — ${rub.libelle}`
+                  )= rub.numero
+
+        //- Combien de spécialités le groupe recouvre. Une seule ne se dit pas :
+        //- ce serait une ligne pour ne rien apprendre.
         if r.specialites > 1
-          p.trouvaille-reprise
-            | Formulation identique dans #{r.specialites.toLocaleString('fr-FR')} spécialités
+          p.trouvaille-reprise #{r.specialites.toLocaleString('fr-FR')} spécialités
+
+        //- L'extrait est la preuve, et il est replié.
+        //-
+        //- « OLANZAPINE · 4.4 » ne dit pas si le RCP énonce que le produit
+        //- allonge le QT ou qu'il est contre-indiqué en cas d'allongement : au
+        //- comptoir, c'est toute la réponse. Mais une molécule n'a pas un seul
+        //- RCP — tramadol LP et tramadol à libération immédiate ont des textes
+        //- différents — d'où la spécialité nommée sous l'extrait : on ne prête
+        //- pas à la molécule une phrase qui n'est vraie que d'une forme.
+        details.preuve
+          summary.preuve-tete Extrait
+          //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
+          //- viennent de la base : le texte est celui du document.
+          p.trouvaille-extrait!= r.extrait
+          p.preuve-source
+            a(href=`/product/${r.code_cis}#${r.ancre}`)= r.denomination
+            if r.numero
+              |  · #{r.numero} #{r.libelle}
+            else if r.libelle
+              |  · #{r.libelle}
 
   if resume && d.total > d.resultats.length
     p.trouvailles-suite

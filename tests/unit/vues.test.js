@@ -52,17 +52,36 @@ const produit = (extra = {}) => ({
 });
 
 const TROUVAILLE = {
+  signature: '62851',
+  molecule: 'OLANZAPINE',
+  sansMolecule: false,
   code_cis: '66297965',
-  denomination: 'VANFLYTA 17,7 mg, comprimé pelliculé',
+  denomination: 'OLANZAPINE ALPHA 5 mg, comprimé',
   numero: '4.4',
   libelle: 'Mises en garde spéciales',
   ancre: 'rcp-12',
   extrait: 'allongement de l’<mark>intervalle QT</mark>',
+  specialites: 66,
+  rubriques: [
+    { numero: '4.4', libelle: 'Mises en garde', cis: '66297965', ancre: 'rcp-12' },
+    { numero: '4.8', libelle: 'Effets indésirables', cis: '66297966', ancre: 'rcp-21' },
+  ],
+};
+
+// Deux spécialités sur treize mille six cents : la dénomination tient lieu de
+// titre, et le lien va à la fiche, pas à une recherche par principe actif.
+const SANS_MOLECULE = {
+  ...TROUVAILLE,
+  signature: 'cis:66297967',
+  molecule: 'SPECIALITE SANS COMPOSITION',
+  denomination: 'SPECIALITE SANS COMPOSITION',
+  sansMolecule: true,
   specialites: 1,
+  rubriques: [{ numero: '4.4', libelle: 'Mises en garde', cis: '66297967', ancre: 'rcp-12' }],
 };
 
 const RECHERCHE_PLEINE = {
-  resultats: [TROUVAILLE],
+  resultats: [TROUVAILLE, SANS_MOLECULE],
   total: 3000,
   borne: true,
   decalage: 20,
@@ -157,7 +176,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /Suivants/);
     assert.match(html, /page=3/);
     assert.match(html, /rubrique=4\.4/);
-    assert.match(html, /Résultats 21 à 21/);
+    assert.match(html, /Résultats 21 à 22/);
   });
 
   // Retour à la première page : elle s'écrit sans paramètre, sinon deux URL
@@ -180,5 +199,38 @@ describe('rendu des gabarits', () => {
     });
     assert.match(html, /Dans les documents/);
     assert.match(html, /href="\/documents\?q=intervalle%20QT"/);
+  });
+
+  // Le regroupement par molécule ne sert à rien si le numéro de rubrique ne
+  // mène nulle part de précis : chaque puce porte l'ancre de sa meilleure
+  // occurrence, qui n'est pas forcément la spécialité de l'extrait.
+  it('chaque rubrique porte sa propre ancre', () => {
+    const html = rendre('documents', {
+      query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /href="\/product\/66297965#rcp-12"/);
+    assert.match(html, /href="\/product\/66297966#rcp-21"/);
+    assert.match(html, /66 spécialités/);
+  });
+
+  // La molécule mène à toutes ses spécialités ; celle qui n'en a pas mène à sa
+  // fiche, sinon le lien conduirait à une recherche vide.
+  it('la molécule mène à ses spécialités, sauf quand il n’y en a pas', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /href="\/search\?q=OLANZAPINE&amp;filter=active"/);
+    assert.match(html, /href="\/product\/66297967#rcp-12"/);
+  });
+
+  // L'extrait est replié mais présent : sans lui la liste dit où le mot
+  // figure, jamais ce que le document en dit.
+  it('l’extrait reste accessible, et nomme la spécialité dont il vient', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /<details class="preuve">/);
+    assert.match(html, /intervalle QT<\/mark>/);
+    assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
   });
 });

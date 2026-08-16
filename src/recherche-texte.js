@@ -10,13 +10,30 @@
  *
  * **L'unité de résultat est la rubrique, pas le produit.** « DOLIPRANE » ne
  * répond pas à la question ; « DOLIPRANE · 4.4 Mises en garde » y répond, et
- * l'ancre posée par le découpeur y conduit directement.
+ * l'ancre posée par le découpeur y conduit directement. Chaque numéro annoncé
+ * porte donc sa propre ancre, prise sur sa meilleure occurrence — un numéro
+ * qui mènerait à une spécialité tirée au sort du groupe serait pire qu'absent.
  *
- * **Les reprises littérales se comptent au lieu de se répéter.** Une molécule
- * a trente génériques dont les RCP sont souvent identiques au mot près :
- * trente lignes pour la même phrase noieraient les autres résultats. On groupe
- * sur l'empreinte du texte — c'est licite parce que la reprise est littérale,
- * pas approchée — et l'on dit combien de spécialités la partagent.
+ * **L'unité de regroupement est la molécule.** Grouper sur l'empreinte du
+ * texte, comme on l'a d'abord fait, ne réunit que les reprises au mot près :
+ * un princeps et son générique dont les RCP diffèrent d'une virgule faisaient
+ * deux lignes. Sur le millésime d'août 2026, les 13 599 spécialités
+ * commercialisées composées se ramènent à 3 352 molécules — olanzapine 66
+ * spécialités, aripiprazole 63, rispéridone 62, soit exactement les familles
+ * qui remplissent une recherche « intervalle QT ».
+ *
+ * La signature est l'ensemble trié des `code_substance` actifs, et non la
+ * dénomination : grouper sur le nom rend 3 655 groupes au lieu de 3 352, soit
+ * 8 % de groupes qui ne sont séparés que par un sel, un hydrate ou une
+ * variante d'écriture. Les `FT` — fractions thérapeutiques — sont écartées,
+ * sans quoi une spécialité compterait sa substance deux fois. Une association
+ * fait son propre groupe : paracétamol + codéine n'est pas du paracétamol.
+ *
+ * Une molécule n'a pas un seul RCP — tramadol LP et tramadol à libération
+ * immédiate ont des textes différents. L'extrait rendu est celui de la
+ * meilleure occurrence, et la vue dit de quelle spécialité il vient : sans
+ * quoi l'on attribuerait à la molécule une phrase qui n'est vraie que d'une
+ * forme.
  *
  * **On borne, et on le dit.** Classer par pertinence suppose d'avoir évalué
  * chaque occurrence : sur un mot courant comme « traitement », c'est cent
@@ -113,38 +130,82 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     `WITH q AS (SELECT ${TSQUERY} AS tq),
      trouve AS (
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
-              s.texte, md5(s.texte) AS empreinte,
-              ts_rank_cd(${VECTEUR}, q.tq) AS score
+              s.texte, ts_rank_cd(${VECTEUR}, q.tq) AS score
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          AND ($2::text IS NULL OR s.numero = $2 OR s.numero LIKE $2 || '.%')
        LIMIT ${PLAFOND}
      ),
-     -- Une empreinte = une formulation. On garde la mieux classée et l'on
-     -- compte les spécialités qui la reprennent mot pour mot.
-     groupe AS (
-       SELECT DISTINCT ON (empreinte)
-              empreinte, code_cis, document_type, position, numero, libelle,
-              texte, score,
-              count(*) OVER (PARTITION BY empreinte)::int AS specialites
-       FROM trouve
-       ORDER BY empreinte, score DESC, code_cis
+     -- La signature moléculaire : l'ensemble trié des codes substance actifs.
+     -- Les spécialités sans composition — deux sur treize mille six cents —
+     -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe
+     -- vide commun, qui les réunirait sans qu'elles aient rien en partage.
+     molecule AS (
+       SELECT t.code_cis,
+              coalesce(
+                (SELECT string_agg(DISTINCT c.code_substance, '+' ORDER BY c.code_substance)
+                 FROM dbpm.cis_compo_bdpm c
+                 WHERE c.code_cis = t.code_cis AND c.nature_composant = 'SA'),
+                'cis:' || t.code_cis) AS signature
+       FROM (SELECT DISTINCT code_cis FROM trouve) t
+     ),
+     enrichi AS (SELECT t.*, m.signature FROM trouve t JOIN molecule m USING (code_cis)),
+     -- Une entrée par rubrique et par molécule, portée par sa meilleure
+     -- occurrence : le numéro affiché doit mener quelque part de précis.
+     par_rubrique AS (
+       SELECT DISTINCT ON (signature, numero)
+              signature, numero, libelle, code_cis, document_type, position, score
+       FROM enrichi
+       WHERE coalesce(numero, '') <> ''
+       ORDER BY signature, numero, score DESC, code_cis
+     ),
+     chapeau AS (
+       SELECT signature,
+              jsonb_agg(jsonb_build_object(
+                'numero', numero, 'libelle', libelle, 'cis', code_cis,
+                'ancre', document_type || '-' || position)
+                -- 10 vient après 4.8, ce que l'ordre alphabétique ignore.
+                -- substring rend NULL sur ce qui n'est pas un chiffre au lieu
+                -- de lever : un numéro mal formé se range en fin de son rang
+                -- au lieu de faire échouer la requête entière. C'est pour
+                -- l'avoir écarté d'abord qu'on s'est retrouvé avec un extrait
+                -- venu d'une rubrique absente des puces.
+                ORDER BY substring(numero from '^[0-9]+')::int NULLS LAST,
+                         substring(numero from '[.]([0-9]+)')::int NULLS LAST,
+                         numero) AS rubriques
+       FROM par_rubrique GROUP BY signature
+     ),
+     meilleur AS (
+       SELECT DISTINCT ON (signature)
+              signature, code_cis, document_type, position, numero, libelle, texte, score
+       FROM enrichi ORDER BY signature, score DESC, code_cis
+     ),
+     resume AS (
+       SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score
+       FROM enrichi GROUP BY signature
      )
-     SELECT g.code_cis, g.document_type, g.position, g.numero, g.libelle,
-            g.specialites, g.score,
+     SELECT r.signature, r.specialites, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
+            b.code_cis, b.numero, b.libelle,
+            b.document_type || '-' || b.position AS ancre,
             m.denomination_medicament AS denomination,
+            (SELECT string_agg(DISTINCT x.denomination_substance, ', '
+                               ORDER BY x.denomination_substance)
+             FROM dbpm.cis_compo_bdpm x
+             WHERE x.code_cis = b.code_cis AND x.nature_composant = 'SA') AS molecule,
             -- L'extrait ne se calcule que sur ce qu'on rend : c'est de loin la
             -- fonction la plus coûteuse de la requête.
-            ts_headline('${LANGUE}', g.texte, q.tq,
+            ts_headline('${LANGUE}', b.texte, q.tq,
               'MaxWords=38, MinWords=18, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'
             ) AS extrait,
             (SELECT count(*)::int FROM trouve) AS occurrences
-     FROM groupe g
-     JOIN dbpm.cis_bdpm m ON m.code_cis = g.code_cis, q
-     ORDER BY g.score DESC, g.specialites DESC, g.code_cis
+     FROM resume r
+     JOIN meilleur b USING (signature)
+     LEFT JOIN chapeau c USING (signature)
+     JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
+     ORDER BY r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $3 OFFSET $4`,
     // Une ligne de plus que demandé : c'est ainsi qu'on sait s'il existe une
-    // page suivante sans compter les formulations distinctes, ce que la requête
+    // page suivante sans compter les molécules distinctes, ce que la requête
     // ne fait nulle part — `occurrences` compte les rubriques avant
     // regroupement, et servirait de plancher trompeur.
     [q, rubrique, limite + 1, decalage],
@@ -157,10 +218,13 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   return {
     decalage,
     suite,
-    resultats: page.map(({ occurrences: _, ...r }) => ({
+    resultats: page.map(({ occurrences: _, molecule, denomination, ...r }) => ({
       ...r,
-      // L'ancre est celle que le découpeur a posée : type et position.
-      ancre: `${r.document_type}-${r.position}`,
+      denomination,
+      // Deux spécialités sur treize mille six cents n'ont pas de composition
+      // enregistrée : leur dénomination tient lieu de titre, faute de mieux.
+      molecule: molecule || denomination,
+      sansMolecule: !molecule,
     })),
     total: occurrences,
     // Le plafond est atteint : le décompte est un plancher, pas un total.
