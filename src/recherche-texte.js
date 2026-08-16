@@ -22,12 +22,27 @@
  * spécialités, aripiprazole 63, rispéridone 62, soit exactement les familles
  * qui remplissent une recherche « intervalle QT ».
  *
- * La signature est l'ensemble trié des `code_substance` actifs, et non la
- * dénomination : grouper sur le nom rend 3 655 groupes au lieu de 3 352, soit
- * 8 % de groupes qui ne sont séparés que par un sel, un hydrate ou une
- * variante d'écriture. Les `FT` — fractions thérapeutiques — sont écartées,
- * sans quoi une spécialité compterait sa substance deux fois. Une association
- * fait son propre groupe : paracétamol + codéine n'est pas du paracétamol.
+ * La signature est l'ensemble trié des noms résolus, un par substance active.
+ * Trois pivots ont été essayés sur le millésime d'août 2026 :
+ *
+ *   `code_substance` brut          3 352 groupes, mais DARUNAVIR sort trois
+ *                                  fois — un code par sel.
+ *   dénomination la plus courte    3 119 groupes, et onze produits de
+ *                                  contraste réunis sous « IODE », le fer
+ *                                  intraveineux avec le sulfate ferreux oral,
+ *                                  l'acétylcystéine sous « CYSTÉINE ».
+ *   nom résolu (retenu)            3 158 groupes, aucune fusion douteuse.
+ *
+ * La fraction thérapeutique n'est pas « la même molécule » : pour un produit
+ * de contraste c'est l'atome d'iode, pour un sel de fer c'est l'élément. Elle
+ * ne remplace donc le sel que si **tous ses mots sont des mots du sel** —
+ * QUIZARTINIB dans DICHLORHYDRATE DE QUIZARTINIB, TACROLIMUS dans TACROLIMUS
+ * MONOHYDRATÉ. IODE n'est pas un mot de IOHEXOL, CYSTÉINE n'en est pas un
+ * d'ACÉTYLCYSTÉINE : ces deux-là gardent leur nom, et leur groupe.
+ *
+ * Les `FT` ne comptent jamais comme substance : sans quoi une spécialité
+ * compterait la sienne deux fois. Une association fait son propre groupe :
+ * paracétamol + codéine n'est pas du paracétamol.
  *
  * Une molécule n'a pas un seul RCP — tramadol LP et tramadol à libération
  * immédiate ont des textes différents. L'extrait rendu est celui de la
@@ -164,15 +179,71 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
          AND ($2::text IS NULL OR s.numero = $2 OR s.numero LIKE $2 || '.%')
        LIMIT ${PLAFOND}
      ),
-     -- La signature moléculaire : l'ensemble trié des codes substance actifs.
+     -- Les substances en jeu, pour ne nommer que celles-là.
+     substances AS (
+       SELECT DISTINCT c.code_substance
+       FROM dbpm.cis_compo_bdpm c
+       WHERE c.code_cis IN (SELECT DISTINCT code_cis FROM trouve)
+         AND c.nature_composant = 'SA'
+     ),
+     -- Les libellés du sel, découpés en mots — sans accents ni ponctuation,
+     -- « BROMURE D'IPRATROPIUM » devenant {BROMURE, D, IPRATROPIUM}.
+     libelles AS (
+       SELECT c.code_substance, c.denomination_substance AS nom,
+              string_to_array(btrim(regexp_replace(
+                upper(public.f_unaccent(c.denomination_substance)),
+                '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
+       FROM dbpm.cis_compo_bdpm c
+       WHERE c.nature_composant = 'SA'
+         AND c.code_substance IN (SELECT code_substance FROM substances)
+     ),
+     -- Les fractions thérapeutiques rattachées au même numéro de liaison.
+     fractions AS (
+       SELECT sa.code_substance, ft.denomination_substance AS nom,
+              string_to_array(btrim(regexp_replace(
+                upper(public.f_unaccent(ft.denomination_substance)),
+                '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
+       FROM dbpm.cis_compo_bdpm sa
+       JOIN dbpm.cis_compo_bdpm ft
+         ON ft.code_cis = sa.code_cis
+        AND ft.numero_liaison_saft = sa.numero_liaison_saft
+        AND ft.nature_composant = 'FT'
+       WHERE sa.nature_composant = 'SA'
+         AND sa.code_substance IN (SELECT code_substance FROM substances)
+     ),
+     -- Une fraction ne peut nommer la substance que si tous ses mots sont des
+     -- mots du sel. C'est toute la règle, et elle a été trouvée en constatant
+     -- les dégâts de l'autre : onze produits de contraste réunis sous « IODE »,
+     -- le carboxymaltose ferrique avec le sulfate ferreux, l'acétylcystéine
+     -- sous « CYSTÉINE ». La fraction thérapeutique n'est pas la molécule,
+     -- c'est ce qui, dans le sel, porte l'effet — parfois un simple atome.
+     candidats AS (
+       SELECT code_substance, nom FROM libelles
+       UNION
+       SELECT f.code_substance, f.nom
+       FROM fractions f
+       WHERE EXISTS (SELECT 1 FROM libelles l
+                     WHERE l.code_substance = f.code_substance AND f.mots <@ l.mots)
+     ),
+     noms AS (
+       SELECT DISTINCT ON (code_substance) code_substance, nom
+       FROM candidats
+       WHERE coalesce(nom, '') <> ''
+       ORDER BY code_substance, length(nom), nom
+     ),
+     -- La signature : l'ensemble trié des noms résolus. Sur le nom et non sur
+     -- le code, sans quoi DARUNAVIR sort trois fois — un code par sel, et la
+     -- base elle-même leur donne le même nom.
+     --
      -- Les spécialités sans composition — deux sur treize mille six cents —
      -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe
      -- vide commun, qui les réunirait sans qu'elles aient rien en partage.
      molecule AS (
        SELECT t.code_cis,
               coalesce(
-                (SELECT string_agg(DISTINCT c.code_substance, '+' ORDER BY c.code_substance)
+                (SELECT string_agg(DISTINCT n.nom, ' + ' ORDER BY n.nom)
                  FROM dbpm.cis_compo_bdpm c
+                 JOIN noms n ON n.code_substance = c.code_substance
                  WHERE c.code_cis = t.code_cis AND c.nature_composant = 'SA'),
                 'cis:' || t.code_cis) AS signature
        FROM (SELECT DISTINCT code_cis FROM trouve) t
@@ -214,62 +285,15 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      resume AS (
        SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score
        FROM enrichi GROUP BY signature
-     ),
-     -- Les substances en jeu, pour ne nommer que celles-là.
-     substances AS (
-       SELECT DISTINCT c.code_substance
-       FROM dbpm.cis_compo_bdpm c
-       WHERE c.code_cis IN (SELECT code_cis FROM molecule)
-         AND c.nature_composant = 'SA'
-     ),
-     -- Le nom lisible d'une substance : le plus court de ceux que la base lui
-     -- donne. « QUIZARTINIB » plutôt que « DICHLORHYDRATE DE QUIZARTINIB » —
-     -- un pharmacien nomme le principe actif, pas son sel.
-     --
-     -- Préférer systématiquement la fraction thérapeutique se retourne : sur
-     -- les 723 codes qui en portent une, 25 l'ont plus longue que le sel —
-     -- « CYCLOPHOSPHAMIDE » deviendrait « CYCLOPHOSPHAMIDE ANHYDRE », et
-     -- « CHLORHYDRATE DE LIDOCAÏNE » gagnerait le même suffixe. Et 99 codes
-     -- ont plusieurs fractions concurrentes, « METFORMINE » contre
-     -- « METFORMINE BASE ». Le plus court tranche les deux d'un coup.
-     --
-     -- Les candidats se ramassent sur toute la table et non sur la spécialité
-     -- affichée : PROGRAF et PROTOPIC ne déclarent pas la fraction que
-     -- déclarent leurs vingt confrères du tacrolimus, si bien que le groupe
-     -- changerait de nom selon le représentant que le classement désigne.
-     --
-     -- C'est aussi pourquoi la signature reste le sel : sur 13 599 spécialités,
-     -- pivoter sur la fraction rend 3 218 groupes au lieu de 3 352, mais scinde
-     -- le tacrolimus en deux. Les 20 % de lignes qui portent une fraction ne
-     -- sont pas réparties par molécule, elles le sont par déclarant.
-     noms AS (
-       SELECT DISTINCT ON (code_substance) code_substance, nom
-       FROM (
-         SELECT sa.code_substance, sa.denomination_substance AS nom
-         FROM dbpm.cis_compo_bdpm sa
-         WHERE sa.nature_composant = 'SA'
-           AND sa.code_substance IN (SELECT code_substance FROM substances)
-         UNION
-         SELECT sa.code_substance, ft.denomination_substance
-         FROM dbpm.cis_compo_bdpm sa
-         JOIN dbpm.cis_compo_bdpm ft
-           ON ft.code_cis = sa.code_cis
-          AND ft.numero_liaison_saft = sa.numero_liaison_saft
-          AND ft.nature_composant = 'FT'
-         WHERE sa.nature_composant = 'SA'
-           AND sa.code_substance IN (SELECT code_substance FROM substances)
-       ) candidats
-       WHERE coalesce(nom, '') <> ''
-       ORDER BY code_substance, length(nom), nom
      )
      SELECT r.signature, r.specialites, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
             b.code_cis, b.numero, b.libelle,
             b.document_type || '-' || b.position AS ancre,
             m.denomination_medicament AS denomination,
-            (SELECT string_agg(DISTINCT n.nom, ', ' ORDER BY n.nom)
-             FROM dbpm.cis_compo_bdpm x
-             JOIN noms n ON n.code_substance = x.code_substance
-             WHERE x.code_cis = b.code_cis AND x.nature_composant = 'SA') AS molecule,
+            -- La signature est déjà le nom : « PARACETAMOL + TRAMADOL » se
+            -- lit tel quel, et deux lignes du même groupe ne peuvent pas
+            -- s'intituler différemment selon leur représentant.
+            CASE WHEN r.signature LIKE 'cis:%' THEN NULL ELSE r.signature END AS molecule,
             -- L'extrait ne se calcule que sur ce qu'on rend : c'est de loin la
             -- fonction la plus coûteuse de la requête.
             ts_headline('${LANGUE}', b.texte, q.tq,
