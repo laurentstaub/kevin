@@ -383,13 +383,19 @@
 
 .filtres {
   display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
   gap: var(--sp-3);
   margin: var(--sp-6) 0 0;
   padding-bottom: var(--sp-1);
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
+/* Un onglet ne se coupe pas en son milieu : « Mises en garde » tenait sur
+   trois lignes, une par mot, pendant que la rangée gardait de la place à
+   droite. C'est la rangée qui doit passer à la ligne, pas le libellé. */
 .filtre {
+  white-space: nowrap;
   font-size: var(--fs-sm);
   color: var(--muted);
   text-decoration: none;
@@ -1020,19 +1026,48 @@
   padding: 0;
 }
 
+/* En grille, une colonne par rubrique trouvée sur la page. Posés au fil, les
+   numéros ne se comparaient pas d'une ligne à l'autre ; alignés, la colonne
+   répond d'un coup d'œil et un trou se voit autant qu'une case pleine. */
+.puces-grille {
+  display: grid;
+  grid-template-columns: repeat(var(--colonnes), 2.4rem);
+  justify-content: end;
+}
+
 .puce {
-  display: inline-block;
+  display: block;
+  text-align: center;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   text-decoration: none;
   padding: 0 0.35em;
   border: var(--rule-width) solid var(--rule);
+  position: relative;
 }
 
 .puce:hover {
   border-color: var(--accent);
   background: var(--accent-pale);
+}
+
+/* L'infobulle est la nôtre, et non `title` : le navigateur attend une seconde
+   avant de l'afficher, ce qui sur une ligne de huit numéros fait huit
+   secondes pour lire ce que la ligne annonce. Celle-ci paraît au survol. */
+.puce[data-titre]:hover::after,
+.puce[data-titre]:focus-visible::after {
+  content: attr(data-titre);
+  position: absolute;
+  bottom: calc(100% + 0.3rem);
+  right: -1px;
+  z-index: 5;
+  white-space: nowrap;
+  background: var(--ink);
+  color: #fff;
+  padding: 0.15em 0.5em;
+  font-variant-numeric: normal;
+  pointer-events: none;
 }
 
 /* L'extrait est du document, pas de l'interface : il reprend la police de
@@ -1092,6 +1127,19 @@
 .filtre-ailleurs::after {
   content: " →";
   color: var(--muted);
+}
+
+/* Le numéro devant le nom : les puces des résultats parlent en « 4.5 », les
+   onglets en « Interactions ». Deux vocabulaires pour la même chose, et rien
+   ne les reliait. */
+.filtre-num {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.35em;
+}
+
+.filtre.actif .filtre-num {
+  color: var(--accent);
 }
 
 .filtre-compte {

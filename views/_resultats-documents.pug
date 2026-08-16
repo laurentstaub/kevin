@@ -14,6 +14,33 @@
 //- @param {string}  q       la requête, pour le lien « tout voir »
 //- @param {boolean} resume  vue courte, au sein de la page de résultats
 mixin resultatsDocuments(d, q, resume)
+  //- Les rubriques en colonnes.
+  //-
+  //- Les numéros posés au fil de chaque ligne ne se comparaient pas d'une
+  //- ligne à l'autre : pour savoir quelles molécules en parlent en 4.5, il
+  //- fallait lire chaque ligne entière. Rangés en grille, la colonne répond
+  //- d'un coup d'œil, et un trou se voit autant qu'une case pleine.
+  //-
+  //- La grille est celle de la page, pas de la ligne : l'ensemble des
+  //- rubriques trouvées, dans l'ordre du document. Au-delà de douze colonnes
+  //- elle deviendrait plus étroite que lisible — on repasse alors au fil.
+  -
+    var rang = function (n) {
+      var m = String(n).match(/^(\d+)(?:\.(\d+))?/);
+      return [m ? +m[1] : 99, m && m[2] !== undefined ? +m[2] : -1];
+    };
+    var numeros = [];
+    (d.resultats || []).forEach(function (r) {
+      (r.rubriques || []).forEach(function (rub) {
+        if (numeros.indexOf(rub.numero) === -1) numeros.push(rub.numero);
+      });
+    });
+    numeros.sort(function (a, b) {
+      var x = rang(a), y = rang(b);
+      return x[0] - y[0] || x[1] - y[1] || (a < b ? -1 : 1);
+    });
+    var grille = numeros.length > 1 && numeros.length <= 12;
+
   ul.trouvailles
     each r in d.resultats
       li.trouvaille
@@ -31,13 +58,19 @@ mixin resultatsDocuments(d, q, resume)
             )= r.molecule
 
           if r.rubriques && r.rubriques.length > 0
-            ul.puces
-              each rub in r.rubriques
+            - var par = {}; r.rubriques.forEach(function (rub) { par[rub.numero] = rub });
+            ul.puces(class=grille ? 'puces-grille' : null style=grille ? `--colonnes: ${numeros.length}` : null)
+              each numero in (grille ? numeros : r.rubriques.map(function (x) { return x.numero }))
                 li
-                  a.puce(
-                    href=`/product/${rub.cis}#${rub.ancre}`
-                    title=`${rub.numero} — ${rub.libelle}`
-                  )= rub.numero
+                  if par[numero]
+                    //- L'infobulle est la nôtre, pas celle du navigateur :
+                    //- `title` attend une seconde avant de paraître, et sur
+                    //- une ligne de chiffres c'est une seconde par chiffre.
+                    a.puce(
+                      href=`/product/${par[numero].cis}#${par[numero].ancre}`
+                      data-titre=`${numero} ${par[numero].libelle}`
+                      aria-label=`${numero} ${par[numero].libelle}`
+                    )= numero
 
         //- Combien de spécialités le groupe recouvre. Une seule ne se dit pas :
         //- ce serait une ligne pour ne rien apprendre.

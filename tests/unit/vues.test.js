@@ -271,4 +271,37 @@ describe('rendu des gabarits', () => {
     const html = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
     assert.doesNotMatch(html, /titre-lien/);
   });
+
+  // Les numéros posés au fil de chaque ligne ne se comparaient pas d'une ligne
+  // à l'autre : pour savoir qui en parle en 4.8, il fallait lire chaque ligne
+  // entière. En grille, la colonne répond, et un trou se voit.
+  it('range les rubriques en colonnes communes à la page', () => {
+    const html = rendre('documents', {
+      query: 'QT',
+      rubrique: null,
+      page: 1,
+      documents: {
+        ...RECHERCHE_PLEINE,
+        resultats: [
+          { ...TROUVAILLE, rubriques: [{ numero: '4.8', libelle: 'Effets', cis: '1', ancre: 'rcp-2' }] },
+          { ...SANS_MOLECULE, rubriques: [{ numero: '4.4', libelle: 'Mises en garde', cis: '2', ancre: 'rcp-1' }] },
+        ],
+      },
+    });
+    // Deux rubriques distinctes sur la page, donc deux colonnes pour tout le monde.
+    assert.match(html, /--colonnes: 2/);
+    // La première ligne n'a pas de 4.4 : sa case reste vide, elle ne disparaît pas.
+    assert.match(html, /<li><\/li>/);
+  });
+
+  // `title` attend une seconde avant de paraître : sur une ligne de huit
+  // numéros, c'est huit secondes pour lire ce que la ligne annonce.
+  it('porte son infobulle plutôt que celle du navigateur', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /data-titre="4\.4 Mises en garde"/);
+    assert.match(html, /aria-label="4\.4 Mises en garde"/);
+    assert.doesNotMatch(html, /<a class="puce"[^>]*title=/);
+  });
 });
