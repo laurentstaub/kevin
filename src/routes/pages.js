@@ -13,7 +13,7 @@ import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
-  chercherDansDocuments, manqueIndex, normaliserRubrique, PAR_PAGE,
+  chercherDansDocuments, manqueIndex, normaliserRubrique, APERCU, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -126,7 +126,7 @@ export function pageRoutes(pool) {
       let panne = null;
       const [results, documents] = await Promise.all([
         searchMedications(pool, query, filter),
-        chercherDansDocuments(pool, query.raw, { limite: 5 }).catch((err) => {
+        chercherDansDocuments(pool, query.raw, { limite: APERCU }).catch((err) => {
           // Une fonctionnalité absente en silence est le pire des états : on
           // cherche pourquoi elle ne trouve rien, alors qu'elle n'est pas
           // installée. Le défaut ne casse pas la recherche par nom, mais il se

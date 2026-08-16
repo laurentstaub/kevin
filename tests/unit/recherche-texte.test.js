@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  chercherDansDocuments, manqueIndex, normaliserRubrique, PLAFOND, PAR_PAGE,
+  chercherDansDocuments, manqueIndex, normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -29,6 +29,14 @@ describe('bornes', () => {
     assert.equal(typeof PLAFOND, 'number');
     assert.ok(PLAFOND >= 1000, 'assez haut pour toute recherche utile');
     assert.ok(PAR_PAGE > 0 && PAR_PAGE <= 100);
+  });
+
+  // Vingt tenait quand une trouvaille occupait cinq lignes d'écran. Groupée
+  // par molécule et l'extrait replié, elle en occupe une : la page montrait un
+  // vingtième de ce qu'elle pouvait.
+  it('rendent assez de lignes pour que la page vaille la peine', () => {
+    assert.ok(PAR_PAGE >= 50, 'la vue complète remplit l’écran');
+    assert.ok(APERCU >= 10 && APERCU < PAR_PAGE, 'l’aperçu en montre moins, pas cinq');
   });
 });
 

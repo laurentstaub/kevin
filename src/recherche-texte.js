@@ -52,8 +52,21 @@ const LANGUE = 'french_nu';
  */
 export const PLAFOND = 3000;
 
-/** Ce qu'on rend d'un coup ; le reste s'obtient en affinant. */
-export const PAR_PAGE = 20;
+/**
+ * Ce qu'on rend d'un coup ; le reste s'obtient en affinant.
+ *
+ * Vingt tenait quand une trouvaille occupait cinq lignes d'écran — produit,
+ * rubrique, extrait sur trois lignes. Groupée par molécule et l'extrait replié,
+ * elle en occupe une : la page montrait un vingtième de ce qu'elle pouvait.
+ */
+export const PAR_PAGE = 50;
+
+/**
+ * Ce qu'en montre la page de recherche par nom, où le bloc n'est qu'un second
+ * temps. Cinq lignes suffisaient à peine à faire deviner qu'il y en avait
+ * d'autres ; douze remplissent l'écran sans prendre la place des spécialités.
+ */
+export const APERCU = 12;
 
 /**
  * Normalise le filtre de rubrique.
@@ -170,8 +183,11 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                 -- au lieu de faire échouer la requête entière. C'est pour
                 -- l'avoir écarté d'abord qu'on s'est retrouvé avec un extrait
                 -- venu d'une rubrique absente des puces.
+                -- NULLS FIRST sur le second rang : « 4 » est le chapitre, il
+                -- ouvre ses sous-rubriques au lieu de les suivre. Il se rangeait
+                -- entre 4.9 et 5.3, ce que l'écran a montré tout de suite.
                 ORDER BY substring(numero from '^[0-9]+')::int NULLS LAST,
-                         substring(numero from '[.]([0-9]+)')::int NULLS LAST,
+                         substring(numero from '[.]([0-9]+)')::int NULLS FIRST,
                          numero) AS rubriques
        FROM par_rubrique GROUP BY signature
      ),
@@ -183,14 +199,61 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      resume AS (
        SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score
        FROM enrichi GROUP BY signature
+     ),
+     -- Les substances en jeu, pour ne nommer que celles-là.
+     substances AS (
+       SELECT DISTINCT c.code_substance
+       FROM dbpm.cis_compo_bdpm c
+       WHERE c.code_cis IN (SELECT code_cis FROM molecule)
+         AND c.nature_composant = 'SA'
+     ),
+     -- Le nom lisible d'une substance : le plus court de ceux que la base lui
+     -- donne. « QUIZARTINIB » plutôt que « DICHLORHYDRATE DE QUIZARTINIB » —
+     -- un pharmacien nomme le principe actif, pas son sel.
+     --
+     -- Préférer systématiquement la fraction thérapeutique se retourne : sur
+     -- les 723 codes qui en portent une, 25 l'ont plus longue que le sel —
+     -- « CYCLOPHOSPHAMIDE » deviendrait « CYCLOPHOSPHAMIDE ANHYDRE », et
+     -- « CHLORHYDRATE DE LIDOCAÏNE » gagnerait le même suffixe. Et 99 codes
+     -- ont plusieurs fractions concurrentes, « METFORMINE » contre
+     -- « METFORMINE BASE ». Le plus court tranche les deux d'un coup.
+     --
+     -- Les candidats se ramassent sur toute la table et non sur la spécialité
+     -- affichée : PROGRAF et PROTOPIC ne déclarent pas la fraction que
+     -- déclarent leurs vingt confrères du tacrolimus, si bien que le groupe
+     -- changerait de nom selon le représentant que le classement désigne.
+     --
+     -- C'est aussi pourquoi la signature reste le sel : sur 13 599 spécialités,
+     -- pivoter sur la fraction rend 3 218 groupes au lieu de 3 352, mais scinde
+     -- le tacrolimus en deux. Les 20 % de lignes qui portent une fraction ne
+     -- sont pas réparties par molécule, elles le sont par déclarant.
+     noms AS (
+       SELECT DISTINCT ON (code_substance) code_substance, nom
+       FROM (
+         SELECT sa.code_substance, sa.denomination_substance AS nom
+         FROM dbpm.cis_compo_bdpm sa
+         WHERE sa.nature_composant = 'SA'
+           AND sa.code_substance IN (SELECT code_substance FROM substances)
+         UNION
+         SELECT sa.code_substance, ft.denomination_substance
+         FROM dbpm.cis_compo_bdpm sa
+         JOIN dbpm.cis_compo_bdpm ft
+           ON ft.code_cis = sa.code_cis
+          AND ft.numero_liaison_saft = sa.numero_liaison_saft
+          AND ft.nature_composant = 'FT'
+         WHERE sa.nature_composant = 'SA'
+           AND sa.code_substance IN (SELECT code_substance FROM substances)
+       ) candidats
+       WHERE coalesce(nom, '') <> ''
+       ORDER BY code_substance, length(nom), nom
      )
      SELECT r.signature, r.specialites, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
             b.code_cis, b.numero, b.libelle,
             b.document_type || '-' || b.position AS ancre,
             m.denomination_medicament AS denomination,
-            (SELECT string_agg(DISTINCT x.denomination_substance, ', '
-                               ORDER BY x.denomination_substance)
+            (SELECT string_agg(DISTINCT n.nom, ', ' ORDER BY n.nom)
              FROM dbpm.cis_compo_bdpm x
+             JOIN noms n ON n.code_substance = x.code_substance
              WHERE x.code_cis = b.code_cis AND x.nature_composant = 'SA') AS molecule,
             -- L'extrait ne se calcule que sur ce qu'on rend : c'est de loin la
             -- fonction la plus coûteuse de la requête.
