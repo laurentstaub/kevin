@@ -34,11 +34,11 @@ CREATE INDEX IF NOT EXISTS idx_sections_numero
 CREATE INDEX IF NOT EXISTS idx_sections_cis
   ON docs.rcp_sections (code_cis);
 
--- Recherche plein texte par rubrique : « quels produits ont X en 4.3 ».
--- C'est ce que le site officiel ne sait pas faire.
-CREATE INDEX IF NOT EXISTS idx_sections_texte_fts
-  ON docs.rcp_sections
-  USING gin (to_tsvector('french', texte));
+-- La recherche plein texte a son propre fichier, sql/recherche.sql : elle a
+-- besoin d'unaccent et d'une configuration maison, que ce fichier-ci ne doit
+-- pas exiger. L'index vivait ici, sur la configuration `french` : db:sections
+-- le recréait donc juste après que db:recherche l'eut supprimé, et deux index
+-- GIN sur la même matière ralentissaient chaque écriture pour rien.
 
 -- État du découpage, une ligne par document — y compris les échecs, qui ne
 -- produisent aucune rubrique et seraient donc invisibles autrement.

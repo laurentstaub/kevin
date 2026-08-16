@@ -91,7 +91,17 @@ export function normaliserRubrique(valeur) {
  * indépendants, ce qui change tout sur une expression de cette longueur.
  */
 const TSQUERY = `websearch_to_tsquery('${LANGUE}', $1)`;
-const VECTEUR = `to_tsvector('${LANGUE}', s.texte)`;
+
+/**
+ * Le vecteur est une colonne, pas une expression.
+ *
+ * `sql/recherche.sql` le stocke sur la table. L'index d'expression qu'on avait
+ * d'abord indexait le résultat sans le conserver : `to_tsvector` se recalculait
+ * sur chacune des 3 000 rubriques candidates, une fois pour la revérification
+ * et une fois pour le classement. Mesuré sur 120 000 rubriques : 407 ms contre
+ * 21 ms, pour un balayage d'index qui prend 0,6 ms dans les deux cas.
+ */
+const VECTEUR = 's.vecteur';
 
 /**
  * L'index de recherche n'est pas en place sur cette base.

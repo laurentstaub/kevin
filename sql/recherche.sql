@@ -47,21 +47,38 @@ BEGIN
   END IF;
 END $$;
 
--- ----------------------------------------------------------------- l'index
+-- ------------------------------------------------- le vecteur, en colonne
 --
--- Index d'expression et non colonne calculée : `texte` occupe déjà autant que
--- `html` dans cette table, une troisième copie du même contenu se paierait sur
--- un plan Heroku. L'index porte le tsvector, la table ne le porte pas.
+-- Ce fichier portait d'abord un index d'expression, au motif que `texte` pèse
+-- déjà autant que `html` et qu'une troisième copie du même contenu se paierait
+-- sur un plan Heroku. Le raisonnement pesait le disque et n'avait jamais mesuré
+-- le temps. Mesure faite, sur 120 000 rubriques d'un kilo-octet :
 --
--- L'expression doit être écrite ici *exactement* comme dans la requête, sans
--- quoi le planificateur ne reconnaît pas l'index et parcourt la table entière.
-CREATE INDEX IF NOT EXISTS idx_sections_fts_nu
-  ON docs.rcp_sections
-  USING gin (to_tsvector('french_nu', texte));
+--   index d'expression   407 ms      colonne stockée   21 ms
+--
+-- Vingt fois. Le balayage d'index ne prend que 0,6 ms dans les deux cas ; tout
+-- le reste est `to_tsvector` recalculé sur chacune des 3 000 rubriques
+-- candidates, une fois pour la revérification et une fois pour `ts_rank_cd`.
+-- Un index d'expression indexe le résultat, il ne le conserve pas.
+--
+-- Le prix est de 45 Mo pour ces 120 000 rubriques, soit environ 40 % du texte
+-- compressé. C'est le bon échange : la lenteur se paie à chaque recherche, le
+-- disque une fois.
+--
+-- ATTENTION : une colonne générée ne se recalcule pas quand la configuration
+-- `french_nu` change. Si la table des correspondances est modifiée plus haut,
+-- il faut supprimer la colonne et réexécuter ce fichier.
+ALTER TABLE docs.rcp_sections
+  ADD COLUMN IF NOT EXISTS vecteur tsvector
+  GENERATED ALWAYS AS (to_tsvector('french_nu', texte)) STORED;
 
--- L'ancien index, sur la configuration `french` sans désaccentuation, ne sert
--- plus personne : deux index GIN sur la même colonne coûtent deux fois le
--- stockage et ralentissent chaque écriture de build-sections.
+CREATE INDEX IF NOT EXISTS idx_sections_vecteur
+  ON docs.rcp_sections USING gin (vecteur);
+
+-- Les deux index précédents ne servent plus personne, et trois index GIN sur
+-- la même matière coûteraient trois fois le stockage en ralentissant chaque
+-- écriture de build-sections.
+DROP INDEX IF EXISTS docs.idx_sections_fts_nu;
 DROP INDEX IF EXISTS docs.idx_sections_texte_fts;
 
 -- Le filtre par rubrique se pose avec la recherche : « insuffisance rénale
