@@ -37,5 +37,21 @@ block content
     else
       +resultatsDocuments(documents, query, false)
 
+      //- Où l'on en est, et comment aller plus loin.
+      //-
+      //- Sans ces deux liens la page annonçait des milliers de rubriques et
+      //- n'en montrait que vingt : le lecteur en concluait, à raison, qu'il
+      //- manquait quelque chose. On ne numérote pas les pages — cent cinquante
+      //- numéros ne se choisissent pas — on avance et on recule.
+      - var base = `/documents?q=${encodeURIComponent(query)}${rubrique ? `&rubrique=${rubrique}` : ''}`
+      - var premier = documents.decalage + 1
+      - var dernier = documents.decalage + documents.resultats.length
+      nav.pages(aria-label="Pagination des résultats")
+        if page > 1
+          a.page-prec(href=`${base}${page > 2 ? `&page=${page - 1}` : ''}`) ← Précédents
+        span.page-rang Résultats #{premier.toLocaleString('fr-FR')} à #{dernier.toLocaleString('fr-FR')}
+        if documents.suite
+          a.page-suiv(href=`${base}&page=${page + 1}`) Suivants →
+
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

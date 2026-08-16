@@ -104,6 +104,25 @@
   padding: var(--sp-4) var(--sp-3) var(--sp-8);
 }
 
+/* La colonne de lecture, deuxième nom.
+   `.recherche` sert la page de garde, `.corps` sert la fiche produit et la
+   recherche plein texte. Cette dernière vivait dans product.css, que la page
+   des documents ne charge pas : elle n'avait donc aucune mise en page et son
+   texte se collait au bord de la fenêtre. Une même idée tenue à deux endroits
+   finit toujours par n'être vraie qu'à un seul. */
+.corps {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-8);
+}
+
+@media (max-width: 52rem) {
+  .corps {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+}
+
 .recherche > .classes:first-child,
 .recherche > #results:first-child {
   margin-top: 0;
@@ -984,11 +1003,57 @@
   margin: var(--sp-1) 0 0;
 }
 
+/* L'onglet qui quitte la page. Les trois premiers filtrent la même liste ;
+   celui-ci mène ailleurs, et sa flèche le dit avant le clic. */
+.filtre-ailleurs::after {
+  content: " →";
+  color: var(--muted);
+}
+
+.filtre-compte {
+  margin-left: var(--sp-1);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Avancer, reculer, savoir où l'on est. Trois éléments sur une ligne, le rang
+   au centre quelle que soit la présence des deux liens : `space-between` seul
+   collait le rang à gauche sur la première page. */
+.pages {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-3);
+  border-top: var(--rule-width) solid var(--rule);
+  font-size: var(--fs-sm);
+}
+
+.page-prec {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.page-rang {
+  grid-column: 2;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.page-suiv {
+  grid-column: 3;
+  justify-self: end;
+}
+
 .trouvailles-suite {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-sm);
 }
 
+/* La page des documents s'ouvre sur son titre, sans bandeau au-dessus : il lui
+   faut la respiration que la fiche produit reçoit de son en-tête. */
 .doc-entete {
   margin: 0 0 var(--sp-3);
+  padding-top: var(--sp-5);
 }

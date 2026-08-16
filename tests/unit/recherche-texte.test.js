@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { manqueIndex, normaliserRubrique, PLAFOND, PAR_PAGE } from '../../src/recherche-texte.js';
+import {
+  chercherDansDocuments, manqueIndex, normaliserRubrique, PLAFOND, PAR_PAGE,
+} from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
   it('accepte un numéro de rubrique, avec ou sans sous-niveau', () => {
@@ -43,5 +45,74 @@ describe('manqueIndex', () => {
     assert.equal(manqueIndex({ code: '57014', message: 'canceling statement due to statement timeout' }), false);
     assert.equal(manqueIndex({ code: '53300', message: 'too many connections' }), false);
     assert.equal(manqueIndex(null), false);
+  });
+});
+
+/**
+ * Un pool qui rend `n` lignes et retient les paramètres reçus.
+ * On ne teste pas Postgres — on teste ce qu'on lui demande et ce qu'on fait de
+ * sa réponse, qui est exactement là où la pagination peut mentir.
+ */
+const faussePool = (n) => {
+  const vues = [];
+  const ligne = (i) => ({
+    code_cis: String(60000000 + i),
+    document_type: 'rcp',
+    position: i,
+    numero: '4.4',
+    libelle: 'Mises en garde',
+    specialites: 1,
+    score: 1 - i / 1000,
+    denomination: `PRODUIT ${i}`,
+    extrait: 'intervalle <mark>QT</mark>',
+    occurrences: PLAFOND,
+  });
+  return {
+    appels: vues,
+    query: async (_texte, params) => {
+      vues.push(params);
+      return { rows: Array.from({ length: n }, (_, i) => ligne(i)) };
+    },
+  };
+};
+
+describe('pagination de la recherche plein texte', () => {
+  // La page suivante ne se déduit d'aucun décompte : `occurrences` compte les
+  // rubriques avant regroupement, donc majore. On demande une ligne de plus
+  // que ce qu'on affiche, et sa présence répond à la question.
+  it('demande une ligne de plus et ne la montre pas', async () => {
+    const pool = faussePool(21);
+    const d = await chercherDansDocuments(pool, 'intervalle QT', { limite: 20 });
+    assert.equal(pool.appels[0][2], 21, 'limite + 1 dans la requête');
+    assert.equal(d.resultats.length, 20, 'la ligne témoin ne s’affiche pas');
+    assert.equal(d.suite, true);
+  });
+
+  it('annonce la fin quand la dernière page est incomplète', async () => {
+    const d = await chercherDansDocuments(faussePool(7), 'intervalle QT', { limite: 20 });
+    assert.equal(d.suite, false);
+    assert.equal(d.resultats.length, 7);
+  });
+
+  it('traduit la page en décalage', async () => {
+    const pool = faussePool(5);
+    await chercherDansDocuments(pool, 'QT', { limite: 20, decalage: 40 });
+    assert.equal(pool.appels[0][3], 40);
+  });
+
+  // Au-delà du plafond il n'y a plus rien à sauter : une page vide au milieu
+  // d'un jeu de résultats se lit comme une panne, pas comme une fin.
+  it('borne le décalage au plafond de la recherche', async () => {
+    const pool = faussePool(0);
+    await chercherDansDocuments(pool, 'QT', { decalage: 999999 });
+    assert.equal(pool.appels[0][3], PLAFOND);
+  });
+
+  it('refuse un décalage négatif ou absurde', async () => {
+    const pool = faussePool(0);
+    for (const mauvais of [-5, NaN, undefined, 'douze']) {
+      await chercherDansDocuments(pool, 'QT', { decalage: mauvais });
+    }
+    for (const params of pool.appels) assert.equal(params[3], 0);
   });
 });

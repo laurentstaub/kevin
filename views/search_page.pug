@@ -79,6 +79,17 @@ block content
           a.filtre(class=(filter === 'all' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}`) Tous
           a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=specialty`) Dénomination
           a.filtre(class=(filter === 'active' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=active`) Principe actif
+          //- Le quatrième onglet, qui n'existait nulle part.
+          //-
+          //- La recherche plein texte ne se montrait qu'en bas de page, une
+          //- fois la recherche par nom déjà faite : rien n'annonçait qu'on
+          //- pouvait chercher « allongement QT ». Elle mène à une autre page,
+          //- et c'est assumé — elle porte ses propres filtres par rubrique.
+          //- Sa place est ici, là où le lecteur choisit déjà comment chercher.
+          a.filtre.filtre-ailleurs(href=`/documents?q=${encodeURIComponent(query)}`)
+            | Dans les documents
+            if documents && documents.total > 0
+              span.filtre-compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
 
         if results.total > 0
           //- Le terme désigne une molécule : une seule liste.

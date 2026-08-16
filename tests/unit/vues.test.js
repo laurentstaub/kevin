@@ -22,7 +22,7 @@ const rendre = (vue, locals) => pug.renderFile(
   { v: 'test', ...locals },
 );
 
-const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false };
+const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
 
 // La fiche produit prend une quinzaine de variables. Les fournir toutes est le
 // prix du test : c'est précisément la page où une locale oubliée casse tout.
@@ -50,6 +50,24 @@ const produit = (extra = {}) => ({
   sections: [],
   ...extra,
 });
+
+const TROUVAILLE = {
+  code_cis: '66297965',
+  denomination: 'VANFLYTA 17,7 mg, comprimé pelliculé',
+  numero: '4.4',
+  libelle: 'Mises en garde spéciales',
+  ancre: 'rcp-12',
+  extrait: 'allongement de l’<mark>intervalle QT</mark>',
+  specialites: 1,
+};
+
+const RECHERCHE_PLEINE = {
+  resultats: [TROUVAILLE],
+  total: 3000,
+  borne: true,
+  decalage: 20,
+  suite: true,
+};
 
 const REMBOURSEMENT = {
   texte: '<p>Ce médicament peut être pris en charge dans le cas suivant : dysfonction érectile.</p>',
@@ -80,6 +98,15 @@ const PAGES = [
   }],
   ['documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE }],
   ['documents', { query: 'QT', rubrique: '4.4', documents: RECHERCHE_VIDE, panne: 'indisponible' }],
+  ['documents', {
+    query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 2,
+  }],
+  ['search_page', {
+    query: 'intervalle QT',
+    filter: 'all',
+    results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
+    documents: RECHERCHE_PLEINE,
+  }],
   ['product', produit()],
   ['product', produit({ delivrance: DELIVRANCE_PLEINE, remboursement: REMBOURSEMENT })],
   ['error', { title: 'Erreur', message: 'Cette page n’existe pas.', status: 404 }],
@@ -118,5 +145,40 @@ describe('rendu des gabarits', () => {
     const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));
     const hors = html.replace(/<a[^>]*>[\s\S]*?<\/a>/g, '');
     assert.doesNotMatch(hors, /médicament d.exception/i);
+  });
+
+  // Le décompte annonçait des milliers de rubriques et la page en montrait
+  // vingt, sans dire où étaient les autres.
+  it('la page des documents sait avancer et reculer', () => {
+    const html = rendre('documents', {
+      query: 'intervalle QT', rubrique: '4.4', documents: RECHERCHE_PLEINE, page: 2,
+    });
+    assert.match(html, /Précédents/);
+    assert.match(html, /Suivants/);
+    assert.match(html, /page=3/);
+    assert.match(html, /rubrique=4\.4/);
+    assert.match(html, /Résultats 21 à 21/);
+  });
+
+  // Retour à la première page : elle s'écrit sans paramètre, sinon deux URL
+  // rendent la même page et le lien « actif » se dédouble.
+  it('revient à la première page sans paramètre de page', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: { ...RECHERCHE_PLEINE, decalage: 20 }, page: 2,
+    });
+    assert.doesNotMatch(html, /page=1/);
+  });
+
+  // La recherche plein texte ne s'annonçait nulle part : elle n'apparaissait
+  // qu'en bas de page, une fois la recherche par nom déjà faite.
+  it('la page de recherche annonce la recherche plein texte', () => {
+    const html = rendre('search_page', {
+      query: 'intervalle QT',
+      filter: 'all',
+      results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
+      documents: RECHERCHE_PLEINE,
+    });
+    assert.match(html, /Dans les documents/);
+    assert.match(html, /href="\/documents\?q=intervalle%20QT"/);
   });
 });

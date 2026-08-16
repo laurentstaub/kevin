@@ -84,16 +84,30 @@ export function manqueIndex(err) {
  *
  * @param {import('pg').Pool} pool
  * @param {string} requete - saisie brute
- * @param {{ rubrique?: string, limite?: number }} [options]
- * @returns {Promise<{ resultats: object[], total: number, borne: boolean }>}
+ * @param {{ rubrique?: string, limite?: number, decalage?: number }} [options]
+ * @returns {Promise<{ resultats: object[], total: number, borne: boolean,
+ *                     decalage: number, suite: boolean }>}
  */
 export async function chercherDansDocuments(pool, requete, options = {}) {
-  const vide = { resultats: [], total: 0, borne: false };
+  const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
   const q = String(requete ?? '').trim();
   if (!q) return vide;
 
   const rubrique = normaliserRubrique(options.rubrique);
-  const limite = Math.min(Math.max(1, options.limite ?? PAR_PAGE), 100);
+  // `Math.min` et `Math.max` propagent NaN sans broncher : borner ne suffit
+  // pas, il faut d'abord constater qu'on a un nombre. Sans ce garde-fou, une
+  // page « ?page=douze » envoyait NaN dans le OFFSET et Postgres refusait la
+  // requête entière — une saisie d'URL faisait tomber la recherche.
+  const entier = (valeur, defaut) => {
+    const n = Math.trunc(Number(valeur));
+    return Number.isFinite(n) ? n : defaut;
+  };
+
+  const limite = Math.min(Math.max(1, entier(options.limite ?? PAR_PAGE, PAR_PAGE)), 100);
+  // Au-delà du plafond il n'y a plus rien à sauter : la page suivante serait
+  // vide, et une page vide au milieu d'un jeu de résultats se lit comme une
+  // panne. Le décalage est borné là où la recherche s'arrête.
+  const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${TSQUERY} AS tq),
@@ -128,14 +142,22 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      FROM groupe g
      JOIN dbpm.cis_bdpm m ON m.code_cis = g.code_cis, q
      ORDER BY g.score DESC, g.specialites DESC, g.code_cis
-     LIMIT $3`,
-    [q, rubrique, limite],
+     LIMIT $3 OFFSET $4`,
+    // Une ligne de plus que demandé : c'est ainsi qu'on sait s'il existe une
+    // page suivante sans compter les formulations distinctes, ce que la requête
+    // ne fait nulle part — `occurrences` compte les rubriques avant
+    // regroupement, et servirait de plancher trompeur.
+    [q, rubrique, limite + 1, decalage],
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;
+  const suite = rows.length > limite;
+  const page = suite ? rows.slice(0, limite) : rows;
 
   return {
-    resultats: rows.map(({ occurrences: _, ...r }) => ({
+    decalage,
+    suite,
+    resultats: page.map(({ occurrences: _, ...r }) => ({
       ...r,
       // L'ancre est celle que le découpeur a posée : type et position.
       ancre: `${r.document_type}-${r.position}`,

@@ -141,12 +141,6 @@ a.forme-choix:hover {
 
 /* Colonne unique. La barre, le bandeau d'identité et le contenu partagent
    désormais la même largeur : un seul axe pour toute la page. */
-.corps {
-  max-width: var(--colonne);
-  margin: 0 auto;
-  padding: 0 var(--sp-4) var(--sp-8);
-}
-
 /* Chaque section est un bloc repliable, fermé au chargement. La fiche s'ouvre
    sur son plan : quatre titres et leur volume, plutôt que trois écrans de
    tableaux qu'il faut dépasser pour atteindre le RCP. */
@@ -1059,8 +1053,7 @@ td.forme {
 /* ---------- Écran étroit ---------- */
 
 @media (max-width: 52rem) {
-  .identite,
-  .corps {
+  .identite {
     padding-left: var(--sp-2);
     padding-right: var(--sp-2);
   }

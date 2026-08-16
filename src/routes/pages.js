@@ -158,26 +158,34 @@ export function pageRoutes(pool) {
     wrap(async (req, res) => {
       const query = parseQuery(req.query.q);
       const rubrique = normaliserRubrique(req.query.rubrique);
+      // Vingt extraits par page tiennent l'écran ; il y en a des milliers. Sans
+      // suite, la page annonçait « plus de 3 000 rubriques » et n'en montrait
+      // que vingt, sans dire où étaient les autres.
+      const page = Math.max(1, Math.trunc(Number(req.query.page)) || 1);
 
       if (!query.raw) return res.redirect('/');
 
       let panne = null;
       const documents = query.tooShort
-        ? { resultats: [], total: 0, borne: false }
-        : await chercherDansDocuments(pool, query.raw, { rubrique, limite: PAR_PAGE })
+        ? { resultats: [], total: 0, borne: false, decalage: 0, suite: false }
+        : await chercherDansDocuments(pool, query.raw, {
+          rubrique, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
+        })
           .catch((err) => {
             console.error('[recherche] plein texte indisponible :', err.message);
             panne = manqueIndex(err)
               ? 'La recherche dans les documents n’est pas encore installée sur cette base '
                 + '— exécuter « npm run db:recherche ».'
               : 'La recherche dans les documents est momentanément indisponible.';
-            return { resultats: [], total: 0, borne: false };
+            return { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
           });
 
       res.render('documents', {
         query: query.raw,
         rubrique,
         documents,
+        page,
+        parPage: PAR_PAGE,
         panne,
         notice: query.tooShort
           ? `Saisissez au moins ${config.search.minLength} caractères.`
