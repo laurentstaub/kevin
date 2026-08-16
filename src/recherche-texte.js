@@ -104,19 +104,24 @@ const TSQUERY = `websearch_to_tsquery('${LANGUE}', $1)`;
 const VECTEUR = 's.vecteur';
 
 /**
- * L'index de recherche n'est pas en place sur cette base.
+ * La recherche n'est pas installée sur cette base.
  *
- * `sql/recherche.sql` n'a pas été exécuté : la configuration `french_nu`
- * n'existe pas, et Postgres le dit par un `undefined_object`. La distinction
- * compte, parce que les deux situations demandent des choses opposées — dans
- * un cas il faut lancer une commande, dans l'autre attendre ou lire les
- * journaux. Une panne annoncée « momentanée » alors qu'elle est définitive
- * fait attendre pour rien.
+ * `sql/recherche.sql` n'a pas été exécuté. La distinction compte, parce que
+ * les deux situations demandent des choses opposées — dans un cas il faut
+ * lancer une commande, dans l'autre attendre ou lire les journaux. Une panne
+ * annoncée « momentanée » alors qu'elle est définitive fait attendre pour rien.
+ *
+ * Trois formes selon ce qui manque, et la troisième a été apprise à la
+ * dure : en passant l'index d'expression en colonne stockée, la requête s'est
+ * mise à demander `s.vecteur` sur des bases qui ne l'avaient pas encore. Le
+ * code n'était plus reconnu, et la page annonçait une indisponibilité
+ * passagère pour une migration qui attendait d'être lancée.
  */
-export function manqueIndex(err) {
-  // 42704 undefined_object, 42883 undefined_function
-  return err?.code === '42704' || err?.code === '42883'
-    || /french_nu|websearch_to_tsquery/i.test(err?.message ?? '');
+export function rechercheAbsente(err) {
+  // 42704 undefined_object (la configuration), 42883 undefined_function,
+  // 42703 undefined_column (la colonne vecteur)
+  return ['42704', '42883', '42703'].includes(err?.code)
+    || /french_nu|websearch_to_tsquery|vecteur/i.test(err?.message ?? '');
 }
 
 /**

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  chercherDansDocuments, manqueIndex, normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
+  chercherDansDocuments, rechercheAbsente, normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -40,19 +40,29 @@ describe('bornes', () => {
   });
 });
 
-describe('manqueIndex', () => {
+describe('rechercheAbsente', () => {
   // Les deux situations demandent des choses opposées : lancer une commande,
   // ou attendre. Une panne annoncée « momentanée » alors qu'elle est
   // définitive fait attendre pour rien.
   it('reconnaît une configuration de recherche absente', () => {
-    assert.equal(manqueIndex({ code: '42704', message: 'text search configuration "french_nu" does not exist' }), true);
-    assert.equal(manqueIndex({ code: '42883', message: 'function websearch_to_tsquery(unknown, unknown) does not exist' }), true);
+    assert.equal(rechercheAbsente({ code: '42704', message: 'text search configuration "french_nu" does not exist' }), true);
+    assert.equal(rechercheAbsente({ code: '42883', message: 'function websearch_to_tsquery(unknown, unknown) does not exist' }), true);
+  });
+
+  // Appris à la dure : en passant l'index d'expression en colonne stockée, la
+  // requête s'est mise à demander `s.vecteur` sur une base qui ne l'avait pas
+  // encore. Le code n'était pas reconnu, et l'écran annonçait une
+  // indisponibilité passagère pour une migration qui attendait d'être lancée.
+  it('reconnaît la colonne vecteur absente', () => {
+    assert.equal(rechercheAbsente({
+      code: '42703', message: 'column s.vecteur does not exist',
+    }), true);
   });
 
   it('ne prend pas une panne passagère pour une absence', () => {
-    assert.equal(manqueIndex({ code: '57014', message: 'canceling statement due to statement timeout' }), false);
-    assert.equal(manqueIndex({ code: '53300', message: 'too many connections' }), false);
-    assert.equal(manqueIndex(null), false);
+    assert.equal(rechercheAbsente({ code: '57014', message: 'canceling statement due to statement timeout' }), false);
+    assert.equal(rechercheAbsente({ code: '53300', message: 'too many connections' }), false);
+    assert.equal(rechercheAbsente(null), false);
   });
 });
 

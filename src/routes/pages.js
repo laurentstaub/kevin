@@ -13,7 +13,7 @@ import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
-  chercherDansDocuments, manqueIndex, normaliserRubrique, APERCU, PAR_PAGE,
+  chercherDansDocuments, rechercheAbsente, normaliserRubrique, APERCU, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -132,8 +132,12 @@ export function pageRoutes(pool) {
           // installée. Le défaut ne casse pas la recherche par nom, mais il se
           // dit — et il se distingue d'une absence de résultats.
           console.error('[recherche] plein texte indisponible :', err.message);
-          panne = manqueIndex(err)
-            ? 'La recherche dans les documents n’est pas encore installée sur cette base.'
+          // La commande se dit ici aussi : c'est le premier des deux écrans
+          // qu'on voit, et renvoyer à l'autre pour lire la consigne ferait
+          // chercher deux fois la même réponse.
+          panne = rechercheAbsente(err)
+            ? 'La recherche dans les documents n’est pas encore installée sur cette base '
+              + '— exécuter « npm run db:recherche ».'
             : 'La recherche dans les documents est momentanément indisponible.';
           return null;
         }),
@@ -173,7 +177,7 @@ export function pageRoutes(pool) {
         })
           .catch((err) => {
             console.error('[recherche] plein texte indisponible :', err.message);
-            panne = manqueIndex(err)
+            panne = rechercheAbsente(err)
               ? 'La recherche dans les documents n’est pas encore installée sur cette base '
                 + '— exécuter « npm run db:recherche ».'
               : 'La recherche dans les documents est momentanément indisponible.';
