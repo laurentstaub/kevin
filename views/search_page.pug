@@ -47,7 +47,21 @@ block content
   //- rien à la lecture, et la seule où l'identité a sa place.
   header.accueil
     .accueil-inner
-      h1.titre-site Demander à Kevin
+      //- Le titre ramène à l'accueil dès qu'on l'a quitté.
+      //-
+      //- Les autres pages ont la barre de situation et son « ← Accueil ».
+      //- Celle-ci ne l'a pas : le bandeau lui tient lieu d'en-tête, et son
+      //- titre n'était pas cliquable. Une fois la recherche lancée, plus
+      //- aucun retour — sauf le bouton du navigateur, qui n'est pas une
+      //- réponse quand on a enchaîné trois recherches.
+      //-
+      //- Sur la page nue, il reste du texte : un lien vers la page qu'on
+      //- regarde n'apprend rien et se clique par erreur.
+      h1.titre-site
+        if results
+          a.titre-lien(href="/") Demander à Kevin
+        else
+          | Demander à Kevin
       p.accueil-champ Base de données publique des médicaments · spécialités, principes actifs, groupes génériques, texte des RCP et des notices
       +champRecherche(query, false)
 

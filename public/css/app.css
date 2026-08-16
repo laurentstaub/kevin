@@ -82,6 +82,20 @@
   color: #fff;
 }
 
+/* Le titre ramène à l'accueil. Pas de soulignement au repos : c'est le titre
+   du site, pas un lien dans une phrase, et le curseur suffit à l'annoncer. */
+.titre-lien {
+  color: inherit;
+  text-decoration: none;
+}
+
+.titre-lien:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--accent-soft);
+}
+
 .accueil-champ {
   font-size: var(--fs-sm);
   color: var(--accent-soft);

@@ -253,4 +253,22 @@ describe('rendu des gabarits', () => {
     });
     assert.doesNotMatch(html, /accueil-exemple/);
   });
+
+  // La page de résultats n'a pas la barre de situation : son bandeau lui tient
+  // lieu d'en-tête, et le titre n'était pas cliquable. Une fois la recherche
+  // lancée, il ne restait que le bouton du navigateur.
+  it('la page de résultats ramène à l’accueil', () => {
+    const html = rendre('search_page', {
+      query: 'valsartan',
+      filter: 'all',
+      results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
+      documents: RECHERCHE_VIDE,
+    });
+    assert.match(html, /<a class="titre-lien" href="\/">Demander à Kevin<\/a>/);
+  });
+
+  it('mais la page de garde ne se lie pas à elle-même', () => {
+    const html = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
+    assert.doesNotMatch(html, /titre-lien/);
+  });
 });
