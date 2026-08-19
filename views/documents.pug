@@ -6,8 +6,8 @@ include _resultats-documents.pug
 //- Recherche plein texte, vue complète.
 //-
 //- Une page, une question : où cette expression figure-t-elle dans les
-//- documents. Les filtres par rubrique vivent ici et nulle part ailleurs —
-//- les mêler à ceux de la recherche par nom ferait une page qui en pose deux.
+//- documents. Le filtre par rubrique vit ici et nulle part ailleurs — le mêler
+//- à ceux de la recherche par nom ferait une page qui en pose deux.
 
 block content
   +barreSituation(`« ${query} » dans les documents`)
@@ -19,16 +19,13 @@ block content
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
 
-    //- Les filtres pilotent la liste : ils sont au-dessus d'elle.
-    nav.filtres(aria-label="Filtrer par rubrique")
-      a.filtre(class=(rubrique ? '' : 'actif')
-        href=`/documents?q=${encodeURIComponent(query)}`) Tout le document
-      each r in colonnes
-        a.filtre(class=(rubrique === r[0] ? 'actif' : '')
-          href=`/documents?q=${encodeURIComponent(query)}&rubrique=${r[0]}`)
-          span.filtre-num= r[0]
-          = r[1]
-
+    //- La rangée d'onglets qui vivait ici a disparu.
+    //-
+    //- Elle listait les huit mêmes rubriques que l'en-tête du tableau, deux
+    //- lignes au-dessus de lui : la même liste écrite deux fois sur le même
+    //- écran, dont l'une ne portait aucune donnée. Le filtre n'est pas perdu
+    //- pour autant — il est passé dans l'en-tête, qui est sa place : on
+    //- restreint une colonne en cliquant sur la colonne.
     if panne
       p.vide= panne
     else if notice
@@ -36,7 +33,7 @@ block content
     else if documents.resultats.length === 0
       p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
     else
-      +resultatsDocuments(documents, query, false, colonnes)
+      +resultatsDocuments(documents, query, false, colonnes, rubrique)
 
       //- Où l'on en est, et comment aller plus loin.
       //-

@@ -312,4 +312,29 @@ describe('rendu des gabarits', () => {
     assert.match(html, /aria-label="4\.4 Mises en garde"/);
     assert.doesNotMatch(html, /<a class="puce"[^>]*title=/);
   });
+
+  // La rangée d'onglets listait les huit mêmes rubriques que l'en-tête du
+  // tableau, deux lignes au-dessus de lui : la même liste écrite deux fois sur
+  // le même écran, dont l'une ne portait aucune donnée.
+  it('filtre depuis l’en-tête, sans rangée d’onglets', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.doesNotMatch(html, /class="filtres"/);
+    assert.match(html, /class="th-lien" href="\/documents\?q=QT&amp;rubrique=4\.5"/);
+  });
+
+  // Filtrée, la page n'a plus de colonnes à montrer — toutes les trouvailles
+  // sont dans la rubrique choisie — et l'extrait devient la réponse.
+  it('replie les colonnes quand une rubrique est choisie', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.doesNotMatch(html, /col-rubrique/);
+    assert.doesNotMatch(html, /cellule-autres/);
+    assert.match(html, /Rubrique 4\.5/);
+    // Et l'on peut en sortir sans refaire la recherche.
+    assert.match(html, /class="th-defaire" href="\/documents\?q=QT"/);
+    assert.match(html, /<details class="preuve" open="open">/);
+  });
 });

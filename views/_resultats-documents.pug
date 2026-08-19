@@ -15,27 +15,49 @@
 //- jamais. Ce qui tombe hors des huit va dans « Autres », qui les nomme sans
 //- leur réserver de place.
 //-
+//- L'en-tête est le filtre.
+//-
+//- Une rangée d'onglets listait ces huit mêmes rubriques deux lignes plus
+//- haut : la même liste écrite deux fois sur le même écran, dont l'une ne
+//- portait aucune donnée. On restreint une colonne en cliquant sur la
+//- colonne — et dès qu'une rubrique est choisie, les colonnes n'ont plus
+//- d'objet, puisque toutes les trouvailles sont dans celle-là. Le tableau se
+//- réduit alors à ce qui répond : la molécule et l'extrait.
+//-
 //- @param {object}  d         sortie de chercherDansDocuments
-//- @param {string}  q         la requête, pour le lien « tout voir »
+//- @param {string}  q         la requête, pour le lien « tout voir » et les filtres
 //- @param {boolean} resume    vue courte, au sein de la page de résultats
 //- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
-mixin resultatsDocuments(d, q, resume, colonnes)
+//- @param {string}  rubrique  la rubrique filtrée, ou rien
+mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
   - var cles = colonnes.map(function (c) { return c[0] })
+  - var lien = function (r) { return `/documents?q=${encodeURIComponent(q)}` + (r ? `&rubrique=${r}` : '') }
+  - var colonnesVues = rubrique ? [] : colonnes
 
   table.trouvailles
     caption.sr-only
       | Molécules dont un document contient l'expression cherchée, et rubriques où elle figure
     colgroup
       col.col-molecule
-      each c in colonnes
+      each c in colonnesVues
         col.col-rubrique
-      col.col-autres
+      if !rubrique
+        col.col-autres
     thead
       tr
-        th.th-molecule(scope="col") Molécule
-        each c in colonnes
-          th.th-rubrique(scope="col" data-titre=c[1])= c[0]
-        th.th-autres(scope="col") Autres
+        th.th-molecule(scope="col")
+          if rubrique
+            //- La rubrique choisie se dit, et se défait. Sans ce retour, on
+            //- ne sort d'un filtre qu'en refaisant la recherche.
+            span.th-filtre= `Rubrique ${rubrique}`
+            a.th-defaire(href=lien(null) title="Rechercher dans tout le document") ×
+          else
+            | Molécule
+        each c in colonnesVues
+          th.th-rubrique(scope="col")
+            a.th-lien(href=lien(c[0]) data-titre=`N'afficher que ${c[0]} ${c[1]}`)= c[0]
+        if !rubrique
+          th.th-autres(scope="col") Autres
 
     each r in d.resultats
       -
@@ -64,7 +86,7 @@ mixin resultatsDocuments(d, q, resume, colonnes)
             if r.specialites > 1
               span.trouvaille-reprise #{r.specialites.toLocaleString('fr-FR')} spécialités
 
-          each c in colonnes
+          each c in colonnesVues
             td.cellule-rubrique
               if par[c[0]]
                 //- L'infobulle est la nôtre, pas celle du navigateur : `title`
@@ -76,13 +98,14 @@ mixin resultatsDocuments(d, q, resume, colonnes)
                   aria-label=`${c[0]} ${par[c[0]].libelle}`
                 )= c[0]
 
-          td.cellule-autres
-            each rub in autres
-              a.puce.puce-autre(
-                href=`/product/${rub.cis}#${rub.ancre}`
-                data-titre=`${rub.numero} ${rub.libelle}`
-                aria-label=`${rub.numero} ${rub.libelle}`
-              )= rub.numero
+          if !rubrique
+            td.cellule-autres
+              each rub in autres
+                a.puce.puce-autre(
+                  href=`/product/${rub.cis}#${rub.ancre}`
+                  data-titre=`${rub.numero} ${rub.libelle}`
+                  aria-label=`${rub.numero} ${rub.libelle}`
+                )= rub.numero
 
         //- L'extrait est la preuve, et il est replié.
         //-
@@ -93,8 +116,10 @@ mixin resultatsDocuments(d, q, resume, colonnes)
         //- différents — d'où la spécialité nommée sous l'extrait : on ne prête
         //- pas à la molécule une phrase qui n'est vraie que d'une forme.
         tr.ligne-preuve
-          td(colspan=colonnes.length + 2)
-            details.preuve
+          td(colspan=colonnesVues.length + (rubrique ? 1 : 2))
+            //- Filtrée, la page n'a plus que l'extrait à montrer : le replier
+            //- reviendrait à cacher la réponse derrière un clic.
+            details.preuve(open=rubrique ? true : false)
               summary.preuve-tete Extrait
               //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
               //- viennent de la base : le texte est celui du document.

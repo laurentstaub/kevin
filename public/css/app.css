@@ -1012,9 +1012,38 @@
 .trouvailles thead .th-autres { text-align: left; }
 .trouvailles thead .th-autres { text-align: center; }
 
-/* L'en-tête nomme sa rubrique au survol : « 4.6 » ne dit pas « Grossesse et
-   allaitement » à qui ne connaît pas le plan par cœur. */
-.th-rubrique[data-titre] { position: relative; cursor: help; }
+/* L'en-tête est le filtre : on restreint une colonne en cliquant dessus. Une
+   rangée d'onglets listait les huit mêmes rubriques deux lignes plus haut —
+   la même liste écrite deux fois, dont l'une ne portait aucune donnée. */
+.th-lien {
+  display: block;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+}
+
+.th-lien:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* La rubrique choisie se dit, et se défait : sans ce retour on ne sort d'un
+   filtre qu'en refaisant la recherche. */
+.th-filtre {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.th-defaire {
+  margin-left: 0.4em;
+  color: var(--faint);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+}
+
+.th-defaire:hover { color: var(--ink); }
 
 .trouvaille {
   border-bottom: var(--rule-width) solid var(--rule);
@@ -1085,7 +1114,8 @@
    secondes pour lire ce que la ligne annonce. Celle-ci paraît au survol. */
 .puce[data-titre]:hover::after,
 .puce[data-titre]:focus-visible::after,
-.th-rubrique[data-titre]:hover::after {
+.th-lien[data-titre]:hover::after,
+.th-lien[data-titre]:focus-visible::after {
   content: attr(data-titre);
   position: absolute;
   bottom: calc(100% + 0.3rem);
