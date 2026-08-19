@@ -1,81 +1,88 @@
-//- Une trouvaille dans les documents : une molécule, pas une spécialité.
+//- Les trouvailles, en tableau.
 //-
-//- La ligne dit trois choses dans l'ordre où on les lit : quelle molécule,
-//- dans quelles rubriques, et — à la demande — la phrase qui le prouve.
+//- Une ligne par molécule, une colonne par rubrique. C'est de la donnée
+//- tabulaire, et l'écrire comme telle règle d'un coup ce qu'une grille CSS
+//- tenait par la chance : les numéros posés au fil de la ligne ne se
+//- comparaient pas d'une ligne à l'autre, puis, alignés en grille, ils se
+//- décalaient dès qu'un nom de groupe était long — `space-between` cesse
+//- d'aligner à droite quand le contenu déborde, et un nom de groupe n'a pas
+//- de longueur bornée : médiane 28 caractères, mais 442 au 99ᵉ centile et
+//- 1 668 au pire, les vaccins pneumococciques nommant chacun de leurs
+//- sérotypes.
 //-
-//- Grouper par molécule plutôt que par empreinte de texte divise la liste par
-//- quatre en moyenne, et bien davantage sur ce qu'on cherche vraiment :
-//- olanzapine 66 spécialités, aripiprazole 63, rispéridone 62. Chaque numéro
-//- de rubrique porte sa propre ancre, prise sur sa meilleure occurrence — un
-//- numéro qui mènerait à une spécialité tirée au sort du groupe serait pire
-//- qu'absent.
+//- Les colonnes sont fixes, et non l'union de ce que la recherche a trouvé :
+//- des colonnes qui changent de place d'une requête à l'autre ne s'apprennent
+//- jamais. Ce qui tombe hors des huit va dans « Autres », qui les nomme sans
+//- leur réserver de place.
 //-
-//- @param {object}  d       sortie de chercherDansDocuments
-//- @param {string}  q       la requête, pour le lien « tout voir »
-//- @param {boolean} resume  vue courte, au sein de la page de résultats
-mixin resultatsDocuments(d, q, resume)
-  //- Les rubriques en colonnes.
-  //-
-  //- Les numéros posés au fil de chaque ligne ne se comparaient pas d'une
-  //- ligne à l'autre : pour savoir quelles molécules en parlent en 4.5, il
-  //- fallait lire chaque ligne entière. Rangés en grille, la colonne répond
-  //- d'un coup d'œil, et un trou se voit autant qu'une case pleine.
-  //-
-  //- La grille est celle de la page, pas de la ligne : l'ensemble des
-  //- rubriques trouvées, dans l'ordre du document. Au-delà de douze colonnes
-  //- elle deviendrait plus étroite que lisible — on repasse alors au fil.
-  -
-    var rang = function (n) {
-      var m = String(n).match(/^(\d+)(?:\.(\d+))?/);
-      return [m ? +m[1] : 99, m && m[2] !== undefined ? +m[2] : -1];
-    };
-    var numeros = [];
-    (d.resultats || []).forEach(function (r) {
-      (r.rubriques || []).forEach(function (rub) {
-        if (numeros.indexOf(rub.numero) === -1) numeros.push(rub.numero);
-      });
-    });
-    numeros.sort(function (a, b) {
-      var x = rang(a), y = rang(b);
-      return x[0] - y[0] || x[1] - y[1] || (a < b ? -1 : 1);
-    });
-    var grille = numeros.length > 1 && numeros.length <= 12;
+//- @param {object}  d         sortie de chercherDansDocuments
+//- @param {string}  q         la requête, pour le lien « tout voir »
+//- @param {boolean} resume    vue courte, au sein de la page de résultats
+//- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
+mixin resultatsDocuments(d, q, resume, colonnes)
+  - var cles = colonnes.map(function (c) { return c[0] })
 
-  ul.trouvailles
+  table.trouvailles
+    caption.sr-only
+      | Molécules dont un document contient l'expression cherchée, et rubriques où elle figure
+    colgroup
+      col.col-molecule
+      each c in colonnes
+        col.col-rubrique
+      col.col-autres
+    thead
+      tr
+        th.th-molecule(scope="col") Molécule
+        each c in colonnes
+          th.th-rubrique(scope="col" data-titre=c[1])= c[0]
+        th.th-autres(scope="col") Autres
+
     each r in d.resultats
-      li.trouvaille
-        .trouvaille-tete
-          //- Deux spécialités sur treize mille six cents n'ont pas de
-          //- composition enregistrée : leur dénomination tient lieu de titre,
-          //- et mène à leur fiche plutôt qu'à une recherche par principe actif
-          //- qui ne rendrait rien.
-          if r.sansMolecule
-            a.trouvaille-molecule(href=`/product/${r.code_cis}#${r.ancre}`)= r.molecule
-          else
-            a.trouvaille-molecule(
-              href=`/search?q=${encodeURIComponent(r.molecule)}&filter=active`
-              title="Toutes les spécialités contenant cette molécule"
-            )= r.molecule
+      -
+        var par = {};
+        (r.rubriques || []).forEach(function (rub) { par[rub.numero] = rub });
+        var autres = (r.rubriques || []).filter(function (rub) {
+          return cles.indexOf(rub.numero) === -1;
+        });
 
-          if r.rubriques && r.rubriques.length > 0
-            - var par = {}; r.rubriques.forEach(function (rub) { par[rub.numero] = rub });
-            ul.puces(class=grille ? 'puces-grille' : null style=grille ? `--colonnes: ${numeros.length}` : null)
-              each numero in (grille ? numeros : r.rubriques.map(function (x) { return x.numero }))
-                li
-                  if par[numero]
-                    //- L'infobulle est la nôtre, pas celle du navigateur :
-                    //- `title` attend une seconde avant de paraître, et sur
-                    //- une ligne de chiffres c'est une seconde par chiffre.
-                    a.puce(
-                      href=`/product/${par[numero].cis}#${par[numero].ancre}`
-                      data-titre=`${numero} ${par[numero].libelle}`
-                      aria-label=`${numero} ${par[numero].libelle}`
-                    )= numero
+      tbody.trouvaille
+        tr
+          th.cellule-molecule(scope="row")
+            //- Deux spécialités sur treize mille six cents n'ont pas de
+            //- composition enregistrée : leur dénomination tient lieu de titre,
+            //- et mène à leur fiche plutôt qu'à une recherche par principe
+            //- actif qui ne rendrait rien.
+            if r.sansMolecule
+              a.trouvaille-molecule(href=`/product/${r.code_cis}#${r.ancre}`)= r.molecule
+            else
+              a.trouvaille-molecule(
+                href=`/search?q=${encodeURIComponent(r.molecule)}&filter=active`
+                title=r.molecule
+              )= r.molecule
+            //- Combien de spécialités le groupe recouvre. Une seule ne se dit
+            //- pas : ce serait une ligne pour ne rien apprendre.
+            if r.specialites > 1
+              span.trouvaille-reprise #{r.specialites.toLocaleString('fr-FR')} spécialités
 
-        //- Combien de spécialités le groupe recouvre. Une seule ne se dit pas :
-        //- ce serait une ligne pour ne rien apprendre.
-        if r.specialites > 1
-          p.trouvaille-reprise #{r.specialites.toLocaleString('fr-FR')} spécialités
+          each c in colonnes
+            td.cellule-rubrique
+              if par[c[0]]
+                //- L'infobulle est la nôtre, pas celle du navigateur : `title`
+                //- attend une seconde avant de paraître, et sur une ligne de
+                //- huit numéros c'est une seconde par numéro.
+                a.puce(
+                  href=`/product/${par[c[0]].cis}#${par[c[0]].ancre}`
+                  data-titre=`${c[0]} ${par[c[0]].libelle}`
+                  aria-label=`${c[0]} ${par[c[0]].libelle}`
+                )= c[0]
+
+          td.cellule-autres
+            each rub in autres
+              a.puce.puce-autre(
+                href=`/product/${rub.cis}#${rub.ancre}`
+                data-titre=`${rub.numero} ${rub.libelle}`
+                aria-label=`${rub.numero} ${rub.libelle}`
+              )= rub.numero
 
         //- L'extrait est la preuve, et il est replié.
         //-
@@ -85,17 +92,19 @@ mixin resultatsDocuments(d, q, resume)
         //- RCP — tramadol LP et tramadol à libération immédiate ont des textes
         //- différents — d'où la spécialité nommée sous l'extrait : on ne prête
         //- pas à la molécule une phrase qui n'est vraie que d'une forme.
-        details.preuve
-          summary.preuve-tete Extrait
-          //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
-          //- viennent de la base : le texte est celui du document.
-          p.trouvaille-extrait!= r.extrait
-          p.preuve-source
-            a(href=`/product/${r.code_cis}#${r.ancre}`)= r.denomination
-            if r.numero
-              |  · #{r.numero} #{r.libelle}
-            else if r.libelle
-              |  · #{r.libelle}
+        tr.ligne-preuve
+          td(colspan=colonnes.length + 2)
+            details.preuve
+              summary.preuve-tete Extrait
+              //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
+              //- viennent de la base : le texte est celui du document.
+              p.trouvaille-extrait!= r.extrait
+              p.preuve-source
+                a(href=`/product/${r.code_cis}#${r.ancre}`)= r.denomination
+                if r.numero
+                  |  · #{r.numero} #{r.libelle}
+                else if r.libelle
+                  |  · #{r.libelle}
 
   if resume && d.total > d.resultats.length
     p.trouvailles-suite

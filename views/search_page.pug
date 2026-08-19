@@ -169,7 +169,7 @@ block content
             h2.groupe-titre
               | Dans les documents
               span.compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
-            +resultatsDocuments(documents, query, true)
+            +resultatsDocuments(documents, query, true, colonnes)
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

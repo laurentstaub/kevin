@@ -23,7 +23,7 @@ block content
     nav.filtres(aria-label="Filtrer par rubrique")
       a.filtre(class=(rubrique ? '' : 'actif')
         href=`/documents?q=${encodeURIComponent(query)}`) Tout le document
-      each r in [['4.1','Indications'],['4.2','Posologie'],['4.3','Contre-indications'],['4.4','Mises en garde'],['4.5','Interactions'],['4.6','Grossesse'],['4.8','Effets indésirables'],['5.1','Pharmacodynamie']]
+      each r in colonnes
         a.filtre(class=(rubrique === r[0] ? 'actif' : '')
           href=`/documents?q=${encodeURIComponent(query)}&rubrique=${r[0]}`)
           span.filtre-num= r[0]
@@ -36,7 +36,7 @@ block content
     else if documents.resultats.length === 0
       p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
     else
-      +resultatsDocuments(documents, query, false)
+      +resultatsDocuments(documents, query, false, colonnes)
 
       //- Où l'on en est, et comment aller plus loin.
       //-

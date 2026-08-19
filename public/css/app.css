@@ -981,28 +981,64 @@
 
 /* Une ligne dit trois choses dans l'ordre où on les lit : quel produit,
    quelle rubrique, et l'extrait. Filets horizontaux seuls, comme partout. */
+/* Les trouvailles sont un tableau, et non une liste de lignes qui feint d'en
+   être un. Une grille CSS tenait l'alignement tant que le nom restait court ;
+   un nom de groupe n'a pas de longueur bornée — 1 668 caractères au pire, un
+   vaccin nommant ses vingt sérotypes — et `space-between` cesse d'aligner à
+   droite dès que le contenu déborde. Le moteur de tableau, lui, ne discute
+   pas : `fixed` fige les colonnes sur l'en-tête, quoi que porte une cellule. */
 .trouvailles {
-  list-style: none;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
   margin: 0;
-  padding: 0;
-  max-width: var(--measure);
 }
 
+.col-rubrique { width: 2.6rem; }
+.col-autres { width: 5.5rem; }
+
+.trouvailles thead th {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--faint);
+  text-align: center;
+  padding: 0 0 var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.trouvailles thead .th-molecule,
+.trouvailles thead .th-autres { text-align: left; }
+.trouvailles thead .th-autres { text-align: center; }
+
+/* L'en-tête nomme sa rubrique au survol : « 4.6 » ne dit pas « Grossesse et
+   allaitement » à qui ne connaît pas le plan par cœur. */
+.th-rubrique[data-titre] { position: relative; cursor: help; }
+
 .trouvaille {
-  padding: var(--sp-2) 0;
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
-/* Le titre et les rubriques sur une ligne, la molécule à gauche, les numéros
-   à droite. Ce sont les deux moitiés de la réponse : quoi, et où. */
-.trouvaille-tete {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
+.trouvaille td,
+.trouvaille th {
+  padding: var(--sp-2) 0 0;
+  vertical-align: baseline;
+}
+
+/* Le nom peut faire mille caractères. Deux lignes, puis on coupe : le titre
+   complet reste en infobulle, et le groupe entier est à un clic. */
+.cellule-molecule {
+  text-align: left;
+  font-weight: 400;
+  padding-right: var(--sp-3);
 }
 
 .trouvaille-molecule {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-size: var(--fs-sm);
   color: var(--ink);
   text-decoration: none;
@@ -1013,27 +1049,17 @@
   text-underline-offset: 2px;
 }
 
-/* Les numéros de rubrique. Chacun mène à son ancre, sur la spécialité où
-   l'occurrence est la mieux classée — le libellé complet reste en infobulle,
-   parce que « Mises en garde spéciales et précautions d'emploi » sur une ligne
-   de résultats coûterait la densité qu'on est venu chercher. */
-.puces {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.cellule-rubrique { text-align: center; }
+
+/* La colonne fourre-tout : composition, précliniques, conservation. Elles
+   n'ont pas de place réservée, mais elles se nomment — les fondre dans un
+   « +3 » ferait disparaître la rubrique 2 d'une recherche sur un excipient. */
+.cellule-autres {
+  text-align: center;
+  line-height: 1.9;
 }
 
-/* En grille, une colonne par rubrique trouvée sur la page. Posés au fil, les
-   numéros ne se comparaient pas d'une ligne à l'autre ; alignés, la colonne
-   répond d'un coup d'œil et un trou se voit autant qu'une case pleine. */
-.puces-grille {
-  display: grid;
-  grid-template-columns: repeat(var(--colonnes), 2.4rem);
-  justify-content: end;
-}
+.cellule-autres .puce { display: inline-block; margin: 0 0.1em; }
 
 .puce {
   display: block;
@@ -1042,10 +1068,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   text-decoration: none;
-  padding: 0 0.35em;
+  padding: 0 0.2em;
   border: var(--rule-width) solid var(--rule);
   position: relative;
 }
+
+.puce-autre { color: var(--muted); }
 
 .puce:hover {
   border-color: var(--accent);
@@ -1056,19 +1084,26 @@
    avant de l'afficher, ce qui sur une ligne de huit numéros fait huit
    secondes pour lire ce que la ligne annonce. Celle-ci paraît au survol. */
 .puce[data-titre]:hover::after,
-.puce[data-titre]:focus-visible::after {
+.puce[data-titre]:focus-visible::after,
+.th-rubrique[data-titre]:hover::after {
   content: attr(data-titre);
   position: absolute;
   bottom: calc(100% + 0.3rem);
-  right: -1px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 5;
   white-space: nowrap;
   background: var(--ink);
   color: #fff;
   padding: 0.15em 0.5em;
   font-variant-numeric: normal;
+  font-size: var(--fs-xs);
   pointer-events: none;
 }
+
+/* L'extrait occupe la largeur entière : replié il ne coûte qu'une ligne,
+   déplié il ne se lit pas dans une colonne de deux centimètres. */
+.ligne-preuve td { padding: var(--sp-1) 0 var(--sp-2); }
 
 /* L'extrait est du document, pas de l'interface : il reprend la police de
    lecture, en plus petit. C'est ce qu'on lit pour décider si l'on ouvre. */

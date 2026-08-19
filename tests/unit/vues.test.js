@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import pug from 'pug';
 import { ROOT } from '../../src/config.js';
+import { COLONNES } from '../../src/recherche-texte.js';
 
 /**
  * Les gabarits se rendent, et pas seulement se compilent.
@@ -19,7 +20,9 @@ import { ROOT } from '../../src/config.js';
  */
 const rendre = (vue, locals) => pug.renderFile(
   path.join(ROOT, 'views', `${vue}.pug`),
-  { v: 'test', ...locals },
+  // `colonnes` est fourni par les deux routes qui rendent des trouvailles :
+  // l'omettre ici ferait échouer le rendu pour une raison qui n'existe pas.
+  { v: 'test', colonnes: COLONNES, ...locals },
 );
 
 const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
@@ -272,26 +275,31 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /titre-lien/);
   });
 
-  // Les numéros posés au fil de chaque ligne ne se comparaient pas d'une ligne
-  // à l'autre : pour savoir qui en parle en 4.8, il fallait lire chaque ligne
-  // entière. En grille, la colonne répond, et un trou se voit.
-  it('range les rubriques en colonnes communes à la page', () => {
+  // Les colonnes sont fixes, et non l'union de ce que la recherche a trouvé :
+  // des colonnes qui changent de place d'une requête à l'autre ne s'apprennent
+  // jamais. Ce qui tombe hors des huit se nomme dans « Autres ».
+  it('range les rubriques en colonnes fixes, et nomme les autres', () => {
     const html = rendre('documents', {
       query: 'QT',
       rubrique: null,
       page: 1,
       documents: {
         ...RECHERCHE_PLEINE,
-        resultats: [
-          { ...TROUVAILLE, rubriques: [{ numero: '4.8', libelle: 'Effets', cis: '1', ancre: 'rcp-2' }] },
-          { ...SANS_MOLECULE, rubriques: [{ numero: '4.4', libelle: 'Mises en garde', cis: '2', ancre: 'rcp-1' }] },
-        ],
+        resultats: [{
+          ...TROUVAILLE,
+          rubriques: [
+            { numero: '4.8', libelle: 'Effets', cis: '1', ancre: 'rcp-2' },
+            { numero: '2', libelle: 'Composition', cis: '1', ancre: 'rcp-9' },
+          ],
+        }],
       },
     });
-    // Deux rubriques distinctes sur la page, donc deux colonnes pour tout le monde.
-    assert.match(html, /--colonnes: 2/);
-    // La première ligne n'a pas de 4.4 : sa case reste vide, elle ne disparaît pas.
-    assert.match(html, /<li><\/li>/);
+    // Huit colonnes de rubrique, plus la molécule et le fourre-tout.
+    assert.equal((html.match(/col-rubrique/g) || []).length, COLONNES.length);
+    // La 2 n'a pas de colonne réservée, mais elle se nomme au lieu de disparaître.
+    assert.match(html, /class="puce puce-autre"[^>]*>2</);
+    // La 4.4, absente de ce résultat, laisse sa cellule vide sans décaler les autres.
+    assert.match(html, /<td class="cellule-rubrique"><\/td>/);
   });
 
   // `title` attend une seconde avant de paraître : sur une ligne de huit

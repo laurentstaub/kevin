@@ -84,6 +84,30 @@ export const PAR_PAGE = 50;
 export const APERCU = 12;
 
 /**
+ * Les rubriques qui font colonne, et onglet.
+ *
+ * Une liste fixe plutôt que l'union de ce qu'une recherche a trouvé : des
+ * colonnes qui changent de place d'une requête à l'autre ne s'apprennent
+ * jamais, et le lecteur relit l'en-tête à chaque fois. Ce sont les huit
+ * rubriques qu'on interroge au comptoir ; tout le reste — la composition, les
+ * données précliniques, la conservation — tombe dans la colonne « Autres »,
+ * qui les nomme sans leur réserver de place.
+ *
+ * Même liste pour les onglets et pour les colonnes : elle vivait en double,
+ * écrite une fois dans le gabarit et une fois nulle part.
+ */
+export const COLONNES = [
+  ['4.1', 'Indications'],
+  ['4.2', 'Posologie'],
+  ['4.3', 'Contre-indications'],
+  ['4.4', 'Mises en garde'],
+  ['4.5', 'Interactions'],
+  ['4.6', 'Grossesse'],
+  ['4.8', 'Effets indésirables'],
+  ['5.1', 'Pharmacodynamie'],
+];
+
+/**
  * Normalise le filtre de rubrique.
  *
  * « 4 » doit rendre 4 et toutes ses sous-rubriques — c'est ainsi qu'on cherche

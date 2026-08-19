@@ -13,7 +13,7 @@ import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
-  chercherDansDocuments, rechercheAbsente, normaliserRubrique, APERCU, PAR_PAGE,
+  chercherDansDocuments, rechercheAbsente, normaliserRubrique, APERCU, COLONNES, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -144,7 +144,7 @@ export function pageRoutes(pool) {
       ]);
 
       res.render('search_page', {
-        query: query.raw, filter, results, documents, panne,
+        query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
       });
     }),
   );
@@ -189,6 +189,7 @@ export function pageRoutes(pool) {
         rubrique,
         documents,
         page,
+        colonnes: COLONNES,
         parPage: PAR_PAGE,
         panne,
         notice: query.tooShort
