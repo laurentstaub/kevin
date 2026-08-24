@@ -337,4 +337,22 @@ describe('rendu des gabarits', () => {
     assert.match(html, /class="th-defaire" href="\/documents\?q=QT"/);
     assert.match(html, /<details class="preuve" open="open">/);
   });
+
+  // Le repli annonçait « Extrait » quand la ligne montre quatre rubriques :
+  // rien ne disait de laquelle il venait.
+  it('le repli nomme la rubrique de son extrait', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /class="preuve-rubrique">4\.4 Mises en garde spéciales/);
+  });
+
+  // L'aperçu au survol se demande au serveur : la puce porte de quoi le
+  // désigner, sa clé primaire, et rien de plus.
+  it('chaque numéro porte de quoi demander son extrait', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
+  });
 });

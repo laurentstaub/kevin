@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  chercherDansDocuments, rechercheAbsente, normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
+  chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
+  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -132,5 +133,41 @@ describe('pagination de la recherche plein texte', () => {
       await chercherDansDocuments(pool, 'QT', { decalage: mauvais });
     }
     for (const params of pool.appels) assert.equal(params[3], 0);
+  });
+});
+
+describe('extraitDeRubrique', () => {
+  const espion = () => {
+    const vus = [];
+    return {
+      vus,
+      query: async (_sql, p) => {
+        vus.push(p);
+        return { rows: [{ numero: '4.5', libelle: 'Interactions', denomination: 'PROGRAF', extrait: 'x' }] };
+      },
+    };
+  };
+
+  it('désigne la rubrique par sa clé primaire', async () => {
+    const pool = espion();
+    const r = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '12', requete: 'QT' });
+    assert.deepEqual(pool.vus[0], ['QT', '66297965', 'rcp', 12]);
+    assert.equal(r.numero, '4.5');
+  });
+
+  // Les trois paramètres viennent de l'URL, donc de n'importe où. Les vérifier
+  // ici est ce qui permet de ne pas s'en méfier dans la requête.
+  it('refuse ce qui n’est pas une rubrique, sans toucher la base', async () => {
+    const pool = espion();
+    for (const mauvais of [
+      { cis: 'abc', type: 'rcp', position: '1', requete: 'QT' },
+      { cis: '66297965', type: 'autre', position: '1', requete: 'QT' },
+      { cis: '66297965', type: 'rcp', position: 'douze', requete: 'QT' },
+      { cis: '66297965', type: 'rcp', position: '1', requete: '   ' },
+      { cis: '12', type: 'rcp', position: '1', requete: 'QT' },
+    ]) {
+      assert.equal(await extraitDeRubrique(pool, mauvais), null, JSON.stringify(mauvais));
+    }
+    assert.equal(pool.vus.length, 0, 'aucune requête n’a été lancée');
   });
 });

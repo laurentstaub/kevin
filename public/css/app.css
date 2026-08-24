@@ -1112,6 +1112,8 @@
 /* L'infobulle est la nôtre, et non `title` : le navigateur attend une seconde
    avant de l'afficher, ce qui sur une ligne de huit numéros fait huit
    secondes pour lire ce que la ligne annonce. Celle-ci paraît au survol. */
+/* L'infobulle du texte seul reste pour l'en-tête, qui n'a pas d'extrait à
+   montrer, et pour les numéros quand JavaScript ne répond pas. */
 .puce[data-titre]:hover::after,
 .puce[data-titre]:focus-visible::after,
 .th-lien[data-titre]:hover::after,
@@ -1129,6 +1131,56 @@
   font-variant-numeric: normal;
   font-size: var(--fs-xs);
   pointer-events: none;
+}
+
+/* L'aperçu au survol d'un numéro : la phrase de cette rubrique-là.
+   Posé sur le corps du document et non dans la cellule — une infobulle de
+   trois lignes dans une colonne de deux centimètres serait rognée par le
+   premier parent qui coupe ce qui déborde. */
+.apercu {
+  position: absolute;
+  z-index: 20;
+  max-width: 30rem;
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule-medium);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 12%);
+  padding: var(--sp-2) var(--sp-3);
+  pointer-events: none;
+}
+
+.apercu-tete {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.apercu-texte {
+  margin: 0;
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.apercu-texte mark {
+  background: var(--accent-pale);
+  color: var(--ink);
+  padding: 0 0.15em;
+}
+
+.apercu-source {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Le repli dit de quelle rubrique il parle : « Extrait » tout court laissait
+   deviner, alors que la ligne annonce quatre rubriques et n'en montre qu'une. */
+.preuve-rubrique {
+  margin-left: 0.5em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 /* L'extrait occupe la largeur entière : replié il ne coûte qu'une ligne,

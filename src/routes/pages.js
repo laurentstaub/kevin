@@ -13,7 +13,8 @@ import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
-  chercherDansDocuments, rechercheAbsente, normaliserRubrique, APERCU, COLONNES, PAR_PAGE,
+  chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
+  normaliserRubrique, APERCU, COLONNES, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -196,6 +197,35 @@ export function pageRoutes(pool) {
           ? `Saisissez au moins ${config.search.minLength} caractères.`
           : null,
       });
+    }),
+  );
+
+  /**
+   * L'extrait d'une rubrique, pour l'aperçu au survol.
+   *
+   * Rendu à la demande et non avec la page : `ts_headline` coûte 21 ms pour
+   * cinquante extraits et 168 ms pour deux cent cinquante. Calculer d'avance
+   * l'aperçu de chaque rubrique de chaque ligne ferait passer la recherche de
+   * 20 ms à 170 pour des aperçus dont presque aucun ne sera survolé.
+   */
+  router.get(
+    '/extrait',
+    wrap(async (req, res) => {
+      const trouvaille = await extraitDeRubrique(pool, {
+        cis: req.query.cis,
+        type: req.query.type,
+        position: req.query.position,
+        requete: req.query.q,
+      }).catch((err) => {
+        console.error('[extrait] indisponible :', err.message);
+        return null;
+      });
+
+      if (!trouvaille) return res.status(404).json({ erreur: 'introuvable' });
+      // Un aperçu se recalcule à l'identique tant que le découpage ne bouge
+      // pas : autant laisser le navigateur le garder le temps d'une lecture.
+      res.set('Cache-Control', 'private, max-age=300');
+      return res.json(trouvaille);
     }),
   );
 

@@ -96,6 +96,9 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
                   href=`/product/${par[c[0]].cis}#${par[c[0]].ancre}`
                   data-titre=`${c[0]} ${par[c[0]].libelle}`
                   aria-label=`${c[0]} ${par[c[0]].libelle}`
+                  data-cis=par[c[0]].cis
+                  data-type=par[c[0]].ancre.split('-')[0]
+                  data-position=par[c[0]].ancre.split('-')[1]
                 )= c[0]
 
           if !rubrique
@@ -105,6 +108,9 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
                   href=`/product/${rub.cis}#${rub.ancre}`
                   data-titre=`${rub.numero} ${rub.libelle}`
                   aria-label=`${rub.numero} ${rub.libelle}`
+                  data-cis=rub.cis
+                  data-type=rub.ancre.split('-')[0]
+                  data-position=rub.ancre.split('-')[1]
                 )= rub.numero
 
         //- L'extrait est la preuve, et il est replié.
@@ -120,7 +126,12 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
             //- Filtrée, la page n'a plus que l'extrait à montrer : le replier
             //- reviendrait à cacher la réponse derrière un clic.
             details.preuve(open=rubrique ? true : false)
-              summary.preuve-tete Extrait
+              //- « Extrait » tout court laissait deviner de quelle rubrique il
+              //- venait : la ligne en annonce quatre et n'en montre qu'une.
+              summary.preuve-tete
+                | Extrait
+                if r.numero
+                  span.preuve-rubrique #{r.numero} #{r.libelle}
               //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
               //- viennent de la base : le texte est celui du document.
               p.trouvaille-extrait!= r.extrait

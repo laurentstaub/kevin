@@ -172,6 +172,39 @@ export function rechercheAbsente(err) {
  * @returns {Promise<{ resultats: object[], total: number, borne: boolean,
  *                     decalage: number, suite: boolean }>}
  */
+/**
+ * L'extrait d'une rubrique précise, à la demande.
+ *
+ * Pourquoi une seconde requête plutôt qu'un extrait par rubrique dans la
+ * première : `ts_headline` est de loin la fonction la plus chère de tout
+ * l'appareil. Mesuré sur le banc, à chaud — 50 extraits 21 ms, 250 extraits
+ * 168 ms. Cinquante lignes portant chacune quatre rubriques, c'est donc une
+ * recherche qui passerait de 20 ms à 170, pour des aperçus dont la plupart ne
+ * seront jamais survolés. Ici, c'est un extrait par survol, et rien pour les
+ * autres.
+ *
+ * La rubrique est désignée par sa clé primaire — CIS, type de document,
+ * position — et non par un identifiant qu'il faudrait inventer.
+ */
+export async function extraitDeRubrique(pool, { cis, type, position, requete }) {
+  const q = String(requete ?? '').trim();
+  const p = Math.trunc(Number(position));
+  if (!q || !/^\d{6,10}$/.test(String(cis ?? '')) || !Number.isFinite(p)) return null;
+  if (!['rcp', 'notice'].includes(String(type))) return null;
+
+  const { rows } = await pool.query(
+    `SELECT s.numero, s.libelle, m.denomination_medicament AS denomination,
+            ts_headline('${LANGUE}', s.texte, ${TSQUERY},
+              'MaxWords=44, MinWords=22, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'
+            ) AS extrait
+     FROM docs.rcp_sections s
+     JOIN dbpm.cis_bdpm m ON m.code_cis = s.code_cis
+     WHERE s.code_cis = $2 AND s.document_type = $3 AND s.position = $4`,
+    [q, String(cis), String(type), p],
+  );
+  return rows[0] ?? null;
+}
+
 export async function chercherDansDocuments(pool, requete, options = {}) {
   const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
   const q = String(requete ?? '').trim();
