@@ -1045,14 +1045,17 @@
 
 .th-defaire:hover { color: var(--ink); }
 
-.trouvaille {
-  border-bottom: var(--rule-width) solid var(--rule);
-}
-
+/* Le filet est posé sur la dernière ligne du groupe, et non sur le groupe.
+   Sur le `tbody`, les moteurs ne s'accordent pas quand les bordures sont
+   fusionnées, et il en apparaissait un second entre la ligne du produit et
+   son extrait — assez pour qu'on ne sache plus si l'extrait se rattachait à
+   ce qui le précède ou à ce qui le suit. Posé sur la ligne, il n'y a plus
+   d'ambiguïté possible : un filet par résultat, en bas. */
 .trouvaille td,
 .trouvaille th {
   padding: var(--sp-2) 0 0;
   vertical-align: baseline;
+  border: 0;
 }
 
 /* Le nom peut faire mille caractères. Deux lignes, puis on coupe : le titre
@@ -1184,11 +1187,18 @@
 }
 
 /* L'extrait occupe la largeur entière : replié il ne coûte qu'une ligne,
-   déplié il ne se lit pas dans une colonne de deux centimètres. */
+   déplié il ne se lit pas dans une colonne de deux centimètres.
+   Il se serre contre la ligne qu'il commente — l'espace qui l'en séparait le
+   laissait flotter entre deux résultats — et s'indente, comme tout ce qui
+   dépend de la molécule, pour se subordonner au nom plutôt que le concurrencer. */
 .ligne-preuve td {
-  padding: var(--sp-1) 0 var(--sp-2);
+  padding: 0 0 var(--sp-2) var(--sp-3);
   position: relative;
+  border-bottom: var(--rule-width) solid var(--rule);
 }
+
+/* Le compte de spécialités porte le même retrait : les deux se lisent comme
+   une seule entrée, subordonnée au nom. */
 
 /* L'encoche, qui pointe la colonne dont l'extrait est tiré. La ligne annonce
    quatre rubriques et n'en montre qu'une : dire laquelle en mots demandait de
@@ -1238,6 +1248,7 @@
   font-size: var(--fs-xs);
   color: var(--faint);
   margin: 0.15em 0 0;
+  padding-left: var(--sp-3);
 }
 
 /* L'extrait est replié, parce qu'il coûte quatre lignes d'écran et qu'on ne le
