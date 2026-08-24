@@ -93,5 +93,7 @@ export function productLinks(product, contexte = {}) {
       ]
     : [];
 
-  return { official, scientific };
+  // Le répertoire qui fonde la substitution : un lien de référence, sans
+  // paramètre, que la fiche cite au lieu de le laisser deviner.
+  return { official, scientific, repertoire: config.links.repertoire };
 }

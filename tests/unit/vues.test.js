@@ -4,6 +4,7 @@ import path from 'node:path';
 import pug from 'pug';
 import { ROOT } from '../../src/config.js';
 import { COLONNES } from '../../src/recherche-texte.js';
+import { productLinks } from '../../src/links.js';
 
 /**
  * Les gabarits se rendent, et pas seulement se compilent.
@@ -49,7 +50,9 @@ const produit = (extra = {}) => ({
   documents: [],
   hasDocuments: false,
   delivrance: { resume: [], groupes: [], liens: [] },
-  links: { official: [], scientific: [] },
+  // Les liens viennent de productLinks : les recopier à la main ici, c'est
+  // rater le jour où la fiche en cite un nouveau — ce qui vient d'arriver.
+  links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [], scientific: [] },
   sections: [],
   ...extra,
 });
@@ -389,5 +392,32 @@ describe('rendu des gabarits', () => {
       query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
     });
     assert.doesNotMatch(html, /--encoche/);
+  });
+
+  // « Substituer » mêle deux provenances que le titre confond : le Répertoire
+  // de l'ANSM, qui fonde la substitution, et notre rapprochement par principe
+  // actif, qui ne la fonde pas. Les taire laisserait entendre qu'une liste
+  // officielle autorise tout ce qui figure sous ce titre.
+  it('dit d’où viennent les substituts, et ce qui n’en est pas', () => {
+    const html = rendre('product', produit({
+      substitutions: [
+        { id: '1', denomination_medicament: 'MYCOSTER', role: 'Princeps' },
+        { id: '2', denomination_medicament: 'CICLOPIROX TEVA', role: 'Générique' },
+        { id: '3', denomination_medicament: 'MYCOSTER shampooing', role: 'Même DCI' },
+      ],
+    }));
+    assert.match(html, /Répertoire des groupes génériques de l’ANSM|Répertoire des groupes génériques de l'ANSM/);
+    assert.match(html, /ansm\.sante\.fr\/documents\/reference\/repertoire-des-medicaments-generiques/);
+    assert.match(html, /sans substitution de droit/);
+  });
+
+  // Sans voisin de DCI, la mise en garde n'a pas lieu d'être : un avertissement
+  // qui ne porte sur rien s'apprend à ne plus être lu.
+  it('se tait sur « Même DCI » quand il n’y en a pas', () => {
+    const html = rendre('product', produit({
+      substitutions: [{ id: '1', denomination_medicament: 'MYCOSTER', role: 'Princeps' }],
+    }));
+    assert.match(html, /Répertoire des groupes génériques/);
+    assert.doesNotMatch(html, /sans substitution de droit/);
   });
 });

@@ -307,8 +307,32 @@ block content
           summary.bloc-tete
             h2.section-titre Substituer
             span.bloc-compte #{substitutions.length} produit#{substitutions.length > 1 ? 's' : ''}
+          //- D'où vient chaque ligne, et ce que « Substituer » recouvre.
+          //-
+          //- Le bloc mêle deux provenances que le titre confond. Princeps et
+          //- génériques viennent du Répertoire des groupes génériques de
+          //- l'ANSM : c'est lui qui fonde la substitution, au sens de
+          //- l'article L.5121-1 du code de la santé publique. « Même DCI » est
+          //- notre rapprochement, calculé sur le principe actif partagé — un
+          //- shampooing et un vernis à ongles peuvent s'y retrouver côte à
+          //- côte, et l'un ne se substitue pas à l'autre.
+          //-
+          //- Ne pas le dire laisserait entendre qu'une liste officielle
+          //- autorise ce que le pharmacien lit sous ce titre.
+          - var officiels = substitutions.filter(function (s) { return s.role !== 'Même DCI' }).length
+          - var voisins = substitutions.length - officiels
           if genericGroup
             p.section-meta Groupe générique · #{genericGroup}
+          p.section-meta.provenance
+            if officiels > 0
+              | Princeps et génériques :
+              |
+              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire des groupes génériques de l'ANSM
+              | .
+            if voisins > 0
+              |
+              strong Même DCI
+              |  n'en fait pas partie : même principe actif, sans substitution de droit — la forme et le dosage peuvent différer.
           table.t-substitution
             caption.sr-only Produits substituables ou partageant le principe actif
             thead

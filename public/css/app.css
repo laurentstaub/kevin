@@ -1136,6 +1136,20 @@
   pointer-events: none;
 }
 
+/* La provenance des substituts. Ce n'est pas une note de bas de page : elle
+   dit ce que le titre « Substituer » recouvre, et surtout ce qu'il ne
+   recouvre pas. */
+.provenance {
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+.provenance strong {
+  font-weight: 400;
+  color: var(--ink);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
 /* L'aperçu au survol d'un numéro : la phrase de cette rubrique-là.
    Posé sur le corps du document et non dans la cellule — une infobulle de
    trois lignes dans une colonne de deux centimètres serait rognée par le
