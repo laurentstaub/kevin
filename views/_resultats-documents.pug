@@ -121,8 +121,25 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
         //- RCP — tramadol LP et tramadol à libération immédiate ont des textes
         //- différents — d'où la spécialité nommée sous l'extrait : on ne prête
         //- pas à la molécule une phrase qui n'est vraie que d'une forme.
+        //- L'encoche pointe la colonne d'où vient l'extrait.
+        //-
+        //- Elle se calcule au lieu de se mesurer : les colonnes de rubrique
+        //- font 2,6 rem, « Autres » 5,5, et toutes sont ancrées à droite —
+        //- seule la colonne des noms absorbe le reste. La distance au bord
+        //- droit est donc connue sans rien demander au navigateur, et elle ne
+        //- bouge pas quand la fenêtre change de taille.
+        -
+          var iCol = cles.indexOf(r.numero);
+          var encoche = null;
+          if (!rubrique && colonnesVues.length) {
+            encoche = iCol >= 0
+              ? `calc(5.5rem + ${colonnesVues.length - 1 - iCol} * 2.6rem + 1.3rem)`
+              : '2.75rem';
+          }
         tr.ligne-preuve
-          td(colspan=colonnesVues.length + (rubrique ? 1 : 2))
+          td(colspan=colonnesVues.length + (rubrique ? 1 : 2)
+            class=encoche ? 'a-encoche' : null
+            style=encoche ? `--encoche: ${encoche}` : null)
             //- Filtrée, la page n'a plus que l'extrait à montrer : le replier
             //- reviendrait à cacher la réponse derrière un clic.
             details.preuve(open=rubrique ? true : false)

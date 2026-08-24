@@ -1185,7 +1185,35 @@
 
 /* L'extrait occupe la largeur entière : replié il ne coûte qu'une ligne,
    déplié il ne se lit pas dans une colonne de deux centimètres. */
-.ligne-preuve td { padding: var(--sp-1) 0 var(--sp-2); }
+.ligne-preuve td {
+  padding: var(--sp-1) 0 var(--sp-2);
+  position: relative;
+}
+
+/* L'encoche, qui pointe la colonne dont l'extrait est tiré. La ligne annonce
+   quatre rubriques et n'en montre qu'une : dire laquelle en mots demandait de
+   lire, la montrer se voit. Sa position vient du gabarit, qui la calcule sur
+   des largeurs de colonne fixes — rien à mesurer, rien à recalculer au
+   redimensionnement. */
+.a-encoche::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: var(--encoche);
+  transform: translateX(50%);
+  border-left: 0.4rem solid transparent;
+  border-right: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid var(--accent-pale);
+}
+
+/* Le corps de l'extrait s'attache à son encoche par la couleur : sans aplat,
+   le triangle flotterait au-dessus de rien. */
+.a-encoche .preuve[open] {
+  background: var(--accent-pale);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.a-encoche .preuve[open] .trouvaille-extrait { color: var(--ink); }
 
 /* L'extrait est du document, pas de l'interface : il reprend la police de
    lecture, en plus petit. C'est ce qu'on lit pour décider si l'on ouvre. */

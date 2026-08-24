@@ -355,4 +355,39 @@ describe('rendu des gabarits', () => {
     });
     assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
   });
+
+  // L'encoche pointe la colonne d'où vient l'extrait. Sa position se calcule
+  // sur des largeurs fixes ancrées à droite : rien à mesurer au navigateur.
+  it('pointe la colonne de l’extrait', () => {
+    const encoche = (numero) => {
+      const html = rendre('documents', {
+        query: 'QT',
+        rubrique: null,
+        page: 1,
+        documents: {
+          ...RECHERCHE_PLEINE,
+          resultats: [{
+            ...TROUVAILLE,
+            numero,
+            rubriques: [{ numero, libelle: 'L', cis: '1', ancre: 'rcp-1' }],
+          }],
+        },
+      });
+      return (html.match(/--encoche: ([^"]+)/) || [])[1];
+    };
+    // Première colonne : sept colonnes de rubrique la séparent du fourre-tout.
+    assert.equal(encoche('4.1'), 'calc(5.5rem + 7 * 2.6rem + 1.3rem)');
+    // Dernière : elle jouxte le fourre-tout.
+    assert.equal(encoche('5.1'), 'calc(5.5rem + 0 * 2.6rem + 1.3rem)');
+    // Hors des huit : l'encoche vise « Autres », qui porte le numéro.
+    assert.equal(encoche('2'), '2.75rem');
+  });
+
+  // Filtrée, la page n'a plus de colonnes : une encoche pointerait le vide.
+  it('n’en pose pas quand il n’y a plus de colonnes', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.doesNotMatch(html, /--encoche/);
+  });
 });
