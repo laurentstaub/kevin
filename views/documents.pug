@@ -10,7 +10,9 @@ include _resultats-documents.pug
 //- à ceux de la recherche par nom ferait une page qui en pose deux.
 
 block content
-  +barreSituation(`« ${query} » dans les documents`)
+  //- La barre porte la requête dans son champ : le titre n'a plus à la
+  //- répéter, il dit où l'on est.
+  +barreSituation('Dans les documents', query, '/documents')
 
   main.corps
     header.doc-entete
@@ -18,6 +20,29 @@ block content
       p.page-meta
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
+
+      //- L'état de la recherche, en un seul endroit.
+      //-
+      //- Il vivait en trois morceaux qui ne se touchaient pas : la barre
+      //- disait la requête, l'en-tête du tableau la rubrique, et le décompte
+      //- ne paraissait que si la recherche avait été plafonnée — c'est-à-dire
+      //- jamais quand on filtre, puisque filtrer fait passer sous le plafond.
+      //- Ici : ce qu'on a cherché, ce qu'on a restreint, ce que ça donne.
+      if !panne && !notice
+        p.etat
+          span.etat-requete= `« ${query} »`
+          if rubrique
+            //- Le jeton se défait d'un clic : un filtre qu'on ne sait pas
+            //- retirer se retire en refaisant la recherche.
+            a.jeton(href=`/documents?q=${encodeURIComponent(query)}`
+              title="Rechercher dans tout le document")
+              | rubrique #{rubrique}
+              span.jeton-croix ×
+          span.etat-compte
+            if documents.borne
+              | plus de #{documents.total.toLocaleString('fr-FR')} rubriques
+            else
+              | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
 
     //- La rangée d'onglets qui vivait ici a disparu.
     //-

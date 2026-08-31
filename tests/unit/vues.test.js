@@ -335,9 +335,9 @@ describe('rendu des gabarits', () => {
     });
     assert.doesNotMatch(html, /col-rubrique/);
     assert.doesNotMatch(html, /cellule-autres/);
-    assert.match(html, /Rubrique 4\.5/);
-    // Et l'on peut en sortir sans refaire la recherche.
-    assert.match(html, /class="th-defaire" href="\/documents\?q=QT"/);
+    // La rubrique active et son retrait vivent dans la ligne d'état.
+    assert.match(html, /class="jeton"[^>]*>rubrique 4\.5/);
+    assert.match(html, /class="jeton" href="\/documents\?q=QT"/);
     assert.match(html, /<details class="preuve" open="open">/);
   });
 
@@ -419,5 +419,35 @@ describe('rendu des gabarits', () => {
     }));
     assert.match(html, /Répertoire des groupes génériques/);
     assert.doesNotMatch(html, /sans substitution de droit/);
+  });
+
+  // Le décompte ne paraissait que si la recherche avait été plafonnée —
+  // c'est-à-dire jamais quand on filtre, puisque filtrer fait passer sous le
+  // plafond. C'était l'écran où le chiffre manquait le plus.
+  it('compte les résultats, plafonnés ou non', () => {
+    const filtre = rendre('documents', {
+      query: 'QT',
+      rubrique: '4.5',
+      page: 1,
+      documents: { ...RECHERCHE_PLEINE, total: 312, borne: false },
+    });
+    assert.match(filtre, /312 rubriques/);
+    assert.doesNotMatch(filtre, /plus de/);
+
+    const plafonne = rendre('documents', {
+      query: 'QT', rubrique: null, page: 1, documents: RECHERCHE_PLEINE,
+    });
+    assert.match(plafonne, /plus de 3 000 rubriques|plus de 3\u202f000 rubriques/);
+  });
+
+  // Le champ partait vide : affiner imposait de tout retaper. Et il resoumet
+  // dans le mode courant — prérempli mais pointant vers la recherche par nom,
+  // il aurait fait croire qu'on affine quand on change de question.
+  it('la barre porte la requête et resoumet au bon endroit', () => {
+    const html = rendre('documents', {
+      query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+    });
+    assert.match(html, /action="\/documents"/);
+    assert.match(html, /value="intervalle QT"/);
   });
 });

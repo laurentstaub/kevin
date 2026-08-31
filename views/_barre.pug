@@ -21,12 +21,20 @@
 //- et une animation coûtent plus d'attention qu'ils n'économisent de place,
 //- sur une page qu'on lit.
 //-
-//- @param {string} titre  ce qu'on est en train de lire, à droite
-mixin barreSituation(titre)
+//- Le champ porte la requête en cours.
+//-
+//- Il partait vide, si bien qu'affiner « CYP 3A4 » en « CYP 3A4 midazolam »
+//- imposait de tout retaper — alors que la page de résultats par nom, elle,
+//- préremplissait le sien. Deux comportements pour un même champ.
+//-
+//- @param {string} titre   ce qu'on est en train de lire, à droite
+//- @param {string} valeur  la requête en cours, s'il y en a une
+//- @param {string} action  où resoumettre — la page courante
+mixin barreSituation(titre, valeur, action)
   header.barre
     .barre-inner
       a.retour(href="/") ← Accueil
-      +champRecherche('', true)
+      +champRecherche(valeur || '', true, action)
       if titre
         span.barre-titre= titre
         //- Rempli et révélé par documents.js ; sans JavaScript il n'apparaît

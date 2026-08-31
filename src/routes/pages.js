@@ -145,6 +145,7 @@ export function pageRoutes(pool) {
       ]);
 
       res.render('search_page', {
+        title: `« ${query.raw} » · Demander à Kevin`,
         query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
       });
     }),
@@ -186,6 +187,11 @@ export function pageRoutes(pool) {
           });
 
       res.render('documents', {
+        // Aucune route ne passait de titre : toutes les recherches
+        // s'appelaient « Demander à Kevin » dans l'historique, les onglets et
+        // les favoris. Trois onglets ouverts sur trois requêtes étaient
+        // indiscernables.
+        title: `« ${query.raw} »${rubrique ? ` — rubrique ${rubrique}` : ''} · Demander à Kevin`,
         query: query.raw,
         rubrique,
         documents,

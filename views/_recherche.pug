@@ -9,6 +9,11 @@
 //-
 //- @param {string} valeur   ce que porte le champ au chargement
 //- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
+//- @param {string} action  où resoumettre — la page courante, et non toujours
+//-                         la recherche par nom : depuis les documents, taper
+//-                         un mot renvoyait à l'autre mode sans prévenir, et
+//-                         un champ prérempli aurait rendu le piège pire,
+//-                         puisqu'on croit affiner quand on change de question
 //-
 //- « Rechercher… », dans une barre collante, se lisait comme une recherche dans
 //- la page — le réflexe ⌘F. Ce champ cherche un autre médicament : il doit le
@@ -17,9 +22,9 @@
 //- Et sur l'accueil il énumérait « Dénomination ou principe actif », ce qui ne
 //- laissait pas ignorer la recherche plein texte : ça la niait. Le troisième
 //- terme manquait.
-mixin champRecherche(valeur, compact)
+mixin champRecherche(valeur, compact, action)
   .search-wrapper(class=compact ? 'search-compacte' : null)
-    form.search-form(method="GET" action="/search" role="search")
+    form.search-form(method="GET" action=action || "/search" role="search")
       .input-wrapper
         input.search-input(
           type="search"

@@ -45,14 +45,10 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
         col.col-autres
     thead
       tr
-        th.th-molecule(scope="col")
-          if rubrique
-            //- La rubrique choisie se dit, et se défait. Sans ce retour, on
-            //- ne sort d'un filtre qu'en refaisant la recherche.
-            span.th-filtre= `Rubrique ${rubrique}`
-            a.th-defaire(href=lien(null) title="Rechercher dans tout le document") ×
-          else
-            | Molécule
+        //- La rubrique active se disait ici ; elle est passée dans la ligne
+        //- d'état, avec la requête et le décompte, pour que l'état de la
+        //- recherche se lise d'un seul endroit.
+        th.th-molecule(scope="col") Molécule
         each c in colonnesVues
           th.th-rubrique(scope="col")
             a.th-lien(href=lien(c[0]) data-titre=`N'afficher que ${c[0]} ${c[1]}`)= c[0]

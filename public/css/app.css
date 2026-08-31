@@ -1029,22 +1029,6 @@
   border-bottom-color: var(--accent);
 }
 
-/* La rubrique choisie se dit, et se défait : sans ce retour on ne sort d'un
-   filtre qu'en refaisant la recherche. */
-.th-filtre {
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.th-defaire {
-  margin-left: 0.4em;
-  color: var(--faint);
-  text-decoration: none;
-  font-size: var(--fs-sm);
-}
-
-.th-defaire:hover { color: var(--ink); }
-
 /* Le filet est posé sur la dernière ligne du groupe, et non sur le groupe.
    Sur le `tbody`, les moteurs ne s'accordent pas quand les bordures sont
    fusionnées, et il en apparaissait un second entre la ligne du produit et
@@ -1135,6 +1119,42 @@
   font-size: var(--fs-xs);
   pointer-events: none;
 }
+
+/* L'état de la recherche : ce qu'on a cherché, ce qu'on a restreint, ce que
+   ça donne. Il vivait en trois morceaux qui ne se touchaient pas — la barre,
+   l'en-tête du tableau, et un décompte qui ne paraissait que plafonné. */
+.etat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.etat-requete { color: var(--ink); }
+
+.etat-compte {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le jeton se défait d'un clic : un filtre qu'on ne sait pas retirer se
+   retire en refaisant la recherche. */
+.jeton {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  padding: 0.1em 0.5em;
+  background: var(--accent-pale);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.jeton:hover { background: var(--accent); color: #fff; }
+.jeton-croix { color: inherit; opacity: 0.7; }
 
 /* La provenance des substituts. Ce n'est pas une note de bas de page : elle
    dit ce que le titre « Substituer » recouvre, et surtout ce qu'il ne
