@@ -37,8 +37,10 @@ const rendre = (vue, locals = {}) => {
     filter: locals.filter,
   }, mode);
 
+  // `v` et `lien` sont posés par l'application dans app.locals : les fournir
+  // ici est fidèle. `etat` vient de la route, et se déduit donc du cas.
   return pug.renderFile(path.join(ROOT, 'views', `${vue}.pug`), {
-    v: 'test', colonnes: COLONNES, etat, lien, ...locals,
+    v: 'test', lien, colonnes: COLONNES, etat, ...locals,
   });
 };
 

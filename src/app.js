@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
 import { ROOT, config } from './config.js';
+import { lien } from './etat-recherche.js';
 import { securityHeaders, cors, notFound, errorHandler } from './middleware.js';
 import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
@@ -46,6 +47,13 @@ export function createApp(pool) {
   app.use(express.json({ limit: '64kb' }));
   const publics = path.join(ROOT, 'public');
   const production = config.env === 'production';
+
+  // `lien` est une aide de gabarit, pas une donnée de route : la même fonction
+  // pure à chaque rendu. Passée route par route, elle finit par manquer à
+  // celle qu'on a oubliée — c'est arrivé à la page d'accueil, et les tests de
+  // rendu ne pouvaient pas le voir puisqu'ils la fournissaient eux-mêmes.
+  // Posée ici, aucune route ne peut plus l'omettre.
+  app.locals.lien = lien;
 
   if (production) {
     app.locals.v = empreinteAssets(publics);

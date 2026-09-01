@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
-import { lireEtat, lien, titre } from '../etat-recherche.js';
+import { lireEtat, titre } from '../etat-recherche.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -61,7 +61,10 @@ export function pageRoutes(pool) {
       });
 
       res.render('search_page', {
+        etat: lireEtat({}, 'nom'),
+        title: titre(lireEtat({}, 'nom')),
         query: '', filter: 'all', results: null, classes, railActif: 'accueil',
+        colonnes: COLONNES,
       });
     }),
   );
@@ -118,7 +121,6 @@ export function pageRoutes(pool) {
       if (query.tooShort) {
         return res.render('search_page', {
           etat,
-          lien,
           title: titre(etat),
           query: query.raw,
           filter,
@@ -154,7 +156,6 @@ export function pageRoutes(pool) {
 
       res.render('search_page', {
         etat,
-        lien,
         title: titre(etat),
         query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
       });
@@ -195,7 +196,6 @@ export function pageRoutes(pool) {
 
       res.render('documents', {
         etat,
-        lien,
         // Aucune route ne passait de titre : toutes les recherches
         // s'appelaient « Demander à Kevin » dans l'historique, les onglets et
         // les favoris. Il se déduit maintenant de l'état.

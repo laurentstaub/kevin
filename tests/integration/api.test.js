@@ -499,3 +499,48 @@ describe('API', { skip }, () => {
     });
   });
 });
+
+/**
+ * Les pages se rendent, toutes, jusqu'au bout.
+ *
+ * Les tests de rendu unitaires fournissent eux-mêmes les locales des
+ * gabarits : ils ne peuvent donc pas voir qu'une route a oublié d'en passer
+ * une. C'est exactement ce qui est arrivé — la page d'accueil ne passait pas
+ * `lien` et rendait une 500, avec une suite verte.
+ *
+ * Ici c'est l'application entière qui répond, avec ses app.locals et ses
+ * routes : une locale manquante fait une 500, et la 500 fait un échec.
+ */
+describe('rendu des pages', { skip }, () => {
+  let pool;
+  let app;
+
+  before(async () => {
+    pool = new pg.Pool({ connectionString: url });
+    await pool.query(await readFile(path.join(ROOT, 'tests', 'fixtures.sql'), 'utf8'));
+    await pool.query(await readFile(path.join(ROOT, 'sql', 'setup.sql'), 'utf8'));
+    oublierClasses();
+    app = createApp(pool);
+  });
+
+  after(async () => {
+    await pool?.end();
+  });
+
+  const PAGES = [
+    ['/', 'accueil'],
+    ['/search?q=aspirine', 'résultats par nom'],
+    ['/search?q=aspirine&filter=active', 'résultats filtrés par principe actif'],
+    ['/search?q=ab', 'requête trop courte'],
+    ['/documents?q=aspirine', 'plein texte'],
+    ['/documents?q=aspirine&rubrique=4.4', 'plein texte filtré'],
+    ['/documents?q=aspirine&page=2', 'plein texte, seconde page'],
+  ];
+
+  for (const [chemin, quoi] of PAGES) {
+    it(`${quoi} — ${chemin}`, async () => {
+      const res = await request(app).get(chemin).expect(200);
+      assert.match(res.text, /<\/html>/, 'la page est rendue jusqu’au bout');
+    });
+  }
+});
