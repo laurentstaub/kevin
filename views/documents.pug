@@ -34,7 +34,7 @@ block content
           if rubrique
             //- Le jeton se défait d'un clic : un filtre qu'on ne sait pas
             //- retirer se retire en refaisant la recherche.
-            a.jeton(href=`/documents?q=${encodeURIComponent(query)}`
+            a.jeton(href=lien(etat, { rubrique: null })
               title="Rechercher dans tout le document")
               | rubrique #{rubrique}
               span.jeton-croix ×
@@ -58,7 +58,7 @@ block content
     else if documents.resultats.length === 0
       p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
     else
-      +resultatsDocuments(documents, query, false, colonnes, rubrique)
+      +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien)
 
       //- Où l'on en est, et comment aller plus loin.
       //-
@@ -66,15 +66,14 @@ block content
       //- n'en montrait que vingt : le lecteur en concluait, à raison, qu'il
       //- manquait quelque chose. On ne numérote pas les pages — cent cinquante
       //- numéros ne se choisissent pas — on avance et on recule.
-      - var base = `/documents?q=${encodeURIComponent(query)}${rubrique ? `&rubrique=${rubrique}` : ''}`
       - var premier = documents.decalage + 1
       - var dernier = documents.decalage + documents.resultats.length
       nav.pages(aria-label="Pagination des résultats")
         if page > 1
-          a.page-prec(href=`${base}${page > 2 ? `&page=${page - 1}` : ''}`) ← Précédents
+          a.page-prec(href=lien(etat, { page: page - 1 })) ← Précédents
         span.page-rang Résultats #{premier.toLocaleString('fr-FR')} à #{dernier.toLocaleString('fr-FR')}
         if documents.suite
-          a.page-suiv(href=`${base}&page=${page + 1}`) Suivants →
+          a.page-suiv(href=lien(etat, { page: page + 1 })) Suivants →
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

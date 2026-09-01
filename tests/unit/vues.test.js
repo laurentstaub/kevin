@@ -5,6 +5,7 @@ import pug from 'pug';
 import { ROOT } from '../../src/config.js';
 import { COLONNES } from '../../src/recherche-texte.js';
 import { productLinks } from '../../src/links.js';
+import { lireEtat, lien } from '../../src/etat-recherche.js';
 
 /**
  * Les gabarits se rendent, et pas seulement se compilent.
@@ -19,12 +20,27 @@ import { productLinks } from '../../src/links.js';
  * et attrape toute la famille : mixin manquant, variable indéfinie, boucle sur
  * ce qui n'est pas un tableau.
  */
-const rendre = (vue, locals) => pug.renderFile(
-  path.join(ROOT, 'views', `${vue}.pug`),
-  // `colonnes` est fourni par les deux routes qui rendent des trouvailles :
-  // l'omettre ici ferait échouer le rendu pour une raison qui n'existe pas.
-  { v: 'test', colonnes: COLONNES, ...locals },
-);
+/**
+ * Les locales que les deux routes de recherche fournissent toujours.
+ *
+ * L'état se déduit de ce que le cas de test annonce — requête, rubrique, page —
+ * plutôt que d'être posé à la main à côté : c'est la même dérivation qu'en
+ * production, donc un test ne peut pas passer sur un état que la route ne
+ * produirait jamais.
+ */
+const rendre = (vue, locals = {}) => {
+  const mode = vue === 'documents' ? 'documents' : 'nom';
+  const etat = locals.etat ?? lireEtat({
+    q: locals.query,
+    rubrique: locals.rubrique,
+    page: locals.page,
+    filter: locals.filter,
+  }, mode);
+
+  return pug.renderFile(path.join(ROOT, 'views', `${vue}.pug`), {
+    v: 'test', colonnes: COLONNES, etat, lien, ...locals,
+  });
+};
 
 const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
 
@@ -204,7 +220,9 @@ describe('rendu des gabarits', () => {
       documents: RECHERCHE_PLEINE,
     });
     assert.match(html, /Dans les documents/);
-    assert.match(html, /href="\/documents\?q=intervalle%20QT"/);
+    // URLSearchParams encode l'espace en « + », là où encodeURIComponent
+    // produisait « %20 » : les deux se décodent pareil côté serveur.
+    assert.match(html, /href="\/documents\?q=intervalle\+QT"/);
   });
 
   // Le regroupement par molécule ne sert à rien si le numéro de rubrique ne

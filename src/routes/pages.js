@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { config } from '../config.js';
 import { wrap } from '../middleware.js';
-import { parseQuery, parseFilter, isValidCis } from '../validate.js';
+import { parseQuery, isValidCis } from '../validate.js';
+import { lireEtat, lien, titre } from '../etat-recherche.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -14,7 +15,7 @@ import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
-  normaliserRubrique, APERCU, COLONNES, PAR_PAGE,
+  APERCU, COLONNES, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -106,16 +107,23 @@ export function pageRoutes(pool) {
   router.get(
     '/search',
     wrap(async (req, res) => {
+      // L'état est lu une fois, en amont : les gabarits reçoivent un objet et
+      // le rendent, au lieu de recomposer des URL de mémoire.
+      const etat = lireEtat(req.query, 'nom');
       const query = parseQuery(req.query.q);
-      const filter = parseFilter(req.query.filter);
+      const filter = etat.filtre;
 
       if (!query.raw) return res.redirect('/');
 
       if (query.tooShort) {
         return res.render('search_page', {
+          etat,
+          lien,
+          title: titre(etat),
           query: query.raw,
           filter,
           results: null,
+          colonnes: COLONNES,
           notice: `Saisissez au moins ${config.search.minLength} caractères.`,
         });
       }
@@ -145,7 +153,9 @@ export function pageRoutes(pool) {
       ]);
 
       res.render('search_page', {
-        title: `« ${query.raw} » · Demander à Kevin`,
+        etat,
+        lien,
+        title: titre(etat),
         query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
       });
     }),
@@ -162,12 +172,9 @@ export function pageRoutes(pool) {
   router.get(
     '/documents',
     wrap(async (req, res) => {
+      const etat = lireEtat(req.query, 'documents');
       const query = parseQuery(req.query.q);
-      const rubrique = normaliserRubrique(req.query.rubrique);
-      // Vingt extraits par page tiennent l'écran ; il y en a des milliers. Sans
-      // suite, la page annonçait « plus de 3 000 rubriques » et n'en montrait
-      // que vingt, sans dire où étaient les autres.
-      const page = Math.max(1, Math.trunc(Number(req.query.page)) || 1);
+      const { rubrique, page } = etat;
 
       if (!query.raw) return res.redirect('/');
 
@@ -187,11 +194,12 @@ export function pageRoutes(pool) {
           });
 
       res.render('documents', {
+        etat,
+        lien,
         // Aucune route ne passait de titre : toutes les recherches
         // s'appelaient « Demander à Kevin » dans l'historique, les onglets et
-        // les favoris. Trois onglets ouverts sur trois requêtes étaient
-        // indiscernables.
-        title: `« ${query.raw} »${rubrique ? ` — rubrique ${rubrique}` : ''} · Demander à Kevin`,
+        // les favoris. Il se déduit maintenant de l'état.
+        title: titre(etat),
         query: query.raw,
         rubrique,
         documents,

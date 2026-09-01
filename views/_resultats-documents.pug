@@ -29,9 +29,8 @@
 //- @param {boolean} resume    vue courte, au sein de la page de résultats
 //- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
 //- @param {string}  rubrique  la rubrique filtrée, ou rien
-mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
+mixin resultatsDocuments(d, q, resume, colonnes, rubrique, etat, lien)
   - var cles = colonnes.map(function (c) { return c[0] })
-  - var lien = function (r) { return `/documents?q=${encodeURIComponent(q)}` + (r ? `&rubrique=${r}` : '') }
   - var colonnesVues = rubrique ? [] : colonnes
 
   table.trouvailles
@@ -51,7 +50,8 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
         th.th-molecule(scope="col") Molécule
         each c in colonnesVues
           th.th-rubrique(scope="col")
-            a.th-lien(href=lien(c[0]) data-titre=`N'afficher que ${c[0]} ${c[1]}`)= c[0]
+            a.th-lien(href=lien(etat, { rubrique: c[0] })
+              data-titre=`N'afficher que ${c[0]} ${c[1]}`)= c[0]
         if !rubrique
           th.th-autres(scope="col") Autres
 
@@ -74,7 +74,7 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
               a.trouvaille-molecule(href=`/product/${r.code_cis}#${r.ancre}`)= r.molecule
             else
               a.trouvaille-molecule(
-                href=`/search?q=${encodeURIComponent(r.molecule)}&filter=active`
+                href=lien(etat, { mode: 'nom', requete: r.molecule, filtre: 'active' })
                 title=r.molecule
               )= r.molecule
             //- Combien de spécialités le groupe recouvre. Une seule ne se dit
@@ -157,7 +157,7 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique)
 
   if resume && d.total > d.resultats.length
     p.trouvailles-suite
-      a(href=`/documents?q=${encodeURIComponent(q)}`)
+      a(href=lien(etat, { mode: 'documents' }))
         | Voir les #{d.borne ? 'plus de ' : ''}#{d.total.toLocaleString('fr-FR')} rubriques et filtrer →
   else if d.borne
     //- Un décompte plafonné doit se dire plafonné : annoncer « 3 000 » comme

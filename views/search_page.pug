@@ -76,10 +76,10 @@ block content
         p.accueil-exemple
           | Cherchez aussi dans le texte des documents :
           |
-          a(href="/documents?q=allongement+QT") allongement QT
+          a(href=lien({ mode: 'documents', requete: 'allongement QT' })) allongement QT
           |
           span.sep
-          a(href="/documents?q=insuffisance+h%C3%A9patique+s%C3%A9v%C3%A8re") insuffisance hépatique sévère
+          a(href=lien({ mode: 'documents', requete: 'insuffisance hépatique sévère' })) insuffisance hépatique sévère
 
   .recherche
     if notice
@@ -106,9 +106,9 @@ block content
       if results
         //- Les filtres pilotent la liste : ils sont au-dessus d'elle.
         nav.filtres(aria-label="Filtrer les résultats")
-          a.filtre(class=(filter === 'all' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}`) Tous
-          a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=specialty`) Dénomination
-          a.filtre(class=(filter === 'active' ? 'actif' : ''), href=`/search?q=${encodeURIComponent(query)}&filter=active`) Principe actif
+          a.filtre(class=(filter === 'all' ? 'actif' : ''), href=lien(etat, { filtre: 'all' })) Tous
+          a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=lien(etat, { filtre: 'specialty' })) Dénomination
+          a.filtre(class=(filter === 'active' ? 'actif' : ''), href=lien(etat, { filtre: 'active' })) Principe actif
           //- Le quatrième onglet, qui n'existait nulle part.
           //-
           //- La recherche plein texte ne se montrait qu'en bas de page, une
@@ -116,7 +116,7 @@ block content
           //- pouvait chercher « allongement QT ». Elle mène à une autre page,
           //- et c'est assumé — elle porte ses propres filtres par rubrique.
           //- Sa place est ici, là où le lecteur choisit déjà comment chercher.
-          a.filtre.filtre-ailleurs(href=`/documents?q=${encodeURIComponent(query)}`)
+          a.filtre.filtre-ailleurs(href=lien(etat, { mode: 'documents' }))
             | Dans les documents
             if documents && documents.total > 0
               span.filtre-compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
@@ -169,7 +169,7 @@ block content
             h2.groupe-titre
               | Dans les documents
               span.compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
-            +resultatsDocuments(documents, query, true, colonnes, null)
+            +resultatsDocuments(documents, query, true, colonnes, null, etat, lien)
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)
