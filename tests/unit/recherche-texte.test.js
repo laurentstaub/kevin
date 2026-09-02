@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
+  chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery,
   normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
 } from '../../src/recherche-texte.js';
 
@@ -102,7 +102,7 @@ describe('pagination de la recherche plein texte', () => {
   it('demande une ligne de plus et ne la montre pas', async () => {
     const pool = faussePool(21);
     const d = await chercherDansDocuments(pool, 'intervalle QT', { limite: 20 });
-    assert.equal(pool.appels[0][2], 21, 'limite + 1 dans la requête');
+    assert.equal(pool.appels[0][1], 21, 'limite + 1 dans la requête');
     assert.equal(d.resultats.length, 20, 'la ligne témoin ne s’affiche pas');
     assert.equal(d.suite, true);
   });
@@ -116,7 +116,7 @@ describe('pagination de la recherche plein texte', () => {
   it('traduit la page en décalage', async () => {
     const pool = faussePool(5);
     await chercherDansDocuments(pool, 'QT', { limite: 20, decalage: 40 });
-    assert.equal(pool.appels[0][3], 40);
+    assert.equal(pool.appels[0][2], 40);
   });
 
   // Au-delà du plafond il n'y a plus rien à sauter : une page vide au milieu
@@ -124,7 +124,7 @@ describe('pagination de la recherche plein texte', () => {
   it('borne le décalage au plafond de la recherche', async () => {
     const pool = faussePool(0);
     await chercherDansDocuments(pool, 'QT', { decalage: 999999 });
-    assert.equal(pool.appels[0][3], PLAFOND);
+    assert.equal(pool.appels[0][2], PLAFOND);
   });
 
   it('refuse un décalage négatif ou absurde', async () => {
@@ -132,7 +132,7 @@ describe('pagination de la recherche plein texte', () => {
     for (const mauvais of [-5, NaN, undefined, 'douze']) {
       await chercherDansDocuments(pool, 'QT', { decalage: mauvais });
     }
-    for (const params of pool.appels) assert.equal(params[3], 0);
+    for (const params of pool.appels) assert.equal(params[2], 0);
   });
 });
 
@@ -151,7 +151,10 @@ describe('extraitDeRubrique', () => {
   it('désigne la rubrique par sa clé primaire', async () => {
     const pool = espion();
     const r = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '12', requete: 'QT' });
-    assert.deepEqual(pool.vus[0], ['QT', '66297965', 'rcp', 12]);
+    // Les trois clés d'abord, puis les atomes de la requête — leur nombre
+    // varie avec le thésaurus, ils ne peuvent donc venir qu'en dernier.
+    assert.deepEqual(pool.vus[0].slice(0, 3), ['66297965', 'rcp', 12]);
+    assert.ok(pool.vus[0].slice(3).includes('QT'));
     assert.equal(r.numero, '4.5');
   });
 
@@ -169,5 +172,28 @@ describe('extraitDeRubrique', () => {
       assert.equal(await extraitDeRubrique(pool, mauvais), null, JSON.stringify(mauvais));
     }
     assert.equal(pool.vus.length, 0, 'aucune requête n’a été lancée');
+  });
+});
+
+describe('composition de la requête tsquery', () => {
+  // websearch_to_tsquery donne à « OR » la précédence inverse de celle qu'il
+  // nous faut : on compose donc par opérateurs, un websearch par alternative.
+  it('un ET entre les concepts, un OU entre les alternatives', () => {
+    const { sql, params } = composerTsquery([['sertraline'], ['QT', '"torsade de pointes"']], 4);
+    assert.equal(params.length, 3);
+    assert.deepEqual(params, ['sertraline', 'QT', '"torsade de pointes"']);
+    assert.match(sql, /^websearch_to_tsquery\('french_nu', \$4\) && \(websearch_to_tsquery\('french_nu', \$5\) \|\| websearch_to_tsquery\('french_nu', \$6\)\)$/);
+  });
+
+  // Seule la forme dépend de la saisie : jamais une valeur n'entre dans le SQL.
+  it('ne met aucune valeur dans le SQL', () => {
+    const { sql } = composerTsquery([["'); DROP TABLE docs.rcp_sections; --"]], 4);
+    assert.doesNotMatch(sql, /DROP/);
+  });
+
+  it('rend une requête vide, pas une erreur, sans atome', () => {
+    const { sql, params } = composerTsquery([], 4);
+    assert.equal(params.length, 0);
+    assert.match(sql, /websearch_to_tsquery\('french_nu', ''\)/);
   });
 });

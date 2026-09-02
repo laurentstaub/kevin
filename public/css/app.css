@@ -1139,6 +1139,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Ce que le thésaurus a cherché en plus. Une ligne discrète sous l'état :
+   elle explique un résultat qui ne contient pas le mot tapé, et offre le
+   refus en un clic — la requête citée n'est jamais élargie. */
+.elargi {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  max-width: var(--measure);
+  line-height: 1.6;
+}
+
+.elargi-vers { color: var(--muted); }
+
+.elargi-exact {
+  margin-left: 0.6em;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Le jeton se défait d'un clic : un filtre qu'on ne sait pas retirer se
    retire en refaisant la recherche. */
 .jeton {

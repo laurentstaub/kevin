@@ -44,6 +44,25 @@ block content
             else
               | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
 
+        //- Ce qu'on a cherché en plus de ce qui a été tapé.
+        //-
+        //- Le thésaurus élargit « QT » à « torsade de pointes » : le lecteur
+        //- doit le savoir, sinon un résultat qui ne contient pas son mot passe
+        //- pour une erreur. Et il doit pouvoir le refuser — la requête entre
+        //- guillemets n'est jamais élargie, c'est la règle de websearch et la
+        //- nôtre.
+        if documents.elargissements && documents.elargissements.length > 0
+          p.elargi
+            each e, i in documents.elargissements
+              if i > 0
+                |  ·
+              | « #{e.terme} » cherché aussi comme
+              |
+              span.elargi-vers= e.vers.join(', ')
+            |
+            a.elargi-exact(href=lien(etat, { requete: `"${query.replace(/"/g, '')}"` })
+              title="Chercher les mots tapés, et rien d'autre") mot pour mot
+
     //- La rangée d'onglets qui vivait ici a disparu.
     //-
     //- Elle listait les huit mêmes rubriques que l'en-tête du tableau, deux

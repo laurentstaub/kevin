@@ -44,7 +44,7 @@ const rendre = (vue, locals = {}) => {
   });
 };
 
-const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
+const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [] };
 
 // La fiche produit prend une quinzaine de variables. Les fournir toutes est le
 // prix du test : c'est précisément la page où une locale oubliée casse tout.
@@ -469,5 +469,30 @@ describe('rendu des gabarits', () => {
     });
     assert.match(html, /action="\/documents"/);
     assert.match(html, /value="intervalle QT"/);
+  });
+
+  // Le thésaurus a cherché « torsade de pointes » pour « QT » : sans le dire,
+  // un résultat qui ne contient pas le mot tapé passe pour une erreur. Et le
+  // refus est à un clic — la requête citée n'est jamais élargie.
+  it('dit ce que le thésaurus a cherché en plus, et comment le refuser', () => {
+    const html = rendre('documents', {
+      query: 'QT',
+      rubrique: null,
+      page: 1,
+      documents: {
+        ...RECHERCHE_PLEINE,
+        elargissements: [{ terme: 'QT', vers: ['intervalle QT', 'torsade de pointes'] }],
+      },
+    });
+    assert.match(html, /« QT » cherché aussi comme/);
+    assert.match(html, /intervalle QT, torsade de pointes/);
+    assert.match(html, /href="\/documents\?q=%22QT%22"[^>]*>mot pour mot/);
+  });
+
+  it('se tait quand rien n’a été élargi', () => {
+    const html = rendre('documents', {
+      query: 'paracétamol', rubrique: null, page: 1, documents: RECHERCHE_PLEINE,
+    });
+    assert.doesNotMatch(html, /cherché aussi comme/);
   });
 });

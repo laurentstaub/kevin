@@ -57,6 +57,8 @@
  * un chiffre faux.
  */
 
+import { elargir } from './thesaurus.js';
+
 /** La configuration de recherche est posée par sql/recherche.sql. */
 const LANGUE = 'french_nu';
 
@@ -129,7 +131,34 @@ export function normaliserRubrique(valeur) {
  * de l'intervalle QT" » cherché comme locution et non comme quatre mots
  * indépendants, ce qui change tout sur une expression de cette longueur.
  */
-const TSQUERY = `websearch_to_tsquery('${LANGUE}', $1)`;
+/**
+ * La requête tsquery, composée à partir des atomes du thésaurus.
+ *
+ * Une liste d'alternatives par concept, un ET entre les concepts :
+ *   (websearch($4) || websearch($5)) && websearch($6)
+ * Chaque alternative passe séparément par websearch_to_tsquery et en garde la
+ * sûreté — un atome hostile ou vide de sens (« de ») devient une requête vide,
+ * que `&&` et `||` absorbent au lieu de propager. Seule la *forme* de
+ * l'expression dépend de la saisie ; toutes les valeurs sont des paramètres.
+ *
+ * @param {string[][]} atomes - sortie de `elargir`
+ * @param {number} depart - index du premier paramètre libre (1-based)
+ * @returns {{ sql: string, params: string[] }}
+ */
+export function composerTsquery(atomes, depart) {
+  const params = [];
+  const groupes = atomes.map((alternatives) => {
+    const morceaux = alternatives.map((a) => {
+      params.push(a);
+      return `websearch_to_tsquery('${LANGUE}', $${depart + params.length - 1})`;
+    });
+    return morceaux.length === 1 ? morceaux[0] : `(${morceaux.join(' || ')})`;
+  });
+  // Sans atome, une requête qui ne trouve rien — le même comportement qu'une
+  // saisie de mots vides de sens, plutôt qu'une erreur de syntaxe SQL.
+  const sql = groupes.length ? groupes.join(' && ') : `websearch_to_tsquery('${LANGUE}', '')`;
+  return { sql, params };
+}
 
 /**
  * Le vecteur est une colonne, pas une expression.
@@ -192,21 +221,25 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
   if (!q || !/^\d{6,10}$/.test(String(cis ?? '')) || !Number.isFinite(p)) return null;
   if (!['rcp', 'notice'].includes(String(type))) return null;
 
+  // Le même élargissement que la recherche : sans quoi l'aperçu surlignerait
+  // « QT » et pas « torsade de pointes », qui est pourtant ce qui a fait
+  // remonter la rubrique.
+  const tq = composerTsquery(elargir(q).atomes, 4);
   const { rows } = await pool.query(
     `SELECT s.numero, s.libelle, m.denomination_medicament AS denomination,
-            ts_headline('${LANGUE}', s.texte, ${TSQUERY},
+            ts_headline('${LANGUE}', s.texte, ${tq.sql},
               'MaxWords=44, MinWords=22, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'
             ) AS extrait
      FROM docs.rcp_sections s
      JOIN dbpm.cis_bdpm m ON m.code_cis = s.code_cis
-     WHERE s.code_cis = $2 AND s.document_type = $3 AND s.position = $4`,
-    [q, String(cis), String(type), p],
+     WHERE s.code_cis = $1 AND s.document_type = $2 AND s.position = $3`,
+    [String(cis), String(type), p, ...tq.params],
   );
   return rows[0] ?? null;
 }
 
 export async function chercherDansDocuments(pool, requete, options = {}) {
-  const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
+  const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [] };
   const q = String(requete ?? '').trim();
   if (!q) return vide;
 
@@ -226,14 +259,18 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   // panne. Le décalage est borné là où la recherche s'arrête.
   const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
+  const { atomes, elargissements } = elargir(q);
+  // Les trois paramètres fixes d'abord, les atomes ensuite : leur nombre varie.
+  const tq = composerTsquery(atomes, 4);
+
   const { rows } = await pool.query(
-    `WITH q AS (SELECT ${TSQUERY} AS tq),
+    `WITH q AS (SELECT ${tq.sql} AS tq),
      trouve AS (
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
               s.texte, ts_rank_cd(${VECTEUR}, q.tq) AS score
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
-         AND ($2::text IS NULL OR s.numero = $2 OR s.numero LIKE $2 || '.%')
+         AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
        LIMIT ${PLAFOND}
      ),
      -- Les substances en jeu, pour ne nommer que celles-là.
@@ -362,12 +399,12 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      LEFT JOIN chapeau c USING (signature)
      JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
      ORDER BY r.score DESC, r.specialites DESC, b.code_cis
-     LIMIT $3 OFFSET $4`,
+     LIMIT $2 OFFSET $3`,
     // Une ligne de plus que demandé : c'est ainsi qu'on sait s'il existe une
     // page suivante sans compter les molécules distinctes, ce que la requête
     // ne fait nulle part — `occurrences` compte les rubriques avant
     // regroupement, et servirait de plancher trompeur.
-    [q, rubrique, limite + 1, decalage],
+    [rubrique, limite + 1, decalage, ...tq.params],
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;
@@ -377,6 +414,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   return {
     decalage,
     suite,
+    // Ce qu'on a cherché en plus de ce qui a été tapé : le lecteur doit le
+    // savoir, et pouvoir le refuser en citant sa requête.
+    elargissements,
     resultats: page.map(({ occurrences: _, molecule, denomination, ...r }) => ({
       ...r,
       denomination,
