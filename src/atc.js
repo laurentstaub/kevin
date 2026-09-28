@@ -1,4 +1,5 @@
 import { importSql } from './groupes.js';
+import { nomsBiosimilaires } from './biosimilaires.js';
 
 /**
  * Classification ATC (schéma `ref`).
@@ -277,10 +278,10 @@ export async function getMoleculesDeClasse(pool, code) {
  *   remboursables: number, liste1: number, liste2: number,
  *   stupefiants: number, assimiles: number, hopital: number }>}
  */
-export async function getPortraitClasse(pool, code) {
+export async function getPortraitClasse(pool, code, biosimilaires = nomsBiosimilaires()) {
   const { rows } = await pool.query(
     `WITH cis AS (
-       SELECT DISTINCT m.code_cis
+       SELECT DISTINCT m.code_cis, upper(public.f_unaccent(m.denomination_medicament)) AS nom
        FROM ref.cis_atc_mapping a
        JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
        WHERE a.atc_code LIKE $1 || '%'
@@ -304,6 +305,11 @@ export async function getPortraitClasse(pool, code) {
             count(*) FILTER (WHERE EXISTS (
               SELECT 1 FROM dbpm.cis_gener_bdpm g
               WHERE g.code_cis = c.code_cis AND g.type_generique IN ('1', '2', '4')))::int AS generiques,
+            -- Les biosimilaires ne sont pas au Répertoire : on les reconnaît
+            -- à leur nom, sur la liste de référence de l'ANSM (biosimilaires.js).
+            count(*) FILTER (WHERE EXISTS (
+              SELECT 1 FROM unnest($2::text[]) b(n)
+              WHERE c.nom = b.n OR c.nom LIKE b.n || ' %' OR c.nom LIKE b.n || ',%'))::int AS biosimilaires,
             count(*) FILTER (WHERE EXISTS (
               SELECT 1 FROM dbpm.cis_cip_bdpm p
               WHERE p.code_cis = c.code_cis
@@ -315,7 +321,7 @@ export async function getPortraitClasse(pool, code) {
             count(*) FILTER (WHERE d.hopital)::int AS hopital
      FROM cis c
      LEFT JOIN cpd d USING (code_cis)`,
-    [code],
+    [code, biosimilaires],
   );
   const p = rows[0];
   return p && p.specialites > 0 ? p : null;
@@ -341,7 +347,11 @@ export function lirePortrait(p) {
   const pluriel = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
 
   return [
-    { valeur: part(p.generiques), libelle: 'génériques' },
+    // Une classe de biologiques n'a pas de génériques, elle a des
+    // biosimilaires : « 0 % génériques » sur l'énoxaparine était juste et
+    // trompeur. Le pourcentage de génériques ne se tait que dans ce cas.
+    (p.generiques || !p.biosimilaires) && { valeur: part(p.generiques), libelle: 'génériques' },
+    p.biosimilaires && { valeur: part(p.biosimilaires), libelle: 'biosimilaires' },
     { valeur: part(p.remboursables), libelle: 'remboursables' },
     p.liste1 && { valeur: part(p.liste1), libelle: 'liste I' },
     p.liste2 && { valeur: part(p.liste2), libelle: 'liste II' },

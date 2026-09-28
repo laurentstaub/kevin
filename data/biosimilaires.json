@@ -1,0 +1,39 @@
+{
+  "note": "Liste de référence des groupes biologiques similaires (CSP, art. R. 5121-9-1). Noms commerciaux seuls, sans dosage. Relevée automatiquement sur la page de l'ANSM : à vérifier contre la source avant de dater verifiee_le.",
+  "source": {
+    "titre": "ANSM — Médicaments biosimilaires, liste de référence des groupes biologiques similaires",
+    "url": "https://ansm.sante.fr/documents/reference/medicaments-biosimilaires",
+    "mise_a_jour": "2026-09-25",
+    "extraite_le": "2026-09-28",
+    "verifiee_le": null
+  },
+  "groupes": [
+    { "substance": "adalimumab", "references": ["HUMIRA"], "biosimilaires": ["AMGEVITA", "AMSPARITY", "HUKYNDRA", "HULIO", "HYRIMOZ", "HEFIYA", "IDACIO", "IMRALDI", "KROMEYA", "LIBMYRIS", "SOLYMBIC", "YUFLYMA"] },
+    { "substance": "aflibercept", "references": ["EYLEA"], "biosimilaires": ["AFQLIR", "AFIVEG", "AHZANTIVE", "BAIAMA", "EYDENZELT", "EIYZEY", "EYLUXVI", "MYNZEPLI", "OPUVIZ", "PAVBLU", "VGENFLI", "YESAFILI"] },
+    { "substance": "bévacizumab", "references": ["AVASTIN"], "biosimilaires": ["ABEVMY", "ALYMSYS", "AVZIVI", "AYBINTIO", "EQUIDACENT", "MVASI", "ONBEVZI", "OYAVAS", "VEGZELMA", "ZIRABEV"] },
+    { "substance": "dénosumab", "references": ["PROLIA"], "biosimilaires": ["ACVYBRA", "CONEXXENCE", "EVFRAXY", "IZAMBY"] },
+    { "substance": "dénosumab", "references": ["XGEVA"], "biosimilaires": ["BILPREVDA", "BOMYNTRA", "DEGEVMA", "DENBRAYCE", "ENWYLMA", "JUBEREQ", "OSENVELT", "VEVZUO", "WYOST", "XBONZY", "XBRYK", "YAXWER", "ZVOGRA"] },
+    { "substance": "éculizumab", "references": ["SOLIRIS"], "biosimilaires": ["BEKEMV", "EPYSQLI"] },
+    { "substance": "énoxaparine", "references": ["LOVENOX"], "biosimilaires": ["ENOXAPARINE ARROW", "ENOXAPARINE BECAT", "ENOXAPARINE BIOGARAN", "ENOXAPARINE CRUSIA", "ENOXAPARINE EG", "ENOXAPARINE LEDRAXEN", "ENOXAPARINE SANOFI", "ENOXAPARINE TEVA", "ENOXAPARINE VENIPHARM", "ENOXAPARINE ZENTIVA", "GHEMAXAN", "INHIXA", "THORINANE"] },
+    { "substance": "époétine", "references": ["EPREX"], "biosimilaires": ["ABSEAMED", "BINOCRIT", "EPOETINE ALFA HEXAL", "RETACRIT", "SILAPO"] },
+    { "substance": "étanercept", "references": ["ENBREL"], "biosimilaires": ["BENEPALI", "ERELZI", "FUBELV", "LIFMIOR", "NEPEXTO"] },
+    { "substance": "filgrastim", "references": ["NEUPOGEN"], "biosimilaires": ["ACCOFIL", "FILGRASTIM HEXAL", "GRASTOFIL", "NIVESTIM", "RATIOGRASTIM", "TEVAGRASTIM", "ZARZIO", "ZEFYLTI"] },
+    { "substance": "follitropine alfa", "references": ["GONAL-F"], "biosimilaires": ["BEMFOLA", "OVALEAP"] },
+    { "substance": "golimumab", "references": ["SIMPONI"], "biosimilaires": ["GOBIVAZ", "GOTENFIA"] },
+    { "substance": "infliximab", "references": ["REMICADE"], "biosimilaires": ["FLIXABI", "INFLECTRA", "REMSIMA", "ZESSLY"] },
+    { "substance": "insuline asparte", "references": ["NOVORAPID"], "biosimilaires": ["DAZPARDA", "INSULINE ASPARTE SANOFI", "KIXELLE"] },
+    { "substance": "insuline glargine", "references": ["LANTUS"], "biosimilaires": ["ABASAGLAR", "LUSDUNA", "ONDIBTA", "SEMGLEE"] },
+    { "substance": "insuline lispro", "references": ["HUMALOG"], "biosimilaires": ["INSULINE LISPRO SANOFI", "BYSUMLOG"] },
+    { "substance": "natalizumab", "references": ["TYSABRI"], "biosimilaires": ["TYRUKO"] },
+    { "substance": "omalizumab", "references": ["XOLAIR"], "biosimilaires": ["OMLYCLO"] },
+    { "substance": "pegfilgrastim", "references": ["NEULASTA"], "biosimilaires": ["CEGFILA", "DYRUPEG", "FULPHILA", "GRASUSTEK", "NYVEPRIA", "PELGRAZ", "PELMEG", "STIMUFEND", "UDENYCA", "VIVLIPEG", "ZIEXTENZO"] },
+    { "substance": "pertuzumab", "references": ["PERJETA"], "biosimilaires": ["POHERDY"] },
+    { "substance": "ranibizumab", "references": ["LUCENTIS"], "biosimilaires": ["BYOOVIZ", "EPRUVY", "RANIVISIO", "RANLUSPEC", "REXATILUX", "RIMMYRAH", "XIMLUCI"] },
+    { "substance": "rituximab", "references": ["MABTHERA"], "biosimilaires": ["BLITZIMA", "ITUXREDI", "RITEMVIA", "RITUZENA", "RIXATHON", "RIXIMYO", "RUXIENCE", "TRUXIMA"] },
+    { "substance": "somatropine", "references": ["GENOTONORM"], "biosimilaires": ["OMNITROPE"] },
+    { "substance": "tériparatide", "references": ["FORSTEO"], "biosimilaires": ["LIVOGIVA", "MOVYMIA", "SONDELBAY", "TERROSA", "ZANDORIAH"] },
+    { "substance": "tocilizumab", "references": ["ROACTEMRA"], "biosimilaires": ["AVTOZMA", "TOFIDENCE", "TUYORY", "TYENNE"] },
+    { "substance": "trastuzumab", "references": ["HERCEPTIN"], "biosimilaires": ["DAZUBLYS", "HERWENDA", "HERZUMA", "KANJINTI", "OGIVRI", "ONTRUZANT", "TRAZIMERA", "TUZNUE", "ZERCEPAC"] },
+    { "substance": "ustékinumab", "references": ["STELARA"], "biosimilaires": ["FYMSKINA", "IMULDOSA", "OTULFI", "PYZCHIVA", "QOYVOLMA", "STEQEYMA", "USGENA", "USYMRO", "USRENTY", "UZPRUVO", "WEZENLA", "YESINTEK"] }
+  ]
+}

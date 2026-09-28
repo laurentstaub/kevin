@@ -46,6 +46,10 @@ mixin formes(groupes)
               //- le nom, et se retrouve à la même place d'une ligne à l'autre.
               if n.princeps
                 span.marque Princeps
+              else if n.biologique === 'reference'
+                span.marque(title="Médicament biologique de référence de son groupe biosimilaire (ANSM)") Référence
+              if n.biologique === 'biosimilaire'
+                span.marque(title="Inscrit sur la liste de référence des groupes biologiques similaires (ANSM)") Biosimilaire
               if n.importation
                 span.marque Importation parallèle
               if n.dosages.length > 1

@@ -23,6 +23,8 @@
  * Pure, pour être testée sans base.
  */
 
+import { statutBiologique } from './biosimilaires.js';
+
 const nombre = (s) => Number(String(s).replace(/\s/g, '').replace(',', '.'));
 
 /** « DUROGESIC 100 microgrammes/heure, dispositif transdermique » → parties. */
@@ -85,7 +87,8 @@ export function regrouperSpecialites(lignes) {
     const cle = `${nom}|${l.titulaires ?? ''}|${Boolean(l.importation)}`;
     if (!f.noms.has(cle)) {
       f.noms.set(cle, {
-        nom, titulaires: l.titulaires, princeps: false, importation: Boolean(l.importation), brut: [],
+        nom, titulaires: l.titulaires, princeps: false, importation: Boolean(l.importation),
+        biologique: statutBiologique(l.denomination), brut: [],
       });
     }
     const n = f.noms.get(cle);
@@ -100,7 +103,13 @@ export function regrouperSpecialites(lignes) {
     .map((f) => ({
       forme: f.forme,
       total: f.total,
-      noms: [...f.noms.values()].map(({ brut, ...n }) => {
+      // La référence d'abord — princeps du Répertoire ou médicament biologique
+      // de référence : LOVENOX avant INHIXA, que l'alphabet mettait devant.
+      // Le tri est stable, l'ordre de la requête vaut pour le reste.
+      noms: [...f.noms.values()]
+        .sort((a, b) => Number(b.princeps || b.biologique === 'reference')
+          - Number(a.princeps || a.biologique === 'reference'))
+        .map(({ brut, ...n }) => {
         const lus = brut.map((b) => ({ ...b, lu: lireDosage(b.dosage) }));
         const unites = new Set(lus.map((b) => b.lu?.unite));
         const chiffres = new Set(lus.map((b) => b.lu?.valeur));

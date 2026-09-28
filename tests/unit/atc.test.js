@@ -69,4 +69,11 @@ describe('lirePortrait', () => {
     assert.deepEqual(lirePortrait(null), []);
     assert.deepEqual(lirePortrait({ ...base, specialites: 0 }), []);
   });
+
+  // Une classe de biologiques : pas de « 0 % génériques », des biosimilaires.
+  it('dit les biosimilaires, et tait les génériques absents', () => {
+    const lignes = lirePortrait({ ...base, generiques: 0, biosimilaires: 300 });
+    assert.equal(lignes[0].libelle, 'biosimilaires');
+    assert.ok(!lignes.some((l) => l.libelle === 'génériques'));
+  });
 });
