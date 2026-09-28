@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre } from '../etat-recherche.js';
+import { lireFiche, listerFiches, lireCalcul, publiee } from '../fiches.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -210,6 +211,38 @@ export function pageRoutes(pool) {
         notice: query.tooShort
           ? `Saisissez au moins ${config.search.minLength} caractères.`
           : null,
+      });
+    }),
+  );
+
+  /**
+   * Fiches thématiques.
+   *
+   * Une fiche non relue existe dans le dépôt et se prévisualise en
+   * développement, bandeau « brouillon » en tête ; en production elle
+   * n'existe pas. Une page médicale publiée sans relecture datée serait
+   * exactement ce que la relecture existe pour empêcher.
+   */
+  const visible = (fiche) => config.env !== 'production' || publiee(fiche);
+
+  router.get(
+    '/fiches',
+    wrap(async (req, res) => {
+      const fiches = listerFiches().filter(visible);
+      res.render('fiches', { title: 'Fiches · Demander à Kevin', fiches });
+    }),
+  );
+
+  router.get(
+    '/fiches/:slug',
+    wrap(async (req, res, next) => {
+      const fiche = lireFiche(req.params.slug);
+      if (!fiche || !visible(fiche)) return next();
+      return res.render('fiche', {
+        title: `${fiche.meta.titre ?? fiche.slug} · Demander à Kevin`,
+        fiche,
+        calcul: lireCalcul(fiche.slug),
+        brouillon: !publiee(fiche),
       });
     }),
   );

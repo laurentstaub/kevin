@@ -1,0 +1,13 @@
+{
+  "titre": "Substances susceptibles de donner des torsades de pointes",
+  "amorce": {
+    "source": "ANSM — Thésaurus des interactions médicamenteuses",
+    "version": "15 septembre 2023, version finale : l'ANSM a cessé de le mettre à jour et renvoie aux RCP",
+    "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
+    "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf",
+    "extraite_le": null
+  },
+  "relu_par": null,
+  "relu_le": null,
+  "inscriptions": []
+}

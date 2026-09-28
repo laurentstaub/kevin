@@ -1,0 +1,80 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+
+//- Une fiche thématique, telle qu'elle est publiée.
+//-
+//- L'en-tête dit qui l'a écrite, quand elle a été relue, et d'après quoi. Le
+//- texte libre vient du Markdown ; tout ce qui porte sur une molécule vient du
+//- calcul, cité du RCP, avec son lien. Rien n'est réécrit par la machine.
+
+block styles
+  link(rel="stylesheet", href=`/css/fiche.css?v=${v}`)
+
+block content
+  +barreSituation(fiche.meta.titre || fiche.slug)
+
+  main.corps
+    if brouillon
+      //- Visible en développement seulement : en production, une fiche non
+      //- relue n'a pas d'adresse.
+      p.brouillon
+        strong Brouillon
+        |  — non relu, non publié. Dater « relu: » dans l'en-tête pour publier.
+
+    header.fiche-entete
+      h1.fiche-titre= fiche.meta.titre || fiche.slug
+      p.fiche-meta
+        if fiche.meta.auteur
+          span= fiche.meta.auteur
+        if fiche.meta.relu
+          span Relu le #{new Date(fiche.meta.relu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+
+    each bloc in fiche.blocs
+      if bloc.type === 'html'
+        .fiche-texte!= bloc.html
+      else if bloc.nom === 'substances'
+        if !calcul
+          p.vide La liste n'a pas encore été calculée — npm run build-fiches.
+        else if calcul.lignes.length === 0
+          //- Une liste vide se dit : une fiche publiée qui ne montrerait rien
+          //- laisserait croire qu'aucune substance n'est concernée.
+          p.vide La liste n'est pas encore établie.
+        else
+          table.fiche-substances
+            caption.sr-only= calcul.liste.titre
+            thead
+              tr
+                th(scope="col") Substance
+                th(scope="col") Ce qu'en dit le RCP
+            tbody
+              each l in calcul.lignes
+                tr
+                  th(scope="row")
+                    span.substance= l.substance
+                    if l.specialite
+                      a.specialite(href=`/product/${l.specialite.cis}`)= l.specialite.denomination
+                    if l.origine === 'ajout'
+                      //- Hors de l'amorce ANSM : l'inscription est un choix
+                      //- éditorial, et le lecteur doit pouvoir le distinguer.
+                      span.origine(title=l.motif || null) Ajout du #{l.valide_le}
+                  td
+                    if l.citations.length
+                      each c in l.citations
+                        blockquote.citation
+                          p= c.phrase
+                          footer
+                            a(href=`/product/${l.specialite.cis}#${c.ancre}`) #{c.numero} #{c.libelle}
+                    else if l.specialite
+                      p.manque Aucune phrase trouvée dans les rubriques #{calcul.rubriques.join(', ')} de ce RCP.
+                    else
+                      p.manque Aucune spécialité commercialisée.
+          p.fiche-source
+            | Liste : #{calcul.liste.amorce.source}, #{calcul.liste.amorce.version}.
+            if calcul.liste.relu_le
+              |  Complétée et relue le #{calcul.liste.relu_le}.
+            br
+            | Citations : RCP de la base de données publique des médicaments, calculées le #{calcul.calcule_le}. Le RCP fait foi.
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

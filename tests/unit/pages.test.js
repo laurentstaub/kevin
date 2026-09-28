@@ -37,6 +37,9 @@ const PAGES = [
   ['/documents?q=aspirine&rubrique=4.4', 'plein texte filtré'],
   ['/documents?q=aspirine&page=2', 'plein texte, seconde page'],
   ['/documents?q=ab', 'plein texte, requête trop courte'],
+  // Hors production, une fiche non relue se prévisualise.
+  ['/fiches', 'index des fiches'],
+  ['/fiches/torsadogenes', 'fiche torsadogènes (brouillon)'],
 ];
 
 describe('rendu des pages, de bout en bout', () => {
@@ -49,6 +52,11 @@ describe('rendu des pages, de bout en bout', () => {
       assert.match(res.text, /<\/html>/, 'la page est rendue jusqu’au bout');
     });
   }
+
+  it('une fiche inconnue est une 404', async () => {
+    await request(app).get('/fiches/inconnue').expect(404);
+    await request(app).get('/fiches/..%2Fpackage').expect(404);
+  });
 
   // Une recherche vide n'est pas une page : elle renvoie à l'accueil.
   it('renvoie à l’accueil sans requête', async () => {
