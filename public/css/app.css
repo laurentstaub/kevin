@@ -469,7 +469,7 @@
 
 /* Les dosages sont les liens : chacun mène à sa spécialité. */
 .specialite-dosages { margin-left: 0.5em; font-variant-numeric: tabular-nums; }
-.specialite-dosage { color: var(--accent); text-decoration: none; }
+.specialite-dosage { color: var(--accent); text-decoration: none; white-space: nowrap; }
 .specialite-dosage:hover { text-decoration: underline; text-underline-offset: 2px; }
 .sep-point { color: var(--faint); }
 

@@ -65,4 +65,29 @@ describe('regrouperSpecialites', () => {
     ]);
     assert.equal(f.noms.length, 2);
   });
+
+  // L'énoxaparine : « 4 000 UI (40 mg)/0,4 mL ». La tête suffit à distinguer
+  // les seringues ; le reste passe en infobulle, et 2 000 vient avant 10 000.
+  it('lit la tête d’un dosage composé, garde le détail', () => {
+    const [f] = regrouperSpecialites([
+      sp('1', 'LOVENOX 10 000 UI (100 mg)/1 ml, solution injectable', 'solution injectable'),
+      sp('2', 'LOVENOX 2 000 UI (20 mg)/0,2 ml, solution injectable', 'solution injectable'),
+      sp('3', 'LOVENOX 4 000 UI (40 mg)/0,4 ml, solution injectable', 'solution injectable'),
+    ]);
+    const n = f.noms[0];
+    assert.equal(n.unite, 'UI');
+    assert.deepEqual(n.dosages.map((d) => d.libelle), ['2\u202f000', '4\u202f000', '10\u202f000']);
+    assert.equal(n.dosages[0].detail, '2 000 UI (20 mg)/0,2 ml');
+  });
+
+  // Une association : 500 mg/30 mg et 500 mg/8 mg ont la même tête — on
+  // écrit tout, sans quoi deux liens porteraient « 500 ».
+  it('écrit tout quand la tête ne distingue pas', () => {
+    const [f] = regrouperSpecialites([
+      sp('1', 'X 500 mg/30 mg, comprimé', 'comprimé'),
+      sp('2', 'X 500 mg/8 mg, comprimé', 'comprimé'),
+    ]);
+    assert.equal(f.noms[0].unite, null);
+    assert.deepEqual(f.noms[0].dosages.map((d) => d.libelle), ['500 mg/30 mg', '500 mg/8 mg']);
+  });
 });

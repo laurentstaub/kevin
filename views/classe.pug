@@ -53,7 +53,7 @@ mixin formes(groupes)
                   each d, i in n.dosages
                     if i > 0
                       span.sep-point  · 
-                    a.specialite-dosage(href=`/product/${d.id}`)= d.libelle
+                    a.specialite-dosage(href=`/product/${d.id}` title=d.detail)= d.libelle
                   if n.unite
                     |  #{n.unite}
             if n.titulaires

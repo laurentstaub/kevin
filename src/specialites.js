@@ -37,14 +37,30 @@ export function decomposer(denomination) {
 }
 
 /**
- * « 100 microgrammes/heure » → { valeur: 100, unite: 'microgrammes/heure' }.
- * Null quand le dosage n'est pas « nombre unité » : une association
- * (« 500 mg/30 mg »), un dosage suivi d'une mention (« 0,33 mg/ml SANS
- * SUCRE ») se montrent alors en entier.
+ * « 100 microgrammes/heure » → { valeur: 100, chiffre: '100', unite: 'microgrammes/heure' }.
+ *
+ * Quand le dosage porte plus qu'un nombre et une unité — l'énoxaparine,
+ * « 4 000 UI (40 mg)/0,4 mL » —, on en lit la tête, « 4 000 UI », et on garde
+ * le reste en `detail` : la ligne affiche la tête, l'infobulle et la fiche le
+ * détail. Sept dosages d'énoxaparine écrits en entier faisaient trois lignes
+ * illisibles par laboratoire.
+ *
+ * Null quand rien ne se lit, et `regrouperSpecialites` décide ensuite si la
+ * tête suffit à distinguer les spécialités d'une ligne.
  */
+const NOMBRE = String.raw`(\d{1,3}(?:[\s  ]\d{3})+|\d+)(?:[.,](\d+))?`;
 function lireDosage(dosage) {
-  const m = /^(\d[\d\s]*(?:[.,]\d+)?)\s*([^\d\s][^\d]*)$/.exec(dosage);
-  return m ? { valeur: nombre(m[1]), chiffre: m[1].trim(), unite: m[2].trim() } : null;
+  const entier = new RegExp(`^${NOMBRE}\\s*([^\\d\\s][^\\d]*)$`).exec(dosage);
+  const tete = entier ?? new RegExp(`^${NOMBRE}\\s*([A-Za-zµμ%]+(?:/[A-Za-zµμ]+)?)(?=[\\s(]|$)`).exec(dosage);
+  if (!tete) return null;
+  const chiffre = tete[2] ? `${tete[1]},${tete[2]}` : tete[1];
+  return {
+    valeur: nombre(chiffre),
+    // L'espace des milliers devient insécable : « 4 000 » ne se coupe plus.
+    chiffre: chiffre.replace(/[\s ]/g, ' '),
+    unite: tete[3].trim(),
+    detail: entier ? null : dosage,
+  };
 }
 
 const minuscule = (s) => String(s ?? '').trim().toLowerCase();
@@ -87,14 +103,20 @@ export function regrouperSpecialites(lignes) {
       noms: [...f.noms.values()].map(({ brut, ...n }) => {
         const lus = brut.map((b) => ({ ...b, lu: lireDosage(b.dosage) }));
         const unites = new Set(lus.map((b) => b.lu?.unite));
-        // Une seule unité pour tous les dosages : on l'écrit une fois, à la fin.
-        const commune = lus.every((b) => b.lu) && unites.size === 1 ? [...unites][0] : null;
+        const chiffres = new Set(lus.map((b) => b.lu?.valeur));
+        // Une seule unité, et des chiffres qui suffisent à distinguer chaque
+        // spécialité : on écrit l'unité une fois, à la fin. Deux « 0,33 mg »
+        // qui ne diffèrent que par « SANS SUCRE » s'écrivent en entier.
+        const commune = lus.every((b) => b.lu) && unites.size === 1 && chiffres.size === lus.length
+          ? [...unites][0] : null;
         const ordonnes = commune ? [...lus].sort((a, b) => a.lu.valeur - b.lu.valeur) : lus;
         return {
           ...n,
           unite: commune,
           dosages: ordonnes.map((b) => ({
             id: b.id,
+            // Ce que la tête tait — « (40 mg)/0,4 mL » — reste en infobulle.
+            detail: commune ? b.lu.detail : null,
             // Sans dosage, le lien porte la dénomination entière : c'est la
             // seule chose qui distingue deux spécialités du même nom.
             libelle: commune ? b.lu.chiffre : (b.dosage || b.denomination),
