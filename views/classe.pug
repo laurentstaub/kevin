@@ -85,15 +85,19 @@ block content
 
     if classe.enfants.length > 0
       nav.classes(aria-label="Sous-classes")
-        h2.classes-titre Sous-classes
+        //- L'unité se dit une fois, en tête de colonne, et non à chaque ligne :
+        //- « 21 spécialités commercialisées » répété quatorze fois noyait le
+        //- chiffre, qui est ce qu'on compare d'une ligne à l'autre.
+        h2.classes-titre
+          | Sous-classes
+          span.classes-unite Spécialités commercialisées
         ul.classes-liste
           each enfant in classe.enfants
             li
               a.classe-lien(href=`/classe/${enfant.code}`)
                 span.classe-code= enfant.code
                 span.classe-label= enfant.label
-                span.classe-compte
-                  +specialites(enfant.specialites)
+                span.classe-compte= enfant.specialites.toLocaleString('fr-FR')
 
     //- Ce que la classe contient, et non comment elle se découpe.
     //-
@@ -109,16 +113,15 @@ block content
       - var reste = molecules.slice(TETE)
       nav.classes.classes-molecules(aria-label="Molécules de la classe")
         h2.classes-titre
-          | Molécules
-          span.compte= molecules.length.toLocaleString('fr-FR')
+          | Molécules · #{molecules.length.toLocaleString('fr-FR')}
+          span.classes-unite Spécialités commercialisées
         ul.classes-liste
           each molecule in principales
             li
               a.classe-lien(href=`/classe/${molecule.code}`)
                 span.classe-code= molecule.code
                 span.classe-label= molecule.label
-                span.classe-compte
-                  +specialites(molecule.specialites)
+                span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
         if reste.length > 0
           details.molecules-reste
             summary.molecules-plus #{reste.length.toLocaleString('fr-FR')} autre#{reste.length > 1 ? 's' : ''} molécule#{reste.length > 1 ? 's' : ''}
@@ -128,8 +131,7 @@ block content
                   a.classe-lien(href=`/classe/${molecule.code}`)
                     span.classe-code= molecule.code
                     span.classe-label= molecule.label
-                    span.classe-compte
-                      +specialites(molecule.specialites)
+                    span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
 
     //- À la feuille, les spécialités elles-mêmes : une ligne par code CIS.
     //- Elles étaient regroupées par nom commercial, « 3 dosages et formes »

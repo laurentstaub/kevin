@@ -93,14 +93,16 @@ block content
     //- nom — et rendent visible ce que la base contient.
     if !results && classes && classes.length > 0
       nav.classes(aria-label="Parcourir par classe thérapeutique")
-        h2.classes-titre Parcourir par classe thérapeutique
+        h2.classes-titre
+          | Parcourir par classe thérapeutique
+          span.classes-unite Spécialités commercialisées
         ul.classes-liste
           each classe in classes
             li
               a.classe-lien(href=`/classe/${classe.code}`)
                 span.classe-code= classe.code
                 span.classe-label= classe.label
-                span.classe-compte #{classe.specialites.toLocaleString('fr-FR')} spécialités
+                span.classe-compte= classe.specialites.toLocaleString('fr-FR')
 
     #results
       if results

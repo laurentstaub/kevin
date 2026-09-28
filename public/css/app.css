@@ -450,8 +450,10 @@
 
 /* ---------- Classes thérapeutiques ---------- */
 
-/* Entrée par le besoin plutôt que par le nom. Une grille de liens, alignée sur
-   le reste : des filets, pas des cartes. */
+/* Entrée par le besoin plutôt que par le nom. Une ligne par classe — code,
+   libellé, décompte aligné à droite — et non deux colonnes : la liste est
+   triée, et deux colonnes la faisaient lire en zigzag (N, C, puis L, A…), le
+   décompte d'une ligne ne se comparant pas à celui d'en face. */
 .classes {
   margin-top: var(--sp-6);
 }
@@ -471,9 +473,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 0;
 }
 
 .classes-liste li {
@@ -495,8 +494,8 @@
      
      Une seule valeur, dimensionnée sur le pire cas possible, plutôt que deux
      qui reposent sur une supposition à propos des données. */
-  grid-template-columns: 4.2rem 1fr;
-  gap: 0 var(--sp-1);
+  grid-template-columns: 4.2rem 1fr auto;
+  gap: 0 var(--sp-2);
   align-items: baseline;
   padding: var(--sp-1) var(--sp-1) var(--sp-1) 0;
   text-decoration: none;
@@ -521,8 +520,8 @@
 }
 
 .classe-compte {
-  grid-column: 2;
-  font-size: var(--fs-xs);
+  text-align: right;
+  font-size: var(--fs-sm);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -530,9 +529,10 @@
 /* Le reste des molécules. Replié, parce qu'une liste écourtée en silence se
    lit comme une liste complète — et déplié d'un clic, parce qu'aucune n'est
    assez secondaire pour mériter une seconde page. */
-.classes-titre .compte {
+.classes-titre .classes-unite {
   float: right;
-  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .molecules-plus {
