@@ -6,6 +6,7 @@ import { lireEtat, titre } from '../etat-recherche.js';
 import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
+import { regrouperSpecialites } from '../specialites.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -123,7 +124,10 @@ export function pageRoutes(pool) {
       const chapeau = lireFiche(code.toLowerCase(), DOSSIER_CLASSES);
 
       res.render('classe', {
-        classe, specialitesListe, feuille, molecules, railActif: code[0],
+        classe, feuille, molecules, railActif: code[0],
+        // Rangées par forme, puis par nom, les dosages à la suite.
+        commercialisees: regrouperSpecialites(specialitesListe.filter((sp) => sp.commercialise)),
+        retirees: regrouperSpecialites(specialitesListe.filter((sp) => !sp.commercialise)),
         portrait: lirePortrait(portrait),
         chapeau: chapeau && visible(chapeau) ? chapeau : null,
       });

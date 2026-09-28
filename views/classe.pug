@@ -19,20 +19,45 @@ mixin specialites(n)
   else
     | Aucune spécialité commercialisée
 
-//- Une ligne par spécialité : la dénomination, le laboratoire à droite. La
-//- ligne de recherche — nom, puis laboratoire dessous, en capitales espacées
-//- — doublait la hauteur de chaque entrée pour un renseignement secondaire.
-mixin ligneSpecialite(sp)
-  li
-    a.specialite-lien(href=`/product/${sp.id}`)
-      span.specialite-nom
-        = sp.denomination
-        if sp.princeps
-          span.marque Princeps
-        if sp.importation
-          span.marque Importation parallèle
-      if sp.titulaires
-        span.specialite-labo= sp.titulaires
+//- Les spécialités d'une forme : une ligne par nom, les dosages à la suite,
+//- chacun lien vers sa spécialité. « ABSTRAL 100 · 200 · 300 microgrammes »
+//- au lieu de trois lignes qui ne diffèrent que d'un chiffre.
+mixin formes(groupes)
+  each f in groupes
+    //- Une seule forme : pas de sous-titre, il ne distinguerait rien.
+    if groupes.length > 1
+      h3.forme-titre
+        | #{f.forme.charAt(0).toUpperCase() + f.forme.slice(1)}
+        span.compte= f.total.toLocaleString('fr-FR')
+    ul.liste.specialites-liste
+      each n in f.noms
+        li
+          .specialite-ligne
+            span.specialite-nom
+              if n.dosages.length === 1
+                - var seul = n.dosages[0]
+                a.specialite-lien(href=`/product/${seul.id}`)
+                  = n.nom
+                  if seul.libelle.indexOf(n.nom) !== 0
+                    |  #{seul.libelle}#{n.unite ? ' ' + n.unite : ''}
+              else
+                = n.nom
+              //- La mention suit le nom, avant les dosages : elle qualifie
+              //- le nom, et se retrouve à la même place d'une ligne à l'autre.
+              if n.princeps
+                span.marque Princeps
+              if n.importation
+                span.marque Importation parallèle
+              if n.dosages.length > 1
+                span.specialite-dosages
+                  each d, i in n.dosages
+                    if i > 0
+                      span.sep-point  · 
+                    a.specialite-dosage(href=`/product/${d.id}`)= d.libelle
+                  if n.unite
+                    |  #{n.unite}
+            if n.titulaires
+              span.specialite-labo= n.titulaires
 
 block content
   +barreSituation(classe.label)
@@ -143,23 +168,19 @@ block content
     //- cachant le 5 mg et le 10 mg derrière un clic ; c'est pourtant la
     //- spécialité qu'on cherche ici.
     if feuille
-      - var commercialisees = specialitesListe.filter(function (s) { return s.commercialise })
-      - var retirees = specialitesListe.filter(function (s) { return !s.commercialise })
+      - var nombre = function (g) { return g.reduce(function (t, f) { return t + f.total }, 0) }
       section.groupe
         h2.groupe-titre
           | Spécialités commercialisées
-          span.compte #{commercialisees.length.toLocaleString('fr-FR')}
-        ul.liste.specialites-liste
-          each sp in commercialisees
-            +ligneSpecialite(sp)
+          span.compte #{nombre(commercialisees).toLocaleString('fr-FR')}
+        +formes(commercialisees)
         //- Les retirées restent consultables — on cherche aussi ce qu'un patient
         //- prenait — mais repliées : elles ne sont pas la réponse au comptoir.
         if retirees.length > 0
+          - var nRetirees = nombre(retirees)
           details.molecules-reste
-            summary.molecules-plus #{retirees.length.toLocaleString('fr-FR')} spécialité#{retirees.length > 1 ? 's' : ''} non commercialisée#{retirees.length > 1 ? 's' : ''}
-            ul.liste.specialites-liste
-              each sp in retirees
-                +ligneSpecialite(sp)
+            summary.molecules-plus #{nRetirees.toLocaleString('fr-FR')} spécialité#{nRetirees > 1 ? 's' : ''} non commercialisée#{nRetirees > 1 ? 's' : ''}
+            +formes(retirees)
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

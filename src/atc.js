@@ -205,7 +205,7 @@ export async function getClasse(pool, code) {
 export async function getSpecialitesDeClasse(pool, code, dci = '') {
   const { rows } = await pool.query(
     `SELECT m.code_cis AS id, m.denomination_medicament AS denomination,
-            m.titulaires,
+            m.titulaires, m.forme_pharmaceutique,
             (m.etat_commercialisation = 'Commercialisée') AS commercialise,
             ${importSql('m')} AS importation,
             EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g

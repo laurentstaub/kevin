@@ -6,6 +6,7 @@ import { ROOT } from '../../src/config.js';
 import { COLONNES } from '../../src/recherche-texte.js';
 import { productLinks } from '../../src/links.js';
 import { lireEtat, lien } from '../../src/etat-recherche.js';
+import { regrouperSpecialites } from '../../src/specialites.js';
 
 /**
  * Les gabarits se rendent, et pas seulement se compilent.
@@ -491,7 +492,7 @@ describe('page de classe', () => {
     enfants: [],
   };
   const page = (extra) => rendre('classe', {
-    classe: CLASSE, specialitesListe: [], feuille: false, molecules: [],
+    classe: CLASSE, commercialisees: [], retirees: [], feuille: false, molecules: [],
     portrait: [], chapeau: null, ...extra,
   });
 
@@ -504,28 +505,28 @@ describe('page de classe', () => {
     assert.doesNotMatch(html, /produit/i);
   });
 
-  // À la feuille, une ligne par code CIS ; les retirées sont repliées.
-  it('liste les spécialités de la molécule, une par code CIS', () => {
+  // À la feuille : par forme, puis une ligne par nom, les dosages à la suite
+  // — chacun lien vers sa spécialité. Les retirées sont repliées.
+  it('range les spécialités par forme et par nom, un lien par dosage', () => {
+    const sp = (id, denomination, forme, extra = {}) => ({
+      id, denomination, forme_pharmaceutique: forme, titulaires: 'LABO', ...extra,
+    });
     const html = page({
       feuille: true,
-      specialitesListe: [
-        { id: '60000001', denomination: 'AMLOR 5 mg, gélule', titulaires: 'VIATRIS', commercialise: true },
-        { id: '60000002', denomination: 'AMLOR 10 mg, gélule', titulaires: 'VIATRIS', commercialise: true },
-        { id: '60000003', denomination: 'AMLODIPINE X 5 mg, comprimé', titulaires: 'X', commercialise: false },
-      ],
+      commercialisees: regrouperSpecialites([
+        sp('1', 'DUROGESIC 12 microgrammes/heure, dispositif transdermique', 'dispositif transdermique', { princeps: true }),
+        sp('2', 'DUROGESIC 100 microgrammes/heure, dispositif transdermique', 'dispositif transdermique', { princeps: true }),
+        sp('3', 'ABSTRAL 100 microgrammes, comprimé sublingual', 'comprimé sublingual'),
+      ]),
+      retirees: regrouperSpecialites([sp('4', 'FENTANYL X 25 microgrammes/heure, dispositif transdermique', 'dispositif transdermique')]),
     });
-    assert.match(html, /href="\/product\/60000001"/);
-    assert.match(html, /AMLOR 10 mg, gélule/);
-    assert.match(html, /Spécialités commercialisées<span class="compte">2</);
+    assert.match(html, /Spécialités commercialisées<span class="compte">3</);
+    assert.match(html, /Dispositif transdermique<span class="compte">2</);
+    assert.match(html, /href="\/product\/1">12<\/a>.*href="\/product\/2">100<\/a> microgrammes\/heure/s);
+    assert.match(html, /<span class="marque">Princeps/);
+    // Une seule spécialité : le nom entier est le lien.
+    assert.match(html, /href="\/product\/3">ABSTRAL 100 microgrammes<\/a>/);
     assert.match(html, /1 spécialité non commercialisée/);
-  });
-
-  it('signale le princeps', () => {
-    const html = page({
-      feuille: true,
-      specialitesListe: [{ id: '1', denomination: 'TOPLEXIL 0,33 mg/ml, sirop', commercialise: true, princeps: true }],
-    });
-    assert.match(html, /TOPLEXIL 0,33 mg\/ml, sirop<span class="marque">Princeps/);
   });
 
   it('se rend sans portrait ni chapeau', () => {
