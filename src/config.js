@@ -38,9 +38,8 @@ export const config = {
   search: {
     minLength: int(process.env.SEARCH_MIN_LENGTH, 3),
     maxTerms: int(process.env.SEARCH_MAX_TERMS, 5),
-    // Par **famille** de résultats, et non au total : dénomination et principe
-    // actif ont chacun leur quota. Un budget commun laissait le premier
-    // affamer le second — « paracétamol » ne rendait alors aucun DOLIPRANE.
+    // Quota par famille (dénomination, principe actif), pas au total : sinon
+    // l'une affame l'autre.
     limit: int(process.env.SEARCH_LIMIT, 60),
     suggestLimit: int(process.env.SUGGEST_LIMIT, 8),
     relatedLimit: int(process.env.RELATED_LIMIT, 40),
@@ -49,9 +48,7 @@ export const config = {
   // Origines autorisées pour le CORS. Vide = même origine uniquement.
   corsOrigins: list(process.env.CORS_ORIGINS),
 
-  // Les file_path de la BDPM sont relatifs au site source
-  // (« /documents/<CIS>/rcp_notice.pdf ») : c'est contre cette base qu'ils se
-  // résolvent, jamais contre notre propre origine.
+  // Base des file_path relatifs de la BDPM (« /documents/<CIS>/rcp_notice.pdf »).
   documentBaseUrl:
     process.env.DOCUMENT_BASE_URL ?? 'https://base-donnees-publique.medicaments.gouv.fr',
 
@@ -70,14 +67,11 @@ export const config = {
     trials: process.env.LINK_TRIALS ?? 'https://clinicaltrials.gov/search?intr={q}',
     ema:
       process.env.LINK_EMA ?? 'https://www.ema.europa.eu/en/search?search_api_fulltext={q}',
-    // Le répertoire qui fait foi pour la substitution. Depuis le décret
-    // 2016-183, il est publié sur le site de l'ANSM et non plus au Journal
-    // officiel.
+    // Répertoire qui fait foi pour la substitution, publié par l'ANSM (décret 2016-183).
     repertoire:
       process.env.LINK_REPERTOIRE
       ?? 'https://ansm.sante.fr/documents/reference/repertoire-des-medicaments-generiques',
-    // Index alphabétique de Meddispar. Le site est édité par l'Ordre national
-    // des pharmaciens : on y renvoie, on n'en recopie rien.
+    // Index alphabétique de Meddispar (Ordre des pharmaciens) : lien seulement, rien n'est recopié.
     meddispar:
       process.env.LINK_MEDDISPAR ?? 'https://www.meddispar.fr/content/search/?letter={lettre}',
     // Pont vers le projet ruptures d'approvisionnement.

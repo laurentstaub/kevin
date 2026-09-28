@@ -4,11 +4,8 @@ import { sanitizeDocument } from '../src/sanitize.js';
 import { outline } from '../src/outline.js';
 
 /**
- * État des lieux de la base : ce qu'elle contient, dans quels formats, et
- * quelle part des documents l'application sait réellement structurer.
- *
- * Lecture seule. Aucune écriture, aucun appel réseau.
- * Exécution : npm run diagnostic
+ * État des lieux de la base et part des documents réellement structurés. Lecture seule, sans réseau.
+ *   npm run diagnostic
  */
 
 const ECHANTILLON = Number(process.env.DIAG_SAMPLE ?? 300);

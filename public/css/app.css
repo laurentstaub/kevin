@@ -3,12 +3,7 @@
 
 /* ---------- Barre de situation ---------- */
 
-/* Une ligne, collante, toujours là. Elle coûte 44 px sur chaque écran — le
-   poste le plus cher d'une page qu'on lit — et les rachète largement : c'est
-   elle qui a permis de retirer le sommaire latéral, ses 208 px, sa grille
-   asymétrique, et de ramener la colonne de lecture sur l'axe de la page.
-   Aucun seuil, aucune apparition au défilement : ce qui bouge pendant qu'on
-   lit coûte plus d'attention qu'il n'économise de place. */
+/* Collante, sans apparition au défilement : ce qui bouge pendant la lecture distrait. */
 .barre {
   position: sticky;
   top: 0;
@@ -27,9 +22,7 @@
   gap: var(--sp-2);
 }
 
-/* Ce qu'on est en train de lire. En retrait — c'est un repère, pas un titre :
-   le vrai est dans le bandeau, deux fois plus grand. Il cède la place au
-   champ de recherche plutôt que de le comprimer. */
+/* Nom du produit, en retrait ; cède la place au champ de recherche. */
 .barre-titre,
 .barre-repere {
   flex: 0 1 auto;
@@ -42,11 +35,7 @@
   text-overflow: ellipsis;
 }
 
-/* La rubrique en cours, quand son titre est sorti par le haut. Elle occupe la
-   même fente que le nom du produit — jamais les deux ensemble : deux repères
-   côte à côte, c'est un fil d'Ariane, et un fil d'Ariane sur une page unique
-   ne renseigne personne. Cliquable parce qu'un repère qui indique où l'on est
-   sans permettre d'en sortir est une décoration. */
+/* Rubrique en cours : remplace le nom du produit, jamais les deux ensemble. */
 .barre-repere {
   appearance: none;
   background: none;
@@ -65,9 +54,7 @@
 
 /* ---------- Bandeau d'accueil ---------- */
 
-/* Le vert profond d'antheosdata, employé une fois et à un seul endroit : la
-   page où l'on n'a rien à lire. Sur la fiche produit il serait une faute — on
-   n'impose pas un aplat sombre à quelqu'un qui traverse quarante mille signes. */
+/* Aplat sombre réservé à l'accueil, seule page sans texte long. */
 .accueil {
   background: var(--bg-fonce);
   padding: var(--sp-8) var(--sp-3) var(--sp-6);
@@ -82,8 +69,7 @@
   color: #fff;
 }
 
-/* Le titre ramène à l'accueil. Pas de soulignement au repos : c'est le titre
-   du site, pas un lien dans une phrase, et le curseur suffit à l'annoncer. */
+/* Titre du site : pas de soulignement au repos. */
 .titre-lien {
   color: inherit;
   text-decoration: none;
@@ -103,9 +89,7 @@
   max-width: var(--measure);
 }
 
-/* Sous le champ, deux requêtes cliquables. Elles ne décrivent pas la recherche
-   plein texte, elles la font — et aucune des deux n'est un nom de médicament,
-   ce qui est toute la démonstration. */
+/* Exemples de requêtes plein texte, volontairement sans nom de médicament. */
 .accueil-exemple {
   font-size: var(--fs-sm);
   color: var(--accent-soft);
@@ -129,27 +113,21 @@
   color: var(--accent-soft);
 }
 
-/* Le champ posé sur l'aplat n'a pas besoin de contour : le fond blanc suffit
-   à le détacher, et un filet de plus ferait un cadre dans un cadre. */
+/* Sur l'aplat, le fond blanc suffit : pas de contour. */
 .accueil .input-wrapper {
   border-color: transparent;
   background: var(--bg);
 }
 
-/* Le titre et le champ ayant migré dans le bandeau, la colonne n'a plus à
-   ménager la place d'un en-tête : elle reprend juste sous l'aplat. */
+/* Pas d'en-tête à ménager : la colonne reprend sous l'aplat. */
 .recherche {
   max-width: var(--colonne);
   margin: 0 auto;
   padding: var(--sp-4) var(--sp-3) var(--sp-8);
 }
 
-/* La colonne de lecture, deuxième nom.
-   `.recherche` sert la page de garde, `.corps` sert la fiche produit et la
-   recherche plein texte. Cette dernière vivait dans product.css, que la page
-   des documents ne charge pas : elle n'avait donc aucune mise en page et son
-   texte se collait au bord de la fenêtre. Une même idée tenue à deux endroits
-   finit toujours par n'être vraie qu'à un seul. */
+/* Colonne de lecture : `.recherche` pour l'accueil, `.corps` pour la fiche et
+   la recherche plein texte. Définie ici : product.css n'est pas chargé partout. */
 .corps {
   max-width: var(--colonne);
   margin: 0 auto;
@@ -179,9 +157,7 @@
   letter-spacing: -0.01em;
 }
 
-/* Le portrait d'une classe : des chiffres en ligne, le libellé dessous. Pas
-   de cartes ni d'encadrés — une rangée de mesures, comme une ligne de
-   tableau sans filets. */
+/* Portrait d'une classe : chiffres en ligne, libellé dessous, sans cadre. */
 .portrait {
   display: flex;
   flex-wrap: wrap;
@@ -199,7 +175,7 @@
 .portrait-libelle { font-size: var(--fs-xs); color: var(--faint); }
 .portrait-base { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--faint); }
 
-/* Un texte non relu, visible en développement seulement : fiches et chapeaux. */
+/* Texte non relu, visible en développement seulement. */
 .brouillon {
   margin: var(--sp-3) 0 0;
   padding: var(--sp-1) var(--sp-2);
@@ -208,7 +184,7 @@
   font-size: var(--fs-sm);
 }
 
-/* Le chapeau signé : du texte de lecture, à la mesure d'une colonne. */
+/* Chapeau signé. */
 .chapeau { max-width: var(--measure); margin: 0 0 var(--sp-4); }
 .chapeau .brouillon { margin: 0 0 var(--sp-2); }
 .chapeau-texte p { font-family: var(--font-lecture); line-height: 1.6; margin: 0 0 var(--sp-2); }
@@ -220,8 +196,7 @@
   position: relative;
 }
 
-/* Le rayon est porté par l'enveloppe et non par ses pièces : `overflow` taille
-   le bouton au même arrondi, sans qu'il ait à le connaître. */
+/* Rayon sur l'enveloppe : `overflow` arrondit aussi le bouton. */
 .input-wrapper {
   display: flex;
   align-items: stretch;
@@ -252,10 +227,8 @@
   outline-offset: 1px;
 }
 
-/* La seule action franche de la page, et donc le seul aplat vif du site. Le
-   vert clair ne porte jamais de texte ailleurs : à 1,66 de contraste sur blanc
-   il serait illisible. Ici il est un fond, et l'encre qui s'y pose est celle
-   du site — 9,09, largement au-dessus du seuil. */
+/* Seul aplat vif du site. Le vert ne porte jamais de texte (1,66 sur blanc) ;
+   l'encre posée dessus tient 9,09. */
 .search-button {
   border: none;
   border-radius: 0;
@@ -272,16 +245,13 @@
   color: #fff;
 }
 
-/* Version d'en-tête : le même champ, posé dans une ligne de navigation.
-   Il doit se remarquer sans peser — c'est un outil disponible, pas l'objet de
-   la page, contrairement à l'accueil où il est le seul contenu. */
+/* Variante d'en-tête : visible sans peser. */
 .search-compacte {
   flex: 1 1 16rem;
   max-width: 26rem;
 }
 
-/* Posé sur le bandeau teinté, le champ doit rester blanc : transparent, il
-   prenait la couleur du bandeau et cessait de se lire comme une saisie. */
+/* Fond blanc : transparent, le champ ne se lit plus comme une saisie. */
 .search-compacte .input-wrapper {
   border-color: var(--rule-medium);
   background: var(--bg);
@@ -301,30 +271,15 @@
   font-size: var(--fs-xs);
 }
 
-/* Le compte rendu d'attente n'a pas sa place dans une ligne de navigation :
-   il y pousserait tout le reste à chaque frappe. */
+/* Masqué : il décalerait la ligne à chaque frappe. */
 .search-compacte .loading {
   display: none !important;
 }
 
 /* ---------- Ligne de situation ---------- */
 
-/* D'où l'on vient, de quoi chercher, où l'on se trouve : les trois repères de
-   navigation tiennent une ligne, au-dessus du contenu de la page.
-
-   Elle règle ici et non dans product.css, que seule la fiche charge. Les pages
-   de classe reprenaient le balisage sans la mise en forme, et « Accueil » se
-   retrouvait empilé au-dessus du champ de recherche.
-
-   D'un seul tenant à gauche : aux deux extrémités de la ligne, ces repères se
-   lisaient comme des éléments sans rapport, et l'œil devait traverser le vide
-   pour relier l'un à l'autre.
-
-   Ce sont des repères de navigation, non de l'identité du produit — celle-ci
-   commence au titre. Les tenir sur leur propre ligne évite deux défauts qu'on a
-   eus tour à tour : le retour seul sur sa ligne coûtait une ligne entière pour
-   deux mots, et le fil ATC glissé entre l'identité et les dosages coupait le
-   bandeau en son milieu. */
+/* Retour, recherche et fil ATC sur une ligne, groupés à gauche, au-dessus du
+   contenu. Défini ici et non dans product.css, que seule la fiche charge. */
 .identite-tete {
   display: flex;
   flex-wrap: wrap;
@@ -333,7 +288,7 @@
   padding-bottom: var(--sp-2);
 }
 
-/* Le trait qui sépare la provenance de la classification. */
+/* Séparateur provenance / classification. */
 .tete-sep {
   color: var(--faint);
   font-size: var(--fs-xs);
@@ -352,8 +307,7 @@
 
 /* ---------- Suggestions ---------- */
 
-/* Objet posé sur la page, donc arrondi et porté par une ombre courte — c'est
-   le seul endroit du site où une surface flotte au-dessus d'une autre. */
+/* Seule surface flottante du site : arrondie, ombre courte. */
 .suggestions {
   position: absolute;
   top: calc(100% + 4px);
@@ -426,9 +380,7 @@
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
-/* Un onglet ne se coupe pas en son milieu : « Mises en garde » tenait sur
-   trois lignes, une par mot, pendant que la rangée gardait de la place à
-   droite. C'est la rangée qui doit passer à la ligne, pas le libellé. */
+/* Libellé insécable : c'est la rangée qui passe à la ligne. */
 .filtre {
   white-space: nowrap;
   font-size: var(--fs-sm);
@@ -448,8 +400,7 @@
   border-bottom-color: var(--accent);
 }
 
-/* La substitution des biosimilaires : un encart de règle, sobre, avant la
-   liste qu'il concerne. */
+/* Encart sur la substitution des biosimilaires. */
 .substitution {
   max-width: var(--measure);
   margin: 0 0 var(--sp-4);
@@ -465,9 +416,7 @@
 
 /* ---------- Spécialités d'une molécule ---------- */
 
-/* Une ligne par spécialité, le laboratoire aligné à droite : le même patron
-   que les listes de classes, et la moitié de la hauteur de la ligne de
-   recherche, dont le laboratoire occupait une seconde ligne. */
+/* Une ligne par spécialité, laboratoire à droite. */
 .specialites-liste li { border-bottom: var(--rule-width) solid var(--rule); }
 
 .specialite-ligne {
@@ -482,7 +431,7 @@
 .specialite-lien { color: inherit; text-decoration: none; }
 .specialite-lien:hover { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Les dosages sont les liens : chacun mène à sa spécialité. */
+/* Chaque dosage est un lien vers sa spécialité. */
 .specialite-dosages { margin-left: 0.5em; font-variant-numeric: tabular-nums; }
 .specialite-dosage { color: var(--accent); text-decoration: none; white-space: nowrap; }
 .specialite-dosage:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -495,7 +444,7 @@
   color: var(--faint);
 }
 
-/* La forme : un intertitre discret, son décompte à droite. */
+/* Forme : intertitre discret, décompte à droite. */
 .forme-titre {
   display: flex;
   justify-content: space-between;
@@ -508,8 +457,7 @@
   color: var(--muted);
 }
 
-/* Au téléphone, le laboratoire à droite volait la moitié de la largeur au
-   nom : il passe dessous, en petit. */
+/* Téléphone : le laboratoire passe sous le nom. */
 @media (max-width: 600px) {
   .specialite-ligne { grid-template-columns: minmax(0, 1fr); }
   .specialite-labo { max-width: none; text-align: left; }
@@ -517,10 +465,7 @@
 
 /* ---------- Classes thérapeutiques ---------- */
 
-/* Entrée par le besoin plutôt que par le nom. Une ligne par classe — code,
-   libellé, décompte aligné à droite — et non deux colonnes : la liste est
-   triée, et deux colonnes la faisaient lire en zigzag (N, C, puis L, A…), le
-   décompte d'une ligne ne se comparant pas à celui d'en face. */
+/* Une ligne par classe, pas deux colonnes : la liste triée se lirait en zigzag. */
 .classes {
   margin-top: var(--sp-6);
 }
@@ -549,18 +494,8 @@
 
 .classe-lien {
   display: grid;
-  /* Taillée pour sept signes — « R03DC01 » —, la longueur maximale d'un code
-     ATC, et non pour les quatre d'une sous-classe.
-     
-     La gouttière était doublée : étroite pour les sous-classes, large pour les
-     molécules, au motif qu'une sous-classe ne dépasse pas quatre signes. C'est
-     faux. Quand les enfants directs d'une classe *sont* les molécules — R03DC
-     n'a que R03DC01 sous lui — la page les rend dans la liste des
-     sous-classes, pour ne pas les afficher deux fois. Le code y débordait donc
-     sur le libellé.
-     
-     Une seule valeur, dimensionnée sur le pire cas possible, plutôt que deux
-     qui reposent sur une supposition à propos des données. */
+  /* Sept signes, longueur max d'un code ATC (« R03DC01 ») : des molécules
+     peuvent figurer dans la liste des sous-classes. */
   grid-template-columns: 4.2rem minmax(0, 1fr) max-content;
   gap: 0 var(--sp-2);
   align-items: baseline;
@@ -574,8 +509,7 @@
   text-underline-offset: 2px;
 }
 
-/* Le code porte la lettre du groupe anatomique : il sert de repère visuel
-   autant que d'information. */
+/* Code en accent : repère visuel autant qu'information. */
 .classe-code {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -593,9 +527,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Le reste des molécules. Replié, parce qu'une liste écourtée en silence se
-   lit comme une liste complète — et déplié d'un clic, parce qu'aucune n'est
-   assez secondaire pour mériter une seconde page. */
+/* Molécules restantes, repliées : une liste écourtée en silence passerait pour complète. */
 .classes-titre {
   display: flex;
   justify-content: space-between;
@@ -626,13 +558,8 @@
 
 /* ---------- Fil ATC ---------- */
 
-/* Le fil siège dans la ligne de situation, en tête de page : aucune marge
-   propre, c'est le conteneur qui l'espace.
-
-   Les niveaux 2 à 5 arrivent en capitales non accentuées, le niveau 1 en casse
-   normale et accentué. Plutôt que de retoucher la donnée — on ne saurait pas
-   restituer les accents manquants — la mise en capitales par le style rend
-   l'ensemble homogène et conserve les accents là où ils existent. */
+/* Fil ATC, espacé par son conteneur. Capitales par le style : homogénéise les
+   niveaux sans perdre les accents du niveau 1. */
 .atc {
   display: flex;
   flex-wrap: wrap;
@@ -643,8 +570,7 @@
   letter-spacing: 0.04em;
 }
 
-/* Le code de la feuille : identifiant, donc chasse fixe, et sans capitales
-   forcées puisqu'il en est déjà. */
+/* Code : chasse fixe, sans capitales forcées. */
 .atc-code {
   font-family: var(--font-mono);
   text-transform: none;
@@ -666,9 +592,7 @@
   color: var(--faint);
 }
 
-/* Dans le fil d'Ariane d'une page de classe, les maillons sont posés dans un
-   paragraphe et non dans le conteneur flex de la fiche : sans marge propre, le
-   chevron colle aux deux codes qu'il sépare. */
+/* Page de classe, hors flex : le chevron a besoin de marges propres. */
 .page-meta .atc-sep {
   margin: 0 0.35em;
 }
@@ -744,8 +668,7 @@
   margin-top: 0.15em;
 }
 
-/* Ce que le regroupement recouvre. En retrait typographique : c'est une
-   précision sur la ligne, pas une deuxième information à lire. */
+/* Précision sur la ligne, en retrait. */
 .resultat-etendue {
   display: block;
   font-size: var(--fs-xs);
@@ -759,9 +682,7 @@
     padding: var(--sp-1) var(--sp-2);
   }
 
-  /* Sur écran étroit, la dénomination et le champ ne tiennent pas ensemble.
-     C'est la dénomination qui cède : elle est écrite en toutes lettres deux
-     centimètres plus bas, le champ n'existe qu'ici. */
+  /* Écran étroit : la dénomination, répétée plus bas, cède la place au champ. */
   .barre-titre {
     display: none;
   }
@@ -787,8 +708,7 @@
 
 /* ---------- Importation parallèle ---------- */
 
-/* Une marque, pas une pastille : filet fin, capitales étroites, aucune
-   couleur. Elle signale un statut réglementaire, elle n'alerte pas. */
+/* Statut réglementaire, sans couleur : il n'alerte pas. */
 .marque {
   display: inline-block;
   margin-left: var(--sp-1);
@@ -812,28 +732,16 @@
 
 /* ---------- Rail de navigation ---------- */
 
-/* Il ne redit pas le plan de la page — celui-ci est dans la colonne de
-   lecture, numéroté, et l'accordéon replié le montre en entier. Il répond au
-   besoin qui traverse toutes les pages : sortir de la fiche qu'on lit. C'est
-   le seul endroit du site où la classification est visible sans l'avoir
-   cherchée.
- *
- * Fixe et non collant : il défile pour son compte, indépendamment de la
- * lecture. Le corps de page se décale d'autant, si bien que rien n'est
- * recouvert et que les colonnes centrées le restent — dans l'espace qui
- * demeure. */
+/* Rail : sortir de la fiche (accueil, classification), pas redire son plan.
+ * Fixe et non collant ; le corps se décale d'autant, rien n'est recouvert. */
 .rail {
   display: none;
 }
 
 @media (min-width: 75rem) {
   :root {
-    /* 288 px, la largeur du rail de Reddit à quelques pixels près. Les libellés
-       du plan ne sont pas courts — « Composition qualitative et quantitative »,
-       « Précautions particulières de conservation » — et à 240 px ils passaient
-       tous à la ligne : trente entrées sur deux lignes chacune font un rail
-       qu'on ne parcourt plus du regard. Il reste 912 px au contenu au seuil de
-       1200, pour une colonne qui en demande 736. */
+    /* 288 px : à 240, les libellés du plan passent à la ligne. Reste 912 px
+       au contenu à 1200 px, pour 736 requis. */
     --rail-l: 18rem;
 
     /* Hauteur du bandeau d'accueil, d'où part le rail sur cette page. */
@@ -844,33 +752,19 @@
     padding-left: var(--rail-l);
   }
 
-  /* La barre traverse toute la fenêtre, rail compris : c'est la barre de
-     l'application, pas celle de la colonne de lecture, et un rail qui monterait
-     à côté d'elle en ferait deux objets de même rang. Le décalage du corps est
-     annulé puis rendu en padding, si bien que le fond s'étend jusqu'au bord
-     tandis que le contenu reste où il était. */
+  /* Barre sur toute la largeur, rail compris : décalage annulé puis rendu en padding. */
   .barre {
     margin-left: calc(-1 * var(--rail-l));
     padding-left: var(--rail-l);
   }
 
-  /* Le bandeau annule le décalage du corps sans le rendre : il occupe la
-     fenêtre entière, et son contenu s'y centre. C'est le seul bloc du site
-     dans ce cas, et c'est voulu — le titre et le champ sont l'objet de la
-     page, pas une colonne posée à côté d'un rail. Les centrer sur l'espace
-     restant les décalait vers la droite d'une demi-largeur de rail, à la
-     manière d'une image mal cadrée. */
+  /* Bandeau centré sur la fenêtre entière, pas sur l'espace restant. */
   .accueil {
     margin-left: calc(-1 * var(--rail-l));
     padding-left: var(--sp-3);
   }
 
-  /* L'accueil n'a pas de barre : c'est le bandeau vert qui lui sert d'en-tête,
-     et le rail doit donc commencer sous lui. Sa hauteur est fixée ici plutôt
-     que laissée au contenu, parce qu'elle sert deux fois — la sienne et le
-     départ du rail — et que deux valeurs tenues séparément finissent par
-     diverger. Le contenu du bandeau est du texte fixe : au-delà de 1200 px il
-     ne bouge pas. */
+  /* Hauteur fixe : elle sert aussi de point de départ au rail. */
   .accueil {
     min-height: var(--accueil-h);
   }
@@ -885,22 +779,11 @@
     inset: var(--barre-h) auto 0 0;
     width: var(--rail-l);
     overflow-y: auto;
-    /* Arrivé en bas du rail, la molette ne doit pas emporter la page : on lit
-       d'un côté, on navigue de l'autre, et les deux ne se poussent pas. */
+    /* En bout de rail, la molette ne fait pas défiler la page. */
     overscroll-behavior: contain;
     padding: var(--sp-3) var(--sp-2) var(--sp-6);
     border-right: var(--rule-width) solid var(--rule);
-    /* Une seule teinte pour tout ce qui n'est pas le document.
-     
-       La barre collante et le bandeau d'identité sont déjà en --bg-tint : ce
-       sont les deux autres pièces de l'habillage. Le rail en est la troisième,
-       et il était resté blanc — d'où une couture verticale le long du bandeau,
-       là où deux surfaces de même fonction se touchent avec deux couleurs
-       différentes. Ce n'était pas un défaut de dosage mais une incohérence de
-       classement.
-     
-       La colonne de lecture, elle, reste blanche. C'est ce qui compte quand on
-       traverse quarante mille signes. */
+    /* Même teinte que la barre et le bandeau ; la colonne de lecture reste blanche. */
     background: var(--bg-tint);
   }
 }
@@ -910,18 +793,14 @@
   flex-direction: column;
 }
 
-/* Chaque bloc est annoncé par son titre et détaché par un filet : sans lui,
-   « Accueil », le plan et les classes formaient une seule liste de trente
-   lignes où l'on ne voyait plus les articulations. */
+/* Blocs titrés et séparés par un filet. */
 .rail-titre {
   margin: var(--sp-3) 0 var(--sp-1);
   padding: var(--sp-3) var(--sp-1) 0;
   border-top: var(--rule-width) solid var(--rule);
-  /* Le filet sépare deux blocs ; en tête de rail il n'en sépare aucun. */
+  /* Pas de filet en tête de rail. */
   font-size: var(--fs-xs);
-  /* --muted et non --faint : ces libellés sont du texte de navigation, pas
-     une métadonnée en retrait, et --faint passe sous 4,5 dès que le fond
-     n'est plus le blanc pur — au survol, par exemple. */
+  /* --muted : --faint passe sous 4,5 hors fond blanc (au survol). */
   color: var(--muted);
   letter-spacing: 0.04em;
 }
@@ -932,8 +811,7 @@
   border-top: none;
 }
 
-/* Cible de clic pleine largeur : dans une liste verticale, viser le texte
-   plutôt que la ligne est une exigence gratuite. */
+/* Cible de clic pleine largeur. */
 .rail-lien {
   display: grid;
   grid-template-columns: 1.6rem 1fr;
@@ -946,20 +824,18 @@
   text-decoration: none;
 }
 
-/* Un lien sans code n'a pas de gouttière à respecter. */
+/* Lien sans code : pas de gouttière. */
 .rail-seul {
   display: block;
 }
 
-/* Sur un fond teinté, le survol s'éclaircit : il soulève au lieu d'enfoncer.
-   L'état sélectionné garde son vert pâle, les trois états restent distincts. */
+/* Sur fond teinté, le survol éclaircit ; l'état sélectionné reste distinct. */
 .rail-lien:hover {
   background: var(--bg);
   color: var(--ink);
 }
 
-/* Même aplat que l'onglet sélectionné : un seul vocabulaire pour dire « vous
-   êtes ici », qu'il s'agisse d'un document ou d'une branche. */
+/* Même aplat que l'onglet sélectionné : un seul signe pour « vous êtes ici ». */
 .rail-actif,
 .rail-actif:hover {
   background: var(--accent-pale);
@@ -979,9 +855,7 @@
   line-height: 1.35;
 }
 
-/* Le libellé CNAM arrive en capitales sans accents. Quatorze fois de suite, il
-   crie ; en bas de casse il se lit, et l'initiale reprend sa majuscule. Les
-   libellés de rubriques, eux, sont déjà composés — on n'y touche pas. */
+/* Libellés CNAM reçus en capitales sans accents : remis en bas de casse. */
 .rail-label-crie {
   text-transform: lowercase;
 }
@@ -992,17 +866,13 @@
 
 /* ---------- Plan de la fiche ---------- */
 
-/* Les rubriques sont en retrait de la section qui les porte, et les
-   sous-rubriques d'un cran de plus : le décalage dit l'imbrication mieux qu'un
-   filet ou une puce, et ne coûte aucune encre. Composées un cran plus petit,
-   elles se lisent comme un détail du plan et non comme son deuxième étage. */
+/* Imbrication marquée par le retrait ; sous-rubriques un cran plus petites. */
 .rail-rubrique {
   padding-left: var(--sp-2);
   font-size: var(--fs-xs);
 }
 
-/* Le code d'une sous-rubrique fait quatre signes — « 4.10 ». La gouttière
-   s'élargit d'autant, sinon le libellé se décale d'une ligne à l'autre. */
+/* Gouttière élargie pour les codes à quatre signes (« 4.10 »). */
 .rail-p2 {
   padding-left: var(--sp-3);
   grid-template-columns: 2.1rem 1fr;
@@ -1013,11 +883,7 @@
   font-size: 0.95em;
 }
 
-/* Repère de lecture posé par documents.js : la rubrique qu'on est en train de
-   lire. Même aplat que l'onglet sélectionné et que la classe courante — un
-   seul signe pour « vous êtes ici », quel que soit l'objet. Deux signes
-   distincts obligeaient à apprendre lequel veut dire quoi, pour une
-   distinction dont on n'a que faire en lisant. */
+/* Rubrique en cours (posée par documents.js) : même aplat « vous êtes ici ». */
 .rail-ici,
 .rail-ici:hover {
   background: var(--accent-pale);
@@ -1030,21 +896,10 @@
 
 /* ---------- Impression ---------- */
 
-/* Ce qui s'imprime, c'est le document — pas l'application.
- *
- * Un RCP se sort pour être annoté, glissé dans un dossier, ou remis à un
- * patient pour la rubrique qui le concerne. Sans cette feuille, la page
- * partait sur papier avec son rail, sa barre collante, ses onglets et ses
- * rubriques repliées : trois pages d'habillage autour d'un texte amputé de
- * tout ce qui n'était pas ouvert à l'écran.
- *
- * Règle unique : tout ce qui sert à naviguer disparaît, tout ce qui porte du
- * texte s'ouvre. */
+/* Impression : la navigation disparaît, tout le texte s'ouvre. */
 @media print {
   :root {
-    /* Les marges sont celles de la page ; la colonne prend ce qui reste. Une
-       largeur de lecture réglée pour un écran n'a plus de sens quand c'est le
-       papier qui fixe la mesure. */
+    /* Largeur fixée par les marges du papier. */
     --colonne: 100%;
   }
 
@@ -1063,8 +918,7 @@
     display: none;
   }
 
-  /* Le fond teinté n'a plus d'objet : il désignait l'habillage, qui n'est plus
-     là. Et une encre d'aplat sur toute une page se paie en cartouche. */
+  /* Pas d'aplat à l'impression. */
   .accueil {
     background: none;
     color: #000;
@@ -1076,8 +930,7 @@
     color: #000;
   }
 
-  /* Un lien imprimé ne mène nulle part : dans le corps du texte on le laisse
-     tel quel, mais la section des références n'existe que pour ses adresses. */
+  /* Adresses imprimées seulement dans les références. */
   .liens a[href^="http"]::after {
     content: ' — ' attr(href);
     font-size: 0.85em;
@@ -1088,14 +941,9 @@
 
 /* ---------- Trouvailles dans les documents ---------- */
 
-/* Une ligne dit trois choses dans l'ordre où on les lit : quel produit,
-   quelle rubrique, et l'extrait. Filets horizontaux seuls, comme partout. */
-/* Les trouvailles sont un tableau, et non une liste de lignes qui feint d'en
-   être un. Une grille CSS tenait l'alignement tant que le nom restait court ;
-   un nom de groupe n'a pas de longueur bornée — 1 668 caractères au pire, un
-   vaccin nommant ses vingt sérotypes — et `space-between` cesse d'aligner à
-   droite dès que le contenu déborde. Le moteur de tableau, lui, ne discute
-   pas : `fixed` fige les colonnes sur l'en-tête, quoi que porte une cellule. */
+/* Produit, rubrique, extrait ; filets horizontaux seuls. */
+/* Vrai tableau en `fixed` : un nom de groupe peut dépasser 1 600 caractères
+   et une grille CSS perdait l'alignement. */
 .trouvailles {
   width: 100%;
   table-layout: fixed;
@@ -1121,9 +969,7 @@
 .trouvailles thead .th-autres { text-align: left; }
 .trouvailles thead .th-autres { text-align: center; }
 
-/* L'en-tête est le filtre : on restreint une colonne en cliquant dessus. Une
-   rangée d'onglets listait les huit mêmes rubriques deux lignes plus haut —
-   la même liste écrite deux fois, dont l'une ne portait aucune donnée. */
+/* L'en-tête sert de filtre par rubrique. */
 .th-lien {
   display: block;
   position: relative;
@@ -1138,15 +984,9 @@
   border-bottom-color: var(--accent);
 }
 
-/* Le filet est posé sur la dernière ligne du groupe, et non sur le groupe.
-   Sur le `tbody`, les moteurs ne s'accordent pas quand les bordures sont
-   fusionnées, et il en apparaissait un second entre la ligne du produit et
-   son extrait — assez pour qu'on ne sache plus si l'extrait se rattachait à
-   ce qui le précède ou à ce qui le suit. Posé sur la ligne, il n'y a plus
-   d'ambiguïté possible : un filet par résultat, en bas. */
-/* `.trouvailles` en tête du sélecteur : la règle générale des tableaux
-   (tokens.css) retire le filet de la dernière ligne de chaque tbody, et
-   chaque molécule est un tbody d'une ligne — elle l'emportait partout. */
+/* Filet sur la ligne, pas sur le tbody : les moteurs le doublent en bordures fusionnées. */
+/* `.trouvailles` en tête pour l'emporter sur tokens.css, qui retire le filet
+   de la dernière ligne de chaque tbody (ici, une molécule par tbody). */
 .trouvailles .trouvaille td,
 .trouvailles .trouvaille th {
   padding: 0.35rem 0;
@@ -1157,9 +997,7 @@
 
 .trouvailles-filtrees .trouvaille th { border-bottom: 0; padding-bottom: 0; }
 
-/* Au téléphone, huit colonnes de 2,6 rem ne laissaient plus rien au nom. Le
-   point tient dans 1,6 rem, et le compte de spécialités s'efface : le nom
-   passe avant. */
+/* Téléphone : colonnes resserrées, compte de spécialités masqué. */
 @media (max-width: 600px) {
   .col-rubrique { width: 1.6rem; }
   .col-autres { width: 2.8rem; }
@@ -1175,8 +1013,7 @@
   padding-right: var(--sp-3);
 }
 
-/* Une ligne, et on coupe : le nom complet est en infobulle, et une ligne par
-   molécule est ce qui rend le tableau lisible d'un coup d'œil. */
+/* Une ligne, tronquée ; nom complet en infobulle. */
 .trouvaille-molecule {
   display: inline-block;
   max-width: calc(100% - 4.5rem);
@@ -1196,9 +1033,7 @@
 
 .cellule-rubrique { text-align: center; }
 
-/* La colonne fourre-tout : composition, précliniques, conservation. Elles
-   n'ont pas de place réservée, mais elles se nomment — les fondre dans un
-   « +3 » ferait disparaître la rubrique 2 d'une recherche sur un excipient. */
+/* Autres rubriques, nommées plutôt que fondues dans un « +3 ». */
 .cellule-autres {
   text-align: center;
   line-height: 1.9;
@@ -1215,7 +1050,7 @@
   vertical-align: middle;
 }
 
-/* Creux : les mots sont dans la rubrique, mais pas l'expression. */
+/* Creux : les mots sont dans la rubrique, pas l'expression. */
 .point.point-epars { background: transparent; }
 
 a.point:hover,
@@ -1233,8 +1068,7 @@ a.point:focus-visible {
   color: var(--faint);
 }
 
-/* Hors des huit colonnes, la rubrique se nomme : « 5.2 », « N2 » pour une
-   notice. En texte et non en case : c'est une information d'appoint. */
+/* Hors des huit colonnes, la rubrique est nommée en texte (« 5.2 », « N2 »). */
 .autre {
   display: inline-block;
   margin: 0 0.2em;
@@ -1247,15 +1081,13 @@ a.point:focus-visible {
 .autre.point-epars { color: var(--faint); }
 .autre:hover { text-decoration: underline; }
 
-/* Filtrée, la phrase suit la molécule, serrée contre elle. */
+/* Filtrée, la phrase suit la molécule. */
 .trouvailles .ligne-phrase td {
   padding: 0 0 var(--sp-2) var(--sp-3);
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
-/* L'état de la recherche : ce qu'on a cherché, ce qu'on a restreint, ce que
-   ça donne. Il vivait en trois morceaux qui ne se touchaient pas — la barre,
-   l'en-tête du tableau, et un décompte qui ne paraissait que plafonné. */
+/* État de la recherche : requête, filtres, décompte. */
 .etat {
   display: flex;
   flex-wrap: wrap;
@@ -1272,9 +1104,7 @@ a.point:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Ce que le thésaurus a cherché en plus. Une ligne discrète sous l'état :
-   elle explique un résultat qui ne contient pas le mot tapé, et offre le
-   refus en un clic — la requête citée n'est jamais élargie. */
+/* Termes ajoutés par le thésaurus, avec refus en un clic. */
 .elargi {
   margin: var(--sp-1) 0 0;
   font-size: var(--fs-xs);
@@ -1292,8 +1122,7 @@ a.point:focus-visible {
   text-underline-offset: 2px;
 }
 
-/* Le jeton se défait d'un clic : un filtre qu'on ne sait pas retirer se
-   retire en refaisant la recherche. */
+/* Jeton retirable d'un clic. */
 .jeton {
   display: inline-flex;
   align-items: baseline;
@@ -1309,9 +1138,7 @@ a.point:focus-visible {
 .jeton:hover { background: var(--accent); color: #fff; }
 .jeton-croix { color: inherit; opacity: 0.7; }
 
-/* La provenance des substituts. Ce n'est pas une note de bas de page : elle
-   dit ce que le titre « Substituer » recouvre, et surtout ce qu'il ne
-   recouvre pas. */
+/* Provenance des substituts : ce que « Substituer » couvre ou non. */
 .provenance {
   max-width: var(--measure);
   line-height: 1.5;
@@ -1323,10 +1150,8 @@ a.point:focus-visible {
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-/* L'aperçu au survol d'un numéro : la phrase de cette rubrique-là.
-   Posé sur le corps du document et non dans la cellule — une infobulle de
-   trois lignes dans une colonne de deux centimètres serait rognée par le
-   premier parent qui coupe ce qui déborde. */
+/* Aperçu au survol, posé sur body : dans la cellule, un parent en overflow
+   le rognerait. */
 .apercu {
   position: absolute;
   z-index: 20;
@@ -1365,8 +1190,7 @@ a.point:focus-visible {
   color: var(--faint);
 }
 
-/* L'extrait est du document, pas de l'interface : il reprend la police de
-   lecture, en plus petit. C'est ce qu'on lit pour décider si l'on ouvre. */
+/* Extrait en police de lecture : c'est du document. */
 .trouvaille-extrait {
   font-family: var(--font-lecture);
   font-size: var(--fs-sm);
@@ -1375,15 +1199,14 @@ a.point:focus-visible {
   margin: var(--sp-1) 0 0;
 }
 
-/* Le terme trouvé, posé par ts_headline. Un aplat pâle plutôt qu'une couleur
-   de texte : on doit le repérer sans le lire en premier. */
+/* Terme trouvé (ts_headline) : aplat pâle plutôt que couleur de texte. */
 .trouvaille-extrait mark {
   background: var(--accent-pale);
   color: var(--ink);
   padding: 0 0.15em;
 }
 
-/* Combien de spécialités le groupe recouvre, à la suite du nom. */
+/* Nombre de spécialités du groupe. */
 .trouvaille-reprise {
   font-size: var(--fs-xs);
   color: var(--faint);
@@ -1391,24 +1214,20 @@ a.point:focus-visible {
   white-space: nowrap;
 }
 
-/* Une molécule n'a pas un seul RCP : la spécialité d'où vient l'extrait se
-   nomme, sans quoi on lui prêterait une phrase vraie d'une seule forme. */
+/* Spécialité source de l'extrait : une molécule a plusieurs RCP. */
 .preuve-source {
   font-size: var(--fs-xs);
   color: var(--faint);
   margin: var(--sp-1) 0 0;
 }
 
-/* L'onglet qui quitte la page. Les trois premiers filtrent la même liste ;
-   celui-ci mène ailleurs, et sa flèche le dit avant le clic. */
+/* Onglet qui quitte la page, signalé par une flèche. */
 .filtre-ailleurs::after {
   content: " →";
   color: var(--muted);
 }
 
-/* Le numéro devant le nom : les puces des résultats parlent en « 4.5 », les
-   onglets en « Interactions ». Deux vocabulaires pour la même chose, et rien
-   ne les reliait. */
+/* Numéro avant le nom, pour relier onglets et puces des résultats. */
 .filtre-num {
   color: var(--faint);
   font-variant-numeric: tabular-nums;
@@ -1425,9 +1244,7 @@ a.point:focus-visible {
   color: var(--muted);
 }
 
-/* Avancer, reculer, savoir où l'on est. Trois éléments sur une ligne, le rang
-   au centre quelle que soit la présence des deux liens : `space-between` seul
-   collait le rang à gauche sur la première page. */
+/* Rang toujours centré : `space-between` seul le collait à gauche en page 1. */
 .pages {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -1460,8 +1277,7 @@ a.point:focus-visible {
   font-size: var(--fs-sm);
 }
 
-/* La page des documents s'ouvre sur son titre, sans bandeau au-dessus : il lui
-   faut la respiration que la fiche produit reçoit de son en-tête. */
+/* Espace au-dessus du titre, faute de bandeau. */
 .doc-entete {
   margin: 0 0 var(--sp-3);
   padding-top: var(--sp-4);

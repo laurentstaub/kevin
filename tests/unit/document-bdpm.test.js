@@ -31,8 +31,7 @@ describe('extraireDocument', () => {
     assert.match(doc.html.slice(0, 80), /1\. DENOMINATION/);
   });
 
-  // C'est tout l'objet du module : le site vient de migrer, un sélecteur appris
-  // aujourd'hui mourrait à la prochaine refonte comme l'ancien collecteur.
+  // Sans sélecteur CSS, qui casserait à la prochaine refonte du site.
   it('laisse dehors la navigation et l’en-tête', () => {
     const doc = extraireDocument(RCP, 'rcp');
     assert.doesNotMatch(doc.html, /Accueil/);
@@ -53,8 +52,7 @@ describe('extraireDocument', () => {
     assert.ok(doc.signes > 800);
   });
 
-  // Une page qui contient par hasard « 1. Dénomination » dans un menu ne doit
-  // pas être prise pour un RCP : sans ce plancher, on stockerait l'habillage.
+  // Un « 1. Dénomination » dans un menu ne fait pas un RCP.
   it('refuse ce qui n’a ni volume ni numérotation', () => {
     assert.equal(extraireDocument(page('<p>1. DENOMINATION DU MEDICAMENT</p>'), 'rcp'), null);
     assert.equal(extraireDocument(page('<p>Rien à voir ici.</p>'), 'rcp'), null);
@@ -77,15 +75,13 @@ describe('extraireDocument', () => {
 });
 
 describe('pageSansDocument', () => {
-  // La BDPM ne renvoie pas d'erreur HTTP : elle sert une page qui l'explique.
+  // La BDPM répond 200 avec une page d'explication.
   it('reconnaît la page d’excuse', () => {
     assert.equal(pageSansDocument(page(
       "<p>Le médicament demandé n'existe pas ou n'entre pas dans le périmètre.</p>")), true);
   });
 
-  // Cas majoritaire en pratique : les homéopathiques à nom commun, qui n'ont
-  // légalement ni RCP ni notice. Ils ressortaient en « page non reconnue »,
-  // c'est-à-dire confondus avec les vraies pannes de lecture.
+  // Cas majoritaire : légalement sans RCP ni notice, à distinguer d'une panne de lecture.
   it('reconnaît l’absence propre aux homéopathiques à nom commun', () => {
     assert.equal(pageSansDocument(page(
       '<p>Aucune indication thérapeutique, aucune posologie et aucune notice ne '
@@ -118,8 +114,7 @@ describe('rubriquesVues', () => {
 });
 
 describe('equilibrer', () => {
-  // La leçon du jour : un fragment déséquilibré n'est pas rendu tel quel, il
-  // est recollé par le navigateur — qui clone l'ouvrante et déplace tout.
+  // Un fragment déséquilibré est recollé par le navigateur, qui déplace tout.
   it('retire une fermante orpheline', () => {
     assert.equal(equilibrer('<p>texte</p></div>'), '<p>texte</p>');
   });
@@ -143,8 +138,7 @@ describe('equilibrer', () => {
   });
 });
 
-// Depuis la refonte, affichageDoc.php redirige vers /medicament/<CIS>/extrait :
-// une seule page qui porte le RCP *puis* la notice.
+// /medicament/<CIS>/extrait porte le RCP puis la notice.
 describe('page unique portant les deux documents', () => {
   const DEUX = page(`<div class="doc">
     <p>1. DENOMINATION DU MEDICAMENT</p><p>AMOXICILLINE ALMUS 1 g</p>
@@ -177,7 +171,6 @@ describe('page unique portant les deux documents', () => {
     const rcp = extraireDocument(DEUX, 'rcp');
     const notice = extraireDocument(DEUX, 'notice');
     assert.ok(rcp.signes > 0 && notice.signes > 0);
-    // Avant la borne, le RCP faisait à lui seul la somme des deux.
     assert.ok(rcp.signes < notice.signes * 3, `rcp ${rcp.signes} / notice ${notice.signes}`);
   });
 });

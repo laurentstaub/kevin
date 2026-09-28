@@ -3,15 +3,9 @@ import { deaccent } from './text.js';
 import { rubriqueNotice } from './rcp-plan.js';
 
 /**
- * Conversion d'un PDF de la BDPM en documents exploitables.
- *
- * Les spécialités enregistrées en procédure centralisée n'ont pas de RCP en
- * HTML : la BDPM sert un PDF unique regroupant les annexes de la décision
- * européenne. Ce module ne fait pas le téléchargement ni l'extraction — il
- * part du texte produit par `pdftotext -layout` et le ramène au même format
- * HTML que les documents scrapés, pour que le découpeur soit le même.
- *
- * Toutes les fonctions sont pures : ni réseau, ni base, ni fichier.
+ * Conversion d'un PDF de la BDPM (procédure centralisée, sans RCP HTML) en
+ * documents au même format HTML que les documents scrapés.
+ * Part du texte de `pdftotext -layout`. Fonctions pures : ni réseau, ni base, ni fichier.
  */
 
 /** Un même PDF contient le RCP, l'étiquetage et la notice. */
@@ -31,18 +25,12 @@ const DEBUT_RCP = /^\s*(RESUME|RÉSUMÉ)\s+DES\s+CARACT/i;
 const LONGUEUR_TITRE_MAX = 250;
 
 /**
- * Une rubrique porte un numéro ponctué : « 1. », « 4.2 », « 6.3. ». Un nombre
- * nu suivi de mots n'en est pas une — « 12 ans présentant une épilepsie… »,
- * coupé en début de ligne, passerait sinon pour la rubrique 12 et avalerait
- * tout le reste du document.
+ * Numéro de rubrique ponctué (« 1. », « 4.2 »). Un nombre nu (« 12 ans… » en
+ * début de ligne) ne compte pas : il avalerait le reste du document.
  */
 const NUMERO_TITRE = /^\d{1,2}(?:\.\d{1,2})*\.\s|^\d{1,2}(?:\.\d{1,2})+\s/;
 
-/**
- * Début d'un élément de liste. La BDPM et l'EMA emploient indifféremment le
- * point médian, le tiret ou la lettre parenthésée ; `pdftotext` rend le tout
- * suivi d'un alignement en espaces qu'il ne faut pas prendre pour un tableau.
- */
+/** Début d'un élément de liste ; l'alignement en espaces qui suit n'est pas un tableau. */
 const PUCE = /^\s*([\u2022\u25AA\u25CF\u00B7\u25E6\u2023\-\u2013\u2014]|\(?[a-z]\)|\d{1,2}\))\s+/;
 
 /** Reprises du plan à l'intérieur d'une même annexe. */
@@ -55,20 +43,16 @@ const REPRISE = {
 export const pages = (texte) => String(texte ?? '').split('\f');
 
 /**
- * Retire l'habillage de page : en-têtes et pieds répétés, numéros isolés.
- *
- * Plutôt que de deviner ce qui est un en-tête, on compte — mais seulement en
- * haut et en bas de page. La dénomination du produit revient sur chaque page
- * en en-tête, et constitue aussi le contenu de la rubrique 1 : sans la
- * contrainte de position, on l'effacerait de la rubrique.
+ * Retire en-têtes, pieds de page répétés et numéros de page.
+ * Seules les lignes de bord comptent : la dénomination, répétée en en-tête,
+ * est aussi le contenu de la rubrique 1.
  */
 export function retirerHabillage(texte) {
   const feuillets = pages(texte);
   if (feuillets.length < 3) return feuillets.join('\n');
 
-  const BORD = 3; // nombre de lignes examinées en haut et en bas de page
+  const BORD = 3; // lignes examinées en haut et en bas de page
 
-  /** Indices des lignes situées sur un bord de page. */
   const bords = (lignes) => {
     const set = new Set();
     for (let i = 0; i < Math.min(BORD, lignes.length); i += 1) set.add(i);
@@ -76,8 +60,6 @@ export function retirerHabillage(texte) {
     return set;
   };
 
-  // Seules les lignes de bord entrent dans le décompte : le nom du produit
-  // figure aussi en rubrique 1, et il ne faut pas l'y effacer.
   const frequence = new Map();
   for (const feuillet of feuillets) {
     const lignes = feuillet.split('\n');
@@ -111,11 +93,8 @@ export function retirerHabillage(texte) {
 }
 
 /**
- * Découpe par annexe — obligatoirement avant toute recherche de rubrique.
- *
- * L'étiquetage porte lui aussi une « 1. DENOMINATION DU MEDICAMENT ». Cherché
- * sur le document entier, le filtre de cohérence retiendrait une progression
- * traversant les annexes et produirait un plan absurde.
+ * Découpe par annexe, avant toute recherche de rubrique : l'étiquetage a aussi
+ * une rubrique « 1. DENOMINATION », qui brouillerait le plan.
  *
  * @returns {Map<string, string>} type de document -> texte
  */
@@ -143,12 +122,11 @@ export function decouperAnnexes(texte) {
     if (!borne.type || borne.type === 'etiquetage-notice') return;
     const fin = bornes[rang + 1]?.i ?? lignes.length;
     const bloc = lignes.slice(borne.i, fin).join('\n');
-    // Un en-tête d'annexe se répète : on recolle les morceaux.
+    // Un en-tête d'annexe peut se répéter : recoller les morceaux.
     parType.set(borne.type, `${parType.get(borne.type) ?? ''}\n${bloc}`);
   });
 
-  // « ANNEXE III » sans suffixe regroupe étiquetage puis notice : on ne garde
-  // que ce qui suit le début de la notice.
+  // « ANNEXE III » seule regroupe étiquetage puis notice : garder la notice.
   const groupee = bornes.find((borne) => borne.type === 'etiquetage-notice');
   if (groupee && !parType.has('notice')) {
     const fin = bornes[bornes.indexOf(groupee) + 1]?.i ?? lignes.length;
@@ -163,23 +141,15 @@ export function decouperAnnexes(texte) {
 }
 
 /**
- * Écarte les sommaires.
- *
- * Une notice s'ouvre sur « Que contient cette notice ? » suivi de ses six
- * rubriques. Ces lignes ont la forme de titres et viennent en premier : le
- * filtre de cohérence les retient, et tout le corps de la notice se retrouve
- * dans la dernière rubrique.
- *
- * Signature d'un sommaire : au moins trois titres qui se suivent sans une seule
- * ligne de texte entre eux, sans descendre d'un niveau. Une rubrique chapeau
- * (« 4 » puis « 4.1 ») est vide elle aussi, mais la suivante est plus profonde.
+ * Écarte les sommaires (« Que contient cette notice ? »), que le filtre de
+ * cohérence prendrait pour le plan.
+ * Sommaire : au moins trois titres consécutifs sans texte entre eux, sans
+ * descendre d'un niveau (ce qui distingue une rubrique chapeau).
  */
 function sansSommaire(candidats, lignes) {
   const profondeur = (numero) => numero.split('.').length;
   const rang = (numero) => Number(numero.split('.')[0]);
-  // Deux titres se suivent dans un sommaire s'ils sont séparés par du vide, au
-  // même niveau, et que la numérotation progresse : « 6 » puis « 1 », c'est le
-  // corps qui commence, pas la suite de la liste.
+  // « 6 » puis « 1 » : c'est le corps qui commence, pas la suite du sommaire.
   const colles = (a, b) =>
     lignes.slice(a.i + 1, b.i).every((ligne) => !ligne.trim()) &&
     profondeur(b.number) <= profondeur(a.number) &&
@@ -198,12 +168,8 @@ function sansSommaire(candidats, lignes) {
 }
 
 /**
- * Reconstitue un HTML minimal — mêmes balises que les documents scrapés, pour
- * que l'application et le découpeur ignorent d'où vient le document.
- *
- * La détection des titres se fait ici, sur le texte : c'est le seul moment où
- * la mise en page est encore lisible. Une fois converti en <p>, il ne resterait
- * que la numérotation.
+ * Reconstitue un HTML minimal, aux mêmes balises que les documents scrapés.
+ * Les titres se détectent ici, tant que la mise en page est encore lisible.
  */
 export function versHtml(texte, type = 'doc') {
   const lignes = String(texte ?? '')
@@ -219,9 +185,8 @@ export function versHtml(texte, type = 'doc') {
     if (number) candidats.push({ i, number, label });
   });
 
-  // Une notice suit un plan connu. Une procédure numérotée dans le corps a la
-  // même forme qu'un plan : seule la tournure du libellé tranche. On ne filtre
-  // que si le plan se reconnaît vraiment — sinon la source fait foi.
+  // Notice : garder les titres du plan connu (écarte les procédures numérotées),
+  // seulement si ce plan se reconnaît.
   if (type === 'notice') {
     const plan = candidats.filter((candidat) => rubriqueNotice(candidat.number, candidat.label));
     if (plan.length >= 4) candidats = plan;
@@ -240,10 +205,7 @@ export function versHtml(texte, type = 'doc') {
 
   const retrait = (ligne) => ligne.length - ligne.trimStart().length;
 
-  // Un PDF n'a pas de paragraphes, il a des lignes. Rendre chaque ligne en
-  // <p> donne un texte aéré d'un interligne complet tous les soixante-dix
-  // signes — illisible. On recolle les lignes consécutives ; ce sont les
-  // lignes vides qui séparent les paragraphes.
+  // Recolle les lignes consécutives ; seules les lignes vides séparent les paragraphes.
   const viderParagraphe = () => {
     if (paragraphe.length === 0) return;
     html.push(`<p>${echapper(paragraphe.join(' '))}</p>`);
@@ -259,13 +221,10 @@ export function versHtml(texte, type = 'doc') {
 
   const viderTableau = () => {
     if (tableau.length === 0) return;
-    // Une seule ligne alignée n'est pas un tableau : c'est une phrase que la
-    // mise en page a espacée. Un vrai tableau a plusieurs lignes.
+    // Une seule ligne alignée est une phrase espacée, pas un tableau.
     if (tableau.length === 1) paragraphe.push(tableau[0].trim());
     else {
-      // Les tableaux de posologie ne se reconstruisent pas de façon fiable :
-      // l'alignement en espaces est conservé tel quel. Une colonne décalée sur
-      // une dose est pire qu'un texte brut.
+      // Alignement conservé tel quel : une colonne décalée sur une dose est pire qu'un texte brut.
       html.push(`<pre>${echapper(tableau.join('\n'))}</pre>`);
     }
     tableau = [];
@@ -287,7 +246,6 @@ export function versHtml(texte, type = 'doc') {
       continue;
     }
 
-    // La ligne vide est la seule marque de fin de paragraphe d'un PDF.
     if (!propre) {
       viderTout();
       continue;
@@ -302,9 +260,7 @@ export function versHtml(texte, type = 'doc') {
       continue;
     }
 
-    // Trois espaces ou plus au milieu d'une ligne : mise en colonnes. Testé
-    // après la puce, sans quoi « •    en association avec… » passe pour un
-    // tableau et sort en chasse fixe.
+    // Mise en colonnes. Testé après la puce, sinon « •    texte » passe pour un tableau.
     if (/\S {3,}\S/.test(ligne)) {
       viderParagraphe();
       viderListe();
@@ -314,8 +270,7 @@ export function versHtml(texte, type = 'doc') {
 
     viderTableau();
 
-    // La suite d'un élément de liste est en retrait sous sa puce ; une ligne
-    // revenue à la marge ouvre autre chose.
+    // Suite d'un élément de liste : en retrait sous sa puce.
     if (liste.length > 0 && retrait(ligne) >= listeIndent - 1) {
       liste.at(-1).push(propre);
       continue;
@@ -330,12 +285,8 @@ export function versHtml(texte, type = 'doc') {
 }
 
 /**
- * Sépare les reprises du plan à l'intérieur d'une annexe.
- *
- * Un PDF de l'EMA décrit toutes les formes d'une spécialité : l'annexe I
- * enchaîne autant de RCP complets qu'il y a de formes — six pour Keppra. Sans
- * séparation, la numérotation repart à 1, le filtre de cohérence refuse ce
- * retour en arrière, et tout le second RCP finit dans la rubrique 10 du premier.
+ * Sépare les reprises du plan dans une annexe : un PDF de l'EMA enchaîne un RCP
+ * complet par forme (six pour Keppra), que le filtre de cohérence fusionnerait.
  *
  * @returns {string[]} un bloc par reprise, dans l'ordre du document
  */
@@ -356,12 +307,8 @@ export function separerRepetitions(texte, type) {
 const mots = (texte) => deaccent(String(texte ?? '')).toLowerCase().match(/[a-z0-9]+/g) ?? [];
 
 /**
- * Choisit la reprise qui correspond à la spécialité.
- *
- * « Keppra 250 mg, comprimé pelliculé » et « Keppra 100 mg/ml, solution
- * buvable » n'ont ni la même posologie ni les mêmes excipients : servir la
- * mauvaise au comptoir serait une faute. On compare la dénomination du CIS à
- * l'en-tête de chaque bloc — c'est la rubrique 1, donc le nom complet.
+ * Choisit la reprise de la spécialité (posologie et excipients diffèrent selon
+ * la forme), en comparant la dénomination du CIS à la rubrique 1 de chaque bloc.
  */
 export function choisirBloc(blocs, denomination) {
   if (blocs.length === 1 || !denomination) return blocs[0];

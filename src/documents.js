@@ -3,12 +3,8 @@ import { outline } from './outline.js';
 import { config } from './config.js';
 
 /**
- * Ordre d'affichage, et non simple liste : le document le plus substantiel
- * vient en premier.
- *
- * `rcp_notice` couvre les spécialités enregistrées en procédure centralisée,
- * pour lesquelles la BDPM ne publie pas de HTML mais un PDF unique regroupant
- * les annexes. Environ 15 % des CIS.
+ * Ordre d'affichage : le plus substantiel d'abord.
+ * `rcp_notice` : PDF unique des spécialités centralisées (environ 15 % des CIS).
  */
 export const DOCUMENT_TYPES = ['rcp', 'rcp_notice', 'notice', 'main'];
 
@@ -20,17 +16,10 @@ export const DOCUMENT_LABELS = {
 };
 
 /**
- * Lien vers le document officiel.
- *
- * Le `file_path` des spécialités centralisées vaut toujours
- * « /documents/<CIS>/rcp_notice.pdf » — un emplacement local que l'ancien
- * scraper n'a jamais rempli, et qui rend 404 une fois résolu contre la BDPM.
- * La fiche document du site, elle, est stable et porte le vrai lien.
+ * Lien vers le document officiel. Un file_path « /documents/<CIS>/rcp_notice.pdf »
+ * rend 404 sur la BDPM : il est remplacé par la fiche document du site.
  */
-// L'ancienne forme — affichageDoc.php?specid=…&typedoc=R — répond encore, par
-// une redirection 301 vers celle-ci. Autant viser l'arrivée : un aller-retour
-// de moins pour le lecteur, et le lien survit au jour où la redirection sera
-// retirée.
+// Vise directement la cible de la redirection 301 de affichageDoc.php.
 const ficheDocument = (cis) =>
   `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`;
 
@@ -39,10 +28,7 @@ function lienOfficiel(cis, filePath) {
   return /^\/documents\//.test(filePath) ? ficheDocument(cis) : safeDocumentUrl(filePath);
 }
 
-/**
- * Documents officiels d'une spécialité. Le HTML est assaini ici, une fois,
- * avant de sortir de la couche données — aucune vue ne reçoit de HTML brut.
- */
+/** Documents officiels d'une spécialité, HTML assaini ici : aucune vue ne reçoit de HTML brut. */
 export async function getDocuments(pool, cis) {
   const { rows } = await pool.query(
     `SELECT code_cis, document_type, html_content, file_path, last_updated
@@ -68,19 +54,15 @@ export async function getDocuments(pool, cis) {
         lastUpdated: row.last_updated,
       };
     })
-    // Un document vide après assainissement et sans URL valide n'a rien à afficher.
+    // Rien à afficher : vide après assainissement et sans URL valide.
     .filter((doc) => doc.html || doc.url)
     // Une seule version par type : la plus récente (tri SQL last_updated DESC).
     .filter((doc) => !seen.has(doc.type) && seen.add(doc.type));
 }
 
 /**
- * Greffe les rubriques déjà découpées sur les documents.
- *
- * Le document garde ses métadonnées — libellé, date, lien vers la version
- * officielle — et gagne son plan. Quand le découpage n'existe pas encore pour
- * ce type, il reste servi d'un bloc : la fiche ne doit pas dépendre de
- * l'avancement d'un traitement par lots.
+ * Greffe les rubriques découpées sur les documents. Sans découpage, le document
+ * reste servi d'un bloc.
  */
 export function withSections(documents, parType) {
   const greffes = documents.map((doc) => {
@@ -96,10 +78,7 @@ export function withSections(documents, parType) {
     };
   });
 
-  // Un PDF européen unique donne deux documents — un RCP et une notice — qui
-  // n'existent pas dans cis_documents : celle-ci ne connaît que la ligne
-  // « rcp_notice » qui les portait. Sans cette reprise, les 2 052 spécialités
-  // centralisées affichent un lien vers un PDF au lieu de leurs rubriques.
+  // Le PDF « rcp_notice » donne un RCP et une notice absents de cis_documents : les ajouter.
   const presents = new Set(greffes.map((doc) => doc.type));
   const porteur = greffes.find((doc) => doc.type === 'rcp_notice');
 
@@ -120,8 +99,7 @@ export function withSections(documents, parType) {
       source: decoupe.source,
     }));
 
-  // Le document porteur n'a plus rien à montrer une fois découpé : ses
-  // rubriques sont ailleurs, et son lien est repris par les documents dérivés.
+  // Porteur vide une fois découpé : son lien est repris par les documents dérivés.
   const restants =
     derives.length > 0
       ? greffes.filter((doc) => !(doc.type === 'rcp_notice' && doc.rubriques.length === 0))

@@ -13,8 +13,7 @@ describe('normaliserRubrique', () => {
     assert.equal(normaliserRubrique(' 4.10 '), '4.10');
   });
 
-  // Le numéro vient de l'URL, donc de n'importe où. Il entre dans un LIKE :
-  // le vérifier ici est ce qui permet de ne pas s'en méfier plus loin.
+  // Le numéro vient de l'URL et entre dans un LIKE.
   it('refuse tout ce qui n’est pas un numéro', () => {
     for (const piege of ['4.3.2', '%', "4' OR 1=1", '', null, undefined, 'quatre', '4;']) {
       assert.equal(normaliserRubrique(piege), null, String(piege));
@@ -23,18 +22,14 @@ describe('normaliserRubrique', () => {
 });
 
 describe('bornes', () => {
-  // Classer par pertinence suppose d'avoir évalué chaque occurrence : sur un
-  // mot courant, c'est cent mille rubriques pour un résultat que personne ne
-  // lira. Le plafond est assumé, et la vue dit qu'il a été atteint.
+  // Le classement évalue chaque occurrence : plafond assumé, signalé par la vue.
   it('sont des valeurs, pas des nombres épars dans le code', () => {
     assert.equal(typeof PLAFOND, 'number');
     assert.ok(PLAFOND >= 1000, 'assez haut pour toute recherche utile');
     assert.ok(PAR_PAGE > 0 && PAR_PAGE <= 100);
   });
 
-  // Vingt tenait quand une trouvaille occupait cinq lignes d'écran. Groupée
-  // par molécule et l'extrait replié, elle en occupe une : la page montrait un
-  // vingtième de ce qu'elle pouvait.
+  // Groupée par molécule et repliée, une trouvaille n'occupe qu'une ligne.
   it('rendent assez de lignes pour que la page vaille la peine', () => {
     assert.ok(PAR_PAGE >= 50, 'la vue complète remplit l’écran');
     assert.ok(APERCU >= 10 && APERCU < PAR_PAGE, 'l’aperçu en montre moins, pas cinq');
@@ -42,18 +37,13 @@ describe('bornes', () => {
 });
 
 describe('rechercheAbsente', () => {
-  // Les deux situations demandent des choses opposées : lancer une commande,
-  // ou attendre. Une panne annoncée « momentanée » alors qu'elle est
-  // définitive fait attendre pour rien.
+  // Absence (lancer la migration) et panne passagère (attendre) appellent des gestes opposés.
   it('reconnaît une configuration de recherche absente', () => {
     assert.equal(rechercheAbsente({ code: '42704', message: 'text search configuration "french_nu" does not exist' }), true);
     assert.equal(rechercheAbsente({ code: '42883', message: 'function websearch_to_tsquery(unknown, unknown) does not exist' }), true);
   });
 
-  // Appris à la dure : en passant l'index d'expression en colonne stockée, la
-  // requête s'est mise à demander `s.vecteur` sur une base qui ne l'avait pas
-  // encore. Le code n'était pas reconnu, et l'écran annonçait une
-  // indisponibilité passagère pour une migration qui attendait d'être lancée.
+  // Base non migrée : `s.vecteur` manque, ce n'est pas une panne passagère.
   it('reconnaît la colonne vecteur absente', () => {
     assert.equal(rechercheAbsente({
       code: '42703', message: 'column s.vecteur does not exist',
@@ -67,11 +57,7 @@ describe('rechercheAbsente', () => {
   });
 });
 
-/**
- * Un pool qui rend `n` lignes et retient les paramètres reçus.
- * On ne teste pas Postgres — on teste ce qu'on lui demande et ce qu'on fait de
- * sa réponse, qui est exactement là où la pagination peut mentir.
- */
+/** Pool factice qui rend `n` lignes et retient les paramètres reçus. */
 const faussePool = (nombre) => {
   const vues = [];
   const ligne = (i) => ({
@@ -96,9 +82,7 @@ const faussePool = (nombre) => {
 };
 
 describe('pagination de la recherche plein texte', () => {
-  // La page suivante ne se déduit d'aucun décompte : `occurrences` compte les
-  // rubriques avant regroupement, donc majore. On demande une ligne de plus
-  // que ce qu'on affiche, et sa présence répond à la question.
+  // `occurrences` majore (compté avant regroupement) : la ligne en plus dit s'il y a une suite.
   it('demande une ligne de plus et ne la montre pas', async () => {
     const pool = faussePool(21);
     const recherche = await chercherDansDocuments(pool, 'intervalle QT', { limite: 20 });
@@ -119,8 +103,7 @@ describe('pagination de la recherche plein texte', () => {
     assert.equal(pool.appels[0][2], 40);
   });
 
-  // Au-delà du plafond il n'y a plus rien à sauter : une page vide au milieu
-  // d'un jeu de résultats se lit comme une panne, pas comme une fin.
+  // Au-delà, une page vide se lirait comme une panne.
   it('borne le décalage au plafond de la recherche', async () => {
     const pool = faussePool(0);
     await chercherDansDocuments(pool, 'QT', { decalage: 999999 });
@@ -151,15 +134,13 @@ describe('extraitDeRubrique', () => {
   it('désigne la rubrique par sa clé primaire', async () => {
     const pool = espion();
     const extrait = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '12', requete: 'QT' });
-    // Les trois clés d'abord, puis les atomes de la requête — leur nombre
-    // varie avec le thésaurus, ils ne peuvent donc venir qu'en dernier.
+    // Les atomes, en nombre variable, viennent après les trois clés.
     assert.deepEqual(pool.vus[0].slice(0, 3), ['66297965', 'rcp', 12]);
     assert.ok(pool.vus[0].slice(3).includes('QT'));
     assert.equal(extrait.numero, '4.5');
   });
 
-  // Les trois paramètres viennent de l'URL, donc de n'importe où. Les vérifier
-  // ici est ce qui permet de ne pas s'en méfier dans la requête.
+  // Les trois paramètres viennent de l'URL.
   it('refuse ce qui n’est pas une rubrique, sans toucher la base', async () => {
     const pool = espion();
     for (const mauvais of [
@@ -176,8 +157,7 @@ describe('extraitDeRubrique', () => {
 });
 
 describe('composition de la requête tsquery', () => {
-  // websearch_to_tsquery donne à « OR » la précédence inverse de celle qu'il
-  // nous faut : on compose donc par opérateurs, un websearch par alternative.
+  // websearch_to_tsquery inverse la précédence voulue de « OR » : un websearch par alternative.
   it('un ET entre les concepts, un OU entre les alternatives', () => {
     const { sql, params } = composerTsquery([['sertraline'], ['QT', '"torsade de pointes"']], 4);
     assert.equal(params.length, 3);
@@ -185,7 +165,6 @@ describe('composition de la requête tsquery', () => {
     assert.match(sql, /^websearch_to_tsquery\('french_nu', \$4\) && \(websearch_to_tsquery\('french_nu', \$5\) \|\| websearch_to_tsquery\('french_nu', \$6\)\)$/);
   });
 
-  // Seule la forme dépend de la saisie : jamais une valeur n'entre dans le SQL.
   it('ne met aucune valeur dans le SQL', () => {
     const { sql } = composerTsquery([["'); DROP TABLE docs.rcp_sections; --"]], 4);
     assert.doesNotMatch(sql, /DROP/);
@@ -199,14 +178,12 @@ describe('composition de la requête tsquery', () => {
 });
 
 describe('expression exacte', () => {
-  // Plusieurs mots tapés sans guillemets : la rubrique qui les porte dans
-  // l'ordre passe devant celle qui les disperse.
+  // Mots dans l'ordre classés devant mots dispersés.
   it('retient une expression de plusieurs mots', () => {
     assert.equal(expressionExacte(' insuffisance hépatique sévère '), 'insuffisance hépatique sévère');
   });
 
-  // Rien à distinguer : un mot seul, une locution déjà entre guillemets, une
-  // requête qui porte un opérateur.
+  // Mot seul, locution entre guillemets ou requête avec opérateur.
   it('ne distingue rien quand il n’y a rien à distinguer', () => {
     for (const saisie of ['QT', '"torsade de pointes"', 'QT -torsade', 'QT or torsade', '']) {
       assert.equal(expressionExacte(saisie), null, saisie);

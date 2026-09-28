@@ -3,15 +3,10 @@ include _barre.pug
 include _recherche.pug
 include _resultats-documents.pug
 
-//- Recherche plein texte, vue complète.
-//-
-//- Une page, une question : où cette expression figure-t-elle dans les
-//- documents. Le filtre par rubrique vit ici et nulle part ailleurs — le mêler
-//- à ceux de la recherche par nom ferait une page qui en pose deux.
+//- Recherche plein texte, vue complète. Seule page à porter le filtre par rubrique.
 
 block content
-  //- La barre porte la requête dans son champ : le titre n'a plus à la
-  //- répéter, il dit où l'on est.
+  //- La requête est dans le champ de la barre ; le titre dit où l'on est.
   +barreSituation('Dans les documents', query, '/documents')
 
   main.corps
@@ -21,19 +16,12 @@ block content
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
 
-      //- L'état de la recherche, en un seul endroit.
-      //-
-      //- Il vivait en trois morceaux qui ne se touchaient pas : la barre
-      //- disait la requête, l'en-tête du tableau la rubrique, et le décompte
-      //- ne paraissait que si la recherche avait été plafonnée — c'est-à-dire
-      //- jamais quand on filtre, puisque filtrer fait passer sous le plafond.
-      //- Ici : ce qu'on a cherché, ce qu'on a restreint, ce que ça donne.
+      //- État de la recherche en un seul endroit : requête, rubrique, décompte.
       if !panne && !notice
         p.etat
           span.etat-requete= `« ${query} »`
           if rubrique
-            //- Le jeton se défait d'un clic : un filtre qu'on ne sait pas
-            //- retirer se retire en refaisant la recherche.
+            //- Le jeton retire le filtre d'un clic.
             a.jeton(href=lien(etat, { rubrique: null })
               title="Rechercher dans tout le document")
               | rubrique #{rubrique}
@@ -44,13 +32,8 @@ block content
             else
               | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
 
-        //- Ce qu'on a cherché en plus de ce qui a été tapé.
-        //-
-        //- Le thésaurus élargit « QT » à « torsade de pointes » : le lecteur
-        //- doit le savoir, sinon un résultat qui ne contient pas son mot passe
-        //- pour une erreur. Et il doit pouvoir le refuser — la requête entre
-        //- guillemets n'est jamais élargie, c'est la règle de websearch et la
-        //- nôtre.
+        //- Élargissements du thésaurus, annoncés et refusables (« mot pour mot » :
+        //- une requête entre guillemets n'est jamais élargie).
         if documents.elargissements && documents.elargissements.length > 0
           p.elargi
             each elargissement, i in documents.elargissements
@@ -63,13 +46,7 @@ block content
             a.elargi-exact(href=lien(etat, { requete: `"${query.replace(/"/g, '')}"` })
               title="Chercher les mots tapés, et rien d'autre") mot pour mot
 
-    //- La rangée d'onglets qui vivait ici a disparu.
-    //-
-    //- Elle listait les huit mêmes rubriques que l'en-tête du tableau, deux
-    //- lignes au-dessus de lui : la même liste écrite deux fois sur le même
-    //- écran, dont l'une ne portait aucune donnée. Le filtre n'est pas perdu
-    //- pour autant — il est passé dans l'en-tête, qui est sa place : on
-    //- restreint une colonne en cliquant sur la colonne.
+    //- Le filtre par rubrique est dans l'en-tête du tableau.
     if panne
       p.vide= panne
     else if notice
@@ -79,12 +56,7 @@ block content
     else
       +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien)
 
-      //- Où l'on en est, et comment aller plus loin.
-      //-
-      //- Sans ces deux liens la page annonçait des milliers de rubriques et
-      //- n'en montrait que vingt : le lecteur en concluait, à raison, qu'il
-      //- manquait quelque chose. On ne numérote pas les pages — cent cinquante
-      //- numéros ne se choisissent pas — on avance et on recule.
+      //- Pagination précédent/suivant, sans numéros (trop de pages pour en choisir une).
       - const premier = documents.decalage + 1
       - const dernier = documents.decalage + documents.resultats.length
       nav.pages(aria-label="Pagination des résultats")

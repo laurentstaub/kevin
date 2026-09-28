@@ -1,26 +1,10 @@
 /**
- * Fiches thématiques : un fichier Markdown, publié sur le site.
- *
- * Le Markdown est le format source, la page est la publication. Trois règles
- * en découlent, et tout ce module les sert.
- *
- * **La fiche dit qui l'a écrite, quand, et d'après quoi.** L'en-tête porte
- * l'auteur, la date de relecture et la source ; une fiche sans date de
- * relecture n'est pas publiée.
- *
- * **Tout ce qui porte sur une molécule est cité, jamais réécrit.** Le texte
- * libre de la fiche est court et signé ; les listes et les phrases viennent de
- * blocs déclaratifs (`::: substances …`, `::: citations …`) que le script de
- * construction calcule depuis les RCP. La phrase du RCP, pas une réécriture.
- *
- * **Le calcul se relit avant de paraître.** Il est écrit dans un fichier JSON
- * versionné : ce qui change d'un millésime à l'autre se lit dans un diff avant
- * de partir en ligne.
- *
- * Le Markdown accepté est un sous-ensemble volontaire — titres, paragraphes,
- * listes, gras, italique, liens — plutôt qu'une dépendance de plus pour un
- * format dont on n'utilisera jamais les tableaux, le HTML brut ni les notes.
- * Tout est échappé d'abord, puis seuls ces motifs sont reconnus.
+ * Fiches thématiques : Markdown source, page publiée. L'en-tête porte auteur,
+ * date de relecture et source ; sans date de relecture, pas de publication.
+ * Ce qui porte sur une molécule est cité depuis les RCP via des blocs
+ * déclaratifs (`::: substances …`), calculés dans un JSON versionné et relu.
+ * Markdown restreint (titres, paragraphes, listes, gras, italique, liens) :
+ * tout est échappé, puis seuls ces motifs sont reconnus.
  */
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -43,9 +27,7 @@ function enLigne(texte) {
   return echapper(texte)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1<em>$2</em>')
-    // Une paire de parenthèses est admise dans l'URL — les pages de l'ANSM et
-    // de Wikipédia en portent — sans quoi la capture s'arrête trop tôt et
-    // laisse une parenthèse orpheline dans le texte.
+    // Une paire de parenthèses est admise dans l'URL (ANSM, Wikipédia).
     .replace(/\[([^\]]+)\]\(((?:[^()\s]|\([^()\s]*\))+)\)/g, (tout, libelle, url) => {
       const brut = url.replace(/&amp;/g, '&');
       if (!lienSur(brut)) return libelle;
@@ -54,10 +36,7 @@ function enLigne(texte) {
     });
 }
 
-/**
- * L'en-tête : des lignes `clé: valeur` entre deux `---`. Un sous-ensemble de
- * YAML, suffisant pour des métadonnées plates, sans dépendance.
- */
+/** En-tête : lignes `clé: valeur` entre deux `---` (YAML plat, sans dépendance). */
 export function lireEnTete(source) {
   const entete = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source);
   if (!entete) return { meta: {}, corps: source };
@@ -140,13 +119,10 @@ export function listerFiches(dossier = DOSSIER_FICHES) {
     .filter(Boolean);
 }
 
-/**
- * Publiée seulement si relue. Une fiche sans date de relecture existe dans le
- * dépôt et se prévisualise en développement ; elle ne paraît pas en ligne.
- */
+/** Publiée seulement si relue ; sinon visible en développement uniquement. */
 export const publiee = (fiche) => Boolean(fiche?.meta?.relu);
 
-/** Le calcul de la fiche, tel que build-fiches l'a écrit et que git l'a gardé. */
+/** Le calcul de la fiche, écrit par build-fiches et versionné. */
 export function lireCalcul(slug, dossier = DOSSIER_CALCULS) {
   if (!SLUG.test(String(slug))) return null;
   const chemin = path.join(dossier, `${slug}.json`);

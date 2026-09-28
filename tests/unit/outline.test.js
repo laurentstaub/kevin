@@ -215,9 +215,7 @@ describe('outline — pièges du balisage BDPM', () => {
   const rubriques = (html) => outline(html, 'rcp').sections.map((section) => section.number);
 
   it('ne se laisse pas berner par le <h1> titre de page', () => {
-    // Une page BDPM contient un seul <h1> — son titre — et les rubriques sont
-    // des <p class="AmmAnnexeTitre*">. Se fier au <h1> faisait conclure « ce
-    // document a de vrais titres » et manquer 93 % des RCP.
+    // Le seul <h1> est le titre de page ; les rubriques sont des <p class="AmmAnnexeTitre*">.
     const page =
       '<h1 class="textedeno">ANASTROZOLE ACCORD 1 mg, comprimé pelliculé</h1>' +
       '<p class="AmmAnnexeTitre1"><a name="RcpDenomination">1. DENOMINATION DU MEDICAMENT</a></p>' +

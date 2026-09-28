@@ -1,14 +1,11 @@
 -- Rubriques de documents — schéma docs.
 -- Idempotent. Exécution : npm run db:sections
---
--- Pourquoi un schéma à part : `dbpm` est le miroir des fichiers CIS_*.txt,
--- reconstruit par DELETE + insert à chaque chargement. Ce qui est dérivé du
--- scraping n'y a pas sa place — sans quoi le miroir cesse d'être jetable.
+-- Schéma à part : `dbpm`, miroir des CIS_*.txt reconstruit à chaque chargement,
+-- doit rester jetable.
 
 CREATE SCHEMA IF NOT EXISTS docs;
 
--- Une ligne par rubrique. La numérotation porte l'arbre : « 4.2 » a pour
--- parent « 4 », ça se déduit, ça ne se stocke pas.
+-- Une ligne par rubrique ; l'arbre se déduit du numéro (« 4.2 » → « 4 »).
 CREATE TABLE IF NOT EXISTS docs.rcp_sections (
   code_cis       varchar(20)  NOT NULL,
   document_type  varchar(20)  NOT NULL,
@@ -23,8 +20,7 @@ CREATE TABLE IF NOT EXISTS docs.rcp_sections (
   PRIMARY KEY (code_cis, document_type, position)
 );
 
--- Sur une page médicale, le lecteur doit pouvoir savoir s'il lit le texte
--- officiel ou une reconstruction depuis un PDF.
+-- Distingue le texte officiel d'une reconstruction depuis un PDF.
 ALTER TABLE docs.rcp_sections
   ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'bdpm_html';
 
@@ -34,14 +30,9 @@ CREATE INDEX IF NOT EXISTS idx_sections_numero
 CREATE INDEX IF NOT EXISTS idx_sections_cis
   ON docs.rcp_sections (code_cis);
 
--- La recherche plein texte a son propre fichier, sql/recherche.sql : elle a
--- besoin d'unaccent et d'une configuration maison, que ce fichier-ci ne doit
--- pas exiger. L'index vivait ici, sur la configuration `french` : db:sections
--- le recréait donc juste après que db:recherche l'eut supprimé, et deux index
--- GIN sur la même matière ralentissaient chaque écriture pour rien.
+-- Index plein texte : dans sql/recherche.sql uniquement (unaccent, config maison).
 
--- État du découpage, une ligne par document — y compris les échecs, qui ne
--- produisent aucune rubrique et seraient donc invisibles autrement.
+-- État du découpage par document, échecs compris (sans rubrique, sinon invisibles).
 CREATE TABLE IF NOT EXISTS docs.document_parse (
   code_cis       varchar(20)  NOT NULL,
   document_type  varchar(20)  NOT NULL,

@@ -1,5 +1,4 @@
-/* Fiche thématique. Une page de lecture : même colonne que le RCP, même
-   police de lecture pour ce qui est cité. */
+/* Fiche thématique : même colonne et même police de lecture que le RCP. */
 
 
 .fiche-entete { padding-top: var(--sp-4); margin-bottom: var(--sp-4); }
@@ -26,8 +25,7 @@
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-/* Le tableau des substances : la substance et sa spécialité à gauche, la
-   phrase du RCP à droite. La phrase est une citation — elle en a la forme. */
+/* Substances : substance et spécialité à gauche, citation du RCP à droite. */
 .fiche-substances {
   width: 100%;
   border-collapse: collapse;

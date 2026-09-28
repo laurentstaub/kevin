@@ -9,25 +9,12 @@ import { lireEtat, lien } from '../../src/etat-recherche.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
 
 /**
- * Les gabarits se rendent, et pas seulement se compilent.
- *
- * `pug.compileFile` ne vérifie rien de ce qui se résout à l'exécution : un
- * mixin absent compile sans une plainte et casse à la première visite. C'est
- * arrivé sur la page des documents — elle appelait `barreSituation` sans
- * inclure `_barre.pug`, et trois vérifications « pug ok » de suite l'ont
- * laissée passer.
- *
- * Rendre chaque page avec des données minimales coûte quelques millisecondes
- * et attrape toute la famille : mixin manquant, variable indéfinie, boucle sur
- * ce qui n'est pas un tableau.
+ * Rend chaque gabarit : `pug.compileFile` laisse passer mixin absent, variable indéfinie
+ * ou boucle sur un non-tableau, qui ne cassent qu'au rendu.
  */
 /**
- * Les locales que les deux routes de recherche fournissent toujours.
- *
- * L'état se déduit de ce que le cas de test annonce — requête, rubrique, page —
- * plutôt que d'être posé à la main à côté : c'est la même dérivation qu'en
- * production, donc un test ne peut pas passer sur un état que la route ne
- * produirait jamais.
+ * Locales toujours fournies par les deux routes de recherche.
+ * `etat` est dérivé du cas comme en production, jamais posé à la main.
  */
 const rendre = (vue, locals = {}) => {
   const mode = vue === 'documents' ? 'documents' : 'nom';
@@ -38,8 +25,6 @@ const rendre = (vue, locals = {}) => {
     filter: locals.filter,
   }, mode);
 
-  // `v` et `lien` sont posés par l'application dans app.locals : les fournir
-  // ici est fidèle. `etat` vient de la route, et se déduit donc du cas.
   return pug.renderFile(path.join(ROOT, 'views', `${vue}.pug`), {
     v: 'test', lien, colonnes: COLONNES, etat, ...locals,
   });
@@ -47,8 +32,7 @@ const rendre = (vue, locals = {}) => {
 
 const RECHERCHE_VIDE = { resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [] };
 
-// La fiche produit prend une quinzaine de variables. Les fournir toutes est le
-// prix du test : c'est précisément la page où une locale oubliée casse tout.
+// Toutes les locales de la fiche produit, la page la plus sensible à un oubli.
 const produit = (extra = {}) => ({
   product: {
     id: '66297965',
@@ -69,8 +53,7 @@ const produit = (extra = {}) => ({
   documents: [],
   hasDocuments: false,
   delivrance: { resume: [], groupes: [], liens: [] },
-  // Les liens viennent de productLinks : les recopier à la main ici, c'est
-  // rater le jour où la fiche en cite un nouveau — ce qui vient d'arriver.
+  // Via productLinks, pour suivre tout nouveau lien de la fiche.
   links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [], scientific: [] },
   sections: [],
   ...extra,
@@ -93,8 +76,7 @@ const TROUVAILLE = {
   ],
 };
 
-// Deux spécialités sur treize mille six cents : la dénomination tient lieu de
-// titre, et le lien va à la fiche, pas à une recherche par principe actif.
+// Cas rare : la dénomination sert de titre et le lien va à la fiche.
 const SANS_MOLECULE = {
   ...TROUVAILLE,
   signature: 'cis:66297967',
@@ -164,16 +146,12 @@ describe('rendu des gabarits', () => {
     });
   }
 
-  // Le cas qui a cassé : une page qui appelle un mixin d'un fichier qu'elle
-  // n'inclut pas. Le rendu est le seul moment où ça se voit.
   it('la page des documents dispose de la barre de situation', () => {
     const html = rendre('documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE });
     assert.match(html, /class="barre"/);
   });
 
-  // La prise en charge restreinte vient d'une autre table que les conditions
-  // de délivrance : elle doit s'afficher même pour une spécialité sans aucune
-  // condition enregistrée, sinon la mention de l'en-tête annonce un bloc vide.
+  // Autre table que les conditions : sinon la mention de l'en-tête annoncerait un bloc vide.
   it('la prise en charge restreinte s’affiche sans condition de délivrance', () => {
     const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));
     assert.match(html, /Indications remboursées/);
@@ -182,17 +160,13 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /aucune condition de prescription/);
   });
 
-  // On rapporte la restriction, on ne qualifie pas la spécialité : le champ de
-  // l'Assurance Maladie ne dit pas « médicament d'exception », et deux
-  // présentations sur huit cents seulement emploient le mot.
+  // Le champ de l'Assurance Maladie rapporte une restriction, pas ce statut.
   it('la fiche ne qualifie pas le produit de médicament d’exception', () => {
     const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));
     const hors = html.replace(/<a[^>]*>[\s\S]*?<\/a>/g, '');
     assert.doesNotMatch(hors, /médicament d.exception/i);
   });
 
-  // Le décompte annonçait des milliers de rubriques et la page en montrait
-  // vingt, sans dire où étaient les autres.
   it('la page des documents sait avancer et reculer', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: '4.4', documents: RECHERCHE_PLEINE, page: 2,
@@ -204,8 +178,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /Résultats 21 à 22/);
   });
 
-  // Retour à la première page : elle s'écrit sans paramètre, sinon deux URL
-  // rendent la même page et le lien « actif » se dédouble.
+  // Sinon deux URL pour une même page, et le lien « actif » se dédouble.
   it('revient à la première page sans paramètre de page', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: { ...RECHERCHE_PLEINE, decalage: 20 }, page: 2,
@@ -213,8 +186,6 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /page=1/);
   });
 
-  // La recherche plein texte ne s'annonçait nulle part : elle n'apparaissait
-  // qu'en bas de page, une fois la recherche par nom déjà faite.
   it('la page de recherche annonce la recherche plein texte', () => {
     const html = rendre('search_page', {
       query: 'intervalle QT',
@@ -223,14 +194,11 @@ describe('rendu des gabarits', () => {
       documents: RECHERCHE_PLEINE,
     });
     assert.match(html, /Dans les documents/);
-    // URLSearchParams encode l'espace en « + », là où encodeURIComponent
-    // produisait « %20 » : les deux se décodent pareil côté serveur.
+    // URLSearchParams encode l'espace en « + ».
     assert.match(html, /href="\/documents\?q=intervalle\+QT"/);
   });
 
-  // Le regroupement par molécule ne sert à rien si le numéro de rubrique ne
-  // mène nulle part de précis : chaque puce porte l'ancre de sa meilleure
-  // occurrence, qui n'est pas forcément la spécialité de l'extrait.
+  // Chaque rubrique pointe sur sa meilleure occurrence, pas sur la spécialité de l'extrait.
   it('chaque rubrique porte sa propre ancre', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -240,8 +208,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /66 spécialités/);
   });
 
-  // La molécule mène à toutes ses spécialités ; celle qui n'en a pas mène à sa
-  // fiche, sinon le lien conduirait à une recherche vide.
+  // Sans molécule, lien vers la fiche plutôt qu'une recherche vide.
   it('la molécule mène à ses spécialités, sauf quand il n’y en a pas', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -250,8 +217,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/product\/66297967#rcp-12"/);
   });
 
-  // Sans filtre, pas d'extrait sous chaque ligne : la phrase se lit au survol
-  // du point. La ligne ne porte que la molécule et ses rubriques.
+  // Sans filtre, la phrase se lit au survol du point.
   it('une ligne par molécule, sans extrait sous chaque ligne', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -261,16 +227,13 @@ describe('rendu des gabarits', () => {
     assert.match(html, /66 spé\./);
   });
 
-  // Sur la page de garde, le champ énumérait « Dénomination ou principe
-  // actif » : il ne laissait pas ignorer la recherche plein texte, il la
-  // niait. L'onglet, lui, ne paraît qu'une fois la recherche lancée.
+  // L'onglet plein texte n'apparaît qu'après une recherche : la page de garde doit l'annoncer.
   it('la page de garde montre qu’on peut chercher une expression', () => {
     const html = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
     assert.match(html, /Dénomination, principe actif ou expression/);
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
-  // L'exemple s'efface dès qu'on a cherché : il enseigne, il n'encombre pas.
   it('l’exemple disparaît une fois la recherche faite', () => {
     const html = rendre('search_page', {
       query: 'aspirine',
@@ -281,9 +244,7 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /accueil-exemple/);
   });
 
-  // La page de résultats n'a pas la barre de situation : son bandeau lui tient
-  // lieu d'en-tête, et le titre n'était pas cliquable. Une fois la recherche
-  // lancée, il ne restait que le bouton du navigateur.
+  // Pas de barre de situation sur cette page : le titre du bandeau est le seul retour.
   it('la page de résultats ramène à l’accueil', () => {
     const html = rendre('search_page', {
       query: 'valsartan',
@@ -299,10 +260,7 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /titre-lien/);
   });
 
-  // Les colonnes sont fixes, et non l'union de ce que la recherche a trouvé :
-  // des colonnes qui changent de place d'une requête à l'autre ne s'apprennent
-  // jamais. Ce qui tombe hors des huit se nomme dans « Autres » ; une rubrique
-  // de notice s'y distingue de la rubrique du RCP qui porte le même numéro.
+  // Colonnes fixes pour être apprises ; dans « Autres », la notice se distingue du RCP de même numéro.
   it('range les rubriques en colonnes fixes, et nomme les autres', () => {
     const html = rendre('documents', {
       query: 'QT',
@@ -328,9 +286,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<td class="cellule-rubrique"><\/td>/);
   });
 
-  // Un point plein : l'expression telle quelle. Creux : les mots, dispersés.
-  // La distinction ne se fait — et la légende ne paraît — que pour une
-  // expression de plusieurs mots.
+  // Point plein : expression exacte ; creux : mots dispersés. Seulement pour plusieurs mots.
   it('distingue l’expression exacte des mots dispersés', () => {
     const resultats = [{
       ...TROUVAILLE,
@@ -355,9 +311,7 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(sans, /point-epars/);
   });
 
-  // Sans JavaScript, le point est un lien muet : `title` le nomme. Le script
-  // le retire au chargement, pour que l'infobulle du navigateur ne recouvre
-  // pas la phrase.
+  // `title` nomme le point sans script ; le script le retire pour ne pas masquer la phrase.
   it('nomme chaque point, pour le lecteur d’écran comme sans script', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -366,9 +320,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /aria-label="4\.4 Mises en garde"/);
   });
 
-  // La rangée d'onglets listait les huit mêmes rubriques que l'en-tête du
-  // tableau, deux lignes au-dessus de lui : la même liste écrite deux fois sur
-  // le même écran, dont l'une ne portait aucune donnée.
+  // Les onglets répéteraient les rubriques de l'en-tête du tableau.
   it('filtre depuis l’en-tête, sans rangée d’onglets', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -377,15 +329,13 @@ describe('rendu des gabarits', () => {
     assert.match(html, /class="th-lien" href="\/documents\?q=QT&amp;rubrique=4\.5"/);
   });
 
-  // Filtrée, la page n'a plus de colonnes à montrer — toutes les trouvailles
-  // sont dans la rubrique choisie — et la phrase devient la réponse.
+  // Filtrée, la phrase devient la réponse.
   it('replie les colonnes quand une rubrique est choisie', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
     });
     assert.doesNotMatch(html, /col-rubrique/);
     assert.doesNotMatch(html, /cellule-autres/);
-    // La rubrique active et son retrait vivent dans la ligne d'état.
     assert.match(html, /class="jeton"[^>]*>rubrique 4\.5/);
     assert.match(html, /class="jeton" href="\/documents\?q=QT"/);
     assert.match(html, /class="ligne-phrase"/);
@@ -393,8 +343,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
   });
 
-  // L'aperçu au survol se demande au serveur : la puce porte de quoi le
-  // désigner, sa clé primaire, et rien de plus.
+  // L'aperçu au survol est demandé au serveur par clé primaire.
   it('chaque numéro porte de quoi demander son extrait', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -402,10 +351,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
   });
 
-  // « Substituer » mêle deux provenances que le titre confond : le Répertoire
-  // de l'ANSM, qui fonde la substitution, et notre rapprochement par principe
-  // actif, qui ne la fonde pas. Les taire laisserait entendre qu'une liste
-  // officielle autorise tout ce qui figure sous ce titre.
+  // Le Répertoire ANSM fonde la substitution ; le rapprochement par principe actif, non.
   it('dit d’où viennent les substituts, et ce qui n’en est pas', () => {
     const html = rendre('product', produit({
       substitutions: [
@@ -419,8 +365,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /sans substitution de droit/);
   });
 
-  // Sans voisin de DCI, la mise en garde n'a pas lieu d'être : un avertissement
-  // qui ne porte sur rien s'apprend à ne plus être lu.
+  // Un avertissement sans objet apprend à ne plus lire les avertissements.
   it('se tait sur « Même DCI » quand il n’y en a pas', () => {
     const html = rendre('product', produit({
       substitutions: [{ id: '1', denomination_medicament: 'MYCOSTER', role: 'Princeps' }],
@@ -429,9 +374,7 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /sans substitution de droit/);
   });
 
-  // Le décompte ne paraissait que si la recherche avait été plafonnée —
-  // c'est-à-dire jamais quand on filtre, puisque filtrer fait passer sous le
-  // plafond. C'était l'écran où le chiffre manquait le plus.
+  // Filtrer fait passer sous le plafond : le décompte doit rester.
   it('compte les résultats, plafonnés ou non', () => {
     const filtre = rendre('documents', {
       query: 'QT',
@@ -448,9 +391,7 @@ describe('rendu des gabarits', () => {
     assert.match(plafonne, /plus de 3 000 rubriques|plus de 3\u202f000 rubriques/);
   });
 
-  // Le champ partait vide : affiner imposait de tout retaper. Et il resoumet
-  // dans le mode courant — prérempli mais pointant vers la recherche par nom,
-  // il aurait fait croire qu'on affine quand on change de question.
+  // Préremplie pour affiner, et dans le mode courant pour ne pas changer de question.
   it('la barre porte la requête et resoumet au bon endroit', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
@@ -459,9 +400,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /value="intervalle QT"/);
   });
 
-  // Le thésaurus a cherché « torsade de pointes » pour « QT » : sans le dire,
-  // un résultat qui ne contient pas le mot tapé passe pour une erreur. Et le
-  // refus est à un clic — la requête citée n'est jamais élargie.
+  // Sinon un résultat sans le mot tapé passe pour une erreur ; une requête citée n'est pas élargie.
   it('dit ce que le thésaurus a cherché en plus, et comment le refuser', () => {
     const html = rendre('documents', {
       query: 'QT',
@@ -496,8 +435,7 @@ describe('page de classe', () => {
     portrait: [], chapeau: null, ...extra,
   });
 
-  // Une seule unité sur la page : la spécialité commercialisée. Le mot
-  // « produit », unité maison que rien ne définissait, a disparu.
+  // Unité unique : la spécialité commercialisée.
   it('compte en spécialités, et montre le portrait', () => {
     const html = page({ portrait: [{ valeur: '41\u00A0%', libelle: 'génériques' }] });
     assert.match(html, /class="portrait-valeur">41/);
@@ -505,8 +443,7 @@ describe('page de classe', () => {
     assert.doesNotMatch(html, /produit/i);
   });
 
-  // À la feuille : par forme, puis une ligne par nom, les dosages à la suite
-  // — chacun lien vers sa spécialité. Les retirées sont repliées.
+  // Les spécialités retirées sont repliées.
   it('range les spécialités par forme et par nom, un lien par dosage', () => {
     const sp = (id, denomination, forme, extra = {}) => ({
       id, denomination, forme_pharmaceutique: forme, titulaires: 'LABO', ...extra,

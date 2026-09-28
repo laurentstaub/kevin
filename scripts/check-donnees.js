@@ -1,15 +1,8 @@
 /**
- * check-donnees.js — les données sont-elles encore fraîches ?
- *
- * Sort en erreur si un contrôle est en rupture. C'est tout l'intérêt : un
- * rapport qu'on lit quand on soupçonne déjà quelque chose n'aurait rien
- * empêché. La collecte des documents s'est arrêtée à la charnière 2023-2024 et
- * deux ans ont passé sans qu'un indicateur ne bouge.
- *
+ * Contrôle la fraîcheur des données ; sort en erreur si un contrôle est en rupture.
+ * À enchaîner après chaque chargement.
  *   npm run check-donnees
  *   npm run check-donnees -- --tolerant   n'échoue pas, se contente de dire
- *
- * À enchaîner après chaque chargement, pas à lancer quand on s'inquiète.
  */
 
 import { readFileSync } from 'node:fs';
@@ -25,16 +18,7 @@ const pool = createPool({ statement_timeout: 0 });
 const pct = (part) => (part === null ? '—' : `${(part * 100).toFixed(1)} %`);
 const verdicts = [];
 
-/**
- * Un état que la marque ne connaît pas n'est pas une rupture.
- *
- * `falaise` prend soin de distinguer « effondrement » de « je n'ai pas su
- * juger » — norme introuvable, norme trop basse. L'appel écrasait la nuance
- * d'un `etat === 'ok' ? … : 'rupture'`, et l'on a lu « RUPTURE — norme — »
- * là où il fallait lire « pas de norme, donc pas de verdict ». Un contrôle qui
- * crie faute de savoir est pire qu'un contrôle absent : on cherche la panne
- * qu'il annonce au lieu de celle qui l'empêche de juger.
- */
+/** Un état inconnu (ex. « pas de norme » de `falaise`) donne « indéterminable », jamais « rupture ». */
 const verdict = (etat) => (['ok', 'alerte', 'rupture'].includes(etat) ? etat : 'indeterminable');
 
 const dire = (etat, titre, detail) => {
@@ -49,7 +33,7 @@ const dire = (etat, titre, detail) => {
   verdicts.push({ etat, titre });
 };
 
-/** Cohortes d'AMM : « ce qui est entré récemment a-t-il été traité comme le reste ». */
+/** Cohortes d'AMM : les entrées récentes sont-elles traitées comme le reste ? */
 async function cohortes(condition) {
   const { rows } = await pool.query(
     `SELECT extract(year FROM m.date_amm)::int AS periode,
@@ -85,8 +69,7 @@ try {
   );
 
   // ---- 2. La classification ATC suit-elle ? ------------------------------
-  // Sa source est annuelle : les AMM de l'année en cours y sont légitimement
-  // absentes. C'est une alerte, jamais une rupture — sauf effondrement franc.
+  // Source annuelle : les AMM de l'année manquent légitimement. Alerte, rupture seulement si effondrement.
   const atc = falaise(
     await cohortes(`EXISTS (SELECT 1 FROM ref.cis_atc_mapping a WHERE a.code_cis = m.code_cis)`),
     { seuilRupture: 0.25, seuilAlerte: 0.7 },
@@ -114,29 +97,15 @@ try {
     verdictDecoupe.etat === 'rupture' ? `attendu au moins ${pct(verdictDecoupe.minimum)} — relancer build-sections` : null);
 
   // ---- 4. Depuis quand rien n'a été écrit ? ------------------------------
-  // La date de la dernière écriture est le seul chiffre qui ne se laisse pas
-  // tromper par une moyenne : elle dit tout net quand le robinet s'est fermé.
+  // Seule la date de dernière écriture n'est pas masquée par une moyenne.
   const { rows: [dates] } = await pool.query(
     `SELECT (SELECT max(last_updated) FROM dbpm.cis_documents)  AS collecte,
             (SELECT max(parsed_at)    FROM docs.document_parse) AS decoupage,
             (SELECT max(date_amm)     FROM dbpm.cis_bdpm)       AS amm`,
   );
 
-  // « AMM la plus récente en base » a été retirée des contrôles : elle mesurait
-  // le monde, pas notre chaîne.
-  //
-  // Une AMM octroyée le 2 avril reste la plus récente quel que soit le nombre
-  // de rechargements — les octrois sont rares et publiés avec du retard, si
-  // bien que l'indicateur vieillit tout seul et réclamerait un rechargement
-  // qui ne le rajeunirait pas. Il a fait perdre du temps une fois ; il ne le
-  // fera pas deux.
-  //
-  // La fraîcheur réelle se mesure ailleurs et autrement : le millésime du
-  // dernier fichier téléchargé, comparé à celui publié par la BDPM. Ce
-  // décompte-là vit dans incident_scraper (`.bdpm_version.json`,
-  // `npm run check-bdpm`), qui est le dépôt qui charge `dbpm.*`. On l'affiche
-  // ici pour mémoire, sans seuil, parce qu'un chiffre sans verdict ne peut pas
-  // se faire passer pour une panne.
+  // Pas de contrôle sur l'AMM la plus récente : elle vieillit d'elle-même, rechargement ou non.
+  // La fraîcheur du chargement se vérifie dans incident_scraper (`npm run check-bdpm`).
   for (const [cle, libelle, alerte, rupture] of [
     ['collecte', 'Dernière collecte de document', 90, 365],
     ['decoupage', 'Dernier découpage', 90, 365],
@@ -148,10 +117,8 @@ try {
       etat === 'rupture' ? `au-delà de ${rupture} jours, la chaîne est à l'arrêt` : null);
   }
 
-  // Les listes relevées à la main. Aucune n'a de fichier officiel qu'un
-  // script puisse recharger : c'est ici qu'on apprend qu'elles vieillissent.
-  // Non vérifiée, une liste est en alerte ; vieille de plus de 60 jours
-  // aussi — l'ANSM a modifié celle des biosimilaires trois fois à l'été 2026.
+  // Listes relevées à la main, sans source rechargeable : alerte si non vérifiées
+  // ou relevées il y a 60 jours ou plus (l'ANSM les modifie souvent).
   {
     const biosimilaires = JSON.parse(readFileSync(path.join(ROOT, 'data', 'biosimilaires.json'), 'utf8'));
     for (const [libelle, bloc, date] of [
@@ -166,9 +133,7 @@ try {
     }
   }
 
-  // Pour mémoire, sans verdict : c'est une propriété du monde pharmaceutique,
-  // pas de notre chaîne. La fraîcheur du chargement se contrôle avec
-  // `npm run check-bdpm`, dans incident_scraper.
+  // Indicatif, sans verdict : mesure le rythme des octrois, pas la chaîne.
   console.log(`         AMM la plus récente octroyée — ${
     dates.amm ? `${age(dates.amm, MAINTENANT)} jours` : 'date absente'
   } (indicatif ; fraîcheur du chargement : check-bdpm)`);

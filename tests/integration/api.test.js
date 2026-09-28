@@ -11,11 +11,8 @@ import { parseQuery } from '../../src/validate.js';
 import { oublierClasses, getClasseAtc } from '../../src/atc.js';
 
 /**
- * Tests d'intégration sur un jeu de données figé (tests/fixtures.sql).
- * Ils ne dépendent d'aucune donnée BDPM réelle : la mise à jour mensuelle
- * de la base ne peut pas les casser.
- *
- * Base cible : TEST_DATABASE_URL, sinon la suite est ignorée proprement.
+ * Tests d'intégration sur le jeu figé tests/fixtures.sql, indépendant des mises à jour BDPM.
+ * Base cible : TEST_DATABASE_URL, sinon la suite est ignorée.
  */
 
 const url = process.env.TEST_DATABASE_URL;
@@ -29,8 +26,7 @@ describe('API', { skip }, () => {
     pool = new pg.Pool({ connectionString: url });
     await pool.query(await readFile(path.join(ROOT, 'tests', 'fixtures.sql'), 'utf8'));
     await pool.query(await readFile(path.join(ROOT, 'sql', 'setup.sql'), 'utf8'));
-    // Le décompte des classes est gardé en mémoire une heure : sans cette
-    // remise à zéro, une suite hériterait du jeu de données de la précédente.
+    // Le décompte des classes est mis en cache une heure : à vider entre suites.
     oublierClasses();
     app = createApp(pool);
   });
@@ -44,7 +40,6 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/api/search?q=aspirine').expect(200);
       const noms = res.body.results.brandMatches.map((resultat) => resultat.denomination_medicament);
       assert.ok(noms.some((nom) => nom.includes('ASPIRINE UPSA')));
-      // Les correspondances de marque contiennent toutes le terme cherché.
       for (const nom of noms) assert.match(nom.toLowerCase(), /aspirine/);
     });
 
@@ -57,7 +52,6 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/api/search?q=paracetamol').expect(200);
       const actifs = res.body.results.activeIngredientMatches;
       assert.ok(actifs.length >= 3);
-      // Ces produits ne portent pas le terme dans leur nom : c'est attendu.
       for (const actif of actifs) assert.match(actif.active_ingredients.toLowerCase(), /paracetamol/);
     });
 
@@ -65,12 +59,10 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/api/search?q=paracetamol').expect(200);
       const actifs = res.body.results.activeIngredientMatches.map((resultat) => resultat.denomination_medicament);
 
-      // La promesse du produit : « paracétamol » doit mener à DOLIPRANE.
       assert.ok(actifs.some((actif) => actif.startsWith('DOLIPRANE')));
       assert.ok(actifs.some((actif) => actif.startsWith('DAFALGAN')));
 
-      // Et ceux que la dénomination rend déjà n'ont rien à faire ici : ce
-      // serait un doublon, et surtout ils évinceraient les précédents.
+      // Déjà rendus par la dénomination : ici, ils feraient doublon et évinceraient les marques.
       for (const nom of actifs) assert.doesNotMatch(nom.toLowerCase(), /paracetamol/);
     });
 
@@ -107,16 +99,7 @@ describe('API', { skip }, () => {
       await request(app).get('/api/search?q=aspirine&q=doliprane').expect(200);
     });
 
-    /**
-     * Le défaut qu'on ferme ici : les génériques qui portent le nom de la
-     * molécule évinçaient la marque.
-     *
-     * « paracétamol » remontait soixante PARACETAMOL <labo> et zéro DOLIPRANE ;
-     * « oxazépam » mettait trois OXAZEPAM <labo> avant SERESTA, qui en est
-     * pourtant le princeps. Une limite de 2 sur un jeu où deux spécialités
-     * s'appellent « PARACETAMOL … » reproduit la situation à l'échelle : si le
-     * classement est mauvais, elles prennent les deux places.
-     */
+    /** Limite 2 avec deux « PARACETAMOL … » : un mauvais classement leur donne les deux places. */
     it('place la marque devant les génériques homonymes de la molécule', async () => {
       const resultats = await searchMedications(pool, parseQuery('paracetamol'), 'all', {
         limit: 2,
@@ -135,11 +118,7 @@ describe('API', { skip }, () => {
       assert.equal(resultats.dci, false);
     });
 
-    /**
-     * On tape « parace » avant « paracétamol » : la molécule doit être reconnue
-     * dès le préfixe, sinon la page change de forme — et de classement — au
-     * dernier caractère saisi.
-     */
+    /** Sinon la page change de forme et de classement au dernier caractère saisi. */
     it('reconnaît la molécule sur un début de mot', async () => {
       for (const debut of ['parac', 'paraceta', 'paracetamol']) {
         const resultats = await searchMedications(pool, parseQuery(debut));
@@ -151,11 +130,7 @@ describe('API', { skip }, () => {
   });
 
   describe('Champ de recherche', () => {
-    /**
-     * La fiche et la page de classe n'offraient qu'un lien vers l'accueil :
-     * chercher un autre médicament imposait un aller-retour, alors qu'au
-     * comptoir on en enchaîne plusieurs.
-     */
+    /** Au comptoir, les recherches s'enchaînent sans repasser par l'accueil. */
     for (const [page, url] of [
       ['la fiche produit', '/product/61111114'],
       ['la page de classe', '/classe/N02'],
@@ -166,8 +141,7 @@ describe('API', { skip }, () => {
 
         assert.match(res.text, /<form class="search-form"[^>]*action="\/search"/);
         assert.match(res.text, /class="search-input"/);
-        // public/js/search.js s'accroche à ces identifiants : sans eux,
-        // l'autocomplétion se tait sans que rien ne le signale.
+        // Requis par public/js/search.js, sinon l'autocomplétion échoue en silence.
         assert.match(res.text, /id="suggestions"/);
         assert.match(res.text, /id="loading"/);
         assert.match(res.text, /js\/search\.js/);
@@ -184,11 +158,7 @@ describe('API', { skip }, () => {
   });
 
   describe('Classe thérapeutique (ATC)', () => {
-    /**
-     * L'en-tête ne porte que le contexte — les cinq niveaux en toutes lettres
-     * font cent six signes en capitales et rompent le bandeau. La chaîne
-     * complète reste accessible : c'est le fil d'Ariane de la page de classe.
-     */
+    /** Les cinq niveaux en toutes lettres rompraient le bandeau ; la chaîne complète est sur la page de classe. */
     it('résume la classe dans l’en-tête, sans la chaîne entière', async () => {
       const res = await request(app).get('/product/61111114').expect(200);
       const fil = res.text.match(/<nav class="atc"[\s\S]*?<\/nav>/)?.[0] ?? '';
@@ -196,22 +166,16 @@ describe('API', { skip }, () => {
 
       assert.deepEqual(maillons, ['Système nerveux', 'ANALGESIQUES']);
 
-      // La taxonomie chimique n'a pas sa place au comptoir.
+      // Ni taxonomie chimique…
       assert.doesNotMatch(fil, /ANILIDES/);
       assert.doesNotMatch(fil, /AUTRES ANALGESIQUES/);
-      // Ni la DCI, déjà affichée deux lignes plus haut.
+      // …ni DCI, déjà affichée plus haut.
       assert.doesNotMatch(fil, />PARACETAMOL</);
 
-      // Le code identifie la feuille et y mène.
       assert.match(fil, /class="atc-code"[^>]*>N02BE01</);
       assert.match(fil, /href="\/classe\/N02BE01"/);
     });
 
-    /**
-     * Vingt-quatre codes de niveau 5 n'ont pas de libellé dans la source : le
-     * leur recopie le code. Afficher « N02BE71 » à un pharmacien ne lui apprend
-     * rien — on reprend le libellé du parent.
-     */
     it('reprend le libellé du parent quand le code n’en a pas', async () => {
       const { rows } = await pool.query(
         `SELECT atc_code, atc_label, atc_level FROM ref.atc_classification
@@ -223,8 +187,6 @@ describe('API', { skip }, () => {
         level: row.atc_level,
       }));
 
-      // La feuille N02BE71 n'a pas de libellé : getClasseAtc reprend celui du
-      // parent, ANILIDES, plutôt que d'afficher le code en guise de nom.
       const via = await getClasseAtc(pool, '61111116');
       assert.equal(via.at(-1).code, 'N02BE71');
       assert.equal(via.at(-1).label, 'ANILIDES');
@@ -232,7 +194,7 @@ describe('API', { skip }, () => {
     });
 
     it('n’affiche rien pour une spécialité sans classe', async () => {
-      // KARDEGIC n'est pas dans le mapping : un tiers de la base est dans ce cas.
+      // KARDEGIC est absent du mapping, comme un tiers de la base.
       const res = await request(app).get('/product/61111113').expect(200);
       assert.doesNotMatch(res.text, /<nav class="atc"/);
     });
@@ -247,16 +209,13 @@ describe('API', { skip }, () => {
     it('parcourt une classe, ses sous-classes et ses produits', async () => {
       const res = await request(app).get('/classe/N02B').expect(200);
 
-      // Sous-classes de N02B, avec leur décompte.
       assert.match(res.text, /href="\/classe\/N02BE"/);
       assert.match(res.text, /href="\/classe\/N02BA"/);
-      // Et les produits de la classe, DOLIPRANE compris.
       assert.match(res.text, /DOLIPRANE/);
     });
 
     it('compte les produits, pas les codes CIS', async () => {
-      // Les deux DOLIPRANE et les deux PARACETAMOL <labo> partagent N02BE01 ;
-      // DAFALGAN aussi. Cinq CIS pour quatre produits.
+      // Cinq CIS pour quatre produits sous N02BE01.
       const res = await request(app).get('/classe/N02BE01').expect(200);
       const noms = [...res.text.matchAll(/<span class="resultat-nom">\s*([A-Z][^<\n]*)/g)]
         .map((correspondance) => correspondance[1].trim());
@@ -276,16 +235,11 @@ describe('API', { skip }, () => {
   });
 
   describe('Choix du dosage', () => {
-    /**
-     * Le regroupement rend la liste lisible, mais il retire un choix : arrivé
-     * sur DOLIPRANE on obtient la présentation désignée comme représentante,
-     * et rien ne dit que c'est celle qu'on cherche. La fiche doit donc offrir
-     * les autres dosages et formes.
-     */
+    /** Le regroupement n'ouvre que la présentation représentante : la fiche doit offrir les autres. */
     it('propose les autres dosages et formes du produit', async () => {
       const res = await request(app).get('/product/61111114').expect(200);
 
-      // Les deux DOLIPRANE de la fixture, libellés par ce que la racine a retiré.
+      // Libellés par ce que la racine commune a retiré.
       assert.match(res.text, /1000 mg, comprimé/);
       assert.match(res.text, /500 mg, gélule/);
       assert.match(res.text, /href="\/product\/61111119"/);
@@ -313,12 +267,7 @@ describe('API', { skip }, () => {
   });
 
   describe('GET /api/suggest — ordre', () => {
-    /**
-     * L'autocomplétion reconstituait les deux familles pour les concaténer,
-     * marques ensuite : SERESTA arrivait après ses trois génériques, et
-     * DOLIPRANE après les PARACETAMOL <labo>. Elle rend maintenant la liste
-     * telle que la recherche l'a classée.
-     */
+    /** L'autocomplétion garde l'ordre de la recherche, sans reconcaténer les familles. */
     it('propose la marque avant les génériques homonymes de la molécule', async () => {
       const res = await request(app).get('/api/suggest?q=paracetamol').expect(200);
       const noms = res.body.suggestions.map((suggestion) => suggestion.name);
@@ -327,14 +276,7 @@ describe('API', { skip }, () => {
       assert.equal(noms[0], 'DOLIPRANE', `reçu : ${noms.join(', ')}`);
     });
 
-    /**
-     * Le défaut suivant : l'unité de résultat.
-     *
-     * Un CIS est un triplet marque × dosage × forme. DOLIPRANE en compte
-     * dix-sept en base réelle : les rendre un par un remplit l'écran d'un seul
-     * médicament, et aucun classement n'y peut rien puisque les dix-sept lignes
-     * sont d'égale pertinence. Une ligne doit donc valoir un produit.
-     */
+    /** Un CIS = marque × dosage × forme : un produit peut en compter des dizaines d'égale pertinence. */
     it('rend un produit par ligne, pas un code CIS', async () => {
       const res = await request(app).get('/api/search?q=doliprane').expect(200);
       const noms = res.body.results.brandMatches;
@@ -348,8 +290,7 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/api/search?q=paracetamol&filter=specialty').expect(200);
       const noms = res.body.results.brandMatches.map((resultat) => resultat.libelle);
 
-      // ARROW et TEVA sont par ailleurs identiques : seul l'état de
-      // commercialisation les départage.
+      // Seul l'état de commercialisation départage ARROW et TEVA.
       assert.ok(
         noms.indexOf('PARACETAMOL ARROW') < noms.indexOf('PARACETAMOL TEVA'),
         `ARROW (commercialisé) doit précéder TEVA : ${noms.join(', ')}`,
@@ -357,9 +298,7 @@ describe('API', { skip }, () => {
     });
 
     it('classe les trouvailles par substance sur la substance, pas sur le nom', async () => {
-      // Toutes ces spécialités contiennent exactement « PARACETAMOL » : elles
-      // sont donc à égalité de rang, et rien ne doit les départager par un
-      // critère emprunté à la dénomination.
+      // Composition identique : même rang, quelle que soit la dénomination.
       const resultats = await searchMedications(pool, parseQuery('paracetamol'));
       for (const resultat of resultats.activeIngredientMatches) assert.equal(resultat.rank, 0);
     });
@@ -501,15 +440,8 @@ describe('API', { skip }, () => {
 });
 
 /**
- * Les pages se rendent, toutes, jusqu'au bout.
- *
- * Les tests de rendu unitaires fournissent eux-mêmes les locales des
- * gabarits : ils ne peuvent donc pas voir qu'une route a oublié d'en passer
- * une. C'est exactement ce qui est arrivé — la page d'accueil ne passait pas
- * `lien` et rendait une 500, avec une suite verte.
- *
- * Ici c'est l'application entière qui répond, avec ses app.locals et ses
- * routes : une locale manquante fait une 500, et la 500 fait un échec.
+ * Rendu par l'application entière : détecte une locale qu'une route oublie de passer,
+ * ce que les tests unitaires de rendu (qui fournissent leurs locales) ne voient pas.
  */
 describe('rendu des pages', { skip }, () => {
   let pool;

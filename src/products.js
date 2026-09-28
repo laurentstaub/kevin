@@ -2,16 +2,8 @@ import { config } from './config.js';
 import { racineSql } from './groupes.js';
 
 /**
- * Dosages et formes du même produit.
- *
- * La recherche rend un produit par ligne — DOLIPRANE, et non ses dix-sept
- * codes CIS. C'est ce qu'il faut pour lire une liste, mais il manquerait alors
- * le moyen de choisir : arrivé sur la fiche, on veut le 1000 mg en gélule, pas
- * celui que le regroupement a désigné comme représentant. Cette liste rend ce
- * choix à la fiche.
- *
- * Le libellé affiché est ce que la racine avait retiré — « 1000 mg, comprimé ».
- * Répéter « DOLIPRANE » sur chacune des dix-sept entrées n'apprendrait rien.
+ * Dosages et formes du même produit (même racine, même titulaire), pour choisir
+ * sur la fiche. Le libellé est la partie après la racine (« 1000 mg, comprimé »).
  */
 export async function getVariantes(pool, cis) {
   const { rows } = await pool.query(
@@ -47,10 +39,7 @@ export async function getVariantes(pool, cis) {
   return rows;
 }
 
-/**
- * Fiche produit : dénomination, forme, titulaire, principes actifs, présentations CIP.
- * Une seule requête. Renvoie null si le CIS n'existe pas.
- */
+/** Fiche produit en une requête ; null si le CIS n'existe pas. */
 export async function getProduct(pool, cis) {
   const { rows } = await pool.query(
     `
@@ -91,10 +80,8 @@ export async function getProduct(pool, cis) {
 }
 
 /**
- * Produits apparentés : d'abord le groupe générique officiel (cis_gener_bdpm),
- * puis, en complément, les spécialités partageant les mêmes principes actifs.
- *
- * Deux requêtes bornées, quel que soit le produit. Aucune boucle.
+ * Produits apparentés : groupe générique officiel (cis_gener_bdpm), complété par
+ * les spécialités de mêmes principes actifs. Deux requêtes bornées.
  */
 export async function getRelatedProducts(pool, cis, activeIngredients) {
   const byId = new Map();
@@ -174,10 +161,7 @@ export async function getRelatedProducts(pool, cis, activeIngredients) {
 }
 
 /**
- * Rôle du produit vis-à-vis de celui consulté. C'est l'information que le
- * pharmacien cherche dans une liste de substitution — elle a sa place dans
- * une colonne, pas dans deux sections séparées.
- *
+ * Rôle du produit vis-à-vis de celui consulté.
  * type_generique BDPM : 0 = princeps, 1 = générique, 2 = générique par
  * complémentarité posologique, 4 = substituable sans groupe.
  */
@@ -186,7 +170,7 @@ export function roleOf(row) {
   return String(row.type_generique) === '0' ? 'Princeps' : 'Générique';
 }
 
-/** Libellé du groupe générique, s'il y en a un. Métadonnée, pas ligne de tableau. */
+/** Libellé du groupe générique, s'il y en a un. */
 export function genericGroupLabel(related) {
   return related.find((apparente) => apparente.libelle_groupe_generique)?.libelle_groupe_generique ?? null;
 }

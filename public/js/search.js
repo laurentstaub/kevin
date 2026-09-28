@@ -1,6 +1,5 @@
-// Autocomplétion de la barre de recherche.
-// Interroge /api/suggest — endpoint borné à quelques lignes, distinct de la
-// recherche complète : taper ne déclenche jamais la requête lourde.
+// Autocomplétion de la barre de recherche, via /api/suggest (borné, léger) :
+// taper ne déclenche jamais la recherche complète.
 
 const form = document.querySelector('.search-form');
 const input = form?.querySelector('.search-input');
@@ -44,8 +43,7 @@ if (form && input && dropdown && list) {
       name.className = 'suggestion-name';
       name.textContent = item.name;
 
-      // Douze codes CIS peuvent porter la même dénomination : la marque et le
-      // titulaire sont les seules choses qui distinguent les lignes.
+      // Plusieurs CIS peuvent partager une dénomination : marque et titulaire les distinguent.
       if (item.parallel) {
         const marque = document.createElement('span');
         marque.className = 'marque';
@@ -62,8 +60,7 @@ if (form && input && dropdown && list) {
         row.append(sub);
       }
 
-      // Une suggestion couvre tout un produit : dire combien de présentations
-      // évite de croire qu'on ne propose qu'un dosage.
+      // Une suggestion couvre tout un produit, d'où le nombre de présentations.
       const etendue = [
         item.presentations > 1 ? `${item.presentations} dosages et formes` : null,
         item.variants > 0

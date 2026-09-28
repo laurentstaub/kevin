@@ -1,23 +1,7 @@
-/* Fiche produit.
- * Décision structurelle non-défaut : bandeau d'identité en pleine largeur,
- * sans marge extérieure, sur l'axe unique de la page. Aucune carte, aucun
- * encadré — les filets et le blanc portent la hiérarchie.
- */
+/* Fiche produit : bandeau d'identité pleine largeur, sur l'axe unique de la page.
+ * Ni carte ni encadré : filets et blanc portent la hiérarchie. */
 
-/* Le bandeau prend la teinte claire de la famille : il se détache de la
-   surface de lecture sans qu'on ait à l'encadrer, et rappelle l'aplat de
-   l'accueil à une valeur qui ne gêne pas la lecture qui suit. */
-/* Le bandeau d'identité est blanc : il parle du produit, donc du document.
- *
- * La teinte marque l'habillage de l'application — la barre et le rail. Le
- * bandeau n'en est pas : il porte la dénomination, la DCI, le titulaire, le
- * CIS. Teinté, il faisait un troisième aplat vert sur le tiers supérieur de
- * l'écran, et la frontière avec le rail changeait de couleur à mi-hauteur.
- * Blanc, la frontière est la même du haut en bas de la page, et le vert ne
- * dit plus qu'une chose : « ceci n'est pas le document ».
- *
- * Le filet du bas suffit à le délimiter — c'est ce que font déjà toutes les
- * sections de la fiche. */
+/* Bandeau d'identité blanc : la teinte est réservée à l'habillage (barre, rail). */
 .identite {
   border-bottom: var(--rule-width) solid var(--rule);
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
@@ -28,20 +12,15 @@
   margin: 0 auto;
 }
 
-/* Une dénomination fait couramment soixante signes — « DOLIPRANE 300 mg,
-   poudre pour solution buvable en sachet-dose ». Au corps de titre le plus
-   grand elle en occupe trois lignes ; d'un cran en dessous elle tient sur une.
-   Les dénominations très longues passeront à deux, ce qui reste lisible :
-   tronquer un nom de médicament, non. */
+/* Un cran sous le plus grand corps : une dénomination de 60 signes tient sur
+   une ligne. Jamais tronquée. */
 .produit-titre {
   font-size: var(--fs-lg);
   letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
-/* Présentations : les codes CIP du dosage affiché. Une ligne dans le bandeau
-   d'identité, dépliable — c'est un détail de conditionnement, pas une section
-   de la fiche. */
+/* Codes CIP du dosage affiché : détail de conditionnement, dépliable. */
 .presentations {
   max-width: var(--measure);
 }
@@ -67,9 +46,7 @@
 
 /* ---------- Dosages et formes ---------- */
 
-/* Le choix que le regroupement a retiré de la liste de résultats. Des filets
-   et du blanc, comme partout ailleurs : ce sont des liens alignés, pas des
-   boutons. Le dosage courant est plein, les autres sont cliquables. */
+/* Liens alignés, pas des boutons : dosage courant plein, les autres cliquables. */
 .formes {
   margin-top: var(--sp-2);
 }
@@ -84,8 +61,7 @@
   gap: var(--sp-1) var(--sp-2);
 }
 
-/* Un dépliant ouvert prend le rang entier : la table des conditionnements n'a
-   rien à faire coincée entre deux puces de dosage. */
+/* Dépliant ouvert sur toute la rangée. */
 .formes-liste > li:has(> details[open]) {
   flex: 1 0 100%;
   margin-top: var(--sp-1);
@@ -108,12 +84,7 @@ a.forme-choix:hover {
   color: var(--ink);
 }
 
-/* Le dosage affiché. Il portait `color: var(--paper)` — un token qui n'existe
-   pas : la déclaration était écartée, la précédente (`var(--ink)`) tenait, et
-   il ne restait qu'un rectangle noir sur fond noir. Le fond est nommé `--bg`.
-   L'aplat se fait en accent plutôt qu'en encre : il faut que la présentation
-   courante saute aux yeux parmi dix-sept, sans ajouter un carré noir de plus à
-   une page qu'on vient d'alléger. */
+/* Dosage affiché : aplat en accent pour ressortir parmi une quinzaine. */
 .forme-choix.actif {
   border-color: var(--accent);
   background: var(--accent);
@@ -139,11 +110,8 @@ a.forme-choix:hover {
 
 /* ---------- Grille asymétrique ---------- */
 
-/* Colonne unique. La barre, le bandeau d'identité et le contenu partagent
-   désormais la même largeur : un seul axe pour toute la page. */
-/* Chaque section est un bloc repliable, fermé au chargement. La fiche s'ouvre
-   sur son plan : quatre titres et leur volume, plutôt que trois écrans de
-   tableaux qu'il faut dépasser pour atteindre le RCP. */
+/* Colonne unique. Sections repliables, fermées au chargement : la fiche
+   s'ouvre sur son plan. */
 .contenu > .bloc {
   padding-top: var(--sp-4);
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
@@ -173,8 +141,7 @@ a.forme-choix:hover {
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-/* Ce que le bloc contient, lisible fermé : sans ce compte, replier revient à
-   cacher. */
+/* Volume du bloc, visible même replié. */
 .bloc-compte {
   font-size: var(--fs-xs);
   color: var(--muted);
@@ -221,8 +188,7 @@ td.forme {
 .t-substitution thead th:nth-child(3) { width: 8rem; }
 .t-presentations thead th:first-child { width: 11rem; }
 
-/* Le rôle est codé par l'encre, pas par un rouge contre un vert.
-   Seul le princeps est mis en avant : c'est la référence du groupe. */
+/* Rôle codé par l'encre, pas par rouge/vert ; seul le princeps ressort. */
 .role {
   font-size: var(--fs-xs);
   text-transform: uppercase;
@@ -267,8 +233,7 @@ td.forme {
   max-width: none;
 }
 
-/* Les filets viennent du CSS : le gabarit n'a pas à savoir quel élément est
-   présent pour décider où poser une barre. */
+/* Filets posés en CSS, indépendamment des éléments présents. */
 .document-meta > * + *::before {
   content: '|';
   color: var(--rule);
@@ -287,15 +252,13 @@ td.forme {
   min-width: 0;
 }
 
-/* Libellé resté en capitales faute de correspondance dans le plan type :
-   on l'affiche comme une étiquette, pas comme un cri. */
+/* Libellé resté en capitales faute de correspondance dans le plan type. */
 .lab-brut {
   font-size: 0.92em;
   letter-spacing: 0.04em;
 }
 
-/* Texte emprunté à la spécialité de référence : le lecteur doit savoir, avant
-   de lire, que ce RCP n'est pas celui de la boîte qu'il a en main. */
+/* Texte emprunté à la spécialité de référence : à signaler avant lecture. */
 .emprunt {
   max-width: var(--measure);
   margin: var(--sp-2) 0 0;
@@ -328,10 +291,7 @@ td.forme {
 
 /* ---------- Onglets RCP / Notice ---------- */
 
-/* Le filet sous la barre a disparu avec la raison d'être qu'il avait : il
-   servait de rail à l'onglet actif, qui le rompait. L'état se disant
-   maintenant par un aplat, le trait ne portait plus rien — il ne faisait
-   qu'ajouter une ligne à un bloc qui en compte déjà une par rubrique. */
+/* Pas de filet sous la barre : l'état actif est un aplat. */
 .onglets {
   display: flex;
   flex-wrap: wrap;
@@ -340,12 +300,7 @@ td.forme {
   max-width: var(--lecture);
 }
 
-/* Un onglet est un bouton : il hérite du rayon des contrôles. Le filet de
-   soulignement qui marquait l'onglet actif épousait donc cet arrondi et se
-   recourbait à ses deux extrémités — un trait qui se tord n'est plus un trait.
-   L'état se dit maintenant par un aplat, ce que la forme arrondie porte
-   naturellement, et ce qui range l'onglet dans la même famille que les puces
-   de dosage et les mentions de délivrance. */
+/* Bouton arrondi : état actif en aplat, un soulignement se courberait. */
 .onglet {
   appearance: none;
   background: none;
@@ -369,9 +324,7 @@ td.forme {
 
 /* ---------- Rubriques repliables ---------- */
 
-/* Le contrôle est au-dessus de ce qu'il pilote, et à sa largeur : « Tout
-   déplier » est aligné au fer à droite, donc sur la fin des filets — les deux
-   doivent tomber au même endroit. */
+/* « Tout déplier » au fer à droite, aligné sur la fin des filets. */
 .rubriques-controle {
   display: flex;
   justify-content: space-between;
@@ -404,8 +357,7 @@ td.forme {
   max-width: var(--lecture);
 }
 
-/* Une rubrique = un filet et un titre. Aucun cadre : la page reste blanche,
-   ce sont les traits qui donnent la structure. */
+/* Une rubrique = un filet et un titre, sans cadre. */
 .rubrique {
   border-top: var(--rule-width) solid var(--rule);
 }
@@ -435,8 +387,7 @@ td.forme {
   color: var(--accent);
 }
 
-/* Le repère d'ouverture occupe la gouttière du numéro : pas de chevron
-   dessiné, un signe qui bascule. */
+/* Repère d'ouverture dans la gouttière du numéro : un signe, pas un chevron. */
 .rubrique-tete .num::after {
   content: '+';
   color: var(--faint);
@@ -448,8 +399,7 @@ td.forme {
   content: '−';
 }
 
-/* Rubrique du socle : celle qu'on vient chercher au comptoir. Aucune couleur
-   ne la signale — c'est le contraste du libellé qui la met devant. */
+/* Rubrique du socle : mise en avant par le contraste, pas la couleur. */
 .rubrique .lab {
   color: var(--muted);
 }
@@ -458,45 +408,33 @@ td.forme {
   color: var(--ink);
 }
 
-/* Rubrique de premier niveau : c'est une charnière du document. */
+/* Rubrique de premier niveau : charnière du document. */
 .rubrique.rub-n1 > .rubrique-tete {
   font-size: var(--fs-base);
   font-family: var(--font-head);
   font-weight: 400;
 }
 
-/* Le blanc entre deux rubriques repliées est du blanc perdu : une rubrique
-   fermée n'est qu'un titre, et vingt-huit titres espacés d'un interligne et
-   demi font une page de titres. Un filet sépare déjà — il n'a pas besoin
-   d'être escorté.
-
-   Une hiérarchie de filets n'a rien à dire tant que tout est fermé : en vue
-   repliée, toutes les lignes visibles sont de niveau 1, et le ton soutenu ne
-   distingue alors plus rien — il ne fait qu'assombrir douze fois la même
-   page. Le trait ne se renforce que là où il sépare vraiment quelque chose :
-   au bord d'une rubrique ouverte. */
+/* Repliées : pas de blanc entre rubriques, filet clair. Le filet ne se
+   renforce qu'au bord d'une rubrique ouverte. */
 .rubrique.rub-n1 {
   border-top: var(--rule-width) solid var(--rule);
   margin-top: var(--sp-1);
 }
 
-/* Les deux bords d'une rubrique ouverte : le sien, et celui de la ligne qui
-   la suit — un bloc de lecture se ferme des deux côtés. */
+/* Rubrique ouverte : filet des deux côtés. */
 .rubrique.rub-n1[open],
 .rubrique[open] + .rubrique.rub-n1 {
   border-top-color: var(--rule-medium);
 }
 
-/* Une rubrique ouverte reprend de l'air : c'est là qu'on lit. */
+/* Rubrique ouverte : plus d'air pour la lecture. */
 .rubrique[open] {
   margin-top: var(--sp-3);
   padding-bottom: var(--sp-2);
 }
 
-/* Titre sans contenu propre — « 4. Données cliniques » avant « 4.1 ».
-   Dans une liste fermée, la charnière n'annonce rien encore : elle n'est
-   qu'une ligne de plus, et se règle comme telle : même filet, même
-   interligne, même rythme que les rubriques qui l'entourent. */
+/* Charnière (« 4. » avant « 4.1 ») : même filet et même rythme que les rubriques. */
 .charniere {
   display: grid;
   grid-template-columns: 2.4rem 1fr;
@@ -511,9 +449,7 @@ td.forme {
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
-/* Une charnière porteuse d'un groupe devient le contrôle de ce groupe. Le
-   bouton reprend la grille du titre — la gouttière de numérotation doit rester
-   alignée sur celle des rubriques, sinon la colonne des numéros ondule. */
+/* Le bouton reprend la grille du titre pour garder les numéros alignés. */
 .charniere:has(> .charniere-bascule) {
   display: block;
 }
@@ -534,9 +470,7 @@ td.forme {
   cursor: pointer;
 }
 
-/* Même « + / − » que les rubriques : un seul vocabulaire pour « ceci
-   s'ouvre ». Sans lui, rien ne disait que 6.1 à 6.6 formaient un groupe, et
-   les refermer demandait six clics. */
+/* Même « + / − » que les rubriques. */
 .charniere .num::after {
   content: '+';
   color: var(--faint);
@@ -548,29 +482,13 @@ td.forme {
   content: '−';
 }
 
-/* Une charnière et la rubrique qu'elle introduit forment un seul bloc : « 4 »
-   ne veut rien dire sans « 4.1 ». Pas d'air entre les deux, donc — et comme
-   4.1 est ouverte par défaut, l'air placé au-dessus de la charnière se voyait
-   sur toutes les fiches et rendait la ligne 3 plus haute que les lignes 1 et
-   2, sans qu'aucune donnée ne justifie l'écart. */
+/* Pas d'air entre une charnière et sa première rubrique : elles forment un bloc. */
 .charniere + .rubrique[open] {
   margin-top: 0;
 }
 
-/* Surface de lecture d'un RCP : quarante mille signes lus à l'écran, souvent
-   debout. Trois réglages, tous mesurés ailleurs que sur le goût.
-
-   - Longueur de ligne 45–75 signes. En deçà l'œil revient trop souvent à la
-     ligne, au-delà il perd le début de la suivante — d'où 66 signes ici.
-   - Interligne 1,75. Le WCAG 1.4.8 pose 1,5 comme plancher pour un bloc de
-     texte ; les lignes longues en demandent davantage, et celle-ci porte
-     87 signes. Ce que le plafond de 75 protège, c'est le retour à la ligne —
-     l'œil qui, arrivé à droite, ne retrouve pas le début de la suivante. Un
-     interlignage généreux fait le même travail par un autre moyen.
-   - Corps 17 px. En dessous de 16 px la vitesse de lecture chute à l'écran.
-
-   Composé au fer à gauche, sans césure : le drapeau vaut mieux que les
-   lézardes d'un texte justifié sans moteur de césure. */
+/* Surface de lecture d'un RCP : corps 17 px, interligne 1,75 (WCAG 1.4.8 :
+   1,5 minimum, davantage pour des lignes de 87 signes). Fer à gauche, sans césure. */
 .rubrique-corps {
   font-family: var(--font-lecture);
   font-size: 1.0625rem;
@@ -579,10 +497,7 @@ td.forme {
   padding: var(--sp-1) 0 0 var(--gouttiere);
   hyphens: none;
   text-wrap: pretty;
-  /* Un mot plus long que la colonne ne l'élargit pas, il se coupe. Sans cette
-     ligne, une suite ininterrompue — conduite de points d'un document pas
-     encore repassé au découpeur, adresse web, code — pousse la colonne au-delà
-     de sa mesure et emmène la mise en page avec elle. */
+  /* Coupe les mots plus longs que la colonne (conduites de points, URL, codes). */
   overflow-wrap: break-word;
 }
 
@@ -590,47 +505,33 @@ td.forme {
   margin-top: 0;
 }
 
-/* Le dernier paragraphe ne pousse pas : le blanc de fin appartient à la
-   rubrique, pas au texte. Trois épaisseurs se cumulaient ici. */
+/* Pas de marge sous le dernier paragraphe : le blanc de fin appartient à la rubrique. */
 .rubrique-corps > :last-child {
   margin-bottom: 0;
 }
 
-/* Une condition de délivrance, mise en forme selon sa propre grammaire.
- *
- * Quatre lignes composées à l'identique se lisaient comme un bloc gris. La
- * source portait pourtant sa structure : la population avant le deux-points,
- * la discipline en capitales. On la rend visible sans rien réécrire. */
-/* Portée sur `.axe-valeur`, faute de quoi `.axe-valeur p + p` — plus
-   spécifique d'un cran — ramenait l'écart à 0,15 em et les conditions se
-   touchaient malgré leur filet. */
+/* Condition de délivrance : population avant le deux-points, discipline en
+   capitales. Portée sur `.axe-valeur` pour l'emporter sur `.axe-valeur p + p`. */
 .axe-valeur .condition + .condition {
   margin-top: 0.5em;
   padding-top: 0.5em;
   border-top: var(--rule-width) solid var(--rule);
 }
 
-/* À qui la condition s'applique — c'est ce qu'on lit en premier, parce que
-   c'est ce qui décide si la ligne concerne le patient qu'on a en face. */
-/* La population garde le corps de la condition : deux tailles dans la même
-   colonne se lisaient comme un défaut de composition, alors que la couleur
-   suffit à dire que cette ligne désigne un public et non une règle. */
+/* Population : même corps que la condition, distinguée par la couleur. */
 .condition-population {
   display: block;
   color: var(--accent);
   margin-bottom: 0.1em;
 }
 
-/* La discipline décide de la recevabilité de l'ordonnance : c'est le mot que
-   l'œil doit trouver sans lire la ligne entière. */
+/* Discipline : décide de la recevabilité de l'ordonnance. */
 .condition-texte strong {
   font-weight: 600;
   color: var(--ink);
 }
 
-/* Composition : nom à gauche, dose à droite, filet entre les deux. Le filet
-   prend la place qui reste — c'est ce que la conduite de points du document
-   imprimé faisait, avec une longueur fixe qui ne survit pas au navigateur. */
+/* Composition : nom à gauche, dose à droite, conduite de points entre les deux. */
 .rubrique-corps .dose,
 .document-corps .dose {
   display: flex;
@@ -639,14 +540,8 @@ td.forme {
   margin: 0 0 0.75em;
 }
 
-/* La conduite est une chaîne de points volontairement trop longue, coupée à la
-   largeur restante par le conteneur. Le moteur de rendu refait la coupe à
-   chaque redimensionnement — aucune mesure à faire en JavaScript.
- *
- * La base est à zéro, pas à « auto » : avec « auto », les cent soixante points
- * comptent dans la largeur demandée par la ligne, le navigateur répartit le
- * manque entre les trois cases et écrase le nom pour un filet qui déborde
- * quand même. À zéro, la conduite ne réclame rien et se contente du reste. */
+/* Conduite : chaîne de points trop longue, coupée par le conteneur.
+ * Base à zéro, pas « auto » : sinon elle réclame sa largeur et écrase le nom. */
 .dose-liaison {
   flex: 1 1 0;
   min-width: 2em;
@@ -662,30 +557,17 @@ td.forme {
   white-space: nowrap;
 }
 
-/* Un interligne complet entre deux paragraphes fait des trous ; trois quarts
-   suffisent à les séparer sans casser le bloc. */
+/* Trois quarts d'interligne entre paragraphes. */
 .rubrique-corps p {
   margin: 0 0 0.75em;
 }
 
-/* Renvoi vers une autre rubrique du même document.
- 
-   Le modèle QRD veut que chaque rubrique cite les autres plutôt que de se
-   répéter ; un RCP en compte couramment quarante. Seul le numéro est
-   cliquable : « voir rubrique » est du texte réglementaire, le numéro est la
-   référence.
- 
-   Discret par construction. Quarante liens verts dans une page de lecture
-   feraient un tapis, et ces renvois ne sont pas ce qu'on vient lire : ils
-   doivent se trouver quand on les cherche, pas se signaler quand on lit. Le
-   soulignement pointillé les dit cliquables sans les faire ressortir. */
+/* Renvoi vers une autre rubrique (modèle QRD) : seul le numéro est cliquable.
+   Discret, souligné en pointillé : un RCP en compte jusqu'à quarante. */
 .rubrique-corps .renvoi,
 .document-corps .renvoi {
   color: inherit;
-  /* L'intitulé de la rubrique visée est en infobulle. Le curseur d'aide le
-     signale : c'est la convention qui dit « il y a quelque chose à lire ici
-     sans cliquer », et elle évite d'ajouter un signe dans un texte qui en
-     compte déjà assez. */
+  /* Intitulé de la rubrique visée en infobulle, signalé par le curseur d'aide. */
   cursor: help;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
@@ -701,20 +583,9 @@ td.forme {
   text-decoration-color: var(--accent);
 }
 
-/* La substance avec laquelle l'interaction se produit.
- 
-   La rubrique 4.5 suit le thésaurus de l'ANSM : sous chacun des quatre niveaux
-   de gravité, chaque substance ouvre un paragraphe préfixé d'un plus. Composée
-   comme le commentaire qui la suit, elle s'y noyait — c'est pourtant le seul
-   mot qu'on cherche quand on tient deux boîtes à la main.
- 
-   Elle prend donc le rang qu'elle a : un titre de troisième niveau, sous le
-   niveau de gravité. Pas plus grosse — le contraste et le blanc suffisent, et
-   la rubrique en compte parfois trente.
- 
-   Le signe reste, en retrait négatif : dans le thésaurus il se lit « en
-   association avec ». En gris et hors du texte, il ponctue la liste sans
-   rivaliser avec le nom qu'il annonce. */
+/* Substance d'interaction (4.5, thésaurus ANSM) : titre de troisième niveau
+   sous le niveau de gravité, marqué par le contraste, pas la taille.
+   Le « + » (« en association avec ») reste en retrait négatif. */
 .rubrique-corps .interaction,
 .document-corps .interaction {
   margin: 1.2em 0 0.35em;
@@ -730,19 +601,14 @@ td.forme {
   color: var(--faint);
 }
 
-/* Le niveau de gravité qui l'introduit reprend l'air d'un titre de section :
-   trois substances peuvent le suivre, ou trente. */
+/* Niveau de gravité : espacé comme un titre de section. */
 .rubrique-corps .sous-titre + .interaction,
 .document-corps .sous-titre + .interaction {
   margin-top: 0.4em;
 }
 
-/* Renvoi de bas de rubrique — l'astérisque du modèle QRD. C'est un commentaire
-   sur le texte, pas le texte : composé à l'identique, il pesait autant que ce
-   qu'il commente. L'italique et le corps réduit le rangent d'eux-mêmes au
-   second plan, sans qu'on ait à le déplacer ni à l'escamoter.
- 
-   L'appel reste en tête : c'est lui qui relie la note à sa mention. */
+/* Renvoi de bas de rubrique (astérisque QRD) : italique, corps réduit.
+   L'appel reste en tête. */
 .rubrique-corps .note,
 .document-corps .note {
   font-size: 0.9em;
@@ -750,47 +616,36 @@ td.forme {
   color: var(--muted);
 }
 
-/* Deux notes de suite forment le pied de la rubrique : elles se serrent entre
-   elles et gardent leur blanc avant la première. */
+/* Notes consécutives serrées, avec du blanc avant la première. */
 .rubrique-corps .note + .note,
 .document-corps .note + .note {
   margin-top: -0.4em;
 }
 
-/* Les listes viennent du texte, pas du balisage : la BDPM les écrit en
-   caractères — « · », « o » — dans des paragraphes ordinaires, et le découpeur
-   leur rend la forme que leur typographie annonçait. D'où un réglage propre,
-   et non celui hérité des listes d'interface. */
+/* Listes reconstituées par le découpeur depuis les « · » / « o » de la BDPM :
+   réglage propre, distinct des listes d'interface. */
 .rubrique-corps ul,
 .rubrique-corps ol,
 .document-corps ul,
 .document-corps ol {
   margin: 0 0 0.75em;
-  /* Le retrait porte la puce hors du texte : la deuxième ligne d'un élément
-     s'aligne alors sous la première et non sous le signe. C'est ce débord qui
-     manquait — l'œil perdait l'entrée de chaque item. */
+  /* Puce hors du texte : les lignes suivantes s'alignent sous la première. */
   padding-left: 1.4em;
 }
 
-/* Les éléments d'une même liste sont une énumération, pas des paragraphes :
-   ils se serrent. L'interligne de séparation reste pour ce qui suit la liste. */
+/* Éléments serrés ; l'écart reste après la liste. */
 .rubrique-corps li,
 .document-corps li {
   margin-bottom: 0.2em;
 }
 
-/* Une liste imbriquée respire au-dessus, pas en dessous : elle appartient à
-   l'élément qui la porte et ne doit pas s'en détacher. */
+/* Liste imbriquée : espace au-dessus, pas en dessous. */
 .rubrique-corps li > ul,
 .document-corps li > ul {
   margin: 0.25em 0 0;
 }
 
-/* Intitulé du modèle QRD — « Posologie », « Personnes âgées ». Il articule la
-   rubrique sans prétendre à son rang : c'est la sans de l'interface qui le
-   distingue du texte suivi, pas une taille plus grande. Un titre plus gros
-   qu'un autre titre dans une rubrique déjà numérotée ferait un troisième
-   niveau de lecture pour rien. */
+/* Intitulé QRD (« Posologie »…) : distingué par la police, pas par la taille. */
 .rubrique-corps .sous-titre,
 .document-corps .sous-titre {
   font-family: var(--font-body);
@@ -809,35 +664,17 @@ td.forme {
   color: var(--faint);
 }
 
-/* Le tableau d'une rubrique n'est pas un tableau d'interface : c'est le
-   document. Un tableau de posologie porte des doses — c'est même la ligne la
-   plus lue du RCP —, et il était épinglé à l'échelle de l'application, en rem
-   absolus : le corps du texte a grossi, lui non, et l'écart s'est vu. En em,
-   il suit la surface de lecture quelle que soit sa taille, et reste à peine en
-   dessous d'elle. Jamais loin en dessous : lire « 3000 mg par jour » plus
-   petit que la phrase qui l'introduit est la mauvaise hiérarchie. */
-/* ---------- Tableaux du document ----------
- *
- * Ceux-ci ne sont pas des tableaux d'interface : ils viennent du RCP, et le
- * tableau de posologie est la ligne la plus lue de la fiche. Ils sont donc
- * réglés en em, pour suivre la surface de lecture, et traités comme un objet
- * de lecture — pas comme une grille de données.
- *
- * Filets horizontaux seuls : pas de colonnes encadrées, pas de fond alterné.
- * Ce qui donne sa forme au tableau, c'est l'alignement des colonnes et deux
- * traits qui l'encadrent ; le reste est du bruit qui ne porte aucune donnée.
- */
+/* ---------- Tableaux du document ---------- */
+
+/* Tableaux du RCP : en em pour suivre la surface de lecture, à peine plus
+   petits qu'elle. Filets horizontaux seuls, pas de fond alterné. */
 .rubrique-corps table,
 .document-corps table {
   font-size: 0.82em;
-  /* Un tableau est un objet posé dans le texte : il se détache par du blanc,
-     pas par un cadre. */
   margin: var(--sp-3) 0;
 }
 
-/* Les deux traits qui tiennent l'objet. Sans le trait de pied, un tableau
-   suivi d'un paragraphe se termine dans le vague ; sans celui de tête, la
-   première ligne flotte sous le texte qui l'annonce. */
+/* Filets de tête et de pied pour délimiter le tableau. */
 .rubrique-corps table,
 .document-corps table {
   border-top: var(--rule-width) solid var(--rule-medium);
@@ -848,18 +685,10 @@ td.forme {
 .rubrique-corps td,
 .document-corps th,
 .document-corps td {
-  /* Gouttière franche entre colonnes : c'est elle qui sépare, pas un filet
-     vertical. Verticalement au contraire on resserre — les lignes du RCP
-     tiennent en deux ou trois mots et n'ont pas besoin d'un interligne et
-     demi de blanc au-dessus. */
+  /* Gouttière entre colonnes plutôt que filet vertical ; lignes resserrées. */
   padding: 0.4em 1.6em 0.4em 0;
   line-height: 1.45;
-  /* Centré et non aligné sur la ligne de base. Dans un tableau de posologie,
-     une cellule tient sur trois lignes — « 2000 mg par jour soit 2 g
-     (4 gélules) » — quand ses voisines en font une : alignées sur la base,
-     celles-ci restent accrochées en haut et la rangée paraît creuse par en
-     dessous. Centrées, les trois valeurs d'une même rangée se lisent sur le
-     même axe, ce qui est bien ce qu'on cherche à comparer. */
+  /* Centré : les cellules d'une rangée peuvent faire une ou trois lignes. */
   vertical-align: middle;
 }
 
@@ -868,13 +697,8 @@ td.forme {
   padding-right: 0;
 }
 
-/* Le vrai gouffre était là. La BDPM sert du Word exporté : dans une cellule,
-   « 2000 mg par jour », « soit 2 g » et « (4 gélules) » sont trois <p>
-   distincts, qui héritaient de l'interligne de séparation des paragraphes du
-   texte suivi — trois quarts de cadratin entre chacun. Ces trois lignes ne
-   sont pas trois paragraphes : c'est une valeur écrite sur trois lignes.
-   Elles se resserrent, et le blanc de la rangée redevient celui qu'on a
-   réglé. */
+/* Les <p> d'une cellule (Word exporté par la BDPM) forment une valeur sur
+   plusieurs lignes, pas des paragraphes : resserrés. */
 .rubrique-corps td > p,
 .rubrique-corps th > p,
 .document-corps td > p,
@@ -882,8 +706,7 @@ td.forme {
   margin: 0;
 }
 
-/* Deux vrais paragraphes dans une cellule restent séparés — d'un souffle, pas
-   d'une ligne blanche. */
+/* Deux vrais paragraphes dans une cellule restent légèrement séparés. */
 .rubrique-corps td > p + p,
 .rubrique-corps th > p + p,
 .document-corps td > p + p,
@@ -891,41 +714,28 @@ td.forme {
   margin-top: 0.15em;
 }
 
-/* En-tête. La BDPM sert du Word exporté : la ligne de tête est presque
-   toujours un <tr> ordinaire, sans <thead>, et n'héritait donc d'aucun
-   traitement. On la reconnaît par sa position dans un tableau qui n'a pas
-   d'en-tête déclaré — c'est la seule prise disponible, et le pire qui puisse
-   arriver si le document déroge est un trait un peu plus marqué sous la
-   première ligne. */
+/* En-tête : la BDPM n'utilise presque jamais <thead> ; la première ligne d'un
+   tableau sans en-tête déclaré est traitée comme tel. */
 .rubrique-corps thead th,
 .document-corps thead th,
 .rubrique-corps table:not(:has(thead)) tr:first-child > *,
 .document-corps table:not(:has(thead)) tr:first-child > * {
   font-size: 0.88em;
   font-weight: 400;
-  /* L'accent, et lui seul, sur la seule ligne du tableau qui ne porte pas de
-     donnée : elle nomme les colonnes. En gris elle se confondait avec les
-     valeurs à peine plus foncées ; en vert elle se lit comme ce qu'elle est,
-     une étiquette. */
+  /* Ligne d'en-tête en accent : elle nomme les colonnes. */
   color: var(--accent);
   border-bottom: var(--rule-width) solid var(--rule-strong);
   padding-bottom: 0.55em;
 }
 
-/* La première colonne porte l'entrée — le poids, la tranche d'âge, la voie.
-   C'est par elle qu'on cherche sa ligne : elle reste à l'encre pleine quand
-   le reste peut respirer. */
+/* Première colonne (poids, âge, voie) à l'encre pleine : c'est l'entrée de lecture. */
 .rubrique-corps tbody tr > :first-child,
 .document-corps tbody tr > :first-child {
   color: var(--ink);
 }
 
-/* Sur écran étroit, un tableau de posologie à quatre colonnes ne rentre pas.
-   On le fait défiler plutôt que de l'écraser : une dose illisible est pire
-   qu'une dose qu'il faut aller chercher. La colonne d'entrée reste visible
-   pendant le défilement, sinon on lit « 3000 mg » sans savoir pour qui.
-   L'enveloppe est posée par documents.js ; sans JavaScript le tableau se
-   comporte comme avant. */
+/* Écran étroit : défilement horizontal, colonne d'entrée collée à gauche.
+   Enveloppe posée par documents.js. */
 .table-defilante {
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -948,8 +758,7 @@ td.forme {
   font-family: var(--font-body);
 }
 
-/* Tableau de posologie repris d'un PDF : l'alignement d'origine est conservé,
-   le reconstruire déplacerait une dose. */
+/* Tableau repris d'un PDF : alignement d'origine conservé pour ne déplacer aucune dose. */
 .rubrique-corps pre {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
@@ -981,8 +790,7 @@ td.forme {
   overflow-wrap: break-word;
 }
 
-/* Titres du document : même gouttière que le plan, pour que l'œil retrouve
-   la numérotation au même endroit. */
+/* Même gouttière que le plan pour la numérotation. */
 .document-corps .doc-heading {
   display: grid;
   grid-template-columns: 2.4rem 1fr;
@@ -998,7 +806,7 @@ td.forme {
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
 }
 
-/* Rubrique de premier niveau : c'est une charnière du document. */
+/* Rubrique de premier niveau : charnière du document. */
 .document-corps h1.doc-heading,
 .document-corps h2.doc-heading {
   font-size: var(--fs-base);
@@ -1064,8 +872,7 @@ td.forme {
     max-width: none;
   }
 
-  /* La forme disparaît sur écran étroit : la dénomination la contient
-     presque toujours (« …, comprimé effervescent »). */
+  /* Forme masquée : la dénomination la contient presque toujours. */
   .t-substitution td:nth-child(2),
   .t-substitution thead th:nth-child(2) {
     display: none;
@@ -1074,11 +881,8 @@ td.forme {
 
 /* ---------- Délivrance ---------- */
 
-/* Le résumé est la réponse, pas un compte : il se lit bloc fermé. Écrit en
-   toutes lettres il occupait deux lignes et écrasait l'en-tête ; abrégé en
-   mentions, il tient sur une. Mêmes filets que les dosages du bandeau — ce
-   sont des étiquettes, pas des boutons, et surtout pas des alertes : un
-   stupéfiant n'est pas une erreur, c'est un cadre de délivrance. */
+/* Résumé abrégé en mentions, lisible bloc fermé. Des étiquettes, pas des
+   alertes : un stupéfiant est un cadre de délivrance, pas une erreur. */
 .mentions {
   display: flex;
   flex-wrap: wrap;
@@ -1097,20 +901,14 @@ td.forme {
   white-space: nowrap;
 }
 
-/* Le classement commande tout le reste — support d'ordonnance, durée,
-   registre. Un filet noir suffit à le détacher : ni couleur, ni fond. */
+/* Le classement commande le reste : filet noir, sans couleur ni fond. */
 .mention-classement {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-/* « Hôpital seulement », « Usage professionnel » : la spécialité ne sort pas
-   de la pharmacie. C'est la seule mention du bloc qui répond non, et elle doit
-   se voir avant d'être lue.
- 
-   Distinguée par le poids — aplat plein, texte blanc — et non par la teinte.
-   Un code rouge contre vert est illisible pour une part notable des lecteurs,
-   et ce serait justement sur la mention qu'il ne faut pas manquer. */
+/* Mention qui répond non (« Hôpital seulement »…) : aplat plein, texte blanc.
+   Le poids plutôt que la teinte, pour rester lisible par les daltoniens. */
 .mention-bloque {
   background: var(--bg-fonce);
   border-color: var(--bg-fonce);
@@ -1118,28 +916,16 @@ td.forme {
   font-weight: 600;
 }
 
-/* Une condition réglementaire se lit par axe : le libellé de la BDPM est
-   long, l'axe qui le range est court. Deux colonnes, pas de fond, pas de
-   pastille — c'est du texte de loi, pas un indicateur. */
+/* Condition par axe, en deux colonnes : texte de loi, pas un indicateur. */
 .axes {
   display: grid;
   grid-template-columns: minmax(5rem, 9rem) 1fr;
-  /* Mesuré : sept pixels séparaient deux conditions d'un même groupe, huit
-     deux groupes distincts. Un pixel d'écart — et comme la séparation interne
-     porte un filet et l'externe rien, la hiérarchie se lisait à l'envers : une
-     condition paraissait appartenir au groupe précédent, et son intitulé
-     semblait mal aligné alors qu'il l'était au pixel près.
-     
-     Le blanc entre deux groupes vaut donc maintenant trois fois celui qui
-     sépare deux conditions. C'est le rapport qui fait le groupe, pas la
-     valeur absolue. */
+  /* Blanc entre groupes = trois fois celui entre conditions : c'est le
+     rapport qui fait le groupe. */
   gap: var(--sp-3) var(--sp-3);
   margin: var(--sp-3) 0 0;
   max-width: var(--measure);
-  /* L'intitulé et sa valeur n'ont pas le même corps : calées par le haut de
-     leur boîte, leurs premières lignes ne tombaient pas au même niveau — un
-     décalage de deux pixels, mais répété sur six rangées. La ligne de base est
-     la seule référence commune à deux corps différents. */
+  /* Ligne de base : l'intitulé et la valeur n'ont pas le même corps. */
   align-items: baseline;
 }
 
@@ -1187,19 +973,12 @@ td.forme {
 /* ---------- Impression de la fiche ---------- */
 
 @media print {
-  /* Tout s'ouvre.
-   *
-   * Une rubrique repliée est cachée par le navigateur lui-même, pas par nous :
-   * sans cette règle, on imprimait un sommaire de douze lignes en croyant
-   * imprimer un RCP. C'est le pire défaut possible pour un document qu'on sort
-   * afin de le lire ailleurs — il paraît complet et ne l'est pas. */
+  /* Tout s'ouvre : une rubrique repliée ne s'imprime pas. */
   details > *:not(summary) {
     display: block !important;
   }
 
-  /* Les panneaux d'onglets restent `hidden` : on imprime le document affiché,
-     pas les trois. Sur papier, l'onglet actif devient son titre — sinon rien
-     ne dit si l'on tient le résumé des caractéristiques ou la notice. */
+  /* Seul le panneau affiché s'imprime ; l'onglet actif en devient le titre. */
   .onglets {
     display: block;
     margin: var(--sp-3) 0 var(--sp-1);
@@ -1218,7 +997,7 @@ td.forme {
     font-size: var(--fs-md);
   }
 
-  /* Commandes : elles n'ont plus rien à commander. */
+  /* Commandes inutiles sur papier. */
   .rubriques-controle,
   .barre-repere,
   .formes-plus,
@@ -1237,7 +1016,7 @@ td.forme {
     cursor: auto;
   }
 
-  /* Un titre seul en bas de page est un titre perdu. */
+  /* Pas de titre seul en bas de page. */
   .rubrique-tete,
   .charniere,
   .bloc-tete,
@@ -1246,7 +1025,7 @@ td.forme {
     page-break-after: avoid;
   }
 
-  /* Une posologie coupée en deux se relit mal et se recopie mal. */
+  /* Pas de posologie coupée entre deux pages. */
   tr,
   .dose,
   li {
@@ -1254,8 +1033,7 @@ td.forme {
     page-break-inside: avoid;
   }
 
-  /* Le défilement horizontal n'existe pas sur papier : le tableau tient dans
-     la largeur, quitte à se resserrer. */
+  /* Pas de défilement sur papier : le tableau tient dans la largeur. */
   .table-defilante {
     overflow: visible;
   }
@@ -1264,9 +1042,7 @@ td.forme {
     min-width: 0;
   }
 
-  /* Les aplats d'état — onglet choisi, dosage courant, mention de délivrance —
-     ne disent plus rien une fois le choix figé, et coûtent du toner. Le filet
-     reste, il porte la même information sans l'encre. */
+  /* Aplats d'état retirés : le filet suffit. */
   .mention,
   .forme-choix.actif {
     background: none;
@@ -1274,9 +1050,7 @@ td.forme {
     border: var(--rule-width) solid #666;
   }
 
-  /* La conduite de points est un artifice d'écran : elle se recalcule à chaque
-     largeur et n'a pas de largeur sur papier. Nom et dose se séparent d'une
-     espace. */
+  /* Pas de conduite de points sur papier : nom et dose séparés d'une espace. */
   .dose-liaison {
     display: none;
   }
@@ -1294,10 +1068,8 @@ td.forme {
 
 /* ---------- Prise en charge limitée ---------- */
 
-/* Six cent soixante-douze spécialités n'ouvrent droit au remboursement que
-   pour certaines indications. Le texte vient de l'Assurance Maladie et se
-   donne mot pour mot — on ne le résume pas, un résumé de condition de prise
-   en charge engagerait plus qu'il n'aide. */
+/* Prise en charge limitée à certaines indications. Texte de l'Assurance
+   Maladie donné tel quel : un résumé engagerait plus qu'il n'aide. */
 .remboursement {
   margin: var(--sp-3) 0 0;
   padding: var(--sp-2) 0 0;
@@ -1315,15 +1087,14 @@ td.forme {
   font-weight: 600;
 }
 
-/* Le taux est la première chose qu'on cherche ici. */
+/* Le taux, première information cherchée. */
 .remboursement-taux {
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--accent);
 }
 
-/* Le texte source porte ses propres <br> : c'est une énumération d'indications,
-   et chaque retour y sépare deux cas de prise en charge. */
+/* Les <br> de la source séparent deux cas de prise en charge. */
 .remboursement-texte {
   font-size: var(--fs-sm);
   line-height: 1.6;

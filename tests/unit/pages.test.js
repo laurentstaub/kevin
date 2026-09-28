@@ -4,21 +4,8 @@ import request from 'supertest';
 import { createApp } from '../../src/app.js';
 
 /**
- * Les pages se rendent, toutes, jusqu'au bout.
- *
- * Les tests de rendu de vues fournissent eux-mêmes les locales des gabarits :
- * ils ne peuvent donc pas voir qu'une route a oublié d'en passer une. C'est
- * exactement ce qui est arrivé — la page d'accueil ne passait pas `lien` et
- * répondait 500, la suite restant verte.
- *
- * Ici, c'est l'application entière qui répond : ses app.locals, ses routes,
- * ses gabarits. Une locale manquante fait une 500, et la 500 fait un échec.
- *
- * La base est un trompe-l'œil qui ne rend jamais rien. C'est volontaire : on
- * ne teste pas les données — l'intégration s'en charge sur des fixtures — mais
- * le fait qu'une page vide se rende quand même, ce qui est aussi le cas d'une
- * recherche sans résultat, d'une base neuve, ou d'une table qu'on vient de
- * vider. Et ça s'exécute partout, sans Postgres, donc à chaque `npm test`.
+ * Rendu par l'application entière : détecte une locale qu'une route oublie de passer.
+ * La base factice ne rend rien, volontairement : une page vide doit se rendre, sans Postgres.
  */
 const poolVide = {
   query: async () => ({ rows: [] }),
@@ -58,7 +45,6 @@ describe('rendu des pages, de bout en bout', () => {
     await request(app).get('/fiches/..%2Fpackage').expect(404);
   });
 
-  // Une recherche vide n'est pas une page : elle renvoie à l'accueil.
   it('renvoie à l’accueil sans requête', async () => {
     await request(app).get('/search').expect(302);
     await request(app).get('/documents').expect(302);

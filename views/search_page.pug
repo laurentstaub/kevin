@@ -2,20 +2,14 @@ extends layout.pug
 include _recherche.pug
 include _resultats-documents.pug
 
-//- Une ligne = un produit, pas un code CIS.
-//-
-//- DOLIPRANE compte dix-sept CIS : les lister, c'est remplir l'écran d'un seul
-//- médicament. La ligne porte donc la racine de marque, et dit ce que le
-//- regroupement recouvre — combien de présentations, combien d'importations —
-//- pour que le lecteur sache qu'il n'a rien perdu en chemin.
+//- Une ligne par produit (racine de marque), pas par code CIS, avec le nombre
+//- de présentations et d'importations regroupées.
 mixin produit(result)
   li
     a.resultat(href=`/product/${result.id}`)
       span.resultat-nom
         = result.libelle
-        //- Dire pourquoi la ligne est là où elle est : sur une recherche de
-        //- molécule, le princeps passe devant ses génériques, et le lecteur
-        //- doit pouvoir le constater plutôt que le deviner.
+        //- La marque explique le rang : le princeps passe devant ses génériques.
         if result.princeps
           span.marque Princeps
         if result.importation
@@ -31,8 +25,7 @@ mixin produit(result)
           = result.forme_pharmaceutique
       if result.presentations > 1 || result.importations > 0
         span.resultat-etendue
-          //- « dosages et formes » et non « présentations » : la fiche produit
-          //- réserve ce mot aux conditionnements CIP, qui sont autre chose.
+          //- Pas « présentations » : la fiche réserve ce mot aux conditionnements CIP.
           if result.presentations > 1
             = `${result.presentations} dosages et formes`
           if result.presentations > 1 && result.importations > 0
@@ -41,22 +34,11 @@ mixin produit(result)
             = `${result.importations} importation${result.importations > 1 ? 's' : ''} parallèle${result.importations > 1 ? 's' : ''}`
 
 block content
-  //- Décision structurelle non-défaut de la page : le bandeau déborde de la
-  //- colonne, sans marge extérieure, et porte le champ de recherche. C'est la
-  //- seule page sans texte long — donc la seule où un aplat sombre ne coûte
-  //- rien à la lecture, et la seule où l'identité a sa place.
+  //- Bandeau pleine largeur en aplat sombre : seule page sans texte long.
   header.accueil
     .accueil-inner
-      //- Le titre ramène à l'accueil dès qu'on l'a quitté.
-      //-
-      //- Les autres pages ont la barre de situation et son « ← Accueil ».
-      //- Celle-ci ne l'a pas : le bandeau lui tient lieu d'en-tête, et son
-      //- titre n'était pas cliquable. Une fois la recherche lancée, plus
-      //- aucun retour — sauf le bouton du navigateur, qui n'est pas une
-      //- réponse quand on a enchaîné trois recherches.
-      //-
-      //- Sur la page nue, il reste du texte : un lien vers la page qu'on
-      //- regarde n'apprend rien et se clique par erreur.
+      //- Le titre sert de retour à l'accueil (pas de barre de situation ici),
+      //- sauf sur la page nue, où il reste du texte.
       h1.titre-site
         if results
           a.titre-lien(href="/") Demander à Kevin
@@ -65,13 +47,7 @@ block content
       p.accueil-champ Base de données publique des médicaments · spécialités, principes actifs, groupes génériques, texte des RCP et des notices
       +champRecherche(query, false)
 
-      //- Un exemple vaut l'annonce.
-      //-
-      //- L'onglet « Dans les documents » ne paraît qu'une fois la recherche
-      //- lancée : sur la page de garde, rien ne disait qu'on pouvait chercher
-      //- autre chose qu'un nom. Une requête qu'on peut cliquer le montre au
-      //- lieu de le promettre — et « allongement QT » n'est le nom d'aucun
-      //- médicament, ce qui fait la démonstration entière.
+      //- Exemples cliquables pour révéler la recherche plein texte sur la page de garde.
       if !results
         p.accueil-exemple
           | Cherchez aussi dans le texte des documents :
@@ -85,12 +61,7 @@ block content
     if notice
       p.notice= notice
 
-    //- Parcourir quand on ne cherche pas un nom.
-    //-
-    //- La page d'accueil ne proposait qu'un champ vide : elle suppose qu'on
-    //- sait déjà quoi taper. Les quatorze groupes anatomiques de la
-    //- classification ATC donnent une entrée par le besoin plutôt que par le
-    //- nom — et rendent visible ce que la base contient.
+    //- Entrée par classe ATC, pour qui ne cherche pas un nom.
     if !results && classes && classes.length > 0
       nav.classes(aria-label="Parcourir par classe thérapeutique")
         h2.classes-titre
@@ -106,30 +77,20 @@ block content
 
     #results
       if results
-        //- Les filtres pilotent la liste : ils sont au-dessus d'elle.
+        //- Filtres au-dessus de la liste qu'ils pilotent.
         nav.filtres(aria-label="Filtrer les résultats")
           a.filtre(class=(filter === 'all' ? 'actif' : ''), href=lien(etat, { filtre: 'all' })) Tous
           a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=lien(etat, { filtre: 'specialty' })) Dénomination
           a.filtre(class=(filter === 'active' ? 'actif' : ''), href=lien(etat, { filtre: 'active' })) Principe actif
-          //- Le quatrième onglet, qui n'existait nulle part.
-          //-
-          //- La recherche plein texte ne se montrait qu'en bas de page, une
-          //- fois la recherche par nom déjà faite : rien n'annonçait qu'on
-          //- pouvait chercher « allongement QT ». Elle mène à une autre page,
-          //- et c'est assumé — elle porte ses propres filtres par rubrique.
-          //- Sa place est ici, là où le lecteur choisit déjà comment chercher.
+          //- Recherche plein texte : autre page (ses propres filtres), mais annoncée ici.
           a.filtre.filtre-ailleurs(href=lien(etat, { mode: 'documents' }))
             | Dans les documents
             if documents && documents.total > 0
               span.filtre-compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
 
         if results.total > 0
-          //- Le terme désigne une molécule : une seule liste.
-          //-
-          //- Séparer selon que le mot figure ou non dans la dénomination n'a de
-          //- sens que pour une marque. Sur « oxazépam », cela mettait les trois
-          //- OXAZEPAM <labo> au-dessus, et SERESTA — le princeps, celui qu'on
-          //- cherche — dans une seconde section, sous eux.
+          //- Terme = molécule : une seule liste, sinon le princeps (SERESTA) passerait
+          //- sous les génériques qui portent le nom (OXAZEPAM <labo>).
           if results.dci
             section.groupe
               h2.groupe-titre
@@ -159,11 +120,7 @@ block content
         else if !documents || documents.resultats.length === 0
           p.vide Aucun résultat pour « #{query} ».
 
-        //- Second bloc, sous les spécialités quand il y en a — c'est
-        //- l'intention la plus fréquente et la moins chère à servir. Mais quand
-        //- la recherche par nom ne rend rien — « allongement du QT » n'est le
-        //- nom d'aucun médicament —, ce bloc devient la réponse et prend toute
-        //- la page, au lieu d'un vide poli sous un « aucun résultat ».
+        //- Documents sous les spécialités ; seuls s'il n'y a aucune spécialité.
         if panne
           p.section-meta= panne
         if documents && documents.resultats.length > 0

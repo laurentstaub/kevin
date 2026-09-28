@@ -30,14 +30,10 @@ block content
 
   +barreSituation(product.denomination_medicament)
 
-  //- Identité : dénomination + toutes les métadonnées en une seule ligne,
-  //- jamais répétées plus bas. Le bandeau déborde de la colonne de contenu.
+  //- Identité : dénomination et métadonnées sur une ligne, non répétées plus bas.
   header.identite
     .identite-inner
-      //- Où l'on est dans la classification. Le retour et la recherche sont
-      //- partis dans la barre collante : ce sont des repères d'application, ils
-      //- doivent rester sous la main jusqu'en bas du RCP. Le fil ATC, lui,
-      //- parle du produit — sa place est dans son bandeau.
+      //- Fil ATC du produit ; retour et recherche sont dans la barre collante.
       .identite-tete
         if resumeAtc
           nav.atc(aria-label="Classe thérapeutique")
@@ -46,8 +42,7 @@ block content
               span.atc-sep ›
               a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${niveau.label}`)= niveau.label
             span.atc-sep ›
-            //- Le code porte la feuille sans l'écrire : « PARACETAMOL » répéterait
-            //- la DCI affichée plus bas. Il mène au détail complet.
+            //- La feuille s'affiche par son code : son libellé répéterait la DCI.
             a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${resumeAtc.feuille.label}`)= resumeAtc.feuille.code
 
       h1.produit-titre= product.denomination_medicament
@@ -62,22 +57,14 @@ block content
           span= product.titulaires
           span.sep
         span CIS #{product.id}
-        //- La procédure d'AMM change la lecture de la fiche : ce produit est le
-        //- même médicament, importé et redistribué, sans documentation propre.
+        //- Importation parallèle : même médicament, sans documentation propre.
         if importation
           span.sep
           span.marque Importation parallèle
 
-      //- Choisir son dosage et sa forme.
-      //-
-      //- La recherche rend un produit par ligne — DOLIPRANE, pas ses dix-sept
-      //- codes CIS. Le choix du dosage se fait donc ici, sur la fiche, sinon il
-      //- ne se fait nulle part : on arrive sur la présentation que le
-      //- regroupement a désignée, et rien ne dit que c'est celle qu'on cherche.
-      //- Dosages, formes et conditionnements : un seul rang. Trois lignes
-      //- empilées pour deux dosages et deux boîtes, c'était trois lignes de
-      //- trop. Le repli ne sert qu'aux produits qui débordent vraiment — un
-      //- Doliprane a dix-sept présentations, un Seresta en a deux.
+      //- Choix du dosage et de la forme (la recherche regroupe par produit) :
+      //- dosages, formes et conditionnements sur un seul rang. Les autres formes
+      //- ne sont repliées qu'au-delà de SEUIL_REPLI variantes.
       - const SEUIL_REPLI = 8
       - const forme = product.forme_pharmaceutique
       - const soeurs = variantes || []
@@ -104,9 +91,7 @@ block content
                         li
                           +choixForme(soeur)
 
-            //- Les présentations sont les codes CIP rattachés au CIS affiché :
-            //- elles décrivent la boîte, pas le médicament. Leur place est donc
-            //- auprès du sélecteur de dosages, sur le même rang.
+            //- Présentations (codes CIP du CIS affiché) : la boîte, sur le rang des dosages.
             if conditionnements > 0
               li
                 details.presentations#presentations
@@ -123,48 +108,25 @@ block content
                           td.code= cip.code_cip13 || cip.code_cip7
                           td= cip.libelle_presentation
 
-  //- Colonne unique, centrée sur l'axe de la page.
-  //-
-  //- Le sommaire latéral listait quatre blocs dont trois tiennent sur une
-  //- ligne repliée : il annonçait ce que l'œil voyait déjà. Et il ne coûtait
-  //- pas de la largeur — la colonne de lecture faisait sa mesure — mais du
-  //- centrage : le texte se lisait quatre-vingts pixels à droite de l'axe.
-  //-
-  //- Le sommaire qui reste est le document lui-même : rubriques repliées, il
-  //- affiche son plan numéroté dans la colonne de lecture, à sa vraie place.
+  //- Colonne unique centrée, sans sommaire latéral : le document replié sert de plan.
   .corps
     main.contenu
 
-      //- Délivrance.
-      //-
-      //- Le RCP répond à « que fait ce médicament ». Au comptoir, la question
-      //- qui vient d'abord est l'autre : « puis-je le délivrer, et à quelles
-      //- conditions ». Elle se règle en une ligne, lisible bloc fermé — liste,
-      //- support d'ordonnance, durée maximale, fractionnement. Tout vient de
-      //- `cis_cpd_bdpm`, donnée publique. Meddispar, édité par l'Ordre, rédige
-      //- la conduite à tenir : il n'est pas ouvert, on y renvoie sans le copier.
+      //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
+      //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
       - const nbConditions = delivrance.groupes.reduce((total, groupe) => total + groupe.conditions.length, 0)
       details.bloc#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
           if delivrance.resume.length > 0 || remboursement
-            //- Mentions plutôt que phrase : « Stupéfiant · Ordo sécurisée ·
-            //- 4 sem. max » se saisit d'un regard, la phrase entière prenait
-            //- deux lignes dans l'en-tête. Le libellé exact de la BDPM reste
-            //- en infobulle et, mot pour mot, dans le corps du bloc.
+            //- Mentions courtes ; le libellé exact BDPM est en infobulle et dans le corps.
             span.mentions
-              //- Six cent soixante-douze spécialités ont une prise en charge
-              //- limitée à certaines indications. C'est une condition de
-              //- délivrance au même titre que les autres — le pharmacien la
-              //- vérifie avant de facturer — et elle vient d'une autre table,
-              //- d'où sa pose ici plutôt que dans `classer`.
+              //- Prise en charge limitée à certaines indications : condition de
+              //- délivrance issue d'une autre table, d'où sa pose ici et non dans `classer`.
               if remboursement
                 span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
               each mention in delivrance.resume
-                //- La mention qui empêche de délivrer se distingue par son
-                //- poids, pas par sa couleur : un code rouge/vert serait
-                //- illisible pour une part notable des lecteurs, et c'est
-                //- justement la mention qu'il ne faut pas manquer.
+                //- La mention bloquante se distingue par la graisse, pas la couleur (daltonisme).
                 span.mention(
                   class=(mention.portee === 'bloque' ? 'mention-bloque'
                     : mention.cle === 'classement' ? 'mention-classement' : null)
@@ -182,8 +144,7 @@ block content
                 dt.axe-titre= groupe.titre
                 dd.axe-valeur
                   each condition in groupe.conditions
-                    //- Le libellé entier reste en infobulle : on met en forme,
-                    //- on ne réécrit pas. La casse d'origine y est intacte.
+                    //- Libellé d'origine intact en infobulle : mis en forme, pas réécrit.
                     p.condition(title=condition.brut)
                       if condition.population
                         span.condition-population= condition.population
@@ -194,21 +155,15 @@ block content
                           else
                             = seg.texte
 
-          //- Le texte de l'Assurance Maladie, mot pour mot.
-          //-
-          //- On ne l'appelle pas « médicament d'exception » : relevé sur les
-          //- 800 présentations concernées, le champ ne contient ce mot que deux
-          //- fois, et toutes les restrictions de prise en charge ne relèvent
-          //- pas de cette catégorie réglementaire. Le lien Meddispar est donné
-          //- comme référence de la catégorie, à charge au lecteur d'y
-          //- rattacher — ou non — la spécialité qu'il tient.
+          //- Texte de l'Assurance Maladie, mot pour mot. Pas de titre « médicament
+          //- d'exception » : toutes les restrictions n'en relèvent pas ; Meddispar
+          //- n'est donné qu'en référence de la catégorie.
           if remboursement
             .remboursement
               h3.remboursement-titre
                 | Prise en charge
                 if remboursement.taux
-                  //- Le taux porte son unité : « 30.00 » posé à côté du titre
-                  //- ne disait pas de quoi il parlait.
+                  //- Le taux doit porter son unité.
                   span.remboursement-taux(title="Taux de remboursement par l’Assurance Maladie")= remboursement.taux
               .remboursement-texte!= remboursement.texte
               p.section-meta
@@ -224,15 +179,13 @@ block content
         else
           p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
 
-      //- Chaque section est un bloc repliable, fermé au chargement : la fiche
-      //- s'ouvre sur son plan, pas sur trois tableaux qu'il faut dépasser.
+      //- Blocs repliables : la fiche s'ouvre sur son plan.
       if hasDocuments
         details.bloc#documents(open)
           summary.bloc-tete
             h2.section-titre Documents
 
-          //- Onglets : le RCP répond au professionnel, la notice au patient.
-          //- Même page, même sommaire — on change d'interlocuteur, pas de fiche.
+          //- Onglets RCP (professionnel) / notice (patient), sur la même page.
           if documents.length > 1
             .onglets(role="tablist" aria-label="Documents officiels")
               each doc, i in documents
@@ -245,14 +198,8 @@ block content
                   tabindex=(i === 0 ? 0 : -1)
                 )= doc.label
 
-          //- Panneau replié : « until-found » plutôt que `hidden` sec. Le
-          //- document reste caché, mais la recherche du navigateur le fouille
-          //- et l'ouvre s'il y trouve le mot cherché. Sans cela ⌘F parcourait
-          //- le RCP et ratait la notice en silence — le pire des deux, puisque
-          //- l'on en concluait que le document n'en parlait pas. Là où
-          //- l'attribut n'est pas compris — Safari aujourd'hui — une valeur
-          //- non vide vaut `hidden` : on retombe sur le comportement d'avant,
-          //- sans rien casser.
+          //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
+          //- Non supporté (Safari), il vaut `hidden`.
           each doc, i in documents
             article.document(
               id=doc.anchor
@@ -261,8 +208,7 @@ block content
               aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
               hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
             )
-              //- Une seule ligne de service : la date, la provenance, le lien
-              //- officiel et la commande. Empilées, elles coûtaient trois lignes.
+              //- Ligne de service unique : date, provenance, lien officiel, commande.
               p.document-meta
                 if documents.length === 1
                   span= doc.label
@@ -288,10 +234,7 @@ block content
 
               if doc.rubriques && doc.rubriques.length > 0
                 .rubriques
-                  //- Le document garde sa numérotation : 1, 2, 3, 4, 4.1… Un
-                  //- RCP se cite par ses rubriques, et l'ordre officiel est
-                  //- celui que le lecteur connaît. Seule l'ouverture est
-                  //- dirigée — toute la rubrique 4 est dépliée, le reste attend.
+                  //- Numérotation et ordre officiels ; seules les rubriques cliniques s'ouvrent.
                   each rubrique in doc.rubriques
                     +rubrique(rubrique, rubrique.clinique === true)
 
@@ -307,18 +250,9 @@ block content
           summary.bloc-tete
             h2.section-titre Substituer
             span.bloc-compte #{substitutions.length} produit#{substitutions.length > 1 ? 's' : ''}
-          //- D'où vient chaque ligne, et ce que « Substituer » recouvre.
-          //-
-          //- Le bloc mêle deux provenances que le titre confond. Princeps et
-          //- génériques viennent du Répertoire des groupes génériques de
-          //- l'ANSM : c'est lui qui fonde la substitution, au sens de
-          //- l'article L.5121-1 du code de la santé publique. « Même DCI » est
-          //- notre rapprochement, calculé sur le principe actif partagé — un
-          //- shampooing et un vernis à ongles peuvent s'y retrouver côte à
-          //- côte, et l'un ne se substitue pas à l'autre.
-          //-
-          //- Ne pas le dire laisserait entendre qu'une liste officielle
-          //- autorise ce que le pharmacien lit sous ce titre.
+          //- Deux provenances à distinguer : princeps et génériques du Répertoire
+          //- ANSM, qui fonde la substitution (CSP, art. L.5121-1) ; « Même DCI »,
+          //- simple rapprochement par principe actif, sans substitution de droit.
           - const officiels = substitutions.filter((substitution) => substitution.role !== 'Même DCI').length
           - const voisins = substitutions.length - officiels
           if genericGroup
@@ -355,9 +289,7 @@ block content
         summary.bloc-tete
           h2.section-titre Références
           span.bloc-compte Ce produit ailleurs
-        //- Les liens officiels tenaient dans le sommaire latéral, où ils
-        //- n'avaient rien à faire : ce ne sont pas des ancres internes mais des
-        //- liens sortants, et le bloc des liens sortants est celui-ci.
+        //- Liens sortants officiels.
         ul.liens
           each link in links.official
             li

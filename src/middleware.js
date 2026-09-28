@@ -1,9 +1,6 @@
 import { config } from './config.js';
 
-/**
- * En-têtes de sécurité. Volontairement écrits à la main : cinq en-têtes, une CSP,
- * aucune dépendance, et la politique reste lisible d'un coup d'œil.
- */
+/** En-têtes de sécurité, écrits à la main pour rester lisibles et sans dépendance. */
 const CSP = [
   "default-src 'self'",
   // Font Awesome et Google Fonts sont chargés par les vues.
@@ -28,10 +25,7 @@ export function securityHeaders(req, res, next) {
   next();
 }
 
-/**
- * CORS restreint à une liste d'origines déclarées.
- * Par défaut : aucune origine tierce, l'application ne sert que son propre front.
- */
+/** CORS restreint aux origines déclarées ; par défaut, aucune origine tierce. */
 export function cors(req, res, next) {
   const origin = req.headers.origin;
   if (origin && config.corsOrigins.includes(origin)) {

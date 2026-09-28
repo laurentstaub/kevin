@@ -1,9 +1,5 @@
 /**
- * diag-atc.js — pourquoi une page de classe montre ce qu'elle montre.
- *
- * La page assemble trois requêtes ; quand elle paraît vide, on ne sait pas
- * laquelle n'a rien rendu. Ce script les rejoue une par une, sur la connexion
- * de l'application, et dit où la chaîne se rompt.
+ * Rejoue une à une les trois requêtes d'une page de classe ATC pour trouver celle qui ne rend rien.
  *
  *   node scripts/diag-atc.js         examine « J »
  *   node scripts/diag-atc.js N02     examine une autre classe
@@ -33,8 +29,7 @@ try {
     }
   }
 
-  // La longueur du code par niveau : si elle ne suit pas 1, 3, 4, 5, 7, la
-  // navigation par préfixe ne tient pas, et rien d'autre ne tiendra non plus.
+  // La navigation par préfixe suppose des longueurs 1, 3, 4, 5, 7 par niveau.
   console.log(`\n=== Longueur des codes par niveau ===\n`);
   const { rows: niveaux } = await pool.query(
     `SELECT atc_level AS niveau, min(length(atc_code)) AS mini,
@@ -72,8 +67,7 @@ try {
     }
   }
 
-  // Si la liste est vide, c'est ici qu'on voit pourquoi : soit aucun code de
-  // niveau 5 sous ce préfixe, soit aucune correspondance vers une spécialité.
+  // Liste vide : aucun code de niveau 5 sous ce préfixe, ou aucune spécialité correspondante.
   console.log(`\n=== Décomposition, préfixe « ${code} » ===\n`);
   const { rows: [detail] } = await pool.query(
     `SELECT

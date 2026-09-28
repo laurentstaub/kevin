@@ -7,15 +7,9 @@ import { sanitizeDocument } from '../src/sanitize.js';
 import { splitDocument, PARSER_VERSION } from '../src/split.js';
 
 /**
- * build-sections.js — découpe les documents en rubriques et les matérialise
- * dans docs.rcp_sections.
- *
- * Lit dbpm.cis_documents, n'y écrit jamais : les rubriques sont dérivées et
- * rejouables, la source reste la référence.
- *
- * Incrémental par défaut : un document dont l'empreinte et la version du
- * découpeur n'ont pas changé est sauté. Incrémenter PARSER_VERSION suffit à
- * tout rejouer après une amélioration de la détection.
+ * Découpe dbpm.cis_documents (lu seulement) en rubriques dans docs.rcp_sections.
+ * Incrémental : saute un document d'empreinte et de PARSER_VERSION inchangées ;
+ * incrémenter PARSER_VERSION rejoue tout.
  *
  *   npm run build-sections                 # incrémental
  *   npm run build-sections -- --all        # tout rejouer
@@ -41,10 +35,8 @@ const empreinte = (contenu) => createHash('sha1').update(contenu ?? '').digest('
 
 const pool = createPool({ statement_timeout: 0 });
 
-// Prérequis : le schéma et les tables.
 await pool.query(await readFile(path.join(ROOT, 'sql', 'sections.sql'), 'utf8'));
 
-// État connu, pour savoir quoi sauter.
 const connu = new Map();
 if (!TOUT) {
   const { rows } = await pool.query(
@@ -55,11 +47,7 @@ if (!TOUT) {
   }
 }
 
-/**
- * « main » est la fiche info de la BDPM — identité, pictogrammes,
- * présentations. Pas un document à rubriques : le découper n'a pas de sens et
- * fausserait le taux de réussite.
- */
+/** Exclut « main » (fiche info BDPM, sans rubriques) : il fausserait le taux de réussite. */
 const TYPES_DECOUPABLES = ['rcp', 'rcp_notice', 'notice'];
 
 const conditions = ["coalesce(html_content, '') <> ''"];
@@ -117,8 +105,7 @@ while (restant > 0) {
 
     if (SEC) continue;
 
-    // Un document se réécrit en entier : le découpage n'est pas incrémental
-    // rubrique par rubrique, et une rubrique disparue doit disparaître.
+    // Réécriture complète du document : une rubrique disparue doit disparaître.
     const client = await pool.connect();
     try {
       await client.query('BEGIN');

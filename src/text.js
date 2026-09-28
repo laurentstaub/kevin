@@ -1,9 +1,8 @@
 const LIGATURES = { œ: 'oe', Œ: 'OE', æ: 'ae', Æ: 'AE', ß: 'ss' };
 
 /**
- * Retire les diacritiques et développe les ligatures, en miroir de la fonction
- * unaccent() de PostgreSQL. Les termes envoyés en base sont donc déjà normalisés,
- * ce qui laisse l'index trigramme faire son travail.
+ * Retire les diacritiques et développe les ligatures, comme unaccent() de
+ * PostgreSQL, pour que l'index trigramme serve.
  */
 export function deaccent(value) {
   if (typeof value !== 'string') return '';

@@ -2,18 +2,10 @@ import { socle } from './rcp-plan.js';
 
 /**
  * Lecture des rubriques déjà découpées (schéma `docs`).
- *
- * Jusqu'ici la fiche produit redécoupait le HTML à chaque requête : le travail
- * était refait pour chaque lecteur, et le résultat n'était consultable que de
- * haut en bas. Le découpage étant maintenant stocké, la page se construit
- * rubrique par rubrique — on peut en ouvrir cinq et laisser les vingt autres
- * fermées.
- *
- * `organiser` est pure : c'est elle qui décide de ce qui s'ouvre et de ce qui
- * n'est qu'une charnière. Le SQL ne fait que fournir les lignes.
+ * `organiser`, pure, décide de ce qui s'ouvre ; le SQL ne fournit que les lignes.
  */
 
-/** D'où vient le texte affiché — une page médicale doit le dire. */
+/** Provenance du texte affiché, à indiquer au lecteur. */
 export const SOURCES = {
   bdpm_html: 'texte officiel de la BDPM',
   bdpm_pdf: 'reconstruit depuis le PDF européen',
@@ -59,22 +51,16 @@ export function organiser(rubriques, etats) {
       profondeur: rubrique.profondeur,
       canonical: rubrique.canonical,
       html: rubrique.html,
-      // « 4. Données cliniques » n'a pas de contenu propre : c'est une
-      // charnière avant 4.1. Elle sépare, elle ne se déplie pas.
+      // Rubrique sans contenu propre (« 4. Données cliniques ») : ne se déplie pas.
       charniere: texte.trim() === '',
-      // Le socle : ce qu'un RCP complet comporte toujours. Sert au contraste
-      // du libellé, pas à l'ouverture.
+      // Sert au contraste du libellé, pas à l'ouverture.
       essentielle: essentielles.includes(rubrique.numero),
-      // La rubrique 4 est la partie clinique du RCP : indications, posologie,
-      // contre-indications, mises en garde, interactions, grossesse, conduite,
-      // effets indésirables, surdosage. C'est tout ce qu'on vient lire devant
-      // un patient — elle est dépliée d'office, à sa place dans le document.
+      // Rubrique 4 (partie clinique) : dépliée d'office.
       clinique: /^4(\.|$)/.test(rubrique.numero),
     });
   }
 
-  // Un document sans rubrique n'a rien à montrer : l'état d'échec est un
-  // renseignement pour l'exploitant, pas pour le lecteur.
+  // Document sans rubrique : masqué (l'échec concerne l'exploitant, pas le lecteur).
   for (const [type, doc] of parType) {
     if (doc.rubriques.length === 0) parType.delete(type);
   }
@@ -103,9 +89,7 @@ export async function getSections(pool, cis) {
   return organiser(rubriques.rows, etats.rows);
 }
 
-/**
- * Entrées de sommaire d'un document découpé, plan entier.
- */
+/** Entrées de sommaire d'un document découpé, plan entier. */
 export function planDe(doc) {
   return doc.rubriques.map((rubrique) => ({
     id: rubrique.id,

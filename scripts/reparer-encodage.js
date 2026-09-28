@@ -1,25 +1,17 @@
 import { createPool } from '../src/db.js';
 
 /**
- * reparer-encodage.js — répare le double encodage UTF-8.
- *
- * « polyÃ©thylÃ¨ne » au lieu de « polyéthylène » : des octets UTF-8 corrects
- * ont été relus comme du Latin-1 (ou du Windows-1252) puis réencodés en UTF-8.
- * L'opération est réversible — on refait le chemin à l'envers.
+ * Répare le double encodage UTF-8 (« polyÃ©thylÃ¨ne ») en refaisant le chemin Latin-1 à l'envers.
  *
  *   npm run reparer-encodage              # constat, n'écrit rien
  *   npm run reparer-encodage -- --ecrire  # applique
- *
- * Ceci est un rattrapage, pas un correctif : la cause est dans le chargeur qui
- * lit les fichiers CIS_*.txt de la BDPM avec le mauvais jeu de caractères. Sans
- * correction là-bas, le prochain rechargement réintroduira le défaut.
+ * ATTENTION : rattrapage seulement ; le chargeur des CIS_*.txt réintroduira le défaut.
  */
 
 const ECRIRE = process.argv.includes('--ecrire');
 const SCHEMAS = ['dbpm', 'docs'];
 
-// Les 27 caractères que Windows-1252 place là où Latin-1 n'a que des contrôles.
-// Sans eux, « â€™ » ne se ramène pas à l'apostrophe typographique.
+// Les 27 caractères de Windows-1252 absents de Latin-1 (sinon « â€™ » reste tel quel).
 const CP1252 = new Map(
   Object.entries({
     '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84,
@@ -36,10 +28,7 @@ const decodeur = new TextDecoder('utf-8', { fatal: true });
 
 /**
  * Retour au texte d'origine, ou null si la chaîne n'est pas du mojibake.
- *
- * Le contrôle est le décodage lui-même : une chaîne saine ne forme pas une
- * séquence UTF-8 valide une fois ramenée à ses octets. C'est plus sûr que
- * n'importe quelle heuristique sur les accents.
+ * Le test est le décodage : une chaîne saine ne donne pas d'UTF-8 valide.
  */
 export function reparer(texte) {
   if (!texte || !/[ÃÂ]|â€/.test(texte)) return null;
@@ -77,8 +66,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const exemples = [];
 
   for (const { s: schema, t: nomTable, c: nomColonne } of colonnes) {
-    // Les identifiants viennent d'information_schema, pas d'une entrée : ils
-    // sont mis entre guillemets par précaution, pas par méfiance.
+    // Identifiants issus d'information_schema, cités par précaution.
     const table = `"${schema}"."${nomTable}"`;
     const colonne = `"${nomColonne}"`;
 

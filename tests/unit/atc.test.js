@@ -21,8 +21,7 @@ describe('resumerClasse', () => {
   });
 
   it('écarte la taxonomie chimique et la DCI', () => {
-    // Cent six signes en capitales rompaient le bandeau d'identité ; « ANILIDES »
-    // ne sert pas au comptoir et « PARACETAMOL » est déjà affiché plus haut.
+    // La chaîne entière romprait le bandeau ; la DCI est déjà affichée plus haut.
     const codes = resumerClasse(CHAINE).contexte.map((niveau) => niveau.code);
     for (const inutile of ['N02B', 'N02BE', 'N02BE01']) {
       assert.ok(!codes.includes(inutile), `${inutile} ne doit pas être dans l'en-tête`);
@@ -49,8 +48,7 @@ describe('lirePortrait', () => {
     liste1: 390, liste2: 0, stupefiants: 3, assimiles: 0, hopital: 0,
   };
 
-  // Deux proportions toujours ; le régime de délivrance seulement s'il
-  // concerne quelqu'un, et les régimes rares en nombre, pas en pourcentage.
+  // Régimes rares en nombre, pas en pourcentage.
   it('dit les proportions, et tait ce qui ne concerne personne', () => {
     assert.deepEqual(lirePortrait(base), [
       { valeur: '41 %', libelle: 'génériques' },
@@ -70,7 +68,6 @@ describe('lirePortrait', () => {
     assert.deepEqual(lirePortrait({ ...base, specialites: 0 }), []);
   });
 
-  // Une classe de biologiques : pas de « 0 % génériques », des biosimilaires.
   it('dit les biosimilaires, et tait les génériques absents', () => {
     const lignes = lirePortrait({ ...base, generiques: 0, biosimilaires: 300 });
     assert.equal(lignes[0].libelle, 'biosimilaires');

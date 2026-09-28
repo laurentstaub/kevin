@@ -1,21 +1,14 @@
 // Sections repliables, onglets, et ouverture au bon endroit depuis une ancre.
-//
-// Toute la fiche est fermée au chargement. Le document replié est le sommaire de la
-// page entière : un lien qui mène à un contenu replié — section, onglet
-// inactif, rubrique — doit ouvrir ce qu'il faut avant que le navigateur
-// n'aille à l'ancre, sinon le lecteur atterrit sur du vide.
-//
-// Sans JavaScript la fiche reste utilisable : les blocs repliables sont des
-// <details> natifs, les onglets des <button> sur des sections déjà rendues.
+// La fiche est repliée au chargement : un lien vers un contenu replié doit
+// l'ouvrir avant que le navigateur n'aille à l'ancre.
+// Sans JavaScript, les <details> natifs et les sections rendues suffisent.
 
 const documents = document.querySelector('#documents');
 const onglets = documents ? [...documents.querySelectorAll('.onglet')] : [];
 const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
 
-// Un panneau replié reste « until-found » : caché, mais fouillé par la
-// recherche du navigateur, qui l'ouvrira si le mot cherché s'y trouve. Là où
-// la valeur n'est pas comprise, une chaîne non vide vaut `hidden` — le
-// comportement d'avant, sans rien casser.
+// « until-found » : caché mais trouvable par la recherche du navigateur.
+// Non supporté, il vaut `hidden`.
 function activerOnglet(indice) {
   onglets.forEach((onglet, i) => {
     const actif = i === indice;
@@ -25,10 +18,8 @@ function activerOnglet(indice) {
   });
 }
 
-// Quand le navigateur révèle un panneau parce qu'il y a trouvé le mot cherché,
-// il retire l'attribut lui-même. Sans ce relais, le panneau s'afficherait avec
-// l'onglet d'à côté marqué actif, et deux documents seraient visibles à la
-// fois : l'état du groupe d'onglets doit suivre ce que le navigateur a fait.
+// Le navigateur révèle seul un panneau trouvé : les onglets doivent suivre,
+// sinon deux documents s'affichent à la fois.
 panneaux.forEach((panneau, i) => {
   if (panneau) panneau.addEventListener('beforematch', () => activerOnglet(i));
 });
@@ -46,13 +37,8 @@ onglets.forEach((onglet, i) => {
 });
 
 /**
- * Ce qu'il faut ouvrir pour qu'une charnière ait quelque chose à montrer.
- *
- * « 6. Données pharmaceutiques » n'a pas de contenu propre : son contenu, ce
- * sont 6.1 à 6.6, qui la suivent comme frères. Cliquer dessus dans un sommaire
- * veut dire « montre-moi la rubrique 6 » — sans quoi le clic ne fait rien de
- * visible et l'on croit le lien mort. On s'arrête au premier titre de même
- * rang, qui appartient déjà à la rubrique suivante.
+ * Sous-rubriques d'une charnière (ex. 6.1 à 6.6 pour « 6. »), qui la suivent
+ * comme frères, jusqu'au prochain titre de même rang.
  */
 function sousRubriques(charniere) {
   const suite = [];
@@ -63,7 +49,7 @@ function sousRubriques(charniere) {
   return suite;
 }
 
-/** Le titre visible d'une cible : c'est lui qui porte la marge d'ancrage. */
+/** Titre visible d'une cible : il porte la marge d'ancrage. */
 function titreDe(cible) {
   return cible.tagName === 'DETAILS' ? cible.querySelector(':scope > summary') ?? cible : cible;
 }
@@ -77,7 +63,7 @@ function reveler(id) {
   const indice = panneaux.indexOf(panneau);
   if (indice !== -1) activerOnglet(indice);
 
-  // La cible peut être elle-même un <details> — une rubrique, une section.
+  // La cible peut être elle-même un <details>.
   for (let noeud = cible; noeud; noeud = noeud.parentElement) {
     if (noeud.tagName === 'DETAILS') noeud.open = true;
   }
@@ -100,7 +86,7 @@ window.addEventListener('hashchange', () => {
 
 if (location.hash) reveler(decodeURIComponent(location.hash.slice(1)));
 
-// « Tout déplier » bascule : un RCP entier se lit parfois d'un trait.
+// « Tout déplier » / « Tout replier ».
 for (const bouton of document.querySelectorAll('.deplier')) {
   bouton.addEventListener('click', () => {
     const panneau = document.getElementById(bouton.dataset.cible);
@@ -115,25 +101,15 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 
 // ---------------------------------------------------------------------------
 // Repère de lecture dans la barre collante.
-//
-// Une rubrique de RCP fait couramment quatre écrans. Passé le premier, son
-// titre est sorti par le haut et le plan avec lui : c'est le seul moment de la
-// page où l'on ne sait plus où l'on est. Le titre de la rubrique prend alors la
-// place du nom du produit — qui, lui, n'a pas changé depuis le chargement — et
-// la rend au défilement inverse. Une fente, une information, toujours la plus
-// locale.
-//
-// Tant que tout est replié, rien ne s'affiche : la liste fermée tient sur un
-// écran et se suffit.
+// Quand le titre de la rubrique en cours est sorti par le haut, il remplace
+// le nom du produit dans la barre. Rien ne s'affiche tant que tout est replié.
 
 const repere = document.querySelector('.barre-repere');
 const barreTitre = document.querySelector('.barre-titre');
 const barre = document.querySelector('.barre');
 
 if (repere && barre && documents) {
-  // La liste des titres candidats ne change qu'à l'ouverture d'une rubrique ou
-  // au changement d'onglet. La recalculer à chaque image de défilement serait
-  // une requête DOM par frame pour un résultat presque toujours identique.
+  // Mis en cache : ne change qu'à l'ouverture d'une rubrique ou d'un onglet.
   let candidats = null;
   const perimer = () => { candidats = null; };
 
@@ -175,8 +151,7 @@ if (repere && barre && documents) {
     for (const titre of titres()) {
       const haut = titre.getBoundingClientRect().top;
       if (haut > seuil) break;
-      // Le titre est passé sous la barre, mais sa rubrique peut être finie :
-      // dans ce cas on ne lit plus dedans, et le repère mentirait.
+      // Titre passé sous la barre, mais rubrique peut-être déjà finie.
       if (titre.parentElement.getBoundingClientRect().bottom > seuil) trouve = titre;
     }
 
@@ -194,14 +169,12 @@ if (repere && barre && documents) {
   addEventListener('resize', auProchainRendu, { passive: true });
   documents.addEventListener('toggle', auProchainRendu, true);
 
-  // Changer d'onglet ne fait pas défiler la page, mais change ce qu'elle
-  // montre : le repère doit suivre, sous peine de nommer une rubrique cachée.
+  // Changer d'onglet ne fait pas défiler, mais change la rubrique visible.
   for (const onglet of onglets) {
     onglet.addEventListener('click', () => { perimer(); auProchainRendu(); });
   }
 
-  // Un repère qui dit où l'on est sans permettre d'en sortir est une
-  // décoration : le clic remonte au titre, donc au plan, sans quitter la page.
+  // Le clic remonte au titre de la rubrique.
   repere.addEventListener('click', () => {
     courant?.scrollIntoView({ block: 'start' });
   });
@@ -210,16 +183,9 @@ if (repere && barre && documents) {
 }
 
 // ---------------------------------------------------------------------------
-// Tableaux du document : enveloppe de défilement.
-//
-// Un tableau de posologie a quatre colonnes ; sur un téléphone il ne rentre
-// pas. Écrasé, il rend une dose illisible — ce qui est pire qu'une dose qu'il
-// faut aller chercher en faisant glisser. On l'enveloppe donc dans un
-// conteneur qui défile, la première colonne restant collée à gauche pour
-// qu'on sache toujours à quel poids se rapporte le « 3000 mg » qu'on lit.
-//
-// Fait ici et non dans le gabarit : le HTML des rubriques vient de la BDPM,
-// on ne le réécrit pas au découpage pour un besoin d'affichage.
+// Tableaux du document : enveloppe de défilement horizontal, pour ne pas
+// écraser une posologie sur téléphone.
+// Fait ici et non dans le gabarit : le HTML des rubriques vient de la BDPM.
 
 const enveloppes = [];
 
@@ -234,11 +200,8 @@ for (const table of document.querySelectorAll(
   enveloppes.push(enveloppe);
 }
 
-// Un conteneur qui défile doit pouvoir être atteint au clavier, sinon son
-// contenu est hors de portée de qui ne se sert pas d'une souris. Mais on ne
-// pose l'arrêt de tabulation que s'il y a vraiment quelque chose à faire
-// défiler : sur un large écran, les onze tableaux d'un RCP ajouteraient onze
-// arrêts qui ne mènent nulle part.
+// Focalisable au clavier seulement s'il déborde, pour éviter des arrêts de
+// tabulation inutiles.
 function reglerDefilement() {
   for (const e of enveloppes) {
     const deborde = e.scrollWidth > e.clientWidth + 1;
@@ -264,8 +227,7 @@ if (enveloppes.length > 0) {
   };
 
   addEventListener('resize', bientot, { passive: true });
-  // Une rubrique fermée mesure zéro : c'est à son ouverture qu'on peut savoir
-  // si son tableau déborde.
+  // Une rubrique fermée mesure zéro : mesurer à l'ouverture.
   documents?.addEventListener('toggle', bientot, true);
   for (const onglet of onglets) onglet.addEventListener('click', bientot);
   bientot();
@@ -273,19 +235,15 @@ if (enveloppes.length > 0) {
 
 // ---------------------------------------------------------------------------
 // Rail : reflet de la page, jamais un second modèle.
-//
-// Deux liens seulement entre le rail et l'accordéon, et ils vont dans le même
-// sens : le rail montre le plan du document affiché, et surligne la rubrique
-// en cours de lecture. Il ne décide de rien — ses liens sont des ancres, que
-// `reveler` sait déjà déplier avant d'y conduire.
+// Il montre le plan du document affiché et surligne la rubrique en cours ;
+// ses liens sont des ancres que `reveler` déplie.
 
 const rail = document.querySelector('.rail');
 
 if (rail && documents) {
   const jeux = [...rail.querySelectorAll('.rail-sous')];
 
-  // Le plan suit l'onglet. Sans ça, le rail nommerait les rubriques d'un
-  // document caché — le pire défaut possible pour un sommaire.
+  // Le plan suit l'onglet actif.
   const suivreOnglet = () => {
     const actif = onglets.findIndex((onglet) => onglet.getAttribute('aria-selected') === 'true');
     const type = panneaux[actif]?.dataset.type;
@@ -298,8 +256,7 @@ if (rail && documents) {
 
   // --- Repère de lecture ---------------------------------------------------
 
-  // Le rail n'existe qu'au-delà de 1200 px : inutile de mesurer quoi que ce
-  // soit sur un téléphone, où la barre collante fait déjà ce travail.
+  // Le rail n'existe qu'au-delà de 1200 px.
   const large = matchMedia('(min-width: 75rem)');
   let cibles = null;
   const perimerCibles = () => { cibles = null; };
@@ -312,8 +269,8 @@ if (rail && documents) {
         const cible = document.getElementById(decodeURIComponent(lien.hash.slice(1)));
         if (cible) cibles.push({ lien, cible });
       }
-      // Ordre du document, et non celui du balisage : les rubriques sont
-      // imbriquées sous « Documents » alors qu'elles le suivent dans la page.
+      // Ordre du document, pas du balisage : les rubriques sont imbriquées
+      // sous « Documents » mais le suivent dans la page.
       cibles.sort((a, b) => (
         a.cible.compareDocumentPosition(b.cible) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
       ));
@@ -331,12 +288,8 @@ if (rail && documents) {
   };
 
   /**
-   * Le seuil doit tomber *sous* l'endroit où un titre ancré vient se poser.
-   *
-   * Les titres portent `scroll-margin-top: barre + sp-2`, soit une vingtaine de
-   * pixels de plus que le bas de la barre. Un seuil calé sur la barre plaçait
-   * donc le titre qu'on venait d'atteindre juste en dessous, et le repère
-   * restait sur le précédent : on cliquait sur 7, le rail marquait 5.
+   * Seuil sous l'endroit où se pose un titre ancré (`scroll-margin-top:
+   * barre + sp-2`), sinon le repère reste sur la rubrique précédente.
    */
   const seuilDeLecture = () => (barre?.getBoundingClientRect().bottom ?? 0) + 24;
 
@@ -351,8 +304,7 @@ if (rail && documents) {
       trouve = lien;
     }
 
-    // Tout est encore sous le seuil — on est en haut de page : c'est la
-    // première entrée qui vaut, pas aucune.
+    // En haut de page : la première entrée.
     marquer(trouve ?? liste[0]?.lien ?? null);
   };
 
@@ -366,13 +318,8 @@ if (rail && documents) {
   const rafraichir = () => { perimerCibles(); bientot(); };
 
   /**
-   * Le clic du rail fait le déplacement lui-même.
-   *
-   * Laissé au navigateur, il calculait la position de l'ancre *avant* que
-   * `reveler` n'ouvre les blocs qui la précèdent : la page s'arrêtait là où la
-   * cible était au moment du clic, pas là où elle a fini. On ouvre d'abord, on
-   * se déplace ensuite, et le repère se pose sans attendre le défilement —
-   * cliquer sur une entrée doit la marquer, pas marquer la précédente.
+   * Le clic du rail fait le défilement lui-même : le navigateur calcule la
+   * position de l'ancre avant que `reveler` n'ouvre les blocs qui précèdent.
    */
   rail.addEventListener('click', (e) => {
     const lien = e.target.closest('.rail-plan .rail-lien[href^="#"]');
@@ -385,7 +332,7 @@ if (rail && documents) {
     e.preventDefault();
     marquer(lien);
     titreDe(cible).scrollIntoView({ block: 'start' });
-    // L'adresse suit, sans empiler une entrée d'historique par rubrique lue.
+    // Sans empiler d'entrée d'historique.
     history.replaceState(null, '', `#${id}`);
     perimerCibles();
   });
@@ -400,17 +347,8 @@ if (rail && documents) {
 }
 
 // ---------------------------------------------------------------------------
-// Charnières : ouvrir et refermer une rubrique entière d'un geste.
-//
-// « 6. Données pharmaceutiques » n'a pas de contenu propre — son contenu, ce
-// sont 6.1 à 6.6. Une fois les six ouvertes, il fallait six clics pour revenir
-// en arrière, et rien à l'écran ne disait qu'elles formaient un groupe. La
-// charnière devient donc le contrôle de son groupe, avec le même « + / − » que
-// les rubriques : un seul vocabulaire pour « ceci s'ouvre ».
-//
-// Construit ici et non dans le gabarit : sans JavaScript, un bouton serait un
-// contrôle mort, focalisable et sans effet. Sans lui, la charnière reste le
-// titre qu'elle était.
+// Charnières : ouvrir et refermer une rubrique entière (ex. 6.1 à 6.6) d'un geste.
+// Bouton créé ici et non dans le gabarit : sans JavaScript, il serait inerte.
 
 for (const charniere of document.querySelectorAll('.charniere')) {
   const groupe = sousRubriques(charniere);
@@ -435,8 +373,7 @@ for (const charniere of document.querySelectorAll('.charniere')) {
     etat();
   });
 
-  // Ouvrir ou fermer une sous-rubrique à la main doit se voir sur la
-  // charnière : deux états qui se contredisent valent moins que pas d'état.
+  // L'état suit aussi les ouvertures manuelles des sous-rubriques.
   for (const bloc of groupe) bloc.addEventListener('toggle', etat);
 
   etat();

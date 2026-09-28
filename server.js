@@ -20,7 +20,7 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// Sans f_unaccent, aucune recherche ne fonctionne : on la crée, ou on s'arrête.
+// Sans f_unaccent, aucune recherche ne fonctionne : la créer ou s'arrêter.
 if (!report.fUnaccent) {
   const created = await ensurePrerequisites(pool);
   if (created.ok) {
@@ -43,7 +43,7 @@ const server = createApp(pool).listen(config.port, () => {
   console.log(`bdpm • http://localhost:${config.port} (${config.env})`);
 });
 
-// Arrêt propre : on cesse d'accepter, on laisse finir, on ferme le pool.
+// Arrêt propre : refuser les nouvelles connexions, finir, fermer le pool.
 let closing = false;
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {

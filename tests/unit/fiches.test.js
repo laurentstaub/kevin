@@ -12,10 +12,7 @@ import { phrases, phrasesPertinentes, motifs } from '../../src/citations.js';
 import { choisirCitations, dejaInscrite, motifSubstance } from '../../src/fiches-calcul.js';
 import { chargerThesaurus } from '../../src/thesaurus.js';
 
-/**
- * Les fiches sont publiées : ce qui s'y écrit doit sortir échappé, ce qui s'y
- * cite doit sortir entier, et ce qui n'est pas relu ne doit pas sortir.
- */
+/** Fiches publiées : texte échappé, citations entières, rien de non relu. */
 
 const html = (corps) => decouper(corps).filter((bloc) => bloc.type === 'html').map((bloc) => bloc.html).join('');
 
@@ -86,7 +83,7 @@ describe('citations — la phrase entière', () => {
       ['Dose de 2.5 mg.', 'Chez le sujet âgé, p. ex. réduire.', 'Fin.']);
   });
 
-  // Les contre-indications sont souvent une liste à puces sans point final.
+  // Les contre-indications sont souvent des puces sans point final.
   it('coupe aussi sur une puce', () => {
     assert.deepEqual(phrases('Hypersensibilité. • Insuffisance hépatique sévère (bilirubine > 3 x LSN) • Grossesse'),
       ['Hypersensibilité.', 'Insuffisance hépatique sévère (bilirubine > 3 x LSN)', 'Grossesse']);

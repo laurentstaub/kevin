@@ -85,8 +85,7 @@ describe('lien Meddispar', () => {
     assert.equal(meddisparLettre('skenan'), 'S');
   });
 
-  // Le garde-fou : aucune des 15 857 spécialités ne commence par autre chose
-  // qu’une lettre, mais l’index Meddispar n’a pas d’entrée pour le reste.
+  // L'index Meddispar n'a d'entrées que pour les lettres.
   it('ne fabrique pas de lettre à partir de rien', () => {
     for (const sansLettre of [null, undefined, '', '  ', '5-FLUOROURACILE']) {
       assert.equal(meddisparLettre(sansLettre), null);
@@ -100,8 +99,7 @@ describe('lien Meddispar', () => {
     assert.match(lien.url, /letter=S/);
   });
 
-  // Meddispar ne recense pas les spécialités sans condition : y renvoyer une
-  // boîte d’ibuprofène enverrait chercher une fiche qui n’existe pas.
+  // Meddispar ne recense pas les spécialités sans condition.
   it('se tait pour une spécialité sans condition de délivrance', () => {
     for (const contexte of [{}, { dispensationParticuliere: false }]) {
       const trouve = productLinks(restreint, contexte).official.find((lien) => lien.key === 'meddispar');

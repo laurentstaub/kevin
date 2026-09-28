@@ -1,20 +1,10 @@
 import { canonicalLabel } from './rcp-plan.js';
 
 /**
- * Extrait le plan d'un RCP ou d'une notice, découpe chaque titre en numéro et
- * libellé, et pose les ancres correspondantes.
- *
- * Un RCP fait quinze à quarante mille signes en rubriques numérotées. Servi
- * d'un bloc, c'est un mur. Servi avec son plan, il se parcourt comme un
- * sommaire — c'est là que le document devient consultable au comptoir.
- *
- * Les documents scrapés de la BDPM n'utilisent pas h1-h4 : leurs titres sont
- * des paragraphes, parfois enveloppés dans une ancre. On ne se fie donc pas à
- * la balise mais au motif, ce qui impose de vérifier ensuite que la suite des
- * numéros se tient — sans quoi « 3 ans. » passe pour une rubrique 3.
- *
- * L'entrée est du HTML déjà assaini ; les identifiants sont générés ici,
- * jamais repris du document.
+ * Extrait le plan d'un RCP ou d'une notice (numéro, libellé) et pose les ancres.
+ * Les titres BDPM sont des paragraphes, pas des h1-h4 : détection par motif,
+ * puis contrôle de la progression des numéros (« 3 ans. » n'est pas la rubrique 3).
+ * Entrée : HTML assaini. Identifiants générés ici, jamais repris du document.
  */
 
 // « 4.2 Posologie », « 6.3. Durée de conservation », « 10. Date de mise à jour »
@@ -46,10 +36,7 @@ const escape = (text) =>
 
 const isAllCaps = (text) => text === text.toUpperCase() && /[A-ZÀ-Þ]/.test(text);
 
-/**
- * Découpe un titre en numéro et libellé, et rétablit casse et accents quand
- * le libellé correspond à une rubrique du plan type.
- */
+/** Découpe un titre en numéro et libellé ; libellé du plan type rétabli s'il correspond. */
 export function splitHeading(text) {
   const match = text.match(NUMBERED);
   if (!match) return { number: null, label: text, canonical: false };
@@ -71,17 +58,9 @@ const compare = (a, b) => {
 };
 
 /**
- * Ne garde que les numéros qui forment une progression cohérente.
- *
- * Le motif seul ne suffit pas : dans le corps d'un RCP, « 3 ans. » (contenu de
- * la rubrique 6.3) et « 30 comprimés sous plaquettes » (contenu de la 6.5)
- * ressemblent à des titres. Ce qui les trahit, c'est la place — une rubrique 3
- * ne vient pas après la 6.3.
- *
- * On retient donc la plus longue sous-suite strictement croissante. Les vrais
- * titres en forment une longue ; le bruit, isolé, en est exclu. Un simple
- * parcours de proche en proche ne suffirait pas : le premier faux positif
- * rencontré ancrerait la suite au mauvais endroit.
+ * Garde la plus longue sous-suite strictement croissante de numéros : écarte
+ * les faux titres du corps (« 3 ans. » après 6.3). Un parcours glouton
+ * s'ancrerait sur le premier faux positif.
  */
 export function coherentes(candidats) {
   const eligibles = candidats.filter((candidat) => parts(candidat.number)[0] <= RUBRIQUE_MAX);
@@ -151,19 +130,14 @@ function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
 export function outline(html, type = 'doc') {
   if (!html) return { html: '', sections: [] };
 
-  // 1. Vrais titres — mais ils ne font foi que s'ils portent la numérotation.
-  //    Une page de la BDPM contient un <h1>, son titre, et rien d'autre : s'y
-  //    fier ferait conclure « ce document a des titres » et manquer les
-  //    rubriques, qui sont des <p class="AmmAnnexeTitre*">.
+  // 1. Vrais titres, retenus seulement s'ils sont numérotés (le <h1> BDPM n'est que le titre de page).
   let candidats = reperer(html, TITRES, {
     exigerNumero: false,
     profondeurParDefaut: (tag) => Number(tag[1]) - 1,
   });
 
-  // 2. Sinon, titres déguisés en blocs : le motif désigne les candidats,
-  //    la progression des numéros tranche. Les titres de la première passe
-  //    sont alors l'habillage de la page — le <h1> reprend la dénomination
-  //    déjà affichée au-dessus — et sont retirés du corps.
+  // 2. Sinon, blocs filtrés par progression des numéros ; les titres de la passe 1
+  //    sont alors de l'habillage, retiré du corps.
   const habillage = [];
   if (candidats.filter((candidat) => candidat.numbered).length < 3) {
     habillage.push(...candidats.filter((candidat) => !candidat.numbered));
@@ -174,8 +148,7 @@ export function outline(html, type = 'doc') {
 
   if (candidats.filter((candidat) => candidat.numbered).length < 3) return { html, sections: [] };
 
-  // Tout ce qui précède la première rubrique numérotée est le titre du
-  // document : déjà affiché au-dessus, il est retiré du corps comme du plan.
+  // Avant la première rubrique numérotée : titre du document, déjà affiché, retiré.
   const premier = candidats.findIndex((candidat) => candidat.numbered);
   const aRetirer = candidats.slice(0, premier);
   const aPoser = candidats.slice(premier);

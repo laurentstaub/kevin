@@ -3,36 +3,16 @@ import { socle } from './rcp-plan.js';
 import { structurer, renvois } from './typographie.js';
 
 /**
- * Découpe un document en rubriques exploitables.
+ * Découpe un document en rubriques, entre les titres marqués par `outline()`.
+ * L'en-tête avant la première rubrique n'est pas conservé (la source reste dans cis_documents).
  *
- * `outline()` repère les titres et les réécrit avec un identifiant ; il ne
- * reste qu'à couper entre deux titres. Le contenu qui précède la première
- * rubrique est l'en-tête du document (titre, date de mise à jour) : il n'est
- * rattaché à aucune rubrique et n'est pas conservé ici — la source, elle,
- * reste intacte dans cis_documents.
- *
- * À incrémenter dès que la détection change : le suivi rejoue alors les
- * documents dont le contenu n'a pourtant pas bougé.
+ * PARSER_VERSION : à incrémenter dès que la détection change, pour rejouer les documents.
  */
-// 13 : le renvoi nomme sa destination en infobulle.
-// 12 : renvois ancrés sur le mot « rubrique » et non sur le verbe qui le
-//      précède — « à la rubrique 6.1 » et « voir la rubrique 4.4 » étaient
-//      manqués.
-// 11 : renvois « voir rubrique 4.6 » transformés en liens vers la rubrique
-//      citée, quand elle existe dans le même document.
-// 10 : niveaux du thésaurus des interactions et substances « + … » de la
-//      rubrique 4.5 distingués du commentaire qui les suit.
-// 9 : notes de bas de rubrique — les renvois par astérisque du modèle QRD —
-//     distinguées du texte qu'elles commentent.
-// 8 : puces « · » et « o » rendues en vraies listes imbriquées, intitulés du
-//     modèle QRD promus en sous-titres, espaces insécables avant les signes
-//     doubles.
-// 5 : conduite reposée en vrais points, et reconnue à travers les retours
-//     à la ligne du HTML indenté de la BDPM.
-// 4 : conduites de points de la rubrique 2 rendues à la largeur.
-// 3 : lignes recollées en paragraphes, listes à puces reconnues.
-// 2 : plan de notice reconnu à la rédaction, reprises de plan séparées dans
-//     les PDF de l’EMA, sommaires écartés, « Informations cliniques » admis.
+// 13 : infobulle de destination des renvois.  12 : renvois ancrés sur « rubrique ».
+// 11 : renvois « voir rubrique 4.6 » en liens.  10 : thésaurus des interactions (4.5).
+// 9 : notes par astérisque (QRD).  8 : listes imbriquées, sous-titres QRD, espaces insécables.
+// 5 : conduite en vrais points.  4 : conduites de points (rubrique 2).  3 : paragraphes, puces.
+// 2 : plan de notice, reprises de plan EMA, sommaires écartés.
 export const PARSER_VERSION = 13;
 
 /** Titres posés par outline(), dans l'ordre du document. */
@@ -55,43 +35,24 @@ export function detaguer(html) {
 }
 
 /**
- * Recompose les lignes de composition en conduite de points.
- *
- * La BDPM écrit la rubrique 2 comme dans un document imprimé :
- * « Anastrozole........................... 1,00 mg », les points servant à
- * mener l'œil du nom jusqu'au dosage. Une conduite de points a une longueur
- * fixe, calculée pour une largeur de page ; dans un navigateur elle déborde,
- * se replie, et la substance, les points et la dose finissent sur trois lignes
- * séparées, ce qui rompt précisément le lien qu'elle devait établir.
- *
- * On rend donc le rôle à sa forme : le nom à gauche, la dose à droite, et
- * entre les deux un filet qui prend la place qui reste, quelle que soit la
- * largeur.
+ * Recompose les conduites de points de la rubrique 2 (« Anastrozole...... 1,00 mg ») :
+ * nom à gauche, dose à droite, points extensibles entre les deux.
+ * Une conduite de longueur fixe se replie sur trois lignes dans un navigateur.
  */
 const PARAGRAPHE = /<p([^>]*)>([\s\S]*?)<\/p>/gi;
 const LEADER = '[.\\u00b7\\u2026]';
 const CONDUITE = new RegExp(`${LEADER}{4,}`, 'g');
 
-// Une conduite assez longue pour la plus large des mesures ; le conteneur la
-// coupe à la largeur exacte. Ce sont de vrais points, dans la police du texte,
-// et non un pointillé dessiné par le navigateur — c'est la conduite du
-// document, pas son imitation.
+// Plus long que la plus large mesure ; le conteneur coupe à la largeur exacte.
 const POINTS = '.'.repeat(160);
 
-// Balises sans contenu : elles n'ouvrent rien, donc elles ne comptent pas.
+// Balises vides : n'augmentent pas la profondeur.
 const VIDES = new Set(['br', 'hr', 'img', 'wbr']);
 const BALISE = /<(\/?)([a-z][a-z0-9]*)\b[^>]*?(\/?)>/gi;
 
 /**
- * Portions de texte situées hors de toute balise.
- *
- * On ne coupe qu'à la profondeur zéro. Le document de l'ANSM enveloppe parfois
- * la ligne entière — nom, points et dose — dans un seul élément ; y trancher
- * laissait une balise ouverte d'un côté et une fermante de l'autre. Le
- * navigateur répare comme il l'entend, en clonant l'ouvrante, et les trois
- * cases se retrouvent chacune dans un élément intercalé qui n'a aucune de nos
- * règles : le nom s'écrase, le filet déborde. Mieux vaut renoncer à la
- * conduite que rendre un document déchiré.
+ * Portions de texte hors de toute balise : couper dans un élément produirait
+ * un HTML mal imbriqué, que le navigateur répare mal.
  *
  * @returns {[number, number][]} intervalles [début, fin) hors balise
  */
@@ -113,12 +74,7 @@ function horsBalise(contenu) {
   return segments;
 }
 
-/**
- * Où couper : la première conduite qui laisse un nom et une dose.
- *
- * Un paragraphe fait de points seuls n'est pas une composition, et une ligne
- * qui se termine par des points non plus — d'où l'exigence des deux côtés.
- */
+/** Première conduite avec du texte des deux côtés (nom et dose). */
 function coupure(contenu) {
   for (const [debut, fin] of horsBalise(contenu)) {
     const segment = contenu.slice(debut, fin);
@@ -135,9 +91,7 @@ function coupure(contenu) {
 
 export function composerDoses(html) {
   return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, contenu) => {
-    // Un paragraphe déjà classé l'a été par `structurer` — note, sous-titre.
-    // Sans ce garde-fou, on lui ajouterait un second attribut `class` et le
-    // navigateur garderait le premier venu.
+    // Déjà classé par `structurer` : un second attribut `class` serait ignoré.
     if (/\bclass\s*=/.test(attrs)) return bloc;
 
     const trouve = coupure(contenu);
@@ -169,7 +123,6 @@ export function splitDocument(html, type = 'doc') {
     return { sections: [], statut: 'echec', manquantes: [...attendues] };
   }
 
-  // Bornes de chaque titre dans le HTML réécrit.
   const bornes = [...marque.matchAll(TITRES_MARQUES)].map((correspondance) => ({
     id: correspondance[2],
     debut: correspondance.index,
@@ -185,30 +138,18 @@ export function splitDocument(html, type = 'doc') {
 
     return {
       position: i,
-      // Un titre sans numéro reste un titre : « NOTICE : INFORMATION DE
-      // L'UTILISATEUR » ouvre le document, et le texte qui la suit lui
-      // appartient. La colonne est NOT NULL — jusqu'ici l'insertion échouait
-      // et le document entier était perdu, dix-huit notices à chaque passe,
-      // en silence. Une chaîne vide dit « pas de numéro » sans rien coûter :
-      // le contrôle du socle porte sur des numéros réels, et la vue n'affiche
-      // qu'une gouttière vide devant le libellé.
+      // Colonne NOT NULL : '' pour un titre sans numéro (« NOTICE : … »).
       numero: titre.number ?? '',
       libelle: titre.label,
       profondeur: titre.depth,
       canonical: titre.canonical,
-      // La structure d'abord, la conduite ensuite : une fois les puces
-      // devenues des <li>, la recherche de conduite ne voit plus que les
-      // paragraphes qui peuvent réellement en porter une.
+      // Structurer d'abord : les puces devenues <li> échappent à la recherche de conduite.
       html: composerDoses(structurer(contenu.trim())),
       texte: detaguer(contenu),
     };
   });
 
-  // Les renvois se posent en second temps : pour transformer « voir rubrique
-  // 4.6 » en lien, il faut connaître l'ancre de la rubrique 4.6, donc avoir
-  // découpé tout le document. L'identifiant est celui que `sections.js`
-  // reconstruira à la lecture — type et position, les deux seules choses qui
-  // ne bougent pas entre le découpage et l'affichage.
+  // Renvois après découpage complet. Ancre `${type}-${position}`, identique à celle de sections.js.
   const ancres = new Map(
     sections
       .filter((section) => section.numero)
@@ -216,9 +157,7 @@ export function splitDocument(html, type = 'doc') {
   );
   for (const section of sections) section.html = renvois(section.html, ancres);
 
-  // Une rubrique socle absente signale un découpage incomplet : son contenu a
-  // silencieusement fusionné dans la précédente. Sur un RCP, « 4.3
-  // Contre-indications » avalée par la posologie ne se voit pas à la lecture.
+  // Rubrique socle absente : son contenu a fusionné dans la précédente, sans que cela se voie.
   const trouves = new Set(sections.map((section) => section.numero));
   const manquantes = attendues.filter((attendue) => !trouves.has(attendue));
 

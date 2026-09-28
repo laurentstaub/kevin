@@ -8,7 +8,6 @@ describe('decomposer', () => {
       { nom: 'DUROGESIC', dosage: '100 microgrammes/heure' });
   });
 
-  // La virgule décimale n'est pas celle de la forme.
   it('ne coupe pas sur la virgule décimale', () => {
     assert.deepEqual(decomposer('OXOMEMAZINE ARROW 0,33 mg/ml, sirop'),
       { nom: 'OXOMEMAZINE ARROW', dosage: '0,33 mg/ml' });
@@ -36,7 +35,7 @@ describe('regrouperSpecialites', () => {
     assert.equal(groupes[0].noms.length, 1);
   });
 
-  // 12 avant 100 : l'ordre des valeurs, pas celui des caractères.
+  // 12 avant 100.
   it('range les dosages par valeur et écrit l’unité une fois', () => {
     const [forme] = regrouperSpecialites([
       sp('1', 'DUROGESIC 100 microgrammes/heure, patch', 'patch'),
@@ -47,7 +46,7 @@ describe('regrouperSpecialites', () => {
     assert.deepEqual(forme.noms[0].dosages.map((dosage) => dosage.libelle), ['12', '37,5', '100']);
   });
 
-  // Unités différentes, ou mention après le dosage : chaque dosage s'écrit en entier.
+  // Aussi quand une mention suit le dosage.
   it('écrit les dosages en entier quand l’unité diffère', () => {
     const [forme] = regrouperSpecialites([
       sp('1', 'OXOMEMAZINE ARROW 0,33 mg/ml SANS SUCRE, solution buvable', 'solution buvable'),
@@ -57,7 +56,7 @@ describe('regrouperSpecialites', () => {
     assert.deepEqual(forme.noms[0].dosages.map((dosage) => dosage.libelle), ['0,33 mg/ml SANS SUCRE', '0,33 mg/ml']);
   });
 
-  // Même nom, deux laboratoires (importation parallèle) : deux lignes.
+  // Même nom, deux laboratoires (importation parallèle).
   it('distingue les titulaires', () => {
     const [forme] = regrouperSpecialites([
       sp('1', 'X 5 mg, comprimé', 'comprimé', 'A'),
@@ -66,8 +65,7 @@ describe('regrouperSpecialites', () => {
     assert.equal(forme.noms.length, 2);
   });
 
-  // L'énoxaparine : « 4 000 UI (40 mg)/0,4 mL ». La tête suffit à distinguer
-  // les seringues ; le reste passe en infobulle, et 2 000 vient avant 10 000.
+  // « 4 000 UI (40 mg)/0,4 mL » : la tête distingue, le reste passe en infobulle.
   it('lit la tête d’un dosage composé, garde le détail', () => {
     const [forme] = regrouperSpecialites([
       sp('1', 'LOVENOX 10 000 UI (100 mg)/1 ml, solution injectable', 'solution injectable'),
@@ -80,8 +78,7 @@ describe('regrouperSpecialites', () => {
     assert.equal(nom.dosages[0].detail, '2 000 UI (20 mg)/0,2 ml');
   });
 
-  // Une association : 500 mg/30 mg et 500 mg/8 mg ont la même tête — on
-  // écrit tout, sans quoi deux liens porteraient « 500 ».
+  // 500 mg/30 mg et 500 mg/8 mg : même tête, deux liens porteraient « 500 ».
   it('écrit tout quand la tête ne distingue pas', () => {
     const [forme] = regrouperSpecialites([
       sp('1', 'X 500 mg/30 mg, comprimé', 'comprimé'),

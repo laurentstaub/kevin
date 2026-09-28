@@ -11,12 +11,11 @@ describe('biosimilaires', () => {
     assert.equal(statutBiologique('DOLIPRANE 1000 mg, comprimé'), null);
   });
 
-  // Le nom doit être entier : LANTUS ne reconnaît pas un LANTUSX.
   it('ne reconnaît pas un nom qui en prolonge un autre', () => {
     assert.equal(statutBiologique('LANTUSX 100 unités/ml, solution'), null);
   });
 
-  // LOVENOX avant INHIXA, que l'ordre alphabétique mettait devant.
+  // Pas l'ordre alphabétique : LOVENOX avant INHIXA.
   it('met la référence en tête de sa forme', () => {
     const [forme] = regrouperSpecialites([
       { id: '1', denomination: 'INHIXA 2 000 UI (20 mg)/0,2 mL, solution injectable', forme_pharmaceutique: 'solution injectable', titulaires: 'T' },
@@ -25,7 +24,7 @@ describe('biosimilaires', () => {
     assert.deepEqual(forme.noms.map((nom) => [nom.nom, nom.biologique]), [['LOVENOX', 'reference'], ['INHIXA', 'biosimilaire']]);
   });
 
-  // Onze groupes substituables au comptoir ; le rituximab ne l'est pas.
+  // Le rituximab n'est pas substituable en officine.
   it('dit si le groupe est substituable en officine', () => {
     assert.deepEqual(groupeBiologique('INHIXA 4 000 UI, solution injectable'),
       { substance: 'énoxaparine', substituable: true, role: 'biosimilaire' });

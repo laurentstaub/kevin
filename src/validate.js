@@ -7,10 +7,7 @@ export function isValidCis(value) {
   return typeof value === 'string' && CIS_PATTERN.test(value);
 }
 
-/**
- * Express renvoie un tableau quand un paramètre est répété (?q=a&q=b).
- * Toujours normaliser avant tout appel de méthode de chaîne.
- */
+/** Express renvoie un tableau quand un paramètre est répété (?q=a&q=b). */
 export function firstString(value) {
   if (Array.isArray(value)) return firstString(value[0]);
   return typeof value === 'string' ? value : '';

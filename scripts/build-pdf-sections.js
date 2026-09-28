@@ -10,26 +10,16 @@ import { pdfEnDocuments } from '../src/pdf.js';
 import { splitDocument, PARSER_VERSION } from '../src/split.js';
 
 /**
- * build-pdf-sections.js — traite les spécialités dont le RCP n'existe qu'en PDF.
- *
- * Les produits enregistrés en procédure centralisée n'ont pas de RCP en HTML :
- * la BDPM renvoie vers le PDF de l'EMA, qui regroupe les annexes de la décision
- * européenne. Ce script résout le lien, télécharge, extrait le texte, le ramène
- * au format des documents scrapés, puis alimente la même table de rubriques.
- *
- * Le `file_path` stocké en base (« /documents/<CIS>/rcp_notice.pdf ») ne
- * désigne rien : c'est un emplacement local que l'ancien scraper n'a jamais
- * rempli. Il ne sert donc que de drapeau « ce produit n'a que du PDF » — la
- * vraie adresse se lit sur la fiche document de la BDPM.
+ * Découpe en rubriques les RCP qui n'existent qu'en PDF EMA (procédure centralisée).
+ * Le `file_path` en base ne pointe sur rien : simple drapeau « PDF seulement » ;
+ * le vrai lien se lit sur la fiche document de la BDPM.
  *
  *   npm run build-pdf-sections                # incrémental
  *   npm run build-pdf-sections -- --limit 20  # échantillon
  *   npm run build-pdf-sections -- --dry-run   # mesurer sans écrire en base
  *   npm run build-pdf-sections -- --all       # rejouer tout
  *   npm run build-pdf-sections -- --cis 62474215,66747729 --all   # rejouer ceux-là
- *
- * Deux caches dans .cache/pdf : les liens résolus et les PDF eux-mêmes. Une
- * reprise après interruption ne redemande rien à la BDPM.
+ * Cache (.cache/pdf) des liens et des PDF : une reprise ne redemande rien.
  */
 
 const execFileP = promisify(execFile);
@@ -44,17 +34,16 @@ const valeur = (option, defaut) => {
 const TOUT = flag('all');
 const SEC = flag('dry-run');
 const LIMITE = Number.parseInt(valeur('limit', ''), 10) || null;
-// Rejouer quelques spécialités nommément, sans reparcourir les deux mille autres.
 const CIS = valeur('cis', '')
   .split(',')
   .map((cis) => cis.trim())
   .filter(Boolean);
 const PAUSE = Number.parseInt(valeur('pause', '400'), 10); // ms entre deux fiches BDPM
-// L'EMA sert les PDF beaucoup moins volontiers que la BDPM ne sert ses fiches.
+// L'EMA limite plus durement le débit que la BDPM.
 let pausePdf = Number.parseInt(valeur('pause-pdf', '1000'), 10);
 const PAUSE_PDF_MAX = 8000;
 const TENTATIVES = 6;
-// Quand l'EMA a fermé la porte, insister ne sert qu'à faire tourner la boucle.
+// Au-delà, l'EMA refuse tout : inutile d'insister.
 const ABANDONS_AVANT_ARRET = 40;
 const CACHE = path.join(ROOT, '.cache', 'pdf');
 const LIENS = path.join(CACHE, 'liens.json');
@@ -91,9 +80,7 @@ if (!TOUT) {
   for (const row of rows) connu.set(row.code_cis, `${row.source_hash}|${row.parser_version}`);
 }
 
-// La dénomination sert à choisir la bonne forme dans un PDF qui les décrit
-// toutes : « Keppra 250 mg, comprimé » et « Keppra 100 mg/ml, solution buvable »
-// ont des posologies différentes.
+// La dénomination choisit la forme dans un PDF qui les décrit toutes (posologies différentes).
 const { rows: cibles } = await pool.query(
   `SELECT d.code_cis, s.denomination_medicament AS denomination
    FROM dbpm.cis_documents d
@@ -117,16 +104,13 @@ const soucis = [];
 
 // -------------------------------------------------- résolution du lien réel
 
-/** Fiche document de la BDPM : c'est elle qui porte le lien vers le PDF.
- *  L'ancienne forme — affichageDoc.php?specid=…&typedoc=R — n'y mène plus que
- *  par une redirection 301. Deux mille et une spécialités, deux mille et un
- *  aller-retours inutiles : on vise l'arrivée. */
+/** Fiche document de la BDPM, qui porte le lien du PDF (visée directe, sans la 301 de affichageDoc.php). */
 const fiche = (cis) =>
   `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`;
 
 const PDF_DANS_PAGE = /https?:\/\/[^\s"'<>]+?\.pdf/gi;
 
-/** cis -> URL du PDF, conservé entre deux exécutions. */
+/** cis -> URL du PDF, persisté. */
 let liens = {};
 try {
   liens = JSON.parse(await readFile(LIENS, 'utf8'));
@@ -147,8 +131,7 @@ async function resoudreLien(cis) {
   const reponse = await fetch(fiche(cis), { headers: UA, redirect: 'follow' });
   await dormir(PAUSE);
 
-  // 404 : le CIS n'existe plus côté BDPM. C'est la même situation qu'une fiche
-  // sans lien, pas une panne — on l'enregistre pour ne plus la redemander.
+  // 404 : CIS disparu de la BDPM, traité comme une fiche sans lien et mémorisé.
   if (reponse.status === 404) {
     liens[cis] = null;
     liensModifies += 1;
@@ -159,10 +142,7 @@ async function resoudreLien(cis) {
   const page = await reponse.text();
   bilan.pages += 1;
 
-  // Le premier PDF d'un domaine autorisé est le bon : la fiche ne porte que le
-  // lien « Vers le RCP et la notice ». Son absence n'est pas une anomalie : la
-  // BDPM répond « le médicament demandé n'existe pas ou n'entre pas dans le
-  // périmètre » pour des AMM retirées dont le CIS traîne encore en base.
+  // Le premier PDF d'un domaine autorisé est le bon. Son absence est normale pour une AMM retirée.
   const url = [...page.matchAll(PDF_DANS_PAGE)].map((lien) => safeDocumentUrl(lien[0])).find(Boolean);
 
   liens[cis] = url ?? null;
@@ -174,16 +154,8 @@ async function resoudreLien(cis) {
 // --------------------------------------------------------- téléchargement
 
 /**
- * Un même PDF de l'EMA couvre tous les dosages d'une spécialité.
- *
- * Le nom local dérive de l'URL **entière**, pas de son nom de fichier : l'EMA
- * range ses PDF par principe actif, et deux médicaments différents y portent le
- * même nom de fichier dans deux répertoires différents —
- * « …/emtricitabine/tenofovir-disoproxil-mylan… » et
- * « …/efavirenz/emtricitabine/tenofovir-disoproxil-mylan… ». Indexé sur le seul
- * nom de fichier, le cache les confondait : le premier téléchargé était relu
- * pour l'autre, et le second CIS se voyait servir le RCP d'une autre
- * association. Le nom de fichier reste en tête, pour que le cache se lise.
+ * Nom local haché sur l'URL entière : l'EMA réutilise un même nom de fichier dans
+ * des répertoires différents pour des médicaments différents.
  */
 const nomLocal = (url) => {
   const base = path
@@ -193,7 +165,7 @@ const nomLocal = (url) => {
   return path.join(CACHE, `${base}-${createHash('sha1').update(url).digest('hex').slice(0, 12)}.pdf`);
 };
 
-/** URL abandonnées pour cette exécution : inutile de les redemander. */
+/** URL abandonnées pendant cette exécution. */
 const perdues = new Map();
 
 async function recupererPdf(url) {
@@ -204,15 +176,13 @@ async function recupererPdf(url) {
     /* absent du cache */
   }
 
-  // Un PDF sert en moyenne deux CIS : sans cette garde, un refus se paie autant
-  // de fois qu'il y a de spécialités derrière le même document.
+  // Un PDF sert plusieurs CIS : un refus ne se paie qu'une fois.
   if (perdues.has(url)) throw new Error(perdues.get(url));
 
   for (let essai = 1; essai <= TENTATIVES; essai += 1) {
     const reponse = await fetch(url, { headers: UA, redirect: 'follow' });
 
-    // L'EMA limite le débit. On respecte son Retry-After quand il est là, et on
-    // ralentit durablement : le refus vient du rythme, pas du document.
+    // Débit limité : respecter Retry-After et ralentir pour le reste de l'exécution.
     if (reponse.status === 429 || reponse.status === 503) {
       bilan.freine += 1;
       pausePdf = Math.min(pausePdf + 1000, PAUSE_PDF_MAX);
@@ -255,7 +225,7 @@ async function extraireTexte(fichier) {
 
 // ------------------------------------------------------------- traitement
 
-/** Un PDF sert plusieurs CIS : on ne le découpe qu'une fois. */
+/** Un PDF sert plusieurs CIS : découpé une seule fois. */
 const dejaDecoupe = new Map();
 
 let abandonsSuite = 0;
@@ -274,7 +244,7 @@ for (const cible of cibles) {
     continue;
   }
 
-  // Produit sorti du périmètre de la BDPM : ce n'est pas un échec de découpage.
+  // Hors périmètre BDPM : pas un échec de découpage.
   if (!url) {
     bilan.retires += 1;
     continue;
@@ -288,8 +258,7 @@ for (const cible of cibles) {
     soucis.push({ cis: cible.code_cis, motif: `téléchargement : ${err.message}` });
     bilan.echec += 1;
     abandonsSuite += 1;
-    // Rien ne passe plus : on s'arrête proprement plutôt que de parcourir le
-    // reste de la liste pour rien. Tout ce qui précède est déjà en base.
+    // L'EMA refuse tout : arrêt propre, le travail fait est déjà en base.
     if (abandonsSuite >= ABANDONS_AVANT_ARRET) {
       arreteTot = true;
       break;
@@ -303,8 +272,7 @@ for (const cible of cibles) {
     continue;
   }
 
-  // Le découpage dépend du PDF et de la forme retenue : deux CIS d'une même
-  // spécialité ne donnent pas le même RCP.
+  // Le découpage dépend aussi de la forme : deux CIS d'une spécialité diffèrent.
   const cle = `${hash}|${cible.denomination ?? ''}`;
 
   let resultats = dejaDecoupe.get(cle);
@@ -315,7 +283,6 @@ for (const cible of cibles) {
       const documents = pdfEnDocuments(await extraireTexte(pdf.fichier), {
         denomination: cible.denomination,
       });
-      // Un PDF donne jusqu'à deux documents : le RCP et la notice.
       resultats = documents.map((doc) => ({ type: doc.type, ...splitDocument(doc.html, doc.type) }));
     } catch (err) {
       soucis.push({ cis: cible.code_cis, motif: `extraction : ${err.message}` });

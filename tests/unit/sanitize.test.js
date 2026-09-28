@@ -90,10 +90,7 @@ describe('safeDocumentUrl', () => {
 });
 
 describe('liens relatifs du document', () => {
-  // Les fiches de la BDPM renvoient les unes aux autres par des chemins
-  // relatifs. Servis tels quels depuis notre origine, ils désignaient des
-  // pages qui n'existent pas chez nous : un clic sur un groupe générique
-  // tombait sur notre 404.
+  // Servis tels quels, les chemins relatifs de la BDPM mèneraient à une 404 locale.
   it('résout un chemin contre le site source', () => {
     const rendu = sanitizeDocument('<a href="/medicament/61234567">Imodium</a>');
     assert.match(rendu, /href="https:\/\/base-donnees-publique\.medicaments\.gouv\.fr\/medicament\/61234567"/);
@@ -109,17 +106,14 @@ describe('liens relatifs du document', () => {
     assert.match(rendu, /href="https:\/\/ansm\.sante\.fr\/x"/);
   });
 
-  // Une ancre descend de trois paragraphes : lui coller target="_blank"
-  // ouvrirait un onglet pour rien.
+  // Sans target="_blank".
   it('garde une ancre interne dans la page', () => {
     const rendu = sanitizeDocument('<a href="#rub-4">voir 4</a>');
     assert.match(rendu, /href="#rub-4"/);
     assert.doesNotMatch(rendu, /target=/);
   });
 
-  // « //ailleurs.fr/x » n'est pas un chemin : c'est une adresse absolue qui
-  // emprunte notre protocole. La prendre pour un chemin de la BDPM en ferait
-  // un lien vers n'importe où.
+  // « //ailleurs.fr/x » est une adresse absolue, pas un chemin de la BDPM.
   it('refuse une adresse protocol-relative', () => {
     const rendu = sanitizeDocument('<a href="//ailleurs.fr/x">ailleurs</a>');
     assert.equal(rendu, 'ailleurs');
@@ -127,10 +121,7 @@ describe('liens relatifs du document', () => {
 });
 
 describe('ancres sans href', () => {
-  // Le document source balise ses rubriques avec des « <a name="…"> ». Le nom
-  // n'étant pas dans la liste blanche, il ne reste qu'une coquille : peinte
-  // comme un lien, et assez encombrante pour empêcher de découper la ligne
-  // qu'elle enveloppe.
+  // Privé de `name` (hors liste blanche), un « <a name> » resterait une coquille stylée comme un lien.
   it('déballe l’ancre et garde son texte', () => {
     assert.equal(
       sanitizeDocument('<p><a name="RcpCompo">Sulfate de morphine</a></p>'),

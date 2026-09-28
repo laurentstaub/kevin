@@ -1,41 +1,15 @@
-//- Rail de navigation, à gauche, indépendant de la lecture.
-//-
-//- Deux blocs, toujours dans cet ordre : « où je suis » puis « où je peux
-//- aller ». Le premier change de page en page et c'est celui dont on se sert
-//- maintenant, d'où sa place en tête ; le second ne bouge jamais et se
-//- mémorise par sa position, d'où sa place en pied. Il reste déplié même
-//- quand le plan au-dessus est long : un bloc qui se replie tout seul sur
-//- certaines pages détruit la prévisibilité qu'on cherchait, et le rail
-//- défile pour son compte — sa longueur ne coûte rien à la lecture.
-//-
-//- Règle qui tient tout le reste : **le rail est une vue de la page, jamais un
-//- second modèle**. L'accordéon sait ce qui est ouvert, quel onglet est actif,
-//- quelles rubriques manquent. Le rail le reflète et ne décide de rien ; les
-//- liens sont de simples ancres, que documents.js sait déjà déplier avant d'y
-//- conduire. Sans JavaScript, ils fonctionnent quand même.
-//-
-//- Il disparaît sous 1200 px. En dessous, l'espace appartient au texte, et la
-//- barre collante porte déjà le retour, la recherche et le repère de lecture.
+//- Rail de navigation à gauche : « où je suis » (plan) puis « où je peux aller »
+//- (classes, toujours déplié). Vue de la page, jamais un second modèle : de
+//- simples ancres, que documents.js déplie. Masqué sous 1200 px.
 
-//- Plan de la fiche : les sections de la page, et sous « Documents » les
-//- rubriques du document affiché.
-//-
-//- Toutes les rubriques, sous-rubriques comprises. Le plan complet fait une
-//- trentaine de lignes, ce qui est long — mais s'en tenir au niveau 1 rendait
-//- inatteignables depuis le rail les rubriques qu'on vient précisément
-//- chercher : 4.3 contre-indications, 4.5 interactions, 4.8 effets
-//- indésirables. Un sommaire qui n'atteint pas ce qu'on cherche ne sert à
-//- rien, et le rail défile pour son compte : sa longueur ne coûte pas de
-//- lecture.
+//- Plan de la fiche, sous-rubriques comprises (4.3, 4.5, 4.8 sont celles qu'on cherche).
 mixin railPlan(sections, documents)
   p.rail-titre Cette fiche
   nav.rail-groupe.rail-plan
     each section in sections
       a.rail-lien.rail-seul(href=`#${section.id}`)= section.label
 
-      //- Les rubriques s'imbriquent sous la section qui les porte. Un jeu par
-      //- document : documents.js révèle celui de l'onglet actif, comme il le
-      //- fait déjà des panneaux.
+      //- Un jeu de rubriques par document ; documents.js révèle celui de l'onglet actif.
       if section.id === 'documents' && documents
         each doc, i in documents
           if doc.rubriques && doc.rubriques.length > 0
@@ -49,9 +23,7 @@ mixin railPlan(sections, documents)
 //- @param {string} actif      la lettre ATC de la page en cours, s'il y en a une
 //- @param {Array}  sections   plan de la fiche produit, absent ailleurs
 //- @param {Array}  documents  documents découpés de la fiche, absents ailleurs
-//- Pas de lien « Accueil » ici : la barre collante en porte un, présent sur
-//- toutes les pages *et* sous 1200 px où le rail n'existe pas. Le doubler
-//- n'offrait pas un second chemin, seulement une seconde occasion d'hésiter.
+//- Pas de lien « Accueil » : la barre collante en porte déjà un.
 mixin rail(classes, actif, sections, documents)
   aside.rail(aria-label="Navigation")
     if sections && sections.length
@@ -61,9 +33,7 @@ mixin rail(classes, actif, sections, documents)
       p.rail-titre Classes thérapeutiques
       nav.rail-groupe
         each classe in classes
-          //- Le libellé CNAM arrive en capitales sans accents. Composé tel
-          //- quel, quatorze fois de suite, il crie ; en bas de casse il se
-          //- lit. Le code reste en clair : c'est lui qu'on retient.
+          //- Libellé CNAM en capitales, affiché en bas de casse (.rail-label-crie).
           a.rail-lien(href=`/classe/${classe.code}`
             class=(actif === classe.code ? 'rail-actif' : null)
             aria-current=(actif === classe.code ? 'page' : null)

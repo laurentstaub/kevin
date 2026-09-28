@@ -1,18 +1,8 @@
 /**
- * Applique un fichier de sql/ — schéma, index, configuration.
- *
+ * Applique un fichier de sql/ sans le `statement_timeout` de 5 s du pool (un index GIN prend des minutes).
  *   npm run db:sections     schéma docs
  *   npm run db:recherche    configuration de langue et index plein texte
- *
- * Pourquoi un script plutôt qu'une ligne dans package.json : la construction
- * d'un index GIN sur trois cent mille rubriques prend des minutes, et le pool
- * de l'application impose un `statement_timeout` de cinq secondes. Ce délai
- * est juste pour une requête servie à un lecteur qui attend devant son écran ;
- * il est absurde pour une migration, et il l'annulait au milieu.
- *
- * Les `NOTICE` de Postgres sont relayés : sql/recherche.sql s'en sert pour
- * dire si la recherche sera ou non insensible aux accents. Un message que
- * personne ne voit ne renseigne personne.
+ * Relaie les `NOTICE` : sql/recherche.sql y indique si la recherche ignore les accents.
  */
 
 import { readFile } from 'node:fs/promises';

@@ -39,19 +39,12 @@ import {
 export function pageRoutes(pool) {
   const router = Router();
 
-  /**
-   * Une fiche, ou un chapeau de classe, non relus existent dans le dépôt et se
-   * prévisualisent en développement ; en production, ils n'ont pas d'adresse.
-   */
+  /** Fiche ou chapeau non relu : visible en développement seulement. */
   const visible = (fiche) => config.env !== 'production' || publiee(fiche);
 
   /**
-   * Le rail est sur toutes les pages, il se charge donc une fois pour toutes.
-   *
-   * `getClassesPrincipales` garde son résultat en mémoire — quatorze lignes
-   * qui ne changent qu'au rechargement mensuel de la BDPM. Un défaut de
-   * classification ne doit rien empêcher : le rail rend alors le seul lien
-   * d'accueil, et la page s'affiche comme avant qu'il existe.
+   * Rail présent sur toutes les pages (résultat mis en cache par getClassesPrincipales).
+   * En cas de défaut, le rail se réduit au lien d'accueil.
    */
   router.use(
     wrap(async (req, res, next) => {
@@ -66,8 +59,7 @@ export function pageRoutes(pool) {
   router.get(
     '/',
     wrap(async (req, res) => {
-      // Une porte d'entrée quand on ne cherche pas un nom précis. Un défaut de
-      // classification ne doit pas empêcher la page de recherche de s'afficher.
+      // Un défaut de classification ne doit pas bloquer la page de recherche.
       const classes = await getClassesPrincipales(pool).catch((err) => {
         console.error('[atc] classes principales indisponibles :', err.message);
         return [];
@@ -83,11 +75,8 @@ export function pageRoutes(pool) {
   );
 
   /**
-   * Parcours par classe thérapeutique.
-   *
-   * Le code ATC est validé contre la base, pas contre une expression régulière :
-   * c'est la seule façon de distinguer une classe réelle d'une chaîne bien
-   * formée qui ne désigne rien.
+   * Parcours par classe thérapeutique. Le code ATC est validé contre la base :
+   * une chaîne bien formée peut ne désigner aucune classe.
    */
   router.get(
     '/classe/:code',
@@ -98,41 +87,32 @@ export function pageRoutes(pool) {
       const classe = await getClasse(pool, code);
       if (!classe) return next();
 
-      // Les spécialités n'apparaissent qu'à la feuille. Plus haut, elles
-      // doublaient les sous-classes et devaient être tronquées : sur une classe
-      // de mille spécialités, on n'en voyait que le début de l'alphabet, ce
-      // qui n'apprend rien et laisse croire que la classe s'arrête à B.
+      // Spécialités listées à la feuille seulement : plus haut, la liste serait tronquée.
       const feuille = classe.level === FEUILLE || classe.enfants.length === 0;
 
-      // Les molécules ne sont rendues que si les sous-classes ne les sont pas
-      // déjà : sur « J05AF », les enfants directs *sont* les molécules, et la
-      // seconde liste répéterait la première mot pour mot.
+      // Enfants déjà au niveau molécule (ex. J05AF) : pas de seconde liste.
       const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
 
       const [specialitesListe, molecules, portrait] = await Promise.all([
         feuille ? getSpecialitesDeClasse(pool, code, classe.label) : [],
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
-        // Le portrait est un plus : une table de conditions absente ne doit
-        // pas emporter la page, qui se rend alors comme avant qu'il existe.
+        // Facultatif : son absence ne doit pas bloquer la page.
         getPortraitClasse(pool, code).catch((err) => {
           console.error('[atc] portrait indisponible pour', code, err.message);
           return null;
         }),
       ]);
 
-      // Le chapeau signé, s'il existe : fiches/classes/<code>.md. Même règle
-      // que pour les fiches — non relu, il ne paraît qu'en développement.
+      // Chapeau signé facultatif : fiches/classes/<code>.md.
       const chapeau = lireFiche(code.toLowerCase(), DOSSIER_CLASSES);
 
-      // Un groupe biologique substituable : la page le dit, avec la règle et
-      // le texte. Le groupe se lit sur les spécialités de la molécule.
+      // Groupe biologique substituable, lu sur les spécialités de la molécule.
       const groupe = specialitesListe.map((sp) => groupeBiologique(sp.denomination)).find(Boolean);
       const substitution = groupe?.substituable ? { ...substitutionBiosimilaires(), substance: groupe.substance } : null;
 
       res.render('classe', {
         substitution,
         classe, feuille, molecules, railActif: code[0],
-        // Rangées par forme, puis par nom, les dosages à la suite.
         commercialisees: regrouperSpecialites(specialitesListe.filter((sp) => sp.commercialise)),
         retirees: regrouperSpecialites(specialitesListe.filter((sp) => !sp.commercialise)),
         portrait: lirePortrait(portrait),
@@ -144,8 +124,7 @@ export function pageRoutes(pool) {
   router.get(
     '/search',
     wrap(async (req, res) => {
-      // L'état est lu une fois, en amont : les gabarits reçoivent un objet et
-      // le rendent, au lieu de recomposer des URL de mémoire.
+      // Les gabarits reçoivent l'état au lieu de recomposer les URL.
       const etat = lireEtat(req.query, 'nom');
       const query = parseQuery(req.query.q);
       const filter = etat.filtre;
@@ -164,22 +143,13 @@ export function pageRoutes(pool) {
         });
       }
 
-      // Les deux recherches partent ensemble : elles répondent à la même
-      // question par deux chemins, et rien ne justifie d'attendre l'une pour
-      // lancer l'autre. Un défaut sur les documents ne doit pas emporter la
-      // recherche par nom, qui est la plus demandée.
+      // En parallèle ; un défaut sur les documents ne bloque pas la recherche par nom.
       let panne = null;
       const [results, documents] = await Promise.all([
         searchMedications(pool, query, filter),
         chercherDansDocuments(pool, query.raw, { limite: APERCU }).catch((err) => {
-          // Une fonctionnalité absente en silence est le pire des états : on
-          // cherche pourquoi elle ne trouve rien, alors qu'elle n'est pas
-          // installée. Le défaut ne casse pas la recherche par nom, mais il se
-          // dit — et il se distingue d'une absence de résultats.
+          // La panne s'affiche, distincte d'une absence de résultats.
           console.error('[recherche] plein texte indisponible :', err.message);
-          // La commande se dit ici aussi : c'est le premier des deux écrans
-          // qu'on voit, et renvoyer à l'autre pour lire la consigne ferait
-          // chercher deux fois la même réponse.
           panne = rechercheAbsente(err)
             ? 'La recherche dans les documents n’est pas encore installée sur cette base '
               + '— exécuter « npm run db:recherche ».'
@@ -196,14 +166,7 @@ export function pageRoutes(pool) {
     }),
   );
 
-  /**
-   * Recherche plein texte, vue complète.
-   *
-   * Elle existe séparément de `/search` parce qu'elle porte ses propres
-   * filtres — par rubrique — et que les mêler à ceux de la recherche par nom
-   * ferait une page qui pose deux questions. Ici, une seule : où cette
-   * expression figure-t-elle dans les documents.
-   */
+  /** Recherche plein texte, vue complète, avec son propre filtre par rubrique. */
   router.get(
     '/documents',
     wrap(async (req, res) => {
@@ -230,9 +193,6 @@ export function pageRoutes(pool) {
 
       res.render('documents', {
         etat,
-        // Aucune route ne passait de titre : toutes les recherches
-        // s'appelaient « Demander à Kevin » dans l'historique, les onglets et
-        // les favoris. Il se déduit maintenant de l'état.
         title: titre(etat),
         query: query.raw,
         rubrique,
@@ -248,14 +208,7 @@ export function pageRoutes(pool) {
     }),
   );
 
-  /**
-   * Fiches thématiques.
-   *
-   * Une fiche non relue existe dans le dépôt et se prévisualise en
-   * développement, bandeau « brouillon » en tête ; en production elle
-   * n'existe pas. Une page médicale publiée sans relecture datée serait
-   * exactement ce que la relecture existe pour empêcher.
-   */
+  /** Fiches thématiques. Non relue : brouillon en développement, absente en production. */
 
   router.get(
     '/fiches',
@@ -280,12 +233,8 @@ export function pageRoutes(pool) {
   );
 
   /**
-   * L'extrait d'une rubrique, pour l'aperçu au survol.
-   *
-   * Rendu à la demande et non avec la page : `ts_headline` coûte 21 ms pour
-   * cinquante extraits et 168 ms pour deux cent cinquante. Calculer d'avance
-   * l'aperçu de chaque rubrique de chaque ligne ferait passer la recherche de
-   * 20 ms à 170 pour des aperçus dont presque aucun ne sera survolé.
+   * Extrait d'une rubrique pour l'aperçu au survol, calculé à la demande :
+   * `ts_headline` sur toute la page ferait passer la recherche de 20 à 170 ms.
    */
   router.get(
     '/extrait',
@@ -301,8 +250,7 @@ export function pageRoutes(pool) {
       });
 
       if (!trouvaille) return res.status(404).json({ erreur: 'introuvable' });
-      // Un aperçu se recalcule à l'identique tant que le découpage ne bouge
-      // pas : autant laisser le navigateur le garder le temps d'une lecture.
+      // Stable tant que le découpage ne change pas.
       res.set('Cache-Control', 'private, max-age=300');
       return res.json(trouvaille);
     }),
@@ -322,35 +270,29 @@ export function pageRoutes(pool) {
       ] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
-          // Le sélecteur de dosage est un confort : son absence ne doit pas
-          // emporter la fiche.
           console.error('[variantes] indisponibles pour', cis, err.message);
           return [];
         }),
         getDocuments(pool, cis).catch((err) => {
-          // Un défaut sur les documents ne doit pas masquer la fiche produit.
           console.error('[documents] indisponibles pour', cis, err.message);
           return [];
         }),
         getSections(pool, cis).catch((err) => {
-          // Découpage indisponible : la fiche retombe sur le texte d'un bloc.
+          // Repli : texte d'un seul bloc.
           console.error('[rubriques] indisponibles pour', cis, err.message);
           return new Map();
         }),
         getDelivrance(pool, cis).catch((err) => {
-          // Une condition de délivrance absente vaut mieux qu'une condition
-          // inventée : on rend un classement vide, le bloc le dira.
+          // Classement vide plutôt qu'inventé.
           console.error('[délivrance] indisponible pour', cis, err.message);
           return { resume: [], groupes: [], liens: [] };
         }),
-        // Six cent soixante-douze spécialités seulement : l'absence est le cas
-        // normal, et un défaut ne doit pas emporter la fiche.
+        // Absence normale : seules 672 spécialités sont concernées.
         getRemboursement(pool, cis).catch((err) => {
           console.error('[remboursement] indisponible pour', cis, err.message);
           return null;
         }),
-        // 36,5 % des spécialités n'ont pas de classe ATC : l'absence est le cas
-        // normal, pas une panne.
+        // Absence normale : 36,5 % des spécialités n'ont pas de classe ATC.
         getClasseAtc(pool, cis).catch((err) => {
           console.error('[atc] classe indisponible pour', cis, err.message);
           return [];
@@ -359,9 +301,7 @@ export function pageRoutes(pool) {
 
       const documents = withSections(bruts, decoupe);
 
-      // Une importation parallèle n'a qu'une fiche info : ni RCP, ni notice.
-      // Le texte à lire est celui de la spécialité française dont elle est la
-      // copie — on l'emprunte plutôt que de laisser la fiche muette.
+      // Importation parallèle sans RCP ni notice : emprunter ceux de la spécialité française.
       const importation = estImportation(product.type_procedure_amm);
       let reference = null;
 
@@ -387,26 +327,19 @@ export function pageRoutes(pool) {
         );
       }
 
-      // Ordre d'affichage : le document le plus substantiel en premier.
+      // Le document le plus substantiel en premier.
       documents.sort((a, b) => DOCUMENT_TYPES.indexOf(a.type) - DOCUMENT_TYPES.indexOf(b.type));
       const hasDocuments = documents.length > 0;
 
-      // Plan de la page : ce qui existe réellement pour ce produit. Les
-      // rubriques des documents s'y imbriquent — le rail est le seul sommaire.
+      // Plan de la page, dans l'ordre d'affichage : le rail doit suivre la lecture.
       const sections = [
-        // Avant les documents : « puis-je le délivrer » se règle en une ligne,
-        // « que fait ce médicament » demande d'ouvrir un RCP.
         { id: 'delivrance', label: 'Délivrance' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
-          // Le document sert désormais les rubriques du comptoir en tête : les
-          // répéter dans le rail ferait un troisième sommaire pour rien.
+          // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
           children: [],
         },
-        // Après les documents : on substitue une fois qu'on sait ce qu'on
-        // substitue. Le rail suit l'ordre de la page, sans quoi le sommaire
-        // annonce un plan que la lecture dément.
         substitutions.length > 0 && { id: 'substituer', label: 'Substituer' },
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
@@ -421,15 +354,13 @@ export function pageRoutes(pool) {
         variantes,
         remboursement,
         resumeAtc,
-        // La branche à laquelle appartient le produit lu — le rail montre où
-        // l'on se trouve dans la classification, pas seulement où aller.
+        // Branche ATC du produit, surlignée dans le rail.
         railActif: resumeAtc?.feuille?.code?.[0] ?? null,
         genericGroup: genericGroupLabel(substitutions),
         documents,
         hasDocuments,
         delivrance,
-        // Meddispar ne recense que les spécialités à dispensation particulière :
-        // le lien n'a de sens que si la BDPM enregistre au moins une condition.
+        // Meddispar ne recense que les spécialités à dispensation particulière.
         links: productLinks(product, {
           dispensationParticuliere: delivrance.groupes.length > 0,
         }),

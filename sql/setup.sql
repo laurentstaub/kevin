@@ -4,8 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- unaccent() est STABLE, donc inutilisable dans un index.
--- Ce wrapper la fige en IMMUTABLE sur un dictionnaire nommé, ce qui la rend indexable.
+-- unaccent() est STABLE : ce wrapper IMMUTABLE sur dictionnaire nommé la rend indexable.
 CREATE OR REPLACE FUNCTION public.f_unaccent(text)
   RETURNS text
   LANGUAGE sql
@@ -14,8 +13,7 @@ AS $$
   SELECT public.unaccent('public.unaccent'::regdictionary, $1)
 $$;
 
--- Index trigrammes : rendent utilisables les motifs LIKE '%terme%',
--- qu'aucun index B-tree ne peut servir.
+-- Index trigrammes pour les motifs LIKE '%terme%'.
 CREATE INDEX IF NOT EXISTS idx_cis_denomination_trgm
   ON dbpm.cis_bdpm
   USING gin (public.f_unaccent(lower(denomination_medicament)) gin_trgm_ops);

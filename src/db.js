@@ -56,13 +56,8 @@ export async function checkDatabase(pool) {
 }
 
 /**
- * Crée les prérequis dont dépend *toute* recherche : extension unaccent et
- * wrapper f_unaccent. C'est instantané et idempotent, donc le serveur s'en
- * charge lui-même — sans eux, aucune requête ne fonctionne, et un simple
- * avertissement au démarrage ne suffit pas à l'éviter.
- *
- * Les index trigrammes restent à `npm run db:setup` : leur construction est
- * longue et n'a pas sa place dans un démarrage.
+ * Crée les prérequis de toute recherche (unaccent, f_unaccent) : instantané et
+ * idempotent. Les index trigrammes, longs à construire, restent à `npm run db:setup`.
  *
  * @returns {Promise<{ ok: boolean, error?: string }>}
  */

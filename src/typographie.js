@@ -1,20 +1,8 @@
 /**
- * Rend au texte de la BDPM la structure qu'il n'a que sous forme de caractères.
- *
- * Les RCP sont du Word exporté : les niveaux hiérarchiques n'y existent pas en
- * balises mais en signes déposés dans des paragraphes ordinaires — « · » pour
- * le premier rang, « o » pour le second, un intitulé nu en guise de titre. Le
- * navigateur les rend donc à plat : une puce sans retrait négatif, dont la
- * deuxième ligne repart sous la puce au lieu de s'aligner sous le texte, et
- * l'œil perd l'entrée de chaque élément.
- *
- * Rien ici ne touche aux mots. On ne réécrit pas un texte réglementaire : on
- * lui donne la forme que sa typographie annonçait déjà. Ce qui est fautif à la
- * source le reste — « (1 à 2 gélule(s))) » garde ses trois parenthèses, sans
- * quoi les deux documents ne se citent plus l'un l'autre.
- *
- * Module pur : du HTML entre, du HTML sort. Employé au découpage, pas au
- * rendu, pour que `PARSER_VERSION` en donne le rejeu et les tests la preuve.
+ * Rend au texte de la BDPM (Word exporté) la structure qu'il ne porte qu'en
+ * caractères : puces, intitulés, espaces, notes, interactions, renvois.
+ * Aucun mot n'est modifié, fautes de la source comprises. Module pur, appliqué
+ * au découpage pour être rejoué via `PARSER_VERSION`.
  */
 
 const BALISE = /<\/?([a-z][a-z0-9]*)\b[^>]*?(\/?)>/gi;
@@ -42,17 +30,9 @@ const detaguer = (html) => String(html ?? '')
 // --------------------------------------------------------------- les puces
 
 /**
- * Deux rangs, et deux seulement.
- *
- * Word exporte le premier en point médian ou en tiret, le second en « o »
- * minuscule — c'est la puce de la police Courier, tombée en caractère
- * ordinaire au passage en HTML. Aucune phrase française ne commence par « o »
- * suivi d'une espace, ni par un tiret : la reconnaissance ne peut pas se
- * tromper sur du texte courant.
- *
- * Les énumérations « a) » et « 1. » sont volontairement laissées de côté. Le
- * découpeur se sert déjà de la numérotation pour trouver les rubriques ; deux
- * mécanismes qui lisent le même signal finissent par se contredire.
+ * Deux rangs : « · » ou tiret, puis « o » (puce Courier devenue caractère) ;
+ * aucune phrase ne commence ainsi. « a) » et « 1. » sont ignorés : le
+ * découpeur s'en sert déjà pour trouver les rubriques.
  */
 const RANGS = [
   { rang: 1, motif: /^([·•▪●◦‣]|[-–—])\s+/ },
@@ -66,13 +46,8 @@ export function rangDePuce(texte) {
 }
 
 /**
- * Retire la puce du HTML, où qu'elle soit nichée.
- *
- * Word l'enferme volontiers dans son propre span : « <span>·</span> arthrose ».
- * Le signe et l'espace qui le suit tombent alors dans deux zones de texte
- * différentes, et chercher « puce + espace » d'un seul tenant ne trouve rien.
- * On ne retire donc que le signe, à la première zone non blanche — le rang a
- * déjà été établi sur le texte détagué, où l'espace est bien là.
+ * Signe de puce par rang. Word l'isole souvent dans un span, loin de son
+ * espace : seul le signe est retiré, le rang est établi sur le texte détagué.
  */
 const SIGNES = { 1: /^[·•▪●◦‣\u2010-\u2015-]/, 2: /^o/ };
 
@@ -95,8 +70,7 @@ function assembler(elements) {
   let premier = true;
 
   for (const { rang, html } of elements) {
-    // Un second rang qui ouvre la suite n'a pas de parent où se nicher : une
-    // <ul> fille d'une <ul> est un balisage invalide. Il prend le premier rang.
+    // Un second rang en tête n'a pas de parent (<ul> dans <ul> invalide) : rang 1.
     const effectif = premier && rang === 2 ? 1 : rang;
     premier = false;
 
@@ -154,12 +128,8 @@ const sansAccents = (texte) => texte.normalize('NFD').replace(/[̀-ͯ]/g, '');
 const clef = (texte) => sansAccents(texte).toLowerCase().replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
 
 /**
- * Les articulations internes du modèle QRD.
- *
- * Répertoire fermé, et non heuristique : ces intitulés ne sont ni en gras ni
- * balisés dans la source, aucun signe typographique ne permet de les trouver.
- * Une liste close échoue du bon côté — un intitulé qu'elle ignore reste un
- * paragraphe, ce qu'il est aujourd'hui.
+ * Intitulés internes du modèle QRD. Liste close : rien ne les signale dans la
+ * source, et un intitulé absent reste un simple paragraphe.
  */
 export const SOUS_TITRES = new Set([
   'posologie', 'mode d\'administration', 'voie d\'administration',
@@ -177,15 +147,13 @@ export const SOUS_TITRES = new Set([
   'efficacite et securite cliniques',
   'absorption', 'distribution', 'biotransformation', 'metabolisme',
   'elimination', 'excretion', 'linearite/non-linearite',
-  // Les quatre niveaux du thésaurus des interactions de l'ANSM, tels que la
-  // rubrique 4.5 les reprend. Liste close elle aussi : le thésaurus n'en
-  // connaît pas d'autres.
+  // Les quatre niveaux du thésaurus des interactions de l'ANSM (rubrique 4.5).
   'associations contre-indiquees', 'associations deconseillees',
   "associations faisant l'objet de precautions d'emploi",
   'associations a prendre en compte', 'a prendre en compte',
 ]);
 
-/** Un intitulé est court par nature : le garde-fou coûte moins qu'un faux. */
+/** Garde-fou contre un faux intitulé. */
 const LONGUEUR_MAX = 60;
 
 export function sousTitres(html) {
@@ -200,11 +168,8 @@ export function sousTitres(html) {
 // ------------------------------------------------------------- les espaces
 
 /**
- * L'espace avant un signe double doit être insécable.
- *
- * On ne fait que durcir une espace déjà présente : jamais en insérer une.
- * « 50% » et « http://… » restent donc intacts, et l'on ne prend pas le risque
- * de modifier un texte réglementaire pour une question de style.
+ * Rend insécable l'espace avant un signe double, sans jamais en insérer une :
+ * « 50% » et « http:// » restent intacts.
  */
 export function espaces(html) {
   const source = String(html ?? '');
@@ -224,16 +189,9 @@ export function espaces(html) {
 // -------------------------------------------------------------- les notes
 
 /**
- * Les appels de note en bas de rubrique.
- *
- * Le modèle QRD renvoie hors du tableau d'effets indésirables par un
- * astérisque, doublé au second renvoi : « prises de poids* » plus bas
- * « *Les prises de poids étant un facteur de risque… ». La note est un commentaire
- * sur le texte, pas le texte ; composée à l'identique, elle pèse autant que ce
- * qu'elle commente et allonge la rubrique d'autant.
- *
- * L'appel reste en place : c'est lui qui relie la note à sa mention, et le
- * retirer romprait le renvoi.
+ * Appels de note du modèle QRD (« prises de poids* » → « *Les prises… ») : la
+ * note est marquée pour peser moins que le texte. L'appel reste, il la relie
+ * à sa mention.
  */
 const APPEL = /^[*†‡]{1,3}(?=\s*\S)/;
 
@@ -248,16 +206,8 @@ export function notes(html) {
 // -------------------------------------------------------- les interactions
 
 /**
- * La substance avec laquelle l'interaction se produit.
- *
- * La rubrique 4.5 suit le thésaurus de l'ANSM : sous chacun des quatre niveaux
- * de gravité, chaque substance ouvre un paragraphe préfixé d'un plus —
- * « + Millepertuis », « + Pénems (carbapénèmes) ». Composée comme le
- * commentaire qui la suit, elle s'y noyait ; c'est pourtant le seul mot qu'on
- * cherche quand on tient deux boîtes à la main.
- *
- * Le signe reste : dans le thésaurus il se lit « en association avec », et le
- * retirer ferait dire à la ligne autre chose que ce qu'elle dit.
+ * Rubrique 4.5 (thésaurus ANSM) : met en évidence la substance en interaction
+ * (« + Millepertuis »). Le « + » reste : il se lit « en association avec ».
  */
 const INTERACTION = /^\+\s+(?=\S)/;
 
@@ -273,25 +223,9 @@ export function interactions(html) {
 // ------------------------------------------------------------ les renvois
 
 /**
- * « (voir rubrique 4.6) » — un renvoi qui ne renvoie nulle part.
- *
- * Le modèle QRD veut que chaque rubrique cite les autres plutôt que de se
- * répéter : un RCP en compte couramment quarante. À l'écran, ces renvois sont
- * du texte mort — il faut retenir le numéro, replier, chercher, déplier,
- * et retrouver ensuite d'où l'on venait. C'est précisément ce qu'un lien
- * hypertexte fait sans qu'on y pense, et c'est ce que le document imprimé ne
- * pouvait pas faire.
- *
- * Seul le numéro devient cliquable, pas la phrase : « voir rubrique » est du
- * texte réglementaire, le numéro est la référence.
- *
- * Un renvoi vers une rubrique absente du document — cela arrive, la notice
- * cite le RCP — reste du texte. Un lien mort vaut moins que pas de lien.
- *
- * Le lien porte l'intitulé de la rubrique visée en infobulle. « Voir rubrique
- * 4.4 » ne dit pas où il mène : il faut y aller pour le savoir, et revenir si
- * ce n'était pas ça. Nommer la destination avant le clic est tout ce qui
- * distingue un renvoi d'une devinette.
+ * Change les numéros de « (voir rubrique 4.6) » en liens, avec l'intitulé de la
+ * cible en infobulle. Seul le numéro est cliquable ; un renvoi vers une
+ * rubrique absente reste du texte.
  *
  * @param {Map<string, {id:string, libelle:string}>} cibles - par numéro
  */
@@ -301,17 +235,8 @@ const echapper = (texte) => String(texte ?? '')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;');
 /**
- * L'ancre est le mot « rubrique », pas le verbe qui le précède.
- *
- * Première version calée sur « voir rubrique » : elle manquait « mentionnés à
- * la rubrique 6.1 » et « voir la rubrique 4.4 ». Relevé sur un RCP entier —
- * trente-six renvois — les tournures sont « voir rubrique X », « voir
- * rubriques X et Y », « voir la rubrique X », « à la rubrique X », et même
- * « voir rubrique 4.3 et 4.4 » au singulier avec deux numéros.
- *
- * Énumérer les verbes revenait à parier sur une liste qu'on ne connaît pas.
- * Dans un RCP, « rubrique » suivi d'un numéro est toujours un renvoi : c'est
- * le seul signal fiable, et il ne dépend d'aucune tournure.
+ * Ancré sur « rubrique(s) » + numéro, pas sur le verbe : les tournures varient
+ * (« voir la rubrique », « à la rubrique », « rubrique 4.3 et 4.4 »).
  */
 const RENVOI = /\brubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|ou|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
 const NUMERO = /\d{1,2}(?:\.\d{1,2})?/g;
@@ -323,9 +248,7 @@ export function renvois(html, cibles) {
   let sortie = '';
   let depuis = 0;
 
-  // Hors balise seulement : un numéro dans un attribut n'est pas un renvoi, et
-  // une phrase coupée par une balise ne sera pas reconnue — elle restera du
-  // texte, ce qui est le bon échec.
+  // Hors balise seulement ; une phrase coupée par une balise reste du texte.
   for (const [debut, fin] of horsBalise(source)) {
     sortie += source.slice(depuis, debut);
     sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (numero) => {

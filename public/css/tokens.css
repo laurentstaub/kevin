@@ -1,21 +1,13 @@
-/* Socle visuel de Dr Kevin. Le guide qui l'explique est dans DESIGN.md.
- *
- * Deux familles seulement, et aucune n'est décorative : des gris qui portent
- * le texte, un vert qui porte l'identité. Le vert vient d'antheosdata.com —
- * même maison, même famille — mais il est employé autrement : là-bas il
- * couvre des pages qu'on parcourt, ici il borde des pages qu'on lit. Un RCP
- * fait quarante mille signes ; l'aplat sombre du site vitrine y deviendrait
- * une épreuve. On garde donc la teinte et on renonce à la surface.
+/* Socle visuel de Dr Kevin (guide : DESIGN.md).
+ * Des gris pour le texte, un vert pour l'identité, repris d'antheosdata.com
+ * mais en bordure, pas en aplat : un RCP fait 40 000 signes.
  */
 
 :root {
-  /* Encre. Le noir tire légèrement au vert, assez pour s'accorder à l'accent
-     sans qu'on puisse le nommer. */
+  /* Noir légèrement vert, accordé à l'accent. */
   --ink: #14201a;
   --muted: #5f6b62;
-  /* Relevé de #9a9a9a : à 2,85 sur blanc, l'ancien gris ne passait aucun seuil
-     WCAG alors qu'il portait des libellés de colonnes et des codes ATC. Sur une
-     base médicale, une mention illisible est une mention absente. */
+  /* Assez foncé pour passer le seuil WCAG : il porte des libellés et des codes ATC. */
   --faint: #6b7770;
   --rule: #e3e9e4;
   --rule-medium: #b6c0b9;
@@ -23,36 +15,24 @@
 
   --bg: #ffffff;
   --bg-alt: #f7faf7;
-  /* Teinte de section. Le bandeau vert clair d'antheosdata, ramené à une
-     valeur qui ne fatigue pas sous quarante mille signes. */
+  /* Teinte de section, adoucie pour les textes longs. */
   --bg-tint: #f2f7f2;
-  /* Aplat profond, réservé à l'en-tête d'accueil : la seule page sans texte
-     long, donc la seule où un fond sombre ne coûte rien. */
+  /* Réservé à l'en-tête d'accueil, seule page sans texte long. */
   --bg-fonce: #123b22;
 
-  /* Accent unique, décliné en deux emplois qui ne se croisent jamais.
-     --accent porte du texte : liens, codes, états actifs. 7,79 sur blanc.
-     --accent-vif ne porte jamais de texte : c'est la couleur de l'action, une
-     seule par écran — le bouton de recherche, le dosage courant. À 1,66 sur
-     blanc il serait illisible ; c'est un aplat, pas une encre. */
+  /* --accent porte du texte (7,79 sur blanc).
+     --accent-vif jamais (1,66 sur blanc) : aplat de l'action, une par écran. */
   --accent: #1b5e33;
   --accent-vif: #7bd44f;
   --accent-soft: #a9cdb4;
-  /* Teinte d'état sélectionné. Plus soutenue que --bg-tint, qui sert de fond
-     de bandeau : posée dessus, elle doit encore se distinguer. L'encre y tient
-     14,31, l'accent 6,64 — un aplat d'état ne doit jamais coûter la lecture de
-     ce qu'il désigne. */
+  /* État sélectionné : doit se distinguer de --bg-tint. Encre 14,31, accent 6,64. */
   --accent-pale: #e4f0e6;
 
-  /* Typographie — inchangée. Les empattements de la surface de lecture sont un
-     choix de confort documenté, pas un accident d'époque. */
+  /* Typographie */
   --font-head: Georgia, 'Times New Roman', serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
-  /* Surface de lecture. Les liseuses composent en serif d'écran — Bookerly
-     chez Kindle — parce qu'un texte de plusieurs milliers de signes se lit
-     mieux avec des empattements qui ancrent la ligne de base. Iowan Old Style
-     et Palatino sont les plus proches parmi les polices déjà installées. */
+  /* Serif de lecture pour les textes longs, parmi les polices système. */
   --font-lecture: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
 
   /* Échelle 1.333 depuis 16 px */
@@ -71,40 +51,21 @@
   --sp-6: 3rem;
   --sp-8: 4rem;
 
-  /* Rayons. Écart assumé avec le socle Antheos, qui les interdit — les deux
-     sites de référence en posent, et une page entièrement à angles vifs
-     paraît aujourd'hui datée plutôt que rigoureuse. La règle de partage est
-     nette : ce qui se manipule s'arrondit, ce qui se lit reste droit.
-       --radius-control   ce qu'on clique ou saisit
-       --radius-surface   ce qui est vraiment un objet posé sur la page
-     La structure — sections, tableaux, rubriques — n'a pas de rayon, parce
-     qu'elle n'a pas de contour : ce sont des filets qui la portent, et un
-     filet ne s'arrondit pas. */
+  /* Rayons (écart assumé avec le socle Antheos) : ce qui se manipule
+     s'arrondit, ce qui se lit reste droit.
+       --radius-control   ce qui se clique ou se saisit
+       --radius-surface   objet posé sur la page */
   --radius-control: 6px;
   --radius-surface: 10px;
   --rule-width: 1px;
-  /* Hauteur de la barre de situation. Elle sort d'ici et non du contenu :
-     les ancres et le rail collant doivent s'en écarter d'autant, sinon un lien
-     vers la rubrique 4.1 dépose son titre dessous. */
+  /* Barre de situation : ancres et rail collant s'en écartent d'autant. */
   --barre-h: 2.75rem;
-  /* Une seule largeur, et tout en dérive.
-     
-     Il n'existait pas de réglage où le texte remplisse un cadre de 52 rem à
-     17 px en restant sous les 75 signes par ligne : il en aurait fallu 99. La
-     variable libre n'était donc pas la mesure, c'était le cadre — ramené ici à
-     ce qu'il valait avant qu'on l'élargisse.
-     
-     La ligne monte à 87 signes, au-dessus de la bande 45–75. C'est assumé et
-     compensé par l'interligne : ce que le plafond protège, c'est le retour à
-     la ligne, et un interlignage plus généreux fait le même travail. Le filet
-     et le texte s'arrêtent au même endroit, ce qui était le vrai grief. */
+  /* Une seule largeur, tout en dérive. Ligne à 87 signes (au-delà de 75),
+     compensée par l'interligne ; filet et texte s'arrêtent au même endroit. */
   --gouttiere: 2.9rem;
   --colonne: 46rem;
 
-  /* Dérivées : la mesure ne peut plus diverger du cadre, et le bloc qui porte
-     la gouttière — filets de rubriques compris — tombe pile où finit le
-     texte. C'est la leçon des trois réglages précédents, où deux largeurs
-     réglées séparément ont dérivé l'une de l'autre à chaque changement. */
+  /* Dérivées : la mesure ne peut pas diverger du cadre. */
   --measure: calc(var(--colonne) - var(--gouttiere));
   --lecture: var(--colonne);
 }
@@ -115,9 +76,7 @@
   box-sizing: border-box;
 }
 
-/* Ce qu'on saisit ou qu'on presse. Le rayon se pose ici et nulle part par
-   défaut : une règle universelle sur `*` interdisait tout arrondi local, ce
-   qui revenait à décider une fois pour toutes qu'aucun élément n'en mérite. */
+/* Rayon posé ici, pas sur `*`, pour laisser les arrondis locaux possibles. */
 input,
 select,
 textarea,

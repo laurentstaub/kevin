@@ -1,17 +1,8 @@
 /**
- * Calcule les fiches : pour chaque substance de chaque liste, la spécialité
- * représentative et les phrases de son RCP.
- *
+ * Calcule, pour chaque substance de chaque liste, la spécialité représentative et ses phrases de RCP.
  *   npm run build-fiches
- *
- * Écrit, pour chaque fiche portant une liste :
- *   data/fiches/<nom>.json            ce que la page publiera — à relire en diff
- *   data/fiches/<nom>.candidats.md    ce que la recherche propose d'ajouter —
- *                                     jamais publié, à trancher à la lecture
- *
- * Le calcul est versionné plutôt que stocké en base : une fiche est une
- * publication, et ce qui change d'un millésime à l'autre doit se lire avant
- * de paraître. `git diff data/fiches/` est la relecture.
+ * Écrit data/fiches/<nom>.json (publié) et <nom>.candidats.md (ajouts proposés, jamais publiés).
+ * Versionné plutôt qu'en base : `git diff data/fiches/` sert de relecture avant publication.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -33,7 +24,7 @@ const lireListe = (nom) => {
   return JSON.parse(readFileSync(chemin, 'utf8'));
 };
 
-/** Les molécules dont les rubriques parlent des termes, page après page. */
+/** Molécules dont les rubriques mentionnent les termes, toutes pages confondues. */
 async function toutesLesTrouvailles(termes, rubriques) {
   const vues = new Map();
   for (const rubrique of rubriques) {
@@ -73,7 +64,7 @@ try {
       console.log(`  ${inscription.substance.padEnd(28)} ${etat}`);
     }
 
-    // Tri par substance : un ordre stable fait des diffs lisibles.
+    // Ordre stable pour des diffs lisibles.
     lignes.sort((a, b) => a.substance.localeCompare(b.substance, 'fr'));
 
     writeFileSync(path.join(DOSSIER_CALCULS, `${fiche.slug}.json`), `${JSON.stringify({
@@ -88,10 +79,8 @@ try {
       lignes,
     }, null, 2)}\n`);
 
-    // Les candidats : ce dont la recherche parle et que la liste ne contient
-    // pas. La recherche trouve des mentions, pas des affirmations — « aucun
-    // allongement du QT » remonte comme le reste. D'où la phrase, pour
-    // trancher à la lecture, et d'où ce fichier, qui n'est jamais publié.
+    // La recherche trouve des mentions, pas des affirmations (« aucun allongement du QT »
+    // remonte aussi) : les candidats sont à trancher à la lecture, jamais publiés.
     if (termes.length) {
       const trouvees = await toutesLesTrouvailles(termes, rubriques);
       const candidats = trouvees

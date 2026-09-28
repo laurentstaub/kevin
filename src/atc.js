@@ -2,18 +2,9 @@ import { importSql } from './groupes.js';
 import { nomsBiosimilaires } from './biosimilaires.js';
 
 /**
- * Classification ATC (schéma `ref`).
- *
- * `ref.cis_atc_mapping` donne un code par spécialité, `ref.atc_classification`
- * porte l'arbre sur cinq niveaux. Deux propriétés de cette source commandent
- * tout ce qui suit :
- *
- * - **Elle est dérivée des données CNAM, pas de la BDPM.** Un médicament jamais
- *   remboursé n'a donc pas de classe : 63,5 % des spécialités seulement en ont
- *   une. L'absence est un cas normal, pas une anomalie à signaler au lecteur.
- * - **L'arbre a quelques trous** — cinq codes de niveau 5 dont le parent de
- *   niveau 4 manque, vingt-quatre dont le libellé recopie le code. On remonte
- *   donc ce qui existe, sans supposer une chaîne complète.
+ * Classification ATC (schéma `ref`), dérivée des données CNAM : seules 63,5 %
+ * des spécialités ont une classe, l'absence est normale. L'arbre a des trous
+ * (parents manquants, libellés égaux au code) : ne pas supposer une chaîne complète.
  */
 
 /** Le libellé vaut le code quand la source n'en fournit pas. */
@@ -37,46 +28,22 @@ export async function getClasseAtc(pool, cis) {
 
   return rows.map((row, i) => ({
     code: row.atc_code,
-    // Vingt-quatre codes de niveau 5 n'ont pas de libellé. Afficher « B03AC01 »
-    // à un pharmacien ne lui apprend rien : on reprend celui du parent.
+    // Libellé absent : celui du parent plutôt que le code brut.
     label: utilisable(row) ? row.atc_label : (rows[i - 1]?.atc_label ?? row.atc_code),
     level: row.atc_level,
   }));
 }
 
 /**
- * L'unité de compte des pages de classe : la spécialité commercialisée.
- *
- * Trois niveaux, et trois seulement, parce que ce sont ceux du métier et de la
- * réglementation : la molécule (la DCI), la spécialité (un dosage et une
- * forme — un code CIS), la présentation (une boîte — un code CIP). Les pages
- * comptaient d'abord des « produits » — un nom commercial, tous dosages
- * confondus — unité maison que rien ne définissait, et qui côtoyait sous le
- * même titre des pourcentages calculés sur les spécialités.
- *
- * Commercialisées seulement : une classe se lit pour ce qu'on peut délivrer.
- * Les spécialités retirées restent listées à la feuille, marquées comme
- * telles, mais ne gonflent pas les décomptes.
+ * Unité de compte des pages de classe : la spécialité (CIS) commercialisée.
+ * Les retirées restent listées à la feuille mais ne comptent pas.
  */
 const SPECIALITES = `count(DISTINCT m.code_cis) FILTER (WHERE m.etat_commercialisation = 'Commercialisée')`;
 
 /**
- * Ce qu'on garde de la chaîne pour l'en-tête d'une fiche.
- *
- * Les cinq niveaux affichés en entier font cent six signes en capitales, entre
- * la ligne d'identité et les dosages : le bandeau se rompt, et l'œil bute avant
- * d'atteindre le produit. Or tout n'y sert pas au comptoir.
- *
- * - Niveaux 1 et 2 — « Système nerveux », « Analgésiques » : ce que fait le
- *   médicament. C'est le renseignement utile, et il tient en deux mots.
- * - Niveaux 3 et 4 — « Autres analgésiques et antipyrétiques », « Anilides » :
- *   de la taxonomie chimique, verbeuse et sans usage devant un patient.
- * - Niveau 5 — « PARACETAMOL » : la DCI, déjà affichée deux lignes plus haut.
- *   La répéter n'ajoute rien.
- *
- * Reste le code lui-même, qui identifie la feuille sans l'écrire en toutes
- * lettres et mène à la classe complète. La chaîne entière n'est pas perdue :
- * elle est le fil d'Ariane de la page de classe.
+ * En-tête de fiche : niveaux 1-2 (ce que fait le médicament) et code de la
+ * feuille. Les niveaux 3-4 sont de la taxonomie chimique, le 5 répète la DCI ;
+ * la chaîne complète reste dans le fil d'Ariane de la page de classe.
  *
  * @returns {{ contexte: object[], feuille: object }|null}
  */
@@ -86,8 +53,7 @@ export function resumerClasse(chaine) {
   const feuille = chaine.at(-1);
   const contexte = chaine.filter((niveau) => niveau.level <= 2 && niveau.code !== feuille.code);
 
-  // Chaîne trop courte pour avoir un contexte distinct de la feuille : on
-  // montre la feuille elle-même plutôt qu'une ligne vide.
+  // Chaîne trop courte : la feuille sert de contexte.
   return { contexte: contexte.length > 0 ? contexte : [feuille], feuille };
 }
 
@@ -95,10 +61,8 @@ let cacheClasses = null;
 const DUREE_CACHE_MS = 60 * 60 * 1000;
 
 export async function getClassesPrincipales(pool) {
-  // Gardé en mémoire : 56 ms de décompte sur toute la base, pour un résultat
-  // qui ne change qu'au rechargement mensuel de la BDPM — et sur la page la
-  // plus demandée du site. L'expiration évite d'avoir à redémarrer après un
-  // rechargement des données.
+  // Cache : 56 ms de décompte pour des données mensuelles, sur la page la plus
+  // demandée. L'expiration évite un redémarrage après rechargement.
   if (cacheClasses && Date.now() - cacheClasses.a < DUREE_CACHE_MS) {
     return cacheClasses.valeur;
   }
@@ -140,15 +104,8 @@ export async function getClasse(pool, code) {
   const classe = chaine.find((niveau) => niveau.code === code);
   if (!classe) return null;
 
-  // Les enfants se déduisent du code, pas de `parent_atc_code`. La hiérarchie
-  // ATC est un préfixe strict — 1, 3, 4, 5 puis 7 signes — donc la filiation
-  // est déjà écrite dans « J05AF06 » ; la colonne n'en est qu'un doublon.
-  //
-  // Et non pas « le niveau suivant » mais « le premier niveau qui existe » :
-  // l'arbre a des étages manquants, des molécules dont le sous-groupe chimique
-  // n'a jamais été inséré. Exiger `level + 1` les rendrait introuvables — elles
-  // n'apparaîtraient dans aucune liste, alors que leur code dit exactement d'où
-  // elles descendent. On saute donc l'étage absent au lieu de buter dessus.
+  // Enfants déduits du code (préfixe strict), au premier niveau existant et non
+  // à `level + 1` : l'arbre a des étages manquants.
   const { rows: enfants } = await pool.query(
     `SELECT c.atc_code AS code, c.atc_label AS label, c.atc_level AS level,
             ${SPECIALITES}::int AS specialites
@@ -183,23 +140,9 @@ export async function getClasse(pool, code) {
 }
 
 /**
- * Les spécialités d'une molécule — une ligne par code CIS.
- *
- * Elles étaient regroupées par nom commercial, comme dans la recherche : douze
- * lignes pour douze laboratoires, chacune annonçant « 3 dosages et formes ».
- * Mais à la feuille, c'est la spécialité qu'on cherche — le 5 mg ou le 10 mg,
- * la gélule ou le comprimé — et le regroupement la cachait derrière un clic.
- *
- * L'ordre est celui dans lequel on les cherche au comptoir : le princeps
- * d'abord — TOPLEXIL avant les vingt OXOMEMAZINE <laboratoire> —, puis les
- * noms de fantaisie, puis les spécialités nommées par leur DCI. L'ordre
- * alphabétique seul rangeait le princeps quelque part au milieu des
- * génériques, sous la lettre de sa marque.
- *
- * Le princeps est celui du Répertoire (type 0 d'un groupe générique). Un nom
- * de fantaisie est un nom qui ne commence pas par la DCI : c'est ce qui
- * rattrape les marques hors Répertoire, et les princeps dont le groupe n'a
- * pas été créé.
+ * Spécialités d'une molécule, une ligne par CIS, dans l'ordre du comptoir :
+ * princeps (type 0 du Répertoire), puis noms de fantaisie (ne commençant pas
+ * par la DCI, ce qui rattrape les marques hors Répertoire), puis les autres.
  *
  * @param {string} dci - le libellé de la feuille ATC, « OXOMEMAZINE »
  */
@@ -224,21 +167,9 @@ export async function getSpecialitesDeClasse(pool, code, dci = '') {
 
 
 /**
- * Molécules d'une classe, la plus répandue d'abord.
- *
- * Les sous-classes disent comment la classe est découpée ; elles ne disent pas
- * ce qu'elle contient. « Antiviraux à action directe » n'apprend rien à qui
- * cherche à savoir quels antiviraux existent — et redescendre quatre étages
- * pour l'apprendre est un parcours, pas une réponse. Cette liste aplatit
- * l'arbre : toutes les feuilles de la classe, d'un coup.
- *
- * L'ordre est le nombre de spécialités commercialisées, faute de mieux. Ce n'est pas l'usage
- * réel — pour cela il faudrait les volumes de l'Assurance Maladie, qui ne sont
- * pas dans cette base — mais c'en est un indice honnête : une molécule qui
- * porte quinze génériques est ancienne et répandue. Le défaut connu de ce
- * classement est le produit récent sous brevet, une seule marque et gros
- * volume, qui se retrouve plus bas qu'il ne le mérite. Le jour où les ventes
- * seront joignables, seul l'ORDER BY change.
+ * Molécules d'une classe (toutes ses feuilles), la plus répandue d'abord.
+ * Indice : nombre de spécialités commercialisées, qui sous-classe les molécules
+ * récentes sous brevet ; à remplacer par les volumes de vente.
  */
 export async function getMoleculesDeClasse(pool, code) {
   const { rows } = await pool.query(
@@ -257,22 +188,9 @@ export async function getMoleculesDeClasse(pool, code) {
 }
 
 /**
- * Le portrait chiffré d'une classe.
- *
- * Une page de classe listait des codes et des libellés : juste, mais sec. Ce
- * qu'un pharmacien veut savoir d'une classe tient pourtant en quelques
- * chiffres que la base connaît déjà — la part de génériques, la part
- * remboursable, le régime de délivrance. Pas une définition : une physionomie.
- *
- * Le dénominateur est la **spécialité commercialisée**, celle de l'en-tête :
- * le statut générique, le remboursement et la liste se portent spécialité par
- * spécialité. Les spécialités retirées ne comptent pas — une classe dont on
- * a cessé de commercialiser les princeps paraîtrait moins générique qu'elle
- * ne l'est au comptoir.
- *
- * Les motifs de délivrance reprennent ceux de `delivrance.js`, qui classe ces
- * mêmes libellés sur la fiche produit : une spécialité comptée « liste I » ici
- * s'affiche « Liste I » là-bas.
+ * Portrait chiffré d'une classe : génériques, remboursables, régime de
+ * délivrance, rapportés aux spécialités commercialisées. Motifs de délivrance
+ * alignés sur `delivrance.js`.
  *
  * @returns {Promise<null|{ specialites: number, generiques: number,
  *   remboursables: number, liste1: number, liste2: number,
@@ -328,15 +246,9 @@ export async function getPortraitClasse(pool, code, biosimilaires = nomsBiosimil
 }
 
 /**
- * Ce que le portrait affiche, et dans quel ordre.
- *
- * Deux proportions toujours — elles décrivent toute classe — puis le régime
- * de délivrance, qui ne se dit que s'il concerne quelqu'un : « 0 stupéfiant »
- * sur la page des antigoutteux est une ligne pour ne rien apprendre. Les
- * régimes rares se comptent en spécialités plutôt qu'en pourcentage :
- * « 0 % » arrondi cacherait les trois stupéfiants d'une classe de six cents.
- *
- * Pure, pour être testée sans base.
+ * Lignes affichées du portrait. Un régime de délivrance nul est omis ; les
+ * régimes rares se comptent en unités (« 0 % » arrondi cacherait trois
+ * stupéfiants sur six cents). Pure, testable sans base.
  *
  * @returns {{ valeur: string, libelle: string }[]}
  */
@@ -347,9 +259,7 @@ export function lirePortrait(portrait) {
   const pluriel = (nombre, un, plusieurs) => (nombre > 1 ? plusieurs : un);
 
   return [
-    // Une classe de biologiques n'a pas de génériques, elle a des
-    // biosimilaires : « 0 % génériques » sur l'énoxaparine était juste et
-    // trompeur. Le pourcentage de génériques ne se tait que dans ce cas.
+    // Classe de biologiques : « 0 % génériques » serait trompeur, les biosimilaires le remplacent.
     (portrait.generiques || !portrait.biosimilaires) && { valeur: part(portrait.generiques), libelle: 'génériques' },
     portrait.biosimilaires && { valeur: part(portrait.biosimilaires), libelle: 'biosimilaires' },
     { valeur: part(portrait.remboursables), libelle: 'remboursables' },

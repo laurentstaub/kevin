@@ -1,12 +1,7 @@
 /**
- * La phrase du RCP.
- *
- * Une fiche ne résume pas un RCP, elle le cite. Cette unité isole, dans le
- * texte d'une rubrique, les phrases qui portent un terme, et les rend telles
- * quelles — sans coupe au milieu, sans reformulation. Ce que `ts_headline`
- * fait pour un aperçu de recherche, fenêtre de mots arbitraire, ne convient
- * pas à une publication : un fragment qui commence par « …supérieur à 500 ms »
- * a perdu son sujet.
+ * Citation du RCP : isole les phrases entières d'une rubrique qui portent un
+ * terme, sans coupe ni reformulation (contrairement à `ts_headline`, dont la
+ * fenêtre de mots peut perdre le sujet de la phrase).
  */
 
 import { deaccent } from './text.js';
@@ -20,26 +15,21 @@ const LONGUEUR_MAX = 600;
 const normal = (texte) => deaccent(String(texte)).toLowerCase();
 
 /**
- * Découpe en phrases, sans couper sur « p. ex. », « 50 mg. Chez… » ni sur les
- * décimales. On coupe sur un point, un point d'exclamation ou d'interrogation
- * suivi d'un espace et d'une majuscule — la règle la plus prudente qui marche
- * sur le texte des RCP.
+ * Découpe en phrases : ponctuation finale suivie d'une espace et d'une
+ * majuscule, pour ne pas couper sur « p. ex. » ni sur les décimales.
  */
 export function phrases(texte) {
   return String(texte ?? '')
     .replace(/\s+/g, ' ')
-    // Une puce coupe aussi : les contre-indications sont souvent une liste
-    // sans point final, qui restait sinon d'un seul bloc.
+    // Une puce coupe aussi : les listes de contre-indications n'ont souvent pas de point.
     .split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])|\s*[•▪]\s*/)
     .map((phrase) => phrase.trim())
     .filter(Boolean);
 }
 
 /**
- * Les motifs à chercher pour un terme, élargis par le thésaurus : « QT »
- * cherche aussi « torsade de pointes ». Chaque motif est borné aux limites de
- * mot — sans quoi « QT » trouverait « QTc », ce qui est voulu, mais aussi
- * n'importe quelle suite de lettres.
+ * Motifs d'un terme élargis par le thésaurus (« QT » → « torsade de pointes »),
+ * bornés en début de mot : « QT » trouve « QTc » mais pas une suite quelconque.
  */
 export function motifs(termes) {
   const alternatives = termes.flatMap((terme) => elargir(terme).atomes.flat())

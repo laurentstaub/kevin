@@ -1,26 +1,8 @@
 /**
- * Les spécialités d'une molécule, rangées pour se lire d'un coup d'œil.
- *
- * Quatre-vingt-six lignes de fentanyl, une par code CIS, sont exactes et
- * illisibles : six ABSTRAL d'affilée qui ne diffèrent que par le dosage, des
- * patchs mêlés aux comprimés sublinguaux. Deux regroupements, et rien d'autre :
- *
- * - **par forme** — le patch et le comprimé sublingual ne répondent pas à la
- *   même question au comptoir (traitement de fond, accès paroxystique) ;
- * - **par nom, les dosages à la suite** — « ABSTRAL 100 · 200 · 300 µg » sur
- *   une ligne. Chaque dosage reste un lien vers sa spécialité : l'unité est
- *   toujours la spécialité, seule la mise en page les rassemble.
- *
- * Tout se déduit de la dénomination BDPM, « NOM DOSAGE, forme » : le nom est
- * ce qui précède le premier nombre isolé, le dosage ce qui le suit jusqu'à
- * la virgule. Une dénomination sans chiffre (« DRILL TOUX SECHE, sirop ») n'a
- * pas de dosage ; elle garde sa ligne.
- *
- * L'ordre d'entrée est respecté — princeps, noms de fantaisie, puis DCI, tel
- * que la requête l'a posé — et les dosages se rangent par valeur, 12 avant
- * 100, ce que l'ordre alphabétique ne fait pas.
- *
- * Pure, pour être testée sans base.
+ * Regroupe les spécialités d'une molécule par forme, puis par nom avec les
+ * dosages à la suite (« ABSTRAL 100 · 200 · 300 µg »), chaque dosage restant un lien.
+ * Tout se déduit de la dénomination BDPM « NOM DOSAGE, forme ».
+ * L'ordre d'entrée est conservé ; les dosages se trient par valeur. Module pur.
  */
 
 import { statutBiologique } from './biosimilaires.js';
@@ -30,8 +12,7 @@ const nombre = (texte) => Number(String(texte).replace(/\s/g, '').replace(',', '
 /** « DUROGESIC 100 microgrammes/heure, dispositif transdermique » → parties. */
 export function decomposer(denomination) {
   const texte = String(denomination ?? '').trim();
-  // La forme suit « , » — virgule *et* espace : la virgule seule est celle
-  // des décimales, « 0,33 mg/ml ».
+  // Virgule suivie d'une espace : la virgule seule est décimale (« 0,33 mg/ml »).
   const virgule = texte.indexOf(', ');
   const tete = (virgule >= 0 ? texte.slice(0, virgule) : texte).trim();
   const parties = /^(.*?)\s+(\d.*)$/.exec(tete);
@@ -40,15 +21,8 @@ export function decomposer(denomination) {
 
 /**
  * « 100 microgrammes/heure » → { valeur: 100, chiffre: '100', unite: 'microgrammes/heure' }.
- *
- * Quand le dosage porte plus qu'un nombre et une unité — l'énoxaparine,
- * « 4 000 UI (40 mg)/0,4 mL » —, on en lit la tête, « 4 000 UI », et on garde
- * le reste en `detail` : la ligne affiche la tête, l'infobulle et la fiche le
- * détail. Sept dosages d'énoxaparine écrits en entier faisaient trois lignes
- * illisibles par laboratoire.
- *
- * Null quand rien ne se lit, et `regrouperSpecialites` décide ensuite si la
- * tête suffit à distinguer les spécialités d'une ligne.
+ * Dosage composé (« 4 000 UI (40 mg)/0,4 mL ») : tête lue, dosage complet en `detail`.
+ * Null si rien ne se lit.
  */
 const NOMBRE = String.raw`(\d{1,3}(?:[\s\u00a0\u202f]\d{3})+|\d+)(?:[.,](\d+))?`;
 function lireDosage(dosage) {
@@ -58,7 +32,7 @@ function lireDosage(dosage) {
   const chiffre = tete[2] ? `${tete[1]},${tete[2]}` : tete[1];
   return {
     valeur: nombre(chiffre),
-    // L'espace des milliers devient insécable : « 4 000 » ne se coupe plus.
+    // Espace des milliers insécable.
     chiffre: chiffre.replace(/[\s\u00a0]/g, '\u202f'),
     unite: tete[3].trim(),
     detail: entier ? null : dosage,
@@ -97,15 +71,12 @@ export function regrouperSpecialites(lignes) {
   }
 
   return [...formes.values()]
-    // La forme la plus fournie d'abord : c'est, presque toujours, la plus
-    // délivrée — le patch de fentanyl, le comprimé de paracétamol.
+    // Forme la plus fournie d'abord (presque toujours la plus délivrée).
     .sort((a, b) => b.total - a.total)
     .map((groupeForme) => ({
       forme: groupeForme.forme,
       total: groupeForme.total,
-      // La référence d'abord — princeps du Répertoire ou médicament biologique
-      // de référence : LOVENOX avant INHIXA, que l'alphabet mettait devant.
-      // Le tri est stable, l'ordre de la requête vaut pour le reste.
+      // Princeps ou biologique de référence d'abord ; tri stable pour le reste.
       noms: [...groupeForme.noms.values()]
         .sort((a, b) => Number(b.princeps || b.biologique === 'reference')
           - Number(a.princeps || a.biologique === 'reference'))
@@ -113,9 +84,7 @@ export function regrouperSpecialites(lignes) {
         const lus = brut.map((entree) => ({ ...entree, lu: lireDosage(entree.dosage) }));
         const unites = new Set(lus.map((entree) => entree.lu?.unite));
         const chiffres = new Set(lus.map((entree) => entree.lu?.valeur));
-        // Une seule unité, et des chiffres qui suffisent à distinguer chaque
-        // spécialité : on écrit l'unité une fois, à la fin. Deux « 0,33 mg »
-        // qui ne diffèrent que par « SANS SUCRE » s'écrivent en entier.
+        // Unité écrite une fois si elle est commune et que les chiffres distinguent chaque spécialité.
         const commune = lus.every((entree) => entree.lu) && unites.size === 1 && chiffres.size === lus.length
           ? [...unites][0] : null;
         const ordonnes = commune ? [...lus].sort((a, b) => a.lu.valeur - b.lu.valeur) : lus;
@@ -124,10 +93,9 @@ export function regrouperSpecialites(lignes) {
           unite: commune,
           dosages: ordonnes.map((entree) => ({
             id: entree.id,
-            // Ce que la tête tait — « (40 mg)/0,4 mL » — reste en infobulle.
+            // Complément du dosage, en infobulle.
             detail: commune ? entree.lu.detail : null,
-            // Sans dosage, le lien porte la dénomination entière : c'est la
-            // seule chose qui distingue deux spécialités du même nom.
+            // Sans dosage lisible : dénomination entière, seule à distinguer les spécialités.
             libelle: commune ? entree.lu.chiffre : (entree.dosage || entree.denomination),
           })),
         };

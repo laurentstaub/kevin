@@ -2,11 +2,8 @@ extends layout.pug
 include _barre.pug
 include _recherche.pug
 
-//- Une fiche thématique, telle qu'elle est publiée.
-//-
-//- L'en-tête dit qui l'a écrite, quand elle a été relue, et d'après quoi. Le
-//- texte libre vient du Markdown ; tout ce qui porte sur une molécule vient du
-//- calcul, cité du RCP, avec son lien. Rien n'est réécrit par la machine.
+//- Fiche thématique publiée : texte libre du Markdown, et pour chaque molécule
+//- la citation du RCP issue du calcul, avec son lien.
 
 block styles
   link(rel="stylesheet", href=`/css/fiche.css?v=${v}`)
@@ -16,8 +13,7 @@ block content
 
   main.corps
     if brouillon
-      //- Visible en développement seulement : en production, une fiche non
-      //- relue n'a pas d'adresse.
+      //- Développement seulement : en production, une fiche non relue n'a pas d'adresse.
       p.brouillon
         strong Brouillon
         |  — non relu, non publié. Dater « relu: » dans l'en-tête pour publier.
@@ -37,8 +33,7 @@ block content
         if !calcul
           p.vide La liste n'a pas encore été calculée — npm run build-fiches.
         else if calcul.lignes.length === 0
-          //- Une liste vide se dit : une fiche publiée qui ne montrerait rien
-          //- laisserait croire qu'aucune substance n'est concernée.
+          //- Une liste vide se dit, pour ne pas suggérer qu'aucune substance n'est concernée.
           p.vide La liste n'est pas encore établie.
         else
           table.fiche-substances
@@ -55,8 +50,7 @@ block content
                     if ligne.specialite
                       a.specialite(href=`/product/${ligne.specialite.cis}`)= ligne.specialite.denomination
                     if ligne.origine === 'ajout'
-                      //- Hors de l'amorce ANSM : l'inscription est un choix
-                      //- éditorial, et le lecteur doit pouvoir le distinguer.
+                      //- Hors amorce ANSM : choix éditorial, signalé comme tel.
                       span.origine(title=ligne.motif || null) Ajout du #{ligne.valide_le}
                   td
                     if ligne.citations.length

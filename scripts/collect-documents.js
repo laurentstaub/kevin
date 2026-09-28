@@ -1,23 +1,12 @@
 /**
- * collect-documents.js — va chercher les RCP et notices qui manquent.
- *
- * La table `dbpm.cis_documents` n'a plus été alimentée depuis le 6 mai 2025, et
- * la collecte d'alors *rafraîchissait* ce qu'elle connaissait déjà sans jamais
- * découvrir les nouvelles spécialités. D'où une table datée d'un jour précis et
- * pourtant amputée de deux années d'AMM : 971 spécialités commercialisées sans
- * le moindre document, dont toutes celles autorisées en 2025 et 2026.
- *
- * Ce script part donc de `dbpm.cis_bdpm` — la liste qui fait autorité — et non
- * de `cis_documents`, qui n'est que son propre reflet.
+ * Collecte les RCP et notices manquants, en partant de `dbpm.cis_bdpm` (qui fait
+ * autorité) et non de `cis_documents`, pour découvrir les nouvelles spécialités.
  *
  *   npm run collect-documents -- --dry-run --limit 5   voir sans écrire
  *   npm run collect-documents -- --limit 100           un premier lot
  *   npm run collect-documents                          tout ce qui manque
  *   npm run collect-documents -- --cis 60151544 --montrer   inspecter un cas
- *
- * Incrémental : ne demande que ce qui n'est pas en base, et retient dans
- * `.cache/documents/vus.json` les CIS dont la BDPM a dit qu'ils n'ont rien —
- * sans quoi chaque passe les redemanderait indéfiniment.
+ * Incrémental ; `.cache/documents/vus.json` retient les CIS sans document selon la BDPM.
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -44,10 +33,7 @@ const VUS = path.join(CACHE, 'vus.json');
 const UA = { 'User-Agent': 'dr-kevin/2.0 (collecte de RCP, usage interne)' };
 const dormir = (ms) => new Promise((reveil) => setTimeout(reveil, ms));
 
-// Depuis la refonte, affichageDoc.php redirige vers /medicament/<CIS>/extrait,
-// une seule page qui porte le RCP puis la notice — quel que soit `typedoc`. On
-// ne demande donc qu'une fois, et l'on n'insiste avec « N » que si la notice
-// manque à l'appel, au cas où une fiche suivrait encore l'ancienne forme.
+// /medicament/<CIS>/extrait porte RCP et notice : une seule requête, « N » en repli si la notice manque.
 const TYPES = [
   { document_type: 'rcp', plan: 'rcp' },
   { document_type: 'notice', plan: 'notice' },
@@ -86,8 +72,7 @@ console.log(`\n${cibles.length.toLocaleString('fr-FR')} spécialité(s) sans doc
 const bilan = { html: 0, pdf: 0, absents: 0, illisibles: 0, erreurs: 0, redirections: 0 };
 const soucis = [];
 
-// La forme d'arrivée d'abord ; l'ancienne ne sert qu'au repli « notice à part »,
-// pour les fiches qui n'auraient pas encore migré.
+// L'ancienne forme d'URL ne sert qu'au repli « notice à part ».
 const fiche = (cis, typedoc) => (typedoc === 'R'
   ? `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`
   : `${config.documentBaseUrl}/affichageDoc.php?specid=${encodeURIComponent(cis)}&typedoc=${typedoc}`);
@@ -106,9 +91,7 @@ for (const [i, cible] of restants.entries()) {
     const reponse = await fetch(url, { headers: UA, redirect: 'follow' });
     await dormir(PAUSE);
 
-    // Une redirection n'est pas un succès : c'est le signe que la source a
-    // bougé. L'ancien collecteur est probablement mort d'une migration d'URL
-    // qu'il a suivie sans rien dire.
+    // Une redirection signale que la source a bougé : la compter, pas la suivre en silence.
     if (reponse.redirected && reponse.url !== url) {
       bilan.redirections += 1;
       if (bilan.redirections === 1) {
@@ -131,19 +114,14 @@ for (const [i, cible] of restants.entries()) {
         if (doc) trouves.push({ ...type, ...doc });
       }
 
-      // Une fiche restée à l'ancienne forme peut servir la notice à part. On
-      // n'insiste que si le RCP, lui, a bien été trouvé en HTML : sur une
-      // spécialité centralisée il n'y a aucun texte à espérer, et redemander
-      // la même page ne rapporte qu'une redirection de plus.
+      // Notice à part (ancienne forme) : seulement si le RCP HTML a été trouvé, sinon rien à espérer.
       if (trouves.length > 0 && !trouves.some((trouve) => trouve.document_type === 'notice')) {
         const autre = await demander('N');
         const doc = autre && extraireDocument(autre, 'notice');
         if (doc) trouves.push({ document_type: 'notice', plan: 'notice', ...doc });
       }
 
-      // Rien d'extrait : c'est peut-être une centralisée, dont la BDPM ne sert
-      // qu'un lien vers le PDF de l'EMA. On note l'adresse, build-pdf-sections
-      // fera le reste — il sait déjà.
+      // Rien d'extrait : peut-être une centralisée ; le lien PDF est laissé à build-pdf-sections.
       if (trouves.length === 0) pdf = lienPdf(page);
 
       if (MONTRER && trouves.length === 0) {
@@ -181,11 +159,8 @@ for (const [i, cible] of restants.entries()) {
     }
     console.log(`  ${cis}  PDF européen — build-pdf-sections prendra la suite`);
   } else {
-    // Deux situations qu'il ne faut surtout pas confondre. Une absence dite
-    // par la BDPM est définitive : on la retient pour ne plus la redemander.
-    // Une page non reconnue est un défaut de lecture **de notre côté** ; la
-    // mettre en cache la rendrait invisible à la passe suivante, corrigée ou
-    // non. On la laisse donc revenir, et on la nomme dans le bilan.
+    // Absence dite par la BDPM : mise en cache. Page non reconnue : défaut de lecture
+    // local, jamais mise en cache pour qu'elle revienne à la passe suivante.
     if (absent) {
       bilan.absents += 1;
       vus[cis] = 'absent';

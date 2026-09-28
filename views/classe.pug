@@ -2,16 +2,8 @@ extends layout.pug
 include _barre.pug
 include _recherche.pug
 
-//- Une classe thérapeutique : son fil, et ce qu'elle contient.
-//-
-//- Une classe montre ses enfants directs ; seule la feuille — la molécule, ou
-//- l'association — montre ses spécialités. Plus haut, la liste des spécialités
-//- doublait les sous-classes et devait être tronquée : sur mille spécialités
-//- on n'en voyait que le début de l'alphabet, ce qui n'apprend rien et laisse
-//- croire que la classe s'arrête à B. Et douze ABACAVIR d'affilée ne disent
-//- qu'une chose, que l'abacavir existe chez douze laboratoires — un
-//- renseignement qui appartient à la page de l'abacavir, pas à celle de la
-//- classe.
+//- Classe thérapeutique : fil, enfants directs et molécules ; seule la feuille
+//- (molécule ou association) liste ses spécialités.
 
 mixin specialites(nombre)
   if nombre > 0
@@ -19,12 +11,10 @@ mixin specialites(nombre)
   else
     | Aucune spécialité commercialisée
 
-//- Les spécialités d'une forme : une ligne par nom, les dosages à la suite,
-//- chacun lien vers sa spécialité. « ABSTRAL 100 · 200 · 300 microgrammes »
-//- au lieu de trois lignes qui ne diffèrent que d'un chiffre.
+//- Une ligne par nom, les dosages à la suite (« ABSTRAL 100 · 200 · 300 microgrammes »).
 mixin formes(groupes)
   each groupeForme in groupes
-    //- Une seule forme : pas de sous-titre, il ne distinguerait rien.
+    //- Pas de sous-titre pour une forme unique.
     if groupes.length > 1
       h3.forme-titre
         | #{groupeForme.forme.charAt(0).toUpperCase() + groupeForme.forme.slice(1)}
@@ -42,8 +32,7 @@ mixin formes(groupes)
                     |  #{seul.libelle}#{groupeNom.unite ? ' ' + groupeNom.unite : ''}
               else
                 = groupeNom.nom
-              //- La mention suit le nom, avant les dosages : elle qualifie
-              //- le nom, et se retrouve à la même place d'une ligne à l'autre.
+              //- La mention suit le nom, avant les dosages, pour s'aligner d'une ligne à l'autre.
               if groupeNom.princeps
                 span.marque Princeps
               else if groupeNom.biologique === 'reference'
@@ -77,31 +66,21 @@ block content
           else
             a(href=`/classe/${niveau.code}`)= niveau.code
       h1.titre-site= classe.label
-      //- Un seul chiffre, et le code une seule fois. La page en portait deux —
-      //- le total de la classe et le nombre de lignes affichées — dont le
-      //- second n'était pas un décompte mais une troncature déguisée en
-      //- information. Et le code figurait ici en plus du fil, qui se termine
-      //- déjà par lui : sur « J », la page affichait « J » deux fois de suite.
-      //- Une unité, et une seule, sur toute la page : la spécialité
-      //- commercialisée — un dosage, une forme, un code CIS. Les pourcentages
-      //- du portrait portent sur elle aussi.
+      //- Unité unique de la page, portrait compris : la spécialité commercialisée (un code CIS).
       p.page-meta
         +specialites(classe.specialites)
 
-      //- La physionomie de la classe, en chiffres que la base connaît déjà.
+      //- Portrait de la classe en chiffres.
       if portrait.length
         dl.portrait
           each mesure in portrait
             .portrait-item
-              //- dt avant dd, comme le veut une liste de définitions ;
-              //- l'affichage met le chiffre au-dessus (column-reverse).
+              //- dt avant dd ; le CSS met le chiffre au-dessus (column-reverse).
               dt.portrait-libelle= mesure.libelle
               dd.portrait-valeur= mesure.valeur
         p.portrait-base Source : BDPM
 
-    //- Le chapeau : quelques phrases de pharmacien, signées et relues. Il
-    //- n'existe que là où il apporte quelque chose — une classe sans chapeau
-    //- n'est pas une classe inachevée.
+    //- Chapeau : texte de pharmacien signé et relu, facultatif.
     if chapeau
       section.chapeau
         if !chapeau.meta.relu
@@ -119,9 +98,7 @@ block content
 
     if classe.enfants.length > 0
       nav.classes(aria-label="Sous-classes")
-        //- L'unité se dit une fois, en tête de colonne, et non à chaque ligne :
-        //- « 21 spécialités commercialisées » répété quatorze fois noyait le
-        //- chiffre, qui est ce qu'on compare d'une ligne à l'autre.
+        //- L'unité en tête de colonne, pas à chaque ligne.
         h2.classes-titre
           | Sous-classes
           span.classes-unite Spécialités commercialisées
@@ -133,14 +110,8 @@ block content
                 span.classe-label= enfant.label
                 span.classe-compte= enfant.specialites.toLocaleString('fr-FR')
 
-    //- Ce que la classe contient, et non comment elle se découpe.
-    //-
-    //- Les sous-classes disent le second ; « Antiviraux à action directe »
-    //- n'apprend rien à qui cherche quels antiviraux existent. Cette liste
-    //- aplatit l'arbre — toutes les feuilles de la classe, la plus répandue
-    //- d'abord. Vingt suffisent à donner la physionomie d'une classe ; le reste
-    //- est là, replié, parce qu'une liste écourtée en silence se lit comme une
-    //- liste complète.
+    //- Toutes les molécules de la classe (arbre aplati), les plus répandues
+    //- d'abord ; au-delà de vingt, le reste est replié mais jamais omis.
     if molecules && molecules.length > 0
       - const TETE = 20
       - const principales = molecules.slice(0, TETE)
@@ -167,13 +138,8 @@ block content
                     span.classe-label= molecule.label
                     span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
 
-    //- À la feuille, les spécialités elles-mêmes : une ligne par code CIS.
-    //- Elles étaient regroupées par nom commercial, « 3 dosages et formes »
-    //- cachant le 5 mg et le 10 mg derrière un clic ; c'est pourtant la
-    //- spécialité qu'on cherche ici.
-    //- Biosimilaires substituables : la règle commune, en une ligne, et le
-    //- texte. Les conditions propres à la molécule (dosage, dispositif) ne
-    //- sont pas recopiées — elles changent d'un arrêté à l'autre.
+    //- Biosimilaires substituables : règle commune et lien vers l'arrêté ; les
+    //- conditions propres à la molécule changent d'un arrêté à l'autre.
     if substitution
       aside.substitution
         p
@@ -197,8 +163,7 @@ block content
           | Spécialités commercialisées
           span.compte #{nombre(commercialisees).toLocaleString('fr-FR')}
         +formes(commercialisees)
-        //- Les retirées restent consultables — on cherche aussi ce qu'un patient
-        //- prenait — mais repliées : elles ne sont pas la réponse au comptoir.
+        //- Les non commercialisées restent consultables, repliées.
         if retirees.length > 0
           - const nRetirees = nombre(retirees)
           details.molecules-reste

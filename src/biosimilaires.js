@@ -1,16 +1,9 @@
 /**
- * Biosimilaires : la liste de référence de l'ANSM, que la BDPM ne porte pas.
- *
- * Le Répertoire des génériques ne connaît que les molécules de synthèse. Une
- * énoxaparine d'Arrow ou de Biogaran n'y figure pas : la page de l'énoxaparine
- * annonçait « 0 % génériques », juste et trompeur. Les biosimilaires ont leur
- * propre liste, les groupes biologiques similaires (CSP, art. R. 5121-9-1),
- * que l'ANSM publie sans fichier téléchargeable. Elle est donc relevée dans
- * data/biosimilaires.json — noms commerciaux, sans dosage — et datée.
- *
- * On reconnaît une spécialité par le début de sa dénomination : « INHIXA
- * 4 000 UI… » commence par INHIXA. Le nom doit être suivi d'une espace, d'une
- * virgule ou de rien, pour que LANTUS ne reconnaisse pas un LANTUSX.
+ * Biosimilaires : liste ANSM des groupes biologiques similaires (CSP, art.
+ * R. 5121-9-1), absente de la BDPM et du Répertoire des génériques. Relevée à
+ * la main dans data/biosimilaires.json (noms commerciaux, sans dosage), datée.
+ * Une spécialité est reconnue au début de sa dénomination, suivi d'une espace,
+ * d'une virgule ou de rien (LANTUS ne doit pas reconnaître LANTUSX).
  */
 
 import { readFileSync } from 'node:fs';
@@ -57,13 +50,9 @@ export const nomsBiosimilaires = () => lire().biosimilaires;
 export const sourceBiosimilaires = () => lire().source;
 
 /**
- * Le groupe biologique d'une spécialité, et s'il est substituable au comptoir.
- *
- * Onze groupes sur vingt-six le sont (arrêté du 20 février 2025, modifié en
- * dernier lieu le 10 avril 2026). La règle commune tient en une phrase ; les
- * conditions propres à certaines molécules — dosage, dispositif — ne sont pas
- * recopiées ici : elles changent d'un arrêté à l'autre, et la page renvoie au
- * texte plutôt que d'en afficher une version qui aurait vieilli.
+ * Le groupe biologique d'une spécialité, et s'il est substituable au comptoir
+ * (arrêté du 20 février 2025 modifié le 10 avril 2026). Les conditions propres
+ * à certaines molécules ne sont pas recopiées : la page renvoie à l'arrêté.
  *
  * @returns {null | { substance, substituable, role: 'reference'|'biosimilaire' }}
  */

@@ -45,7 +45,6 @@ describe('splitDocument', () => {
     const posologie = sections.find((section) => section.numero === '4.2');
     assert.match(posologie.texte, /75 mg par jour/);
     assert.match(posologie.texte, /Avaler avec/);
-    // Le contenu de la rubrique suivante ne doit pas déborder.
     assert.ok(!posologie.texte.includes('Ulcère'));
   });
 
@@ -120,17 +119,13 @@ describe('PARSER_VERSION', () => {
 });
 
 describe('composerDoses', () => {
-  // La BDPM compose la rubrique 2 comme un document imprimé :
-  // « Anastrozole..................... 1,00 mg ». La conduite de points a une
-  // longueur fixe, calculée pour une largeur de page ; dans un navigateur elle
-  // déborde et casse en trois lignes.
+  // Conduite de points de longueur fixe (« Anastrozole....... 1,00 mg ») : déborde dans un navigateur.
   it('sépare le nom de la dose', () => {
     const rendu = composerDoses('<p>Anastrozole.......................... 1,00 mg</p>');
     assert.match(rendu, /^<p class="dose"><span class="dose-nom">Anastrozole<\/span>/);
     assert.match(rendu, /<span class="dose-valeur">1,00 mg<\/span><\/p>$/);
   });
 
-  // Le HTML de la BDPM est indenté : la dose se trouve sur la ligne suivante.
   it('reconnaît une conduite coupée par un retour à la ligne', () => {
     const indente = '<p>\n  Anastrozole..........................\n  1,00 mg\n</p>';
     assert.match(composerDoses(indente), /dose-valeur">1,00 mg</);
@@ -162,12 +157,7 @@ describe('composerDoses', () => {
     );
   });
 
-  // Le document de l'ANSM enveloppe parfois la ligne entière — nom, points et
-  // dose — dans un seul élément. Couper au milieu laissait une balise ouverte
-  // d'un côté et une fermante de l'autre ; le navigateur réparait en clonant
-  // l'ouvrante, et les trois cases se retrouvaient chacune dans un élément
-  // intercalé, hors de portée de la feuille de style. Le nom s'écrasait sur
-  // trois lignes, le filet débordait de la page.
+  // Ligne entière dans un seul élément : couper laisserait le navigateur recoller les balises.
   it('renonce plutôt que de couper à l’intérieur d’une balise', () => {
     const enveloppe = '<p><a name="x">Sulfate de morphine ........... 5 mg</a></p>';
     assert.equal(composerDoses(enveloppe), enveloppe);
@@ -215,15 +205,10 @@ describe('composerDoses', () => {
   });
 });
 
-// Dix-huit notices échouaient à chaque passe de build-sections sur la
-// contrainte NOT NULL de `numero`, et le document entier était perdu — sans
-// que rien d'autre qu'une ligne d'erreur ne le signale.
+// `numero` est NOT NULL en base : un null fait perdre tout le document.
 describe('titre sans numéro', () => {
-  // Deux conditions pour reproduire le cas : au moins trois titres numérotés —
-  // sinon `outline` bascule sur les blocs, qui les exigent tous numérotés — et
-  // un titre sans numéro **après** le premier numéroté. Ceux qui précèdent sont
-  // retirés comme titre de document ; c'est celui du milieu qui passait, et qui
-  // faisait échouer l'insertion.
+  // Il faut au moins trois titres numérotés (sinon `outline` bascule sur les blocs) et
+  // le titre sans numéro après le premier numéroté (avant, il est retiré comme titre).
   const NOTICE = `<h3>NOTICE : INFORMATION DE L'UTILISATEUR</h3>
     <p>Veuillez lire attentivement cette notice avant de prendre ce médicament.</p>
     <h3>1. Qu'est-ce que KEYVAX et dans quels cas est-il utilisé ?</h3>

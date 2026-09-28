@@ -1,18 +1,8 @@
--- Audit des spécialités sans RCP — lecture seule.
---
--- Une fiche sans bloc Documents ne dit pas pourquoi : le lecteur ne peut pas
--- distinguer « ce médicament n'a pas de RCP publié » de « le site n'a pas su le
--- récupérer ». Avant de compenser, il faut savoir laquelle des trois causes
--- domine, parce qu'elles n'appellent pas la même réponse :
---
+-- Audit des spécialités commercialisées sans RCP, lecture seule. Trois causes :
 --   aucune ligne dans cis_documents   la BDPM ne publie rien — à énoncer
 --   une ligne, mais html et pdf vides la collecte a échoué — à réparer
 --   du contenu, mais aucune rubrique  le découpage a échoué — à rejouer
---
 -- Usage :  npm run audit-documents
---
--- Le périmètre est celui qui compte : les spécialités effectivement
--- commercialisées. Une AMM éteinte sans RCP n'est pas un défaut.
 
 \echo ''
 \echo '=== 1. Où en sont les spécialités commercialisées ? ====================='
@@ -76,10 +66,7 @@ WHERE m.code_cis = '60151544';
 \echo '=== 3. Le groupe générique offre-t-il un voisin qui a un RCP ? =========='
 \echo ''
 
--- Si la réponse est « presque toujours », l'emprunt encadré est jouable : le
--- groupe générique est l'affirmation de l'ANSM que ces produits sont
--- interchangeables à même dose et même forme. Sinon, il ne reste qu'à énoncer
--- l'absence, ce qui vaut de toute façon mieux qu'une page muette.
+-- Un voisin de groupe générique (interchangeable selon l'ANSM) pourrait prêter son RCP.
 WITH orphelines AS (
   SELECT DISTINCT m.code_cis
   FROM dbpm.cis_bdpm m
@@ -131,11 +118,7 @@ LIMIT 20;
 \echo '=== 4. Les 971 sans document : lesquelles ont vraiment un RCP à aller chercher ? ==='
 \echo ''
 
--- Deux populations très différentes se cachent dans ce chiffre. Un
--- enregistrement homéopathique ne publie aucun RCP : rien à collecter, tout à
--- énoncer. Une AMM ordinaire en a forcément un — vérifié à la main sur le CIS
--- 60151544, dont la page BDPM publie bien RCP et notice quand la base n'en a
--- aucun. C'est du travail de collecte, et il se chiffre ici.
+-- L'homéopathie ne publie pas de RCP ; une AMM ordinaire en a un, à collecter.
 WITH manquantes AS (
   SELECT m.code_cis, m.denomination_medicament, m.type_procedure_amm, m.date_amm
   FROM dbpm.cis_bdpm m
@@ -156,9 +139,7 @@ ORDER BY count(*) DESC;
 \echo '--- Et par ancienneté de l’AMM, hors homéopathie ---'
 \echo ''
 
--- Si la masse est récente, le collecteur n'a simplement jamais tourné depuis :
--- une seule passe suffit. Si elle est étalée sur vingt ans, le trou est
--- structurel et il faudra comprendre ce que la collecte laisse passer.
+-- Masse récente : collecte arrêtée ; étalée sur vingt ans : trou structurel.
 WITH manquantes AS (
   SELECT m.date_amm
   FROM dbpm.cis_bdpm m
@@ -178,9 +159,7 @@ LIMIT 15;
 \echo '--- Comparaison : la même répartition chez celles qui ONT un document ---'
 \echo ''
 
--- Le témoin. Sans lui, on ne saurait pas si « beaucoup de 2024 » veut dire
--- « la collecte s'est arrêtée en 2023 » ou simplement « il y a eu beaucoup
--- d'AMM en 2024 ».
+-- Témoin : distingue une collecte arrêtée d'une année riche en AMM.
 SELECT extract(year FROM m.date_amm)::int AS annee_amm,
        count(*) FILTER (WHERE EXISTS (SELECT 1 FROM dbpm.cis_documents d
                                       WHERE d.code_cis = m.code_cis))  AS avec_document,

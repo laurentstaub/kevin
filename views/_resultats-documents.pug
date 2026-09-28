@@ -1,37 +1,10 @@
-//- Les trouvailles, en tableau.
+//- Trouvailles en tableau : une ligne par molécule, une colonne par rubrique.
+//- Colonnes fixes pour rester apprises ; le reste va dans « Autres ». Un nom de
+//- groupe peut dépasser 1 600 caractères. Cliquer un en-tête filtre sur la
+//- rubrique : le tableau se réduit alors à la molécule et l'extrait.
 //-
-//- Une ligne par molécule, une colonne par rubrique. C'est de la donnée
-//- tabulaire, et l'écrire comme telle règle d'un coup ce qu'une grille CSS
-//- tenait par la chance : les numéros posés au fil de la ligne ne se
-//- comparaient pas d'une ligne à l'autre, puis, alignés en grille, ils se
-//- décalaient dès qu'un nom de groupe était long — `space-between` cesse
-//- d'aligner à droite quand le contenu déborde, et un nom de groupe n'a pas
-//- de longueur bornée : médiane 28 caractères, mais 442 au 99ᵉ centile et
-//- 1 668 au pire, les vaccins pneumococciques nommant chacun de leurs
-//- sérotypes.
-//-
-//- Les colonnes sont fixes, et non l'union de ce que la recherche a trouvé :
-//- des colonnes qui changent de place d'une requête à l'autre ne s'apprennent
-//- jamais. Ce qui tombe hors des huit va dans « Autres », qui les nomme sans
-//- leur réserver de place.
-//-
-//- Une ligne par molécule, rien de plus. Ce qu'une rubrique dit se lit au
-//- survol de son point : la ligne d'extrait qui suivait chaque molécule
-//- triplait la hauteur du tableau pour une phrase qu'on ne lit qu'une fois
-//- sur dix, et c'était la moins utile — celle du meilleur score, souvent un
-//- 5.2 de pharmacocinétique.
-//-
-//- L'en-tête est le filtre.
-//-
-//- Une rangée d'onglets listait ces huit mêmes rubriques deux lignes plus
-//- haut : la même liste écrite deux fois sur le même écran, dont l'une ne
-//- portait aucune donnée. On restreint une colonne en cliquant sur la
-//- colonne — et dès qu'une rubrique est choisie, les colonnes n'ont plus
-//- d'objet, puisque toutes les trouvailles sont dans celle-là. Le tableau se
-//- réduit alors à ce qui répond : la molécule et l'extrait.
-//-
-//- @param {object}  d         sortie de chercherDansDocuments
-//- @param {string}  q         la requête, pour le lien « tout voir » et les filtres
+//- @param {object}  recherche sortie de chercherDansDocuments
+//- @param {string}  requete   la requête, pour le lien « tout voir » et les filtres
 //- @param {boolean} resume    vue courte, au sein de la page de résultats
 //- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
 //- @param {string}  rubrique  la rubrique filtrée, ou rien
@@ -39,8 +12,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
   - const cles = colonnes.map((colonne) => colonne[0])
   - const colonnesVues = rubrique ? [] : colonnes
 
-  //- La légende ne paraît que s'il y a quelque chose à distinguer : pour un
-  //- mot seul, ou une locution entre guillemets, tous les points sont pleins.
+  //- Légende inutile pour un mot seul ou une locution entre guillemets (tout est plein).
   if recherche.exacte && !rubrique
     p.legende
       span.point.point-legende(aria-hidden="true")
@@ -59,9 +31,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
         col.col-autres
     thead
       tr
-        //- La rubrique active se disait ici ; elle est passée dans la ligne
-        //- d'état, avec la requête et le décompte, pour que l'état de la
-        //- recherche se lise d'un seul endroit.
+        //- La rubrique active est annoncée dans la ligne d'état, pas ici.
         th.th-molecule(scope="col") Molécule
         each colonne in colonnesVues
           th.th-rubrique(scope="col")
@@ -77,8 +47,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
           .filter((rub) => rub.type !== 'notice')
           .map((rub) => [rub.numero, rub]));
         const autres = rubriques.filter((rub) => rub.type === 'notice' || !cles.includes(rub.numero));
-        // Les notices se nomment « N2 » : la rubrique 2 d'une notice (avant de
-        // prendre) n'est pas la rubrique 2 d'un RCP (la composition).
+        // Préfixe « N » : la rubrique 2 d'une notice n'est pas celle d'un RCP.
         const court = (rub) => (rub.type === 'notice' ? 'N' : '') + rub.numero;
         const long = (rub) => (rub.type === 'notice' ? 'Notice · ' : '') + rub.numero + ' ' + rub.libelle
           + (recherche.exacte && !rub.exact ? ' — mots séparés' : '');
@@ -86,10 +55,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
       tbody.trouvaille
         tr
           th.cellule-molecule(scope="row")
-            //- Deux spécialités sur treize mille six cents n'ont pas de
-            //- composition enregistrée : leur dénomination tient lieu de titre,
-            //- et mène à leur fiche plutôt qu'à une recherche par principe
-            //- actif qui ne rendrait rien.
+            //- Sans composition enregistrée : la dénomination mène à la fiche.
             if trouvaille.sansMolecule
               a.trouvaille-molecule(href=`/product/${trouvaille.code_cis}#${trouvaille.ancre}`)= trouvaille.molecule
             else
@@ -97,17 +63,12 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                 href=lien(etat, { mode: 'nom', requete: trouvaille.molecule, filtre: 'active' })
                 title=trouvaille.molecule
               )= trouvaille.molecule
-            //- Combien de spécialités le groupe recouvre, sur la même ligne :
-            //- une seconde ligne pour un nombre doublait la hauteur du tableau.
+            //- Nombre de spécialités du groupe, sur la même ligne.
             if trouvaille.specialites > 1
               span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
 
-          //- Un point par rubrique, et non plus son numéro : l'en-tête le dit
-          //- déjà, et le répéter dans chaque case faisait un tableau de
-          //- chiffres où rien ne ressortait. Plein, l'expression y figure
-          //- telle quelle ; creux, les mots y sont mais dispersés.
-          //- La phrase paraît au survol (extraits.js) ; sans JavaScript, le
-          //- point reste un lien vers la rubrique, et `title` la nomme.
+          //- Point plein : expression telle quelle ; creux : mots dispersés.
+          //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.
           each colonne in colonnesVues
             td.cellule-rubrique
               if par[colonne[0]]
@@ -135,13 +96,11 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                   data-position=rub.ancre.split('-')[1]
                 )= court(rub)
 
-        //- Filtrée sur une rubrique, la page n'a plus de colonnes : la phrase
-        //- devient la réponse, et se montre sans qu'on la demande.
+        //- Filtré sur une rubrique, la phrase s'affiche d'office.
         if rubrique && trouvaille.extrait
           tr.ligne-phrase
             td
-              //- La phrase vient de la base : ts_headline n'y ajoute que
-              //- <mark> et l'échappement, le reste est le texte du document.
+              //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
               p.trouvaille-extrait!= trouvaille.extrait
               p.preuve-source
                 a(href=`/product/${trouvaille.code_cis}#${trouvaille.ancre}`)= trouvaille.denomination
@@ -151,8 +110,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
       a(href=lien(etat, { mode: 'documents' }))
         | Voir les #{recherche.borne ? 'plus de ' : ''}#{recherche.total.toLocaleString('fr-FR')} rubriques et filtrer →
   else if recherche.borne
-    //- Un décompte plafonné doit se dire plafonné : annoncer « 3 000 » comme
-    //- un total ferait passer une borne pour une mesure.
+    //- Un décompte plafonné doit se dire plafonné.
     p.section-meta
       | Recherche arrêtée aux #{recherche.total.toLocaleString('fr-FR')} premières rubriques trouvées.
       |  Affinez la requête ou choisissez une rubrique pour un décompte exact.

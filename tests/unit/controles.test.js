@@ -4,9 +4,7 @@ import { couverture, mediane, falaise, plancher, age } from '../../src/controles
 
 const cohorte = (periode, avec, sans) => ({ periode, avec, sans });
 
-// Les chiffres réels de la base, en août 2026. La collecte des documents s'est
-// arrêtée à la charnière 2023-2024 ; le contrôle doit le dire sans qu'on lui
-// souffle la date.
+// Chiffres réels d'août 2026 : la collecte s'est arrêtée fin 2023, date non fournie au contrôle.
 const DOCUMENTS = [
   cohorte(2026, 0, 4), cohorte(2025, 0, 228), cohorte(2024, 65, 327), cohorte(2023, 206, 136),
   cohorte(2022, 309, 67), cohorte(2021, 392, 30), cohorte(2020, 392, 36), cohorte(2019, 445, 19),
@@ -23,16 +21,12 @@ describe('falaise', () => {
     assert.equal(verdict.derniereSaine, 2022);
   });
 
-  // Le chiffre qui rend le contrôle utile : il nomme le moment de l'arrêt sans
-  // qu'on ait eu à lui dire quand la collecte aurait dû tourner.
   it('établit la norme sur les anciennes, non sur l’ensemble', () => {
     const verdict = falaise(DOCUMENTS);
     assert.ok(verdict.reference > 0.95, `norme ${verdict.reference} — les années cassées ne doivent pas l’abaisser`);
   });
 
-  // Un plancher global serait resté vert pendant que 2025 était à zéro : vingt
-  // années pleines portent la moyenne à 84,6 %. C'est le cœur de l'affaire —
-  // ce n'est pas le niveau qui alerte, c'est l'écart entre les générations.
+  // Les années pleines tiennent la moyenne haute même avec 2025 à zéro : c'est l'écart qui alerte.
   it('voit ce qu’un seuil global ne voit pas', () => {
     const total = DOCUMENTS.reduce((somme, cohorte) => ({ avec: somme.avec + cohorte.avec, sans: somme.sans + cohorte.sans }),
       { avec: 0, sans: 0 });
@@ -41,7 +35,7 @@ describe('falaise', () => {
   });
 
   it('ignore une cohorte trop petite pour prouver quoi que ce soit', () => {
-    // 2026 n'a que quatre spécialités : zéro document n'y démontre rien.
+    // 2026 : quatre spécialités seulement.
     assert.ok(!falaise(DOCUMENTS).ruptures.some((rupture) => rupture.periode === 2026));
     assert.equal(falaise([...DOCUMENTS], { volumeMin: 2 }).ruptures[0].periode, 2026);
   });
@@ -52,7 +46,6 @@ describe('falaise', () => {
     assert.equal(falaise(saines).derniereSaine, 2026);
   });
 
-  // Sans norme, un verdict vert serait un mensonge : on ne sait pas juger.
   it('se déclare incapable plutôt que rassurant', () => {
     assert.equal(falaise([]).etat, 'indeterminable');
     assert.equal(falaise([cohorte(2025, 100, 100), cohorte(2024, 100, 100)]).etat, 'indeterminable');
@@ -90,8 +83,7 @@ describe('age', () => {
     assert.equal(age('2026-08-02T00:00:00Z', maintenant), 10);
   });
 
-  // Une source sans date ne peut pas être jugée périmée — c'est un défaut en
-  // soi, et le contrôle doit le distinguer d'une source fraîche.
+  // Une source sans date doit se distinguer d'une source fraîche.
   it('rend null sur une date absente', () => {
     assert.equal(age(null, maintenant), null);
   });

@@ -10,27 +10,10 @@ import {
 } from './groupes.js';
 
 /**
- * Recherche de médicaments — UNE seule requête SQL, quel que soit le volume.
- *
- * **L'unité de résultat est le produit, pas le code CIS.** Un CIS est un
- * triplet marque × dosage × forme : DOLIPRANE en compte dix-sept, DAFALGAN
- * quatorze. En rendre la liste, c'est remplir l'écran d'un seul médicament et
- * cacher tous les autres — et aucun classement n'y peut rien, puisque ces
- * dix-sept lignes sont réellement d'égale pertinence. Le regroupement est fait
- * en base, avant le LIMIT : regrouper après rendrait un nombre de produits
- * imprévisible. Voir `src/groupes.js` pour la clé et l'ordre de pertinence.
- *
- * **Chaque famille a son propre quota et son propre classement.** Un quota
- * commun laissait la dénomination affamer le principe actif : soixante
- * spécialités portent « paracétamol » dans leur nom, elles consommaient tous
- * les créneaux et DOLIPRANE n'apparaissait jamais. Et un rang calculé sur la
- * dénomination pour *toutes* les lignes plaçait en tête, dans les trouvailles
- * par substance, précisément les produits que la recherche par nom avait déjà
- * rendus — l'inverse du service attendu. Une ligne trouvée par substance est
- * donc classée sur la substance.
- *
- * `limit` s'entend **par famille** : « paracétamol » peut rendre 60 produits
- * par dénomination et 60 par principe actif.
+ * Recherche de médicaments en une seule requête SQL. Unité de résultat : le
+ * produit (voir `src/groupes.js`), regroupé en base avant le LIMIT.
+ * Chaque famille a son quota et son classement : un quota commun laissait les
+ * « PARACETAMOL … » évincer DOLIPRANE. `limit` s'entend par famille.
  *
  * @param {import('pg').Pool} pool
  * @param {{ terms: string[], normalized: string }} query - sortie de parseQuery()
@@ -44,8 +27,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   if (terms.length === 0) return empty;
 
   const limit = options.limit ?? config.search.limit;
-  // On retient large avant de regrouper : la borne porte sur des produits, la
-  // sélection interne sur des CIS, et il en faut plusieurs pour un produit.
+  // Marge : la borne porte sur des produits, la sélection interne sur des CIS.
   const innerLimit = Math.max(limit * 12, 400);
 
   const params = terms.map((term) => `%${deaccent(term)}%`);
@@ -88,11 +70,8 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   }
 
   if (wantActive) {
-    // Sur l'onglet « Tous », cette famille répond à une question précise : quels
-    // produits contiennent la substance *sans* la porter dans leur nom. Ceux qui
-    // la portent sont déjà rendus par la dénomination, les remonter ici ferait
-    // doublon — et les écarter avant le LIMIT est ce qui garantit que DOLIPRANE
-    // ne se fait pas évincer par deux cents PARACETAMOL ARROW.
+    // Sur « Tous », exclut les produits qui portent déjà le terme dans leur nom :
+    // sinon doublon, et les PARACETAMOL ARROW évinceraient DOLIPRANE avant le LIMIT.
     const horsDenomination = wantBrand
       ? `AND NOT EXISTS (
            SELECT 1 FROM dbpm.cis_bdpm mb
@@ -114,20 +93,10 @@ export async function searchMedications(pool, query, filter = 'all', options = {
     unions.push(`SELECT code_cis, 'active'::text AS match_type, rang FROM subst_hits`);
   }
 
-  // Le terme désigne-t-il une molécule ? Si oui, la question posée n'est plus
-  // « quels produits s'appellent ainsi » mais « quels produits en contiennent »,
-  // et séparer selon que le mot figure ou non dans le nom n'a plus de sens :
-  // c'est un détail de récupération, pas une distinction que le lecteur pose.
-  // Les deux familles sont alors fondues en une seule liste classée.
-  //
-  // La reconnaissance se fait sur le **préfixe** et non sur l'égalité : on tape
-  // « oxaz » avant « oxazépam », et la page ne peut pas changer de forme au
-  // septième caractère. Un préfixe reste exigeant — « oxaz » ouvre OXAZEPAM,
-  // mais ne reconnaît pas SULFAMÉTHOXAZOLE, qui ne fait que le contenir.
-  // La substance reconnue est rendue avec le résultat : le titre de la liste
-  // nomme la molécule (« contenant PARACÉTAMOL ») et non ce qui a été tapé,
-  // qui n'en est souvent qu'un début. La plus courte des substances candidates est
-  // la molécule de base — « OXAZEPAM » plutôt qu'« OXAZEPAM SODIQUE ».
+  // Si le terme est le préfixe d'une substance, les deux familles fusionnent en
+  // une liste. Préfixe plutôt qu'égalité : la page ne doit pas changer de forme
+  // en cours de frappe. La candidate la plus courte nomme la molécule de base
+  // (« OXAZEPAM », pas « OXAZEPAM SODIQUE ») affichée dans le titre.
   ctes.unshift(`
       dci AS (
         SELECT denomination_substance AS substance
@@ -238,8 +207,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   const dci = rows[0]?.dci === true;
   const substance = dci ? (rows[0]?.substance_dci ?? null) : null;
 
-  // L'étiquetage se calcule sur la liste telle qu'elle sera affichée : c'est la
-  // présence d'un homonyme sous les yeux du lecteur qui rend la précision utile.
+  // Par liste affichée : l'homonymie ne compte qu'au sein d'une même liste.
   const produits = dci
     ? etiqueter(rows)
     : [
@@ -248,9 +216,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
       ];
 
   return {
-    // Vrai quand le terme désigne une molécule : la page n'affiche alors qu'une
-    // liste, et `produits` en porte l'ordre. `substance` nomme la molécule
-    // reconnue — c'est elle que le titre annonce, pas ce qui a été tapé.
+    // Vrai si le terme désigne une molécule : une seule liste, ordonnée par `produits`.
     dci,
     substance,
     produits,
@@ -262,14 +228,8 @@ export async function searchMedications(pool, query, filter = 'all', options = {
 
 /**
  * Suggestions d'autocomplétion : la même requête, bornée plus court.
- *
- * Le regroupement se fait en base — il n'y a plus de dédoublonnage à refaire
- * ici. Huit produits, et non huit dosages du même produit.
- *
- * La liste rendue est `produits`, dans son ordre. Reconstituer les deux
- * familles pour les concaténer remettrait les génériques homonymes de la
- * molécule devant la marque : c'est ce qui affichait SERESTA en dernier sur
- * « oxazépam », après ses trois génériques.
+ * Rend `produits` dans son ordre : concaténer les deux familles remettrait les
+ * génériques devant la marque (SERESTA derrière ses génériques).
  */
 export async function suggest(pool, query) {
   const limite = config.search.suggestLimit;

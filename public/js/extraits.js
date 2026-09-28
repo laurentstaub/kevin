@@ -1,21 +1,8 @@
 /**
- * La phrase d'une rubrique, au survol de son point.
- *
- * Le tableau dit qu'une molécule mentionne l'expression en 4.4, en 4.5 et en
- * 4.8 ; il n'en montrait qu'un extrait, celui de la meilleure occurrence, si
- * bien qu'on ne savait pas à quelle rubrique il se rattachait sans lire la
- * ligne de provenance. Survoler un numéro montre maintenant sa phrase.
- *
- * L'extrait n'est pas rendu avec la page : `ts_headline` coûte 21 ms pour
- * cinquante extraits et 168 ms pour deux cent cinquante, et presque aucun
- * aperçu n'est survolé. Il est donc demandé au serveur, une fois, puis gardé.
- *
- * Sans JavaScript il ne se passe rien de fâcheux : le point reste un lien
- * vers sa rubrique, et son `title` la nomme. Avec, le `title` est retiré —
- * le navigateur l'afficherait une seconde plus tard par-dessus l'aperçu.
- *
- * Au toucher, il n'y a pas de survol : le premier appui montre la phrase, le
- * second suit le lien.
+ * Aperçu de la phrase d'une rubrique au survol de son numéro.
+ * Chargé à la demande puis mis en cache : `ts_headline` est trop coûteux
+ * pour être rendu avec la page. Le `title` est retiré pour ne pas recouvrir
+ * l'aperçu. Au toucher : premier appui = aperçu, second = lien.
  */
 (function () {
   const table = document.querySelector('.trouvailles');
@@ -49,8 +36,7 @@
     bulleCourante.style.visibility = 'hidden';
     bulleCourante.hidden = false;
     const hauteur = bulleCourante.getBoundingClientRect().height;
-    // Au-dessus si la place y est, sinon dessous : un aperçu qui sort de
-    // l'écran par le haut ne se lit pas davantage qu'un aperçu absent.
+    // Au-dessus si la place y est, sinon dessous.
     const dessus = rect.top > hauteur + 16;
     bulleCourante.style.top = (window.scrollY + (dessus ? rect.top - hauteur - 8 : rect.bottom + 8)) + 'px';
     const largeur = bulleCourante.getBoundingClientRect().width;
@@ -68,8 +54,7 @@
     tete.textContent = (donnee.type === 'notice' ? 'Notice · ' : '') + donnee.numero + ' ' + donnee.libelle;
     const corps = document.createElement('p');
     corps.className = 'apercu-texte';
-    // La phrase vient de ts_headline : seuls <mark> et l'échappement de
-    // Postgres s'y trouvent, le reste est le texte du document.
+    // HTML de ts_headline : seulement <mark> et du texte échappé par Postgres.
     corps.innerHTML = donnee.extrait;
     const source = document.createElement('p');
     source.className = 'apercu-source';
@@ -107,7 +92,7 @@
     const cible = e.target.closest(CIBLE);
     if (!cible) return;
     clearTimeout(attente);
-    // Un délai court : sans lui, traverser la ligne déclencherait huit requêtes.
+    // Délai : évite une requête par point traversé.
     attente = setTimeout(() => { demander(cible); }, 120);
   }
 

@@ -15,8 +15,6 @@ describe('reparer', () => {
     assert.equal(reparer('coeur â€” et poumon'), 'coeur — et poumon');
   });
 
-  // Le vrai risque d'un tel script n'est pas de rater une ligne, c'est
-  // d'abîmer celles qui vont bien.
   it('laisse intact un texte déjà correct', () => {
     for (const sain of [
       'Comprimé pelliculé sécable',
@@ -41,8 +39,7 @@ describe('reparer', () => {
   });
 
   it('renonce plutôt que de produire du charabia', () => {
-    // « Ã » suivi d'un caractère hors plage : la séquence d'octets ne serait
-    // pas de l'UTF-8 valide, on ne réécrit pas.
+    // « Ã » suivi d'un caractère hors plage : pas d'UTF-8 valide.
     assert.equal(reparer('Ãge'), null);
   });
 });

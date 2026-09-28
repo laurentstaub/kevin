@@ -1,16 +1,10 @@
 /**
- * test_RCP_info.mjs — banc d'essai du découpage des RCP et des notices.
- *
- * Tous les contrôles au même endroit : sur des cas construits, et sur les
- * documents réels s'ils sont accessibles.
- *
+ * Banc d'essai du découpage des RCP et notices, sur cas construits et documents réels. Lecture seule.
  *   node test_RCP_info.mjs                      # cas construits seulement
  *   node test_RCP_info.mjs --base               # + mesure sur la base
  *   node test_RCP_info.mjs --dump <fichier.sql> # + mesure sur un dump pg_dump
  *   node test_RCP_info.mjs --bilan              # + ce qui est déjà en base
  *   node test_RCP_info.mjs --cis 60002283       # inspecter un document précis
- *
- * Ne modifie rien : lecture seule de bout en bout.
  */
 
 import { createReadStream } from 'node:fs';
@@ -180,10 +174,8 @@ titre('Contrôle qualité');
 // ═══════════════════════════════════════════════ documents en PDF
 
 /**
- * Les spécialités enregistrées à l'EMA n'ont pas de HTML : la BDPM sert un PDF
- * unique regroupant les annexes de la décision européenne. Le banc reproduit ce
- * que rend `pdftotext -layout` : pages séparées par un saut de page, en-tête
- * répété, numéro de page isolé, tableau aligné à l'espace.
+ * Imite la sortie de `pdftotext -layout` d'un PDF EMA : sauts de page, en-tête répété,
+ * numéro de page isolé, tableau aligné à l'espace.
  */
 const PDF_EMA = [
   [
@@ -355,8 +347,7 @@ titre('PDF — spécialité à plusieurs formes');
     'Infection a virus X.', '',
     "4.2  Posologie et mode d'administration", '',
     texte, '',
-    // Ligne de corps coupée en début de ligne par la mise en page : sans
-    // garde-fou elle passe pour la rubrique 12.
+    // Ligne de corps commençant par un nombre : ne doit pas passer pour la rubrique 12.
     '12 ans presentant une forme severe de la maladie.', '',
     '4.3  Contre-indications', '',
     'Hypersensibilite.', '',
@@ -404,8 +395,7 @@ titre('PDF — spécialité à plusieurs formes');
 
 titre('PDF — sommaire de notice');
 {
-  // Structure réelle d'une notice EMA, relevée sur Keppra : le « Que contient
-  // cette notice ? » énumère les six rubriques avant le corps.
+  // Le sommaire « Que contient cette notice ? » énumère les six rubriques avant le corps.
   const rubrique = (numero, titre, corps) => `${numero}.    ${titre}\n\n${corps}\n`;
   const intitules = [
     "Qu'est-ce que Keppra et dans quels cas est-il utilise",
@@ -444,8 +434,7 @@ titre('PDF — sommaire de notice');
     `${resultat.sections.at(-1).texte.length} signes`,
   );
 
-  // Une procédure numérotée dans le corps a la forme d'un plan (relevé sur
-  // ReFacto AF : six étapes de reconstitution avant les rubriques 4 à 6).
+  // Une procédure numérotée dans le corps a la forme d'un plan.
   const avecProcedure = [
     'Notice : information de l’utilisateur', '',
     "1.   Qu'est-ce que REFACTO et dans quel cas est-il utilise", '',
@@ -487,8 +476,7 @@ titre('PDF — sommaire de notice');
 
 titre('PDF — rédactions réelles du plan de notice');
 {
-  // Relevé sur les 851 PDF en cache : le modèle QRD est suivi, sa rédaction
-  // non. Chaque variante ci-dessous a coûté une rubrique perdue.
+  // Variantes réelles de rédaction du modèle QRD.
   const attendus = [
     ['1', "Qu'est-ce que Cyanokit et dans quel cas est-il utilisé ?"],
     ['1', "Qu'est ce Naglazyme et dans quel cas est-il utilisé"], // sans tiret
@@ -514,7 +502,6 @@ titre('PDF — rédactions réelles du plan de notice');
     rates.map(([numero, libelle]) => `${numero} — ${libelle}`).join('\n      '),
   );
 
-  // Les étapes d'une procédure ne doivent jamais passer pour un plan.
   const procedure = [
     ['1', 'Avant de vous coucher, lavez vos mains et la zone à traiter'],
     ['2', 'Ouvrez un nouveau sachet et prenez de la crème sur le bout des doigts.'],
@@ -628,7 +615,6 @@ if (opt('base')) {
   mesurer('base locale', await depuisBase(MAX));
 }
 
-// Bilan de ce qui est réellement en base, HTML et PDF confondus.
 if (opt('bilan')) {
   const { createPool } = await import('./src/db.js');
   const pool = createPool({ statement_timeout: 0 });
@@ -653,8 +639,7 @@ if (opt('bilan')) {
   }
 }
 
-// Inspection d'un document précis. Ce qui est en base fait foi ; si rien n'y est
-// encore, on redécoupe le HTML d'origine pour comparer.
+// La base fait foi ; à défaut, redécoupe le HTML d'origine.
 if (typeof cis === 'string') {
   const { createPool } = await import('./src/db.js');
   const pool = createPool({ statement_timeout: 0 });

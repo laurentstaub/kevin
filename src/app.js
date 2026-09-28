@@ -8,12 +8,8 @@ import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
 
 /**
- * Empreinte des fichiers servis : la date du plus récent, en base 36.
- *
- * Les feuilles et scripts sont mis en cache une heure par le navigateur, qui
- * ne revient donc pas les demander. Sans marque de version dans l'URL, une
- * modification de mise en page reste invisible jusqu'à l'expiration — on croit
- * à un défaut de CSS alors que c'est une feuille périmée.
+ * Empreinte des fichiers servis (date du plus récent, en base 36), ajoutée aux
+ * URL pour contourner le cache navigateur d'une heure après une modification.
  */
 function empreinteAssets(racine) {
   let recent = 0;
@@ -48,34 +44,21 @@ export function createApp(pool) {
   const publics = path.join(ROOT, 'public');
   const production = config.env === 'production';
 
-  // `lien` est une aide de gabarit, pas une donnée de route : la même fonction
-  // pure à chaque rendu. Passée route par route, elle finit par manquer à
-  // celle qu'on a oubliée — c'est arrivé à la page d'accueil, et les tests de
-  // rendu ne pouvaient pas le voir puisqu'ils la fournissaient eux-mêmes.
-  // Posée ici, aucune route ne peut plus l'omettre.
+  // Aide de gabarit posée globalement pour qu'aucune route ne puisse l'omettre.
   app.locals.lien = lien;
 
   if (production) {
     app.locals.v = empreinteAssets(publics);
   } else {
-    // En développement, l'empreinte se recalcule à chaque rendu.
-    //
-    // Calculée une seule fois au démarrage, elle ne bougeait pas quand on
-    // modifiait une feuille pendant que le serveur tournait : l'URL restait la
-    // même, le navigateur gardait sa copie une heure, et la correction semblait
-    // sans effet — on la refaisait, on la cherchait ailleurs, alors qu'elle
-    // était déjà en place. C'est précisément ce que l'empreinte devait éviter.
-    //
-    // Le parcours ne coûte rien : une dizaine de fichiers. Et `node --watch` ne
-    // redémarre pas sur du CSS, qui n'est jamais importé par le serveur.
+    // En développement, recalcul à chaque rendu : `node --watch` ne redémarre
+    // pas sur du CSS. Le parcours est bon marché (une dizaine de fichiers).
     app.use((req, res, next) => {
       res.locals.v = empreinteAssets(publics);
       next();
     });
   }
 
-  // Pas de cache en développement : l'empreinte suffit en production, mais elle
-  // ne protège de rien si le navigateur ne revient pas demander le fichier.
+  // Pas de cache en développement, sinon le navigateur ne redemande pas le fichier.
   app.use(express.static(publics, { maxAge: production ? '1h' : 0 }));
 
   app.use('/api', apiRoutes(pool));

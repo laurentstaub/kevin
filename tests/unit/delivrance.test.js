@@ -17,10 +17,7 @@ const courts = (classement) => classement.resume.map((mention) => mention.court)
 const bruts = (groupe) => groupe.conditions.map((condition) => condition.brut);
 
 describe('classer', () => {
-  // Écrit en toutes lettres, le résumé occupait deux lignes dans l'en-tête du
-  // bloc. Abrégé, il tient sur une : c'est la seule raison d'être des mentions.
-  // Ce qui conditionne le geste d'abord, ce qui le décrit ensuite : on lit la
-  // réponse avant d'en lire les modalités.
+  // Mentions abrégées pour tenir sur une ligne ; ce qui conditionne la délivrance avant les modalités.
   it('rend la réponse du comptoir en mentions courtes, la plus lourde d’abord', () => {
     assert.deepEqual(courts(classer(MORPHINE)), [
       'Ordo sécurisée',
@@ -51,8 +48,7 @@ describe('classer', () => {
   });
 
   it('suit l’ordre de la portée, pas celui de la base', () => {
-    // La requête trie par libellé : l'ordre d'arrivée est arbitraire et ne doit
-    // jamais transparaître dans la réponse.
+    // La requête trie par libellé : ordre d'arrivée arbitraire.
     const desordre = classer([...MORPHINE].sort());
     assert.deepEqual(courts(desordre), courts(classer(MORPHINE)));
   });
@@ -68,9 +64,7 @@ describe('classer', () => {
 
   // ---- Ce qui empêche de délivrer ----------------------------------------
 
-  // Le motif précédent, « réservé à l'usage », attrapait « réservé à l'usage
-  // professionnel DENTAIRE » et l'affichait « Usage hospitalier ». Faux, et
-  // faux sur la mention la plus lourde de conséquence du bloc.
+  // « réservé à l'usage professionnel DENTAIRE » n'est pas un usage hospitalier.
   it('ne confond pas l’usage hospitalier et l’usage professionnel', () => {
     assert.deepEqual(courts(classer(["réservé à l'usage HOSPITALIER"])), ['Hôpital seulement']);
     assert.deepEqual(courts(classer(["réservé à l'usage professionnel DENTAIRE"])), ['Usage professionnel']);
@@ -81,9 +75,7 @@ describe('classer', () => {
     assert.equal(classer(['liste I']).bloque, false);
   });
 
-  // « Prescription hospitalière » ne veut pas dire « délivrance hospitalière » :
-  // l'ordonnance vient de l'hôpital, la boîte se délivre en ville. Les
-  // confondre, c'est refuser à tort.
+  // Prescrite à l'hôpital, délivrée en ville.
   it('ne bloque pas sur une prescription hospitalière', () => {
     const classement = classer(['prescription hospitalière']);
     assert.equal(classement.bloque, false);
@@ -111,8 +103,7 @@ describe('classer', () => {
       'Prescription limitée à 12 semaines');
   });
 
-  // Le vrai risque : une spécialité sans condition ressemble à une spécialité
-  // dont la lecture a échoué. Le vide doit être un vide net.
+  // Ne doit pas ressembler à une lecture échouée.
   it('rend un classement vide sans condition', () => {
     for (const rien of [[], null, undefined, ['', '   ']]) {
       const classement = classer(rien);
@@ -130,9 +121,7 @@ describe('classer', () => {
 });
 
 describe('conditions non reconnues', () => {
-  // Sur une donnée réglementaire, escamoter ce qu'on n'a pas su ranger serait
-  // pire que de l'afficher brut : le lecteur perdrait l'information sans le
-  // savoir. Les 163 libellés de la base évoluent, les règles suivront.
+  // Donnée réglementaire : mieux vaut l'afficher brute que la perdre sans le dire.
   it('sortent verbatim plutôt que d’être perdues', () => {
     const classement = classer(['condition inédite de la BDPM 2027']);
     const autres = classement.groupes.find((groupe) => groupe.cle === 'autres');
@@ -152,8 +141,7 @@ describe('conditions non reconnues', () => {
 });
 
 describe('liens Meddispar', () => {
-  // Meddispar est édité par l'Ordre et n'est pas en accès ouvert : on renvoie
-  // vers la rubrique, on ne recopie pas la conduite à tenir.
+  // Meddispar n'est pas en accès ouvert : lien vers la rubrique, sans recopie.
   it('accompagnent le classement stupéfiant', () => {
     const liens = classer(MORPHINE).liens;
     assert.equal(liens.length, 1);
@@ -188,8 +176,7 @@ describe('presenter', () => {
       + presente.segments.map((segment) => (segment.fort ? `**${segment.texte}**` : segment.texte)).join('');
   };
 
-  // La source porte sa structure dans la ponctuation : le deux-points sépare
-  // la population de la condition, et aucun autre libellé n'en contient.
+  // Le deux-points sépare population et condition ; aucun autre libellé n'en contient.
   it('détache la population de la condition', () => {
     assert.equal(
       rendu('pour adolescents de sexe masculin et hommes susceptibles de procréer : prescription initiale réservée à certains spécialistes'),
@@ -197,8 +184,7 @@ describe('presenter', () => {
     );
   });
 
-  // Les capitales de la BDPM ne sont pas une emphase mais un repérage : c'est
-  // ainsi qu'elle isole la discipline dans une phrase d'un seul tenant.
+  // La BDPM isole la discipline par des capitales.
   it('rend lisible la discipline criée', () => {
     assert.equal(
       rendu('prescription réservée aux spécialistes et services NEUROLOGIE'),
@@ -206,9 +192,7 @@ describe('presenter', () => {
     );
   });
 
-  // Une locution désigne une seule spécialité. Traitée mot à mot, elle sortait
-  // en « Maladies Infectieuses ET Tropicales » — trois emphases pour une
-  // notion, et un « ET » resté crié parce qu'il est trop court pour être vu.
+  // Sinon « Maladies Infectieuses ET Tropicales » : trois emphases, et « ET » resté en capitales.
   it('tient une locution entière pour une seule notion', () => {
     assert.equal(
       rendu('prescription réservée aux spécialistes en MALADIES INFECTIEUSES ET TROPICALES'),
@@ -220,8 +204,7 @@ describe('presenter', () => {
     );
   });
 
-  // Un sigle mis en bas de casse cesse d'être un sigle. Relevé sur les 164
-  // libellés : trois seulement, la liste est close.
+  // Liste close : trois sigles dans la base.
   it('laisse les sigles en capitales', () => {
     assert.equal(rendu('délivrance effectuée par un CSAPA'), 'Délivrance effectuée par un CSAPA');
     assert.match(rendu("prescription et délivrance subordonnées à l'obtention du résultat du dépistage d'un déficit en DPD"), /DPD$/);
@@ -234,23 +217,21 @@ describe('presenter', () => {
 });
 
 describe('pourcentage', () => {
-  // Ce que la base rend vraiment : node-postgres sort un numeric en chaîne.
+  // node-postgres rend un numeric en chaîne.
   it('rend le taux avec son signe et sans ses décimales mortes', () => {
     assert.equal(pourcentage('30.00'), '30\u00A0%');
     assert.equal(pourcentage('65.00'), '65\u00A0%');
     assert.equal(pourcentage(100), '100\u00A0%');
   });
 
-  // Six spécialités sur six cent soixante-douze portent le texte sans le taux :
-  // l'absence est un cas normal, pas un « NaN\u00A0% » dans l'en-tête du bloc.
+  // Cas réel : texte sans taux, qui ne doit pas donner « NaN\u00A0% ».
   it('ne rend rien quand le taux manque', () => {
     for (const vide of [null, undefined, '', 'non renseigné']) {
       assert.equal(pourcentage(vide), null);
     }
   });
 
-  // La BDPM n'écrit que 15, 30, 65 et 100, mais rien dans le schéma ne
-  // l'impose : une décimale doit sortir à la française, pas en point anglais.
+  // Le schéma n'impose pas les seuls taux entiers de la BDPM.
   it('garde une décimale réelle, à la virgule', () => {
     assert.equal(pourcentage('62.50'), '62,50\u00A0%');
   });

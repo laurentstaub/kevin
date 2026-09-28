@@ -143,8 +143,7 @@ describe('rubriques ouvertes', () => {
   });
 
   it('ne confond pas socle et partie clinique', () => {
-    // « 1 » et « 6.1 » sont du socle — un RCP complet les a toujours — mais
-    // personne ne vient les lire devant un patient.
+    // « 1 » et « 6.1 » sont du socle, sans intérêt clinique.
     assert.equal(par('1').essentielle, true);
     assert.equal(par('1').clinique, false);
   });
@@ -174,8 +173,7 @@ describe('withSections', () => {
     assert.equal(fusion[0].anchor, 'doc-rcp');
   });
 
-  // Les spécialités centralisées n'ont qu'une ligne « rcp_notice » en base,
-  // alors que le découpage du PDF en produit deux : un RCP et une notice.
+  // Une ligne « rcp_notice » en base, deux documents après découpage du PDF.
   describe('spécialité centralisée', () => {
     const porteur = [
       {

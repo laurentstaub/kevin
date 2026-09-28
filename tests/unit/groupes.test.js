@@ -11,9 +11,7 @@ describe('etiqueter', () => {
   });
 
   it('précise le titulaire quand deux produits partagent la racine', () => {
-    // Les neuf « GLUCOSE 10 % <laboratoire> » : le laboratoire est écrit après
-    // le dosage, il disparaît donc de la racine. Sans lui, six lignes
-    // identiques.
+    // Laboratoire écrit après le dosage (« GLUCOSE 10 % <labo> ») : absent de la racine.
     const rendus = etiqueter([
       { racine: 'GLUCOSE', titulaires: 'BAXTER' },
       { racine: 'GLUCOSE', titulaires: 'AGUETTANT' },

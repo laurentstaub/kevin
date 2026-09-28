@@ -1,12 +1,6 @@
 /**
- * Règles de style, peu nombreuses et vérifiables.
- *
- * - pas de `var` : `const` par défaut, `let` quand la valeur change ;
- * - des fonctions fléchées pour les rappels (`.map((ligne) => …)`) ;
- * - pas de nom d'une lettre, sauf les indices (i, j), l'événement (e), le
- *   paramètre ignoré (_) et le couple d'un comparateur de tri (a, b) :
- *   `f.noms`, `n.dosages` se lisaient bien en écrivant la ligne, mal en la
- *   relisant un mois plus tard.
+ * Règles de style : pas de `var`, fonctions fléchées pour les rappels, pas de
+ * nom d'une lettre hors i, j, e, _, a, b.
  *
  *   npm run lint
  */

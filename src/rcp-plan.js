@@ -1,17 +1,9 @@
 import { deaccent } from './text.js';
 
 /**
- * Plan type du RCP (modèle QRD, version française ANSM).
- *
- * Les documents scrapés arrivent en capitales et souvent sans accents
- * (« 4. DONNEES CLINIQUES »). Cette table sert uniquement à rétablir la casse
- * et les accents : le libellé canonique n'est retenu que s'il correspond,
- * mot pour mot, au libellé source une fois normalisé. Jamais de substitution
- * de contenu sur une page médicale — une rubrique dont le titre a changé de
- * rédaction garde le sien.
- *
- * Certaines rubriques ont deux rédactions selon l'ancienneté de l'AMM :
- * elles sont toutes listées, et c'est celle qui correspond qui est retenue.
+ * Plan type du RCP (modèle QRD, version française ANSM), pour rétablir casse et
+ * accents uniquement : retenu seulement s'il correspond mot pour mot à la source
+ * normalisée. Plusieurs rédactions possibles selon l'ancienneté de l'AMM.
  */
 const RCP = {
   '1': ['Dénomination du médicament'],
@@ -50,13 +42,8 @@ const RCP = {
 };
 
 /**
- * Rubriques qu'un RCP complet comporte toujours. Leur absence après découpage
- * ne veut pas dire que le médicament n'a pas de contre-indications : elle veut
- * dire qu'on a raté le titre, et que son contenu a fusionné dans la rubrique
- * précédente. C'est le contrôle qualité du découpage.
- *
- * Volontairement restreint aux rubriques non facultatives : 4.7, 4.9, 5.3,
- * 6.2, 6.4 et suivantes peuvent légitimement manquer.
+ * Rubriques toujours présentes dans un RCP complet : une absence signale un
+ * titre raté (contrôle qualité du découpage). Les rubriques facultatives en sont exclues.
  */
 export const RUBRIQUES_SOCLE = [
   '1', // dénomination
@@ -70,25 +57,15 @@ export const RUBRIQUES_SOCLE = [
   '6.1', // excipients
 ];
 
-/**
- * La notice suit un plan différent — six rubriques, dont les libellés
- * contiennent le nom du produit et ne peuvent donc pas être normalisés.
- * Seule la numérotation fait foi.
- */
+/** Notice : six rubriques ; libellés non normalisables (nom du produit), seule la numérotation compte. */
 export const RUBRIQUES_SOCLE_NOTICE = ['1', '2', '3', '4', '5', '6'];
 
 /**
- * Tournure attendue de chaque rubrique de notice.
- *
- * Le libellé contient le nom du produit : impossible de le comparer mot pour
- * mot comme pour le RCP. On reconnaît seulement sa tournure — ce qui suffit à
- * écarter les listes numérotées du corps. Une procédure de reconstitution en
- * six étapes a exactement la forme d'un plan, et le filtre de cohérence n'a
- * aucun moyen de les distinguer par la seule numérotation.
+ * Tournure attendue de chaque rubrique de notice : écarte les listes numérotées
+ * du corps (une procédure en six étapes a la forme d'un plan).
  */
 const NOTICE = {
-  // « Qu'est-ce que X… », mais aussi « Qu'est ce X… » : le tiret manque ou se
-  // dédouble selon l'extraction du PDF, et le « que » saute parfois.
+  // Tolère tiret manquant ou doublé et « que » absent (extraction PDF).
   '1': /qu.{0,2}est.{0,3}ce /,
   '2': /informations? a connaitre/,
   '3': /comment/, // « Comment prendre X », « Comment X est-il administré ? »
@@ -111,15 +88,14 @@ export function socle(type) {
   return []; // « main » est une fiche info, pas un document à rubriques
 }
 
-/** Forme comparable : sans accents, sans casse, sans ponctuation ni espaces. */
+/** Clé de comparaison : sans accents, casse, ponctuation ni espaces. */
 const key = (text) =>
   deaccent(String(text ?? ''))
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
 /**
- * Libellé de référence d'une rubrique, si et seulement s'il correspond au
- * libellé source. Sinon null : la source fait foi.
+ * Libellé de référence s'il correspond au libellé source, sinon null.
  *
  * @param {string} number - « 4.1 », sans point final
  * @param {string} label - libellé tel qu'il figure dans le document

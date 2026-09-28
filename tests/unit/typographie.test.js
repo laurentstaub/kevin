@@ -13,8 +13,7 @@ describe('rangs de puce', () => {
     assert.equal(rangDePuce('o des lombalgies,'), 2);
   });
 
-  // Aucune phrase française ne commence par « o » suivi d'une espace ; « ou »
-  // en revanche est un mot, et le motif exige la limite.
+  // « ou » est un mot : le motif exige « o » suivi d'une espace.
   it('ne prend pas un mot pour une puce', () => {
     assert.equal(rangDePuce('ou des arthroses'), 0);
     assert.equal(rangDePuce('Elles sont limitées à :'), 0);
@@ -32,8 +31,7 @@ describe('listes', () => {
     assert.equal(rendu, '<ul><li>a</li></ul><p>Texte.</p><ul><li>b</li></ul>');
   });
 
-  // <ul> fille directe de <ul> est un balisage invalide : sans parent où se
-  // nicher, le second rang prend le premier.
+  // <ul> fille directe de <ul> est invalide.
   it('remonte un second rang orphelin', () => {
     assert.equal(listes('<p>o seule</p>'), '<ul><li>seule</li></ul>');
   });
@@ -70,7 +68,6 @@ describe('espaces insécables', () => {
     assert.equal(espaces('<p>au :</p>'), '<p>au :</p>');
   });
 
-  // Ne jamais en insérer : « 50% » et « http:// » doivent rester intacts.
   it('n’en insère jamais', () => {
     assert.equal(espaces('<p>50% et http://x</p>'), '<p>50% et http://x</p>');
   });
@@ -82,8 +79,7 @@ describe('espaces insécables', () => {
 });
 
 describe('structurer', () => {
-  // Le texte réglementaire n'est pas corrigé : ce qui est fautif à la source
-  // le reste, sans quoi les deux documents ne se citent plus l'un l'autre.
+  // Sinon le document ne cite plus la source à l'identique.
   it('ne corrige pas les fautes de la source', () => {
     const html = '<p>(1 à 2 gélule(s)))</p>';
     assert.match(structurer(html), /\(1 à 2 gélule\(s\)\)\)/);
@@ -91,15 +87,12 @@ describe('structurer', () => {
 });
 
 describe('notes de bas de rubrique', () => {
-  // Le modèle QRD renvoie hors du tableau d'effets indésirables par un
-  // astérisque, doublé au second renvoi. La note commente le texte : composée
-  // à l'identique, elle pèse autant que ce qu'elle commente.
+  // Renvois QRD par astérisque (doublé au second) : la note doit peser moins que le texte.
   it('reconnaît un renvoi par astérisque', () => {
     assert.match(notes('<p>*Les prises de poids sont un facteur de risque.</p>'), /^<p class="note">/);
     assert.match(notes('<p>**Une anomalie a été rapportée.</p>'), /^<p class="note">/);
   });
 
-  // L'appel relie la note à sa mention : le retirer romprait le renvoi.
   it('garde l’appel en tête', () => {
     assert.match(notes('<p>*Voir rubrique 4.4.</p>'), /\*Voir rubrique 4\.4\./);
   });
@@ -109,8 +102,7 @@ describe('notes de bas de rubrique', () => {
     assert.equal(notes(html), html, 'l’astérisque est en fin, pas en tête');
   });
 
-  // `structurer` enchaîne les passes : un paragraphe déjà classé par l'une ne
-  // doit pas recevoir un second attribut `class` de la suivante.
+  // Pas de second attribut `class` d'une passe suivante.
   it('laisse en paix un paragraphe déjà classé', () => {
     const html = '<p class="dose">*quelque chose</p>';
     assert.equal(notes(html), html);
@@ -118,15 +110,13 @@ describe('notes de bas de rubrique', () => {
 });
 
 describe('substances en interaction', () => {
-  // La rubrique 4.5 suit le thésaurus de l'ANSM : sous chaque niveau de
-  // gravité, chaque substance ouvre un paragraphe préfixé d'un plus.
+  // Rubrique 4.5 (thésaurus ANSM) : un paragraphe « + substance » par niveau de gravité.
   it('reconnaît la ligne d’une substance', () => {
     assert.match(interactions('<p>+ Millepertuis</p>'), /^<p class="interaction">/);
     assert.match(interactions('<p>+ Pénems (carbapénèmes)</p>'), /^<p class="interaction">/);
   });
 
-  // Le signe se lit « en association avec » : le retirer ferait dire à la
-  // ligne autre chose que ce qu'elle dit.
+  // Le signe signifie « en association avec ».
   it('garde le signe', () => {
     assert.match(interactions('<p>+ Millepertuis</p>'), /\+ Millepertuis/);
   });
@@ -136,8 +126,7 @@ describe('substances en interaction', () => {
     assert.equal(interactions(html), html);
   });
 
-  // Les quatre niveaux du thésaurus sont un répertoire clos, comme les
-  // intitulés du modèle QRD.
+  // Répertoire clos de quatre niveaux.
   it('promeut les niveaux de gravité en sous-titres', () => {
     for (const libelle of ['Associations contre-indiquées', 'Associations déconseillées',
       "Associations faisant l'objet de précautions d'emploi", 'Associations à prendre en compte']) {
@@ -152,8 +141,6 @@ describe('renvois entre rubriques', () => {
     ['4.6', { id: 'rcp-8', libelle: 'Fertilité, grossesse et allaitement' }],
   ]);
 
-  // « voir rubrique » est du texte réglementaire, le numéro est la référence :
-  // seul le numéro devient cliquable.
   it('ne rend cliquable que le numéro', () => {
     assert.equal(
       renvois('<p>Hypersensibilité (voir rubrique 4.6).</p>', ancres),
@@ -167,15 +154,13 @@ describe('renvois entre rubriques', () => {
     assert.match(rendu, /href="#rcp-5"[^>]*>4\.3<\/a> et <a class="renvoi" href="#rcp-8"[^>]*>4\.6<\/a>/);
   });
 
-  // La notice cite parfois le RCP : la rubrique visée n'est pas dans le même
-  // document. Un lien mort vaut moins que pas de lien.
+  // Ex. une notice qui cite le RCP : pas de lien mort.
   it('laisse en texte un renvoi vers une rubrique absente', () => {
     const html = '<p>Voir rubrique 9.9.</p>';
     assert.equal(renvois(html, ancres), html);
   });
 
-  // Relevées sur un RCP entier — trente-six renvois — plutôt que devinées.
-  // La première version, calée sur « voir rubrique », en manquait deux formes.
+  // Tournures relevées sur un RCP entier.
   it('reconnaît toutes les tournures du corpus', () => {
     const ancres = new Map([
       ['4.4', { id: 'rcp-1', libelle: 'Mises en garde' }],
@@ -202,9 +187,6 @@ describe('renvois entre rubriques', () => {
     assert.match(renvois(html, ancres), /href="\/x\?rubrique=4\.6"/);
   });
 
-  // « Voir rubrique 4.4 » ne dit pas où il mène : il faut y aller pour le
-  // savoir, et revenir si ce n'était pas ça. Nommer la destination avant le
-  // clic est tout ce qui distingue un renvoi d'une devinette.
   it('nomme sa destination en infobulle', () => {
     const rendu = renvois('<p>voir rubrique 4.6</p>', ancres);
     assert.match(rendu, /title="4\.6 — Fertilité, grossesse et allaitement"/);

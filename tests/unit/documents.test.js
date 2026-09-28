@@ -19,7 +19,7 @@ describe('groupByType', () => {
   });
 
   it('ne jette pas les documents de type rcp_notice', () => {
-    // 2 101 lignes en base, soit ~15 % des CIS : elles étaient perdues.
+    // Environ 15 % des CIS.
     const grouped = groupByType([{ type: 'rcp_notice' }, { type: 'main' }]);
     assert.equal(grouped.rcp_notice.length, 1);
     assert.equal(grouped.main.length, 1);

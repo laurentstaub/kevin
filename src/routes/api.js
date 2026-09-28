@@ -25,9 +25,7 @@ export function apiRoutes(pool) {
       if (query.tooShort) return res.json({ query: query.raw, suggestions: [] });
 
       const { produits } = await suggest(pool, query);
-      // Une suggestion = un produit, dans l'ordre de pertinence rendu par la
-      // recherche. `libelle` porte la racine de marque, précisée du titulaire
-      // quand deux produits la partagent (les neuf GLUCOSE).
+      // `libelle` : racine de marque, précisée du titulaire si elle est partagée.
       const suggestions = produits.map((row) => ({
         id: row.id,
         name: row.libelle,
@@ -80,10 +78,7 @@ export function apiRoutes(pool) {
     }),
   );
 
-  /**
-   * Contenu d'un document. Le HTML est déjà assaini par la couche données ;
-   * il est servi en JSON — jamais en text/html sur l'origine de l'application.
-   */
+  /** Contenu d'un document : HTML assaini, servi en JSON, jamais en text/html. */
   router.get(
     '/product/:id/documents/:type',
     wrap(async (req, res, next) => {
