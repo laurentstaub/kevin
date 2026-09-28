@@ -494,7 +494,7 @@
      
      Une seule valeur, dimensionnée sur le pire cas possible, plutôt que deux
      qui reposent sur une supposition à propos des données. */
-  grid-template-columns: 4.2rem 1fr auto;
+  grid-template-columns: 4.2rem minmax(0, 1fr) max-content;
   gap: 0 var(--sp-2);
   align-items: baseline;
   padding: var(--sp-1) var(--sp-1) var(--sp-1) 0;
@@ -529,10 +529,17 @@
 /* Le reste des molécules. Replié, parce qu'une liste écourtée en silence se
    lit comme une liste complète — et déplié d'un clic, parce qu'aucune n'est
    assez secondaire pour mériter une seconde page. */
+.classes-titre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
 .classes-titre .classes-unite {
-  float: right;
   text-transform: none;
   letter-spacing: 0;
+  text-align: right;
 }
 
 .molecules-plus {
