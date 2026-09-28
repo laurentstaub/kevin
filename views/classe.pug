@@ -24,6 +24,8 @@ mixin ligneSpecialite(sp)
     a.resultat(href=`/product/${sp.id}`)
       span.resultat-nom
         = sp.denomination
+        if sp.princeps
+          span.marque Princeps
         if sp.importation
           span.marque Importation parallèle
       if sp.titulaires

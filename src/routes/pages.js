@@ -108,7 +108,7 @@ export function pageRoutes(pool) {
       const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
 
       const [specialitesListe, molecules, portrait] = await Promise.all([
-        feuille ? getSpecialitesDeClasse(pool, code) : [],
+        feuille ? getSpecialitesDeClasse(pool, code, classe.label) : [],
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
         // Le portrait est un plus : une table de conditions absente ne doit
         // pas emporter la page, qui se rend alors comme avant qu'il existe.

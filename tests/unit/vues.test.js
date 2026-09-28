@@ -520,6 +520,14 @@ describe('page de classe', () => {
     assert.match(html, /1 spécialité non commercialisée/);
   });
 
+  it('signale le princeps', () => {
+    const html = page({
+      feuille: true,
+      specialitesListe: [{ id: '1', denomination: 'TOPLEXIL 0,33 mg/ml, sirop', commercialise: true, princeps: true }],
+    });
+    assert.match(html, /TOPLEXIL 0,33 mg\/ml, sirop<span class="marque">Princeps/);
+  });
+
   it('se rend sans portrait ni chapeau', () => {
     const html = page({});
     assert.doesNotMatch(html, /class="portrait"/);

@@ -189,20 +189,34 @@ export async function getClasse(pool, code) {
  * Mais à la feuille, c'est la spécialité qu'on cherche — le 5 mg ou le 10 mg,
  * la gélule ou le comprimé — et le regroupement la cachait derrière un clic.
  *
- * Commercialisées d'abord, puis par dénomination : l'ordre alphabétique met
- * côte à côte les dosages d'un même nom.
+ * L'ordre est celui dans lequel on les cherche au comptoir : le princeps
+ * d'abord — TOPLEXIL avant les vingt OXOMEMAZINE <laboratoire> —, puis les
+ * noms de fantaisie, puis les spécialités nommées par leur DCI. L'ordre
+ * alphabétique seul rangeait le princeps quelque part au milieu des
+ * génériques, sous la lettre de sa marque.
+ *
+ * Le princeps est celui du Répertoire (type 0 d'un groupe générique). Un nom
+ * de fantaisie est un nom qui ne commence pas par la DCI : c'est ce qui
+ * rattrape les marques hors Répertoire, et les princeps dont le groupe n'a
+ * pas été créé.
+ *
+ * @param {string} dci - le libellé de la feuille ATC, « OXOMEMAZINE »
  */
-export async function getSpecialitesDeClasse(pool, code) {
+export async function getSpecialitesDeClasse(pool, code, dci = '') {
   const { rows } = await pool.query(
-    `SELECT DISTINCT m.code_cis AS id, m.denomination_medicament AS denomination,
+    `SELECT m.code_cis AS id, m.denomination_medicament AS denomination,
             m.titulaires,
             (m.etat_commercialisation = 'Commercialisée') AS commercialise,
-            ${importSql('m')} AS importation
-     FROM ref.cis_atc_mapping a
-     JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
-     WHERE a.atc_code LIKE $1 || '%'
-     ORDER BY commercialise DESC, denomination, id`,
-    [code],
+            ${importSql('m')} AS importation,
+            EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
+                    WHERE g.code_cis = m.code_cis AND g.type_generique = '0') AS princeps,
+            -- Nommée par sa DCI : « OXOMEMAZINE ARROW », et non « TOPLEXIL ».
+            ($2 <> '' AND public.f_unaccent(upper(m.denomination_medicament))
+                          LIKE public.f_unaccent(upper($2)) || '%') AS nom_dci
+     FROM dbpm.cis_bdpm m
+     WHERE m.code_cis IN (SELECT code_cis FROM ref.cis_atc_mapping WHERE atc_code LIKE $1 || '%')
+     ORDER BY commercialise DESC, princeps DESC, nom_dci, denomination, id`,
+    [code, String(dci ?? '')],
   );
   return rows;
 }
