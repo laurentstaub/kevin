@@ -249,15 +249,15 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/product\/66297967#rcp-12"/);
   });
 
-  // L'extrait est replié mais présent : sans lui la liste dit où le mot
-  // figure, jamais ce que le document en dit.
-  it('l’extrait reste accessible, et nomme la spécialité dont il vient', () => {
+  // Sans filtre, pas d'extrait sous chaque ligne : la phrase se lit au survol
+  // du point. La ligne ne porte que la molécule et ses rubriques.
+  it('une ligne par molécule, sans extrait sous chaque ligne', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /<details class="preuve">/);
-    assert.match(html, /intervalle QT<\/mark>/);
-    assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
+    assert.doesNotMatch(html, /trouvaille-extrait/);
+    assert.doesNotMatch(html, /<details/);
+    assert.match(html, /66 spé\./);
   });
 
   // Sur la page de garde, le champ énumérait « Dénomination ou principe
@@ -300,7 +300,8 @@ describe('rendu des gabarits', () => {
 
   // Les colonnes sont fixes, et non l'union de ce que la recherche a trouvé :
   // des colonnes qui changent de place d'une requête à l'autre ne s'apprennent
-  // jamais. Ce qui tombe hors des huit se nomme dans « Autres ».
+  // jamais. Ce qui tombe hors des huit se nomme dans « Autres » ; une rubrique
+  // de notice s'y distingue de la rubrique du RCP qui porte le même numéro.
   it('range les rubriques en colonnes fixes, et nomme les autres', () => {
     const html = rendre('documents', {
       query: 'QT',
@@ -311,29 +312,57 @@ describe('rendu des gabarits', () => {
         resultats: [{
           ...TROUVAILLE,
           rubriques: [
-            { numero: '4.8', libelle: 'Effets', cis: '1', ancre: 'rcp-2' },
-            { numero: '2', libelle: 'Composition', cis: '1', ancre: 'rcp-9' },
+            { numero: '4.8', libelle: 'Effets', cis: '1', ancre: 'rcp-2', type: 'rcp', exact: true },
+            { numero: '2', libelle: 'Composition', cis: '1', ancre: 'rcp-9', type: 'rcp', exact: true },
+            { numero: '2', libelle: 'Avant de prendre', cis: '1', ancre: 'notice-3', type: 'notice', exact: true },
           ],
         }],
       },
     });
-    // Huit colonnes de rubrique, plus la molécule et le fourre-tout.
     assert.equal((html.match(/col-rubrique/g) || []).length, COLONNES.length);
-    // La 2 n'a pas de colonne réservée, mais elle se nomme au lieu de disparaître.
-    assert.match(html, /class="puce puce-autre"[^>]*>2</);
+    assert.match(html, /class="autre"[^>]*>2</);
+    assert.match(html, /class="autre"[^>]*>N2</);
+    assert.match(html, /aria-label="Notice · 2 Avant de prendre"/);
     // La 4.4, absente de ce résultat, laisse sa cellule vide sans décaler les autres.
     assert.match(html, /<td class="cellule-rubrique"><\/td>/);
   });
 
-  // `title` attend une seconde avant de paraître : sur une ligne de huit
-  // numéros, c'est huit secondes pour lire ce que la ligne annonce.
-  it('porte son infobulle plutôt que celle du navigateur', () => {
+  // Un point plein : l'expression telle quelle. Creux : les mots, dispersés.
+  // La distinction ne se fait — et la légende ne paraît — que pour une
+  // expression de plusieurs mots.
+  it('distingue l’expression exacte des mots dispersés', () => {
+    const resultats = [{
+      ...TROUVAILLE,
+      rubriques: [
+        { numero: '4.3', libelle: 'Contre-indications', cis: '1', ancre: 'rcp-3', type: 'rcp', exact: true },
+        { numero: '4.2', libelle: 'Posologie', cis: '1', ancre: 'rcp-2', type: 'rcp', exact: false },
+      ],
+    }];
+    const avec = rendre('documents', {
+      query: 'insuffisance hépatique', rubrique: null, page: 1,
+      documents: { ...RECHERCHE_PLEINE, exacte: true, resultats },
+    });
+    assert.match(avec, /class="legende"/);
+    assert.match(avec, /class="point point-epars"[^>]*aria-label="4\.2 Posologie — mots séparés"/);
+    assert.match(avec, /class="point"[^>]*aria-label="4\.3 Contre-indications"/);
+
+    const sans = rendre('documents', {
+      query: 'QT', rubrique: null, page: 1,
+      documents: { ...RECHERCHE_PLEINE, exacte: false, resultats },
+    });
+    assert.doesNotMatch(sans, /class="legende"/);
+    assert.doesNotMatch(sans, /point-epars/);
+  });
+
+  // Sans JavaScript, le point est un lien muet : `title` le nomme. Le script
+  // le retire au chargement, pour que l'infobulle du navigateur ne recouvre
+  // pas la phrase.
+  it('nomme chaque point, pour le lecteur d’écran comme sans script', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /data-titre="4\.4 Mises en garde"/);
+    assert.match(html, /title="4\.4 Mises en garde"/);
     assert.match(html, /aria-label="4\.4 Mises en garde"/);
-    assert.doesNotMatch(html, /<a class="puce"[^>]*title=/);
   });
 
   // La rangée d'onglets listait les huit mêmes rubriques que l'en-tête du
@@ -348,7 +377,7 @@ describe('rendu des gabarits', () => {
   });
 
   // Filtrée, la page n'a plus de colonnes à montrer — toutes les trouvailles
-  // sont dans la rubrique choisie — et l'extrait devient la réponse.
+  // sont dans la rubrique choisie — et la phrase devient la réponse.
   it('replie les colonnes quand une rubrique est choisie', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
@@ -358,16 +387,9 @@ describe('rendu des gabarits', () => {
     // La rubrique active et son retrait vivent dans la ligne d'état.
     assert.match(html, /class="jeton"[^>]*>rubrique 4\.5/);
     assert.match(html, /class="jeton" href="\/documents\?q=QT"/);
-    assert.match(html, /<details class="preuve" open="open">/);
-  });
-
-  // Le repli annonçait « Extrait » quand la ligne montre quatre rubriques :
-  // rien ne disait de laquelle il venait.
-  it('le repli nomme la rubrique de son extrait', () => {
-    const html = rendre('documents', {
-      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
-    });
-    assert.match(html, /class="preuve-rubrique">4\.4 Mises en garde spéciales/);
+    assert.match(html, /class="ligne-phrase"/);
+    assert.match(html, /intervalle QT<\/mark>/);
+    assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
   });
 
   // L'aperçu au survol se demande au serveur : la puce porte de quoi le
@@ -377,41 +399,6 @@ describe('rendu des gabarits', () => {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
     assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
-  });
-
-  // L'encoche pointe la colonne d'où vient l'extrait. Sa position se calcule
-  // sur des largeurs fixes ancrées à droite : rien à mesurer au navigateur.
-  it('pointe la colonne de l’extrait', () => {
-    const encoche = (numero) => {
-      const html = rendre('documents', {
-        query: 'QT',
-        rubrique: null,
-        page: 1,
-        documents: {
-          ...RECHERCHE_PLEINE,
-          resultats: [{
-            ...TROUVAILLE,
-            numero,
-            rubriques: [{ numero, libelle: 'L', cis: '1', ancre: 'rcp-1' }],
-          }],
-        },
-      });
-      return (html.match(/--encoche: ([^"]+)/) || [])[1];
-    };
-    // Première colonne : sept colonnes de rubrique la séparent du fourre-tout.
-    assert.equal(encoche('4.1'), 'calc(5.5rem + 7 * 2.6rem + 1.3rem)');
-    // Dernière : elle jouxte le fourre-tout.
-    assert.equal(encoche('5.1'), 'calc(5.5rem + 0 * 2.6rem + 1.3rem)');
-    // Hors des huit : l'encoche vise « Autres », qui porte le numéro.
-    assert.equal(encoche('2'), '2.75rem');
-  });
-
-  // Filtrée, la page n'a plus de colonnes : une encoche pointerait le vide.
-  it('n’en pose pas quand il n’y a plus de colonnes', () => {
-    const html = rendre('documents', {
-      query: 'QT', rubrique: '4.5', documents: RECHERCHE_PLEINE, page: 1,
-    });
-    assert.doesNotMatch(html, /--encoche/);
   });
 
   // « Substituer » mêle deux provenances que le titre confond : le Répertoire

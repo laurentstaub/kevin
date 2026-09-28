@@ -15,6 +15,12 @@
 //- jamais. Ce qui tombe hors des huit va dans « Autres », qui les nomme sans
 //- leur réserver de place.
 //-
+//- Une ligne par molécule, rien de plus. Ce qu'une rubrique dit se lit au
+//- survol de son point : la ligne d'extrait qui suivait chaque molécule
+//- triplait la hauteur du tableau pour une phrase qu'on ne lit qu'une fois
+//- sur dix, et c'était la moins utile — celle du meilleur score, souvent un
+//- 5.2 de pharmacocinétique.
+//-
 //- L'en-tête est le filtre.
 //-
 //- Une rangée d'onglets listait ces huit mêmes rubriques deux lignes plus
@@ -33,7 +39,16 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique, etat, lien)
   - var cles = colonnes.map(function (c) { return c[0] })
   - var colonnesVues = rubrique ? [] : colonnes
 
-  table.trouvailles
+  //- La légende ne paraît que s'il y a quelque chose à distinguer : pour un
+  //- mot seul, ou une locution entre guillemets, tous les points sont pleins.
+  if d.exacte && !rubrique
+    p.legende
+      span.point.point-legende(aria-hidden="true")
+      |  « #{q} » tel quel
+      span.point.point-epars.point-legende(aria-hidden="true")
+      |  les mots, dispersés
+
+  table.trouvailles(class=rubrique ? 'trouvailles-filtrees' : null)
     caption.sr-only
       | Molécules dont un document contient l'expression cherchée, et rubriques où elle figure
     colgroup
@@ -58,10 +73,19 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique, etat, lien)
     each r in d.resultats
       -
         var par = {};
-        (r.rubriques || []).forEach(function (rub) { par[rub.numero] = rub });
-        var autres = (r.rubriques || []).filter(function (rub) {
-          return cles.indexOf(rub.numero) === -1;
+        (r.rubriques || []).forEach(function (rub) {
+          if (rub.type !== 'notice') par[rub.numero] = rub;
         });
+        var autres = (r.rubriques || []).filter(function (rub) {
+          return rub.type === 'notice' || cles.indexOf(rub.numero) === -1;
+        });
+        // Les notices se nomment « N2 » : la rubrique 2 d'une notice (avant de
+        // prendre) n'est pas la rubrique 2 d'un RCP (la composition).
+        var court = function (rub) { return (rub.type === 'notice' ? 'N' : '') + rub.numero };
+        var long = function (rub) {
+          return (rub.type === 'notice' ? 'Notice · ' : '') + rub.numero + ' ' + rub.libelle
+            + (d.exacte && !rub.exact ? ' — mots séparés' : '');
+        };
 
       tbody.trouvaille
         tr
@@ -77,83 +101,54 @@ mixin resultatsDocuments(d, q, resume, colonnes, rubrique, etat, lien)
                 href=lien(etat, { mode: 'nom', requete: r.molecule, filtre: 'active' })
                 title=r.molecule
               )= r.molecule
-            //- Combien de spécialités le groupe recouvre. Une seule ne se dit
-            //- pas : ce serait une ligne pour ne rien apprendre.
+            //- Combien de spécialités le groupe recouvre, sur la même ligne :
+            //- une seconde ligne pour un nombre doublait la hauteur du tableau.
             if r.specialites > 1
-              span.trouvaille-reprise #{r.specialites.toLocaleString('fr-FR')} spécialités
+              span.trouvaille-reprise(title=`${r.specialites} spécialités`) #{r.specialites.toLocaleString('fr-FR')} spé.
 
+          //- Un point par rubrique, et non plus son numéro : l'en-tête le dit
+          //- déjà, et le répéter dans chaque case faisait un tableau de
+          //- chiffres où rien ne ressortait. Plein, l'expression y figure
+          //- telle quelle ; creux, les mots y sont mais dispersés.
+          //- La phrase paraît au survol (extraits.js) ; sans JavaScript, le
+          //- point reste un lien vers la rubrique, et `title` la nomme.
           each c in colonnesVues
             td.cellule-rubrique
               if par[c[0]]
-                //- L'infobulle est la nôtre, pas celle du navigateur : `title`
-                //- attend une seconde avant de paraître, et sur une ligne de
-                //- huit numéros c'est une seconde par numéro.
-                a.puce(
-                  href=`/product/${par[c[0]].cis}#${par[c[0]].ancre}`
-                  data-titre=`${c[0]} ${par[c[0]].libelle}`
-                  aria-label=`${c[0]} ${par[c[0]].libelle}`
-                  data-cis=par[c[0]].cis
-                  data-type=par[c[0]].ancre.split('-')[0]
-                  data-position=par[c[0]].ancre.split('-')[1]
-                )= c[0]
+                - var rub = par[c[0]]
+                a.point(
+                  class=d.exacte && !rub.exact ? 'point-epars' : null
+                  href=`/product/${rub.cis}#${rub.ancre}`
+                  title=long(rub)
+                  aria-label=long(rub)
+                  data-cis=rub.cis
+                  data-type=rub.ancre.split('-')[0]
+                  data-position=rub.ancre.split('-')[1]
+                )
 
           if !rubrique
             td.cellule-autres
               each rub in autres
-                a.puce.puce-autre(
+                a.autre(
+                  class=d.exacte && !rub.exact ? 'point-epars' : null
                   href=`/product/${rub.cis}#${rub.ancre}`
-                  data-titre=`${rub.numero} ${rub.libelle}`
-                  aria-label=`${rub.numero} ${rub.libelle}`
+                  title=long(rub)
+                  aria-label=long(rub)
                   data-cis=rub.cis
                   data-type=rub.ancre.split('-')[0]
                   data-position=rub.ancre.split('-')[1]
-                )= rub.numero
+                )= court(rub)
 
-        //- L'extrait est la preuve, et il est replié.
-        //-
-        //- « OLANZAPINE · 4.4 » ne dit pas si le RCP énonce que le produit
-        //- allonge le QT ou qu'il est contre-indiqué en cas d'allongement : au
-        //- comptoir, c'est toute la réponse. Mais une molécule n'a pas un seul
-        //- RCP — tramadol LP et tramadol à libération immédiate ont des textes
-        //- différents — d'où la spécialité nommée sous l'extrait : on ne prête
-        //- pas à la molécule une phrase qui n'est vraie que d'une forme.
-        //- L'encoche pointe la colonne d'où vient l'extrait.
-        //-
-        //- Elle se calcule au lieu de se mesurer : les colonnes de rubrique
-        //- font 2,6 rem, « Autres » 5,5, et toutes sont ancrées à droite —
-        //- seule la colonne des noms absorbe le reste. La distance au bord
-        //- droit est donc connue sans rien demander au navigateur, et elle ne
-        //- bouge pas quand la fenêtre change de taille.
-        -
-          var iCol = cles.indexOf(r.numero);
-          var encoche = null;
-          if (!rubrique && colonnesVues.length) {
-            encoche = iCol >= 0
-              ? `calc(5.5rem + ${colonnesVues.length - 1 - iCol} * 2.6rem + 1.3rem)`
-              : '2.75rem';
-          }
-        tr.ligne-preuve
-          td(colspan=colonnesVues.length + (rubrique ? 1 : 2)
-            class=encoche ? 'a-encoche' : null
-            style=encoche ? `--encoche: ${encoche}` : null)
-            //- Filtrée, la page n'a plus que l'extrait à montrer : le replier
-            //- reviendrait à cacher la réponse derrière un clic.
-            details.preuve(open=rubrique ? true : false)
-              //- « Extrait » tout court laissait deviner de quelle rubrique il
-              //- venait : la ligne en annonce quatre et n'en montre qu'une.
-              summary.preuve-tete
-                | Extrait
-                if r.numero
-                  span.preuve-rubrique #{r.numero} #{r.libelle}
-              //- `ts_headline` de Postgres, dont seuls <mark> et l'échappement
-              //- viennent de la base : le texte est celui du document.
+        //- Filtrée sur une rubrique, la page n'a plus de colonnes : la phrase
+        //- devient la réponse, et se montre sans qu'on la demande.
+        if rubrique && r.extrait
+          tr.ligne-phrase
+            td
+              //- La phrase vient de la base : ts_headline n'y ajoute que
+              //- <mark> et l'échappement, le reste est le texte du document.
               p.trouvaille-extrait!= r.extrait
               p.preuve-source
                 a(href=`/product/${r.code_cis}#${r.ancre}`)= r.denomination
-                if r.numero
-                  |  · #{r.numero} #{r.libelle}
-                else if r.libelle
-                  |  · #{r.libelle}
 
   if resume && d.total > d.resultats.length
     p.trouvailles-suite

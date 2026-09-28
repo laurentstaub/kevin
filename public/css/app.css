@@ -1035,26 +1035,46 @@
    son extrait — assez pour qu'on ne sache plus si l'extrait se rattachait à
    ce qui le précède ou à ce qui le suit. Posé sur la ligne, il n'y a plus
    d'ambiguïté possible : un filet par résultat, en bas. */
-.trouvaille td,
-.trouvaille th {
-  padding: var(--sp-2) 0 0;
-  vertical-align: baseline;
+/* `.trouvailles` en tête du sélecteur : la règle générale des tableaux
+   (tokens.css) retire le filet de la dernière ligne de chaque tbody, et
+   chaque molécule est un tbody d'une ligne — elle l'emportait partout. */
+.trouvailles .trouvaille td,
+.trouvailles .trouvaille th {
+  padding: 0.35rem 0;
+  vertical-align: middle;
   border: 0;
+  border-bottom: var(--rule-width) solid var(--rule);
 }
 
-/* Le nom peut faire mille caractères. Deux lignes, puis on coupe : le titre
-   complet reste en infobulle, et le groupe entier est à un clic. */
+.trouvailles-filtrees .trouvaille th { border-bottom: 0; padding-bottom: 0; }
+
+/* Au téléphone, huit colonnes de 2,6 rem ne laissaient plus rien au nom. Le
+   point tient dans 1,6 rem, et le compte de spécialités s'efface : le nom
+   passe avant. */
+@media (max-width: 600px) {
+  .col-rubrique { width: 1.6rem; }
+  .col-autres { width: 2.8rem; }
+  .trouvailles thead th { font-size: 0.65rem; letter-spacing: 0; }
+  .trouvailles .trouvaille-reprise { display: none; }
+  .trouvailles .trouvaille-molecule { max-width: 100%; font-size: var(--fs-xs); }
+  .trouvailles .autre { margin: 0 0.1em; }
+}
+
 .cellule-molecule {
   text-align: left;
   font-weight: 400;
   padding-right: var(--sp-3);
 }
 
+/* Une ligne, et on coupe : le nom complet est en infobulle, et une ligne par
+   molécule est ce qui rend le tableau lisible d'un coup d'œil. */
 .trouvaille-molecule {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  display: inline-block;
+  max-width: calc(100% - 4.5rem);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
   font-size: var(--fs-sm);
   color: var(--ink);
   text-decoration: none;
@@ -1075,49 +1095,53 @@
   line-height: 1.9;
 }
 
-.cellule-autres .puce { display: inline-block; margin: 0 0.1em; }
 
-.puce {
-  display: block;
-  text-align: center;
+.point {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--accent);
+  vertical-align: middle;
+}
+
+/* Creux : les mots sont dans la rubrique, mais pas l'expression. */
+.point.point-epars { background: transparent; }
+
+a.point:hover,
+a.point:focus-visible {
+  outline: 2px solid var(--accent-pale);
+  outline-offset: 2px;
+}
+
+.point-legende { width: 0.55rem; height: 0.55rem; margin-left: var(--sp-2); }
+.point-legende:first-child { margin-left: 0; }
+
+.legende {
+  margin: var(--sp-2) 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Hors des huit colonnes, la rubrique se nomme : « 5.2 », « N2 » pour une
+   notice. En texte et non en case : c'est une information d'appoint. */
+.autre {
+  display: inline-block;
+  margin: 0 0.2em;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   text-decoration: none;
-  padding: 0 0.2em;
-  border: var(--rule-width) solid var(--rule);
-  position: relative;
 }
 
-.puce-autre { color: var(--muted); }
+.autre.point-epars { color: var(--faint); }
+.autre:hover { text-decoration: underline; }
 
-.puce:hover {
-  border-color: var(--accent);
-  background: var(--accent-pale);
-}
-
-/* L'infobulle est la nôtre, et non `title` : le navigateur attend une seconde
-   avant de l'afficher, ce qui sur une ligne de huit numéros fait huit
-   secondes pour lire ce que la ligne annonce. Celle-ci paraît au survol. */
-/* L'infobulle du texte seul reste pour l'en-tête, qui n'a pas d'extrait à
-   montrer, et pour les numéros quand JavaScript ne répond pas. */
-.puce[data-titre]:hover::after,
-.puce[data-titre]:focus-visible::after,
-.th-lien[data-titre]:hover::after,
-.th-lien[data-titre]:focus-visible::after {
-  content: attr(data-titre);
-  position: absolute;
-  bottom: calc(100% + 0.3rem);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  white-space: nowrap;
-  background: var(--ink);
-  color: #fff;
-  padding: 0.15em 0.5em;
-  font-variant-numeric: normal;
-  font-size: var(--fs-xs);
-  pointer-events: none;
+/* Filtrée, la phrase suit la molécule, serrée contre elle. */
+.trouvailles .ligne-phrase td {
+  padding: 0 0 var(--sp-2) var(--sp-3);
+  border-bottom: var(--rule-width) solid var(--rule);
 }
 
 /* L'état de la recherche : ce qu'on a cherché, ce qu'on a restreint, ce que
@@ -1232,53 +1256,6 @@
   color: var(--faint);
 }
 
-/* Le repli dit de quelle rubrique il parle : « Extrait » tout court laissait
-   deviner, alors que la ligne annonce quatre rubriques et n'en montre qu'une. */
-.preuve-rubrique {
-  margin-left: 0.5em;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
-/* L'extrait occupe la largeur entière : replié il ne coûte qu'une ligne,
-   déplié il ne se lit pas dans une colonne de deux centimètres.
-   Il se serre contre la ligne qu'il commente — l'espace qui l'en séparait le
-   laissait flotter entre deux résultats — et s'indente, comme tout ce qui
-   dépend de la molécule, pour se subordonner au nom plutôt que le concurrencer. */
-.ligne-preuve td {
-  padding: 0 0 var(--sp-2) var(--sp-3);
-  position: relative;
-  border-bottom: var(--rule-width) solid var(--rule);
-}
-
-/* Le compte de spécialités porte le même retrait : les deux se lisent comme
-   une seule entrée, subordonnée au nom. */
-
-/* L'encoche, qui pointe la colonne dont l'extrait est tiré. La ligne annonce
-   quatre rubriques et n'en montre qu'une : dire laquelle en mots demandait de
-   lire, la montrer se voit. Sa position vient du gabarit, qui la calcule sur
-   des largeurs de colonne fixes — rien à mesurer, rien à recalculer au
-   redimensionnement. */
-.a-encoche::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: var(--encoche);
-  transform: translateX(50%);
-  border-left: 0.4rem solid transparent;
-  border-right: 0.4rem solid transparent;
-  border-bottom: 0.4rem solid var(--accent-pale);
-}
-
-/* Le corps de l'extrait s'attache à son encoche par la couleur : sans aplat,
-   le triangle flotterait au-dessus de rien. */
-.a-encoche .preuve[open] {
-  background: var(--accent-pale);
-  padding: var(--sp-2) var(--sp-3);
-}
-
-.a-encoche .preuve[open] .trouvaille-extrait { color: var(--ink); }
-
 /* L'extrait est du document, pas de l'interface : il reprend la police de
    lecture, en plus petit. C'est ce qu'on lit pour décider si l'on ouvre. */
 .trouvaille-extrait {
@@ -1297,31 +1274,12 @@
   padding: 0 0.15em;
 }
 
-/* Combien de spécialités le groupe recouvre : on compte au lieu de répéter. */
+/* Combien de spécialités le groupe recouvre, à la suite du nom. */
 .trouvaille-reprise {
   font-size: var(--fs-xs);
   color: var(--faint);
-  margin: 0.15em 0 0;
-  padding-left: var(--sp-3);
-}
-
-/* L'extrait est replié, parce qu'il coûte quatre lignes d'écran et qu'on ne le
-   lit qu'une fois sur dix. Mais il ne disparaît pas : « OLANZAPINE · 4.4 » ne
-   dit pas si le RCP énonce que le produit allonge le QT ou qu'il est
-   contre-indiqué en cas d'allongement, et c'est toute la réponse. */
-.preuve {
-  margin-top: var(--sp-1);
-}
-
-.preuve-tete {
-  font-size: var(--fs-xs);
-  color: var(--faint);
-  cursor: pointer;
-  list-style-position: inside;
-}
-
-.preuve-tete:hover {
-  color: var(--muted);
+  margin-left: 0.5em;
+  white-space: nowrap;
 }
 
 /* Une molécule n'a pas un seul RCP : la spécialité d'où vient l'extrait se

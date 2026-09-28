@@ -28,7 +28,9 @@ const normal = (s) => deaccent(String(s)).toLowerCase();
 export function phrases(texte) {
   return String(texte ?? '')
     .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])/)
+    // Une puce coupe aussi : les contre-indications sont souvent une liste
+    // sans point final, qui restait sinon d'un seul bloc.
+    .split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])|\s*[•▪]\s*/)
     .map((p) => p.trim())
     .filter(Boolean);
 }

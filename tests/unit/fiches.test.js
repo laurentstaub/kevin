@@ -86,6 +86,12 @@ describe('citations — la phrase entière', () => {
       ['Dose de 2.5 mg.', 'Chez le sujet âgé, p. ex. réduire.', 'Fin.']);
   });
 
+  // Les contre-indications sont souvent une liste à puces sans point final.
+  it('coupe aussi sur une puce', () => {
+    assert.deepEqual(phrases('Hypersensibilité. • Insuffisance hépatique sévère (bilirubine > 3 x LSN) • Grossesse'),
+      ['Hypersensibilité.', 'Insuffisance hépatique sévère (bilirubine > 3 x LSN)', 'Grossesse']);
+  });
+
   it('garde les phrases qui portent le terme, au plus deux', () => {
     const texte = 'Aucun effet. Allongement de l’intervalle QT observé. Le QTc doit être surveillé. Un troisième QT.';
     assert.deepEqual(phrasesPertinentes(texte, motifs(['QT'])),

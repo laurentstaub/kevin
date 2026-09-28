@@ -1,5 +1,5 @@
 /**
- * Aperçu d'une rubrique au survol de son numéro.
+ * La phrase d'une rubrique, au survol de son point.
  *
  * Le tableau dit qu'une molécule mentionne l'expression en 4.4, en 4.5 et en
  * 4.8 ; il n'en montrait qu'un extrait, celui de la meilleure occurrence, si
@@ -10,8 +10,12 @@
  * cinquante extraits et 168 ms pour deux cent cinquante, et presque aucun
  * aperçu n'est survolé. Il est donc demandé au serveur, une fois, puis gardé.
  *
- * Sans JavaScript il ne se passe rien de fâcheux : le numéro reste un lien
- * vers sa rubrique, et le bloc « Extrait » de la ligne reste dépliable.
+ * Sans JavaScript il ne se passe rien de fâcheux : le point reste un lien
+ * vers sa rubrique, et son `title` la nomme. Avec, le `title` est retiré —
+ * le navigateur l'afficherait une seconde plus tard par-dessus l'aperçu.
+ *
+ * Au toucher, il n'y a pas de survol : le premier appui montre la phrase, le
+ * second suit le lien.
  */
 (function () {
   var table = document.querySelector('.trouvailles');
@@ -20,7 +24,11 @@
   var requete = new URLSearchParams(window.location.search).get('q');
   if (!requete) return;
 
+  var CIBLE = '[data-cis]';
+  table.querySelectorAll(CIBLE).forEach(function (el) { el.removeAttribute('title'); });
+
   var cache = new Map();
+  var toucher = false;
   var bulle = null;
   var attente = null;
   var courant = null;
@@ -57,10 +65,10 @@
     b.innerHTML = '';
     var tete = document.createElement('p');
     tete.className = 'apercu-tete';
-    tete.textContent = donnee.numero + ' ' + donnee.libelle;
+    tete.textContent = (donnee.type === 'notice' ? 'Notice · ' : '') + donnee.numero + ' ' + donnee.libelle;
     var corps = document.createElement('p');
     corps.className = 'apercu-texte';
-    // `extrait` vient de ts_headline : seuls <mark> et l'échappement de
+    // La phrase vient de ts_headline : seuls <mark> et l'échappement de
     // Postgres s'y trouvent, le reste est le texte du document.
     corps.innerHTML = donnee.extrait;
     var source = document.createElement('p');
@@ -95,7 +103,8 @@
   }
 
   function viser(e) {
-    var cible = e.target.closest('.puce[data-cis]');
+    if (toucher) return;
+    var cible = e.target.closest(CIBLE);
     if (!cible) return;
     clearTimeout(attente);
     // Un délai court : sans lui, traverser la ligne déclencherait huit requêtes.
@@ -104,10 +113,20 @@
 
   table.addEventListener('mouseover', viser);
   table.addEventListener('mouseout', function (e) {
-    if (e.target.closest('.puce[data-cis]')) cacher();
+    if (!toucher && e.target.closest(CIBLE)) cacher();
+  });
+
+  table.addEventListener('pointerdown', function (e) { toucher = e.pointerType === 'touch'; });
+  table.addEventListener('click', function (e) {
+    var cible = e.target.closest(CIBLE);
+    if (!cible || !toucher) return;
+    if (courant === cible && bulle && !bulle.hidden) return; // second appui : le lien
+    e.preventDefault();
+    demander(cible);
   });
   table.addEventListener('focusin', viser);
-  table.addEventListener('focusout', cacher);
+  table.addEventListener('focusout', function () { if (!toucher) cacher(); });
   window.addEventListener('scroll', cacher, { passive: true });
+  document.addEventListener('click', function (e) { if (!e.target.closest(CIBLE)) cacher(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cacher(); });
 }());

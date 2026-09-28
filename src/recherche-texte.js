@@ -110,6 +110,85 @@ export const COLONNES = [
 ];
 
 /**
+ * L'ordre dans lequel une rubrique répond à la question du comptoir.
+ *
+ * Une molécule contre-indiquée en cas d'insuffisance hépatique sévère passe
+ * avant celle dont le 5.2 décrit sa pharmacocinétique chez l'insuffisant : la
+ * première réponse est « peut-on la délivrer », la seconde « à quelle dose »,
+ * le reste vient ensuite. Le score de `ts_rank_cd` ne sait rien de cela — il
+ * compte des mots, et une rubrique de pharmacocinétique en compte beaucoup.
+ * Les notices viennent après toutes les rubriques du RCP : elles disent la
+ * même chose en d'autres mots.
+ */
+export const PRIORITE = ['4.3', '4.2', '4.4', '4.5', '4.6', '4.8', '4.1', '5.1'];
+
+const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((n) => `'${n}'`).join(', ')}]::text[], s.numero), ${PRIORITE.length})
+  + CASE WHEN s.document_type = 'rcp' THEN 0 ELSE ${PRIORITE.length + 1} END`;
+
+/**
+ * L'expression telle qu'elle a été tapée, quand elle a plusieurs mots.
+ *
+ * « insuffisance hépatique sévère » cherche les trois mots, où qu'ils soient
+ * dans la rubrique : c'est ce qui fait trois mille résultats, dont une bonne
+ * part de 4.2 qui énumèrent « insuffisance hépatique légère, modérée ou
+ * sévère ». Les deux sont utiles, mais pas au même rang : la rubrique qui
+ * porte l'expression dans l'ordre vient d'abord, et se distingue à l'écran.
+ *
+ * Rien à distinguer quand la saisie est entre guillemets — websearch la
+ * cherche déjà comme locution — ni quand elle porte un opérateur, ni pour un
+ * mot seul : on rend alors null, et toutes les occurrences comptent comme
+ * exactes.
+ *
+ * @returns {string|null}
+ */
+export function expressionExacte(requete) {
+  const q = String(requete ?? '').trim();
+  if (!q || q.includes('"') || /(^|\s)-\S|\sor\s/i.test(q)) return null;
+  return q.split(/[^\p{L}\p{N}]+/u).filter(Boolean).length >= 2 ? q : null;
+}
+
+/**
+ * Où couper les phrases : un point suivi d'une majuscule, ou une puce. La
+ * règle est celle de `citations.js`, qui cite les RCP dans les fiches ; les
+ * contre-indications sont souvent une liste à puces sans point final, que la
+ * seule ponctuation laissait d'un bloc.
+ */
+const COUPE = String.raw`(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])|\s*[•▪]\s*`;
+const MARQUES = 'StartSel=<mark>, StopSel=</mark>';
+const FENETRE = `MaxWords=44, MinWords=22, MaxFragments=1, ${MARQUES}`;
+/** Au-delà, la « phrase » est une énumération mal ponctuée : on la fenêtre. */
+const PHRASE_MAX = 600;
+
+/**
+ * La phrase du document qui porte la requête, entière, termes marqués.
+ *
+ * Un aperçu qui commence par « polysorbate 80 ou à l'un des excipients » et
+ * s'arrête sur « (voir rubrique » a perdu son début et sa fin : `ts_headline`
+ * découpe une fenêtre de mots sans rien savoir des phrases. On découpe donc
+ * d'abord en phrases, on garde la première qui répond — celle qui porte
+ * l'expression exacte si l'une la porte — et on ne marque qu'à l'intérieur.
+ *
+ * Quand aucune phrase ne répond seule — les mots sont dans la rubrique, mais
+ * dispersés sur plusieurs phrases — on retombe sur la fenêtre de ts_headline.
+ */
+function phraseSql(texte, requete, exacte) {
+  // Entre parenthèses : `@@` et `&&` ont la même priorité, et la requête
+  // composée « a && b » se lirait « (vecteur @@ a) && b ».
+  const tq = `(${requete})`;
+  return `coalesce((
+    SELECT CASE WHEN length(ph.p) <= ${PHRASE_MAX}
+             THEN ts_headline('${LANGUE}', ph.p, ${tq}, 'HighlightAll=true, ${MARQUES}')
+             ELSE ts_headline('${LANGUE}', ph.p, ${tq}, '${FENETRE}') END
+    FROM regexp_split_to_table(regexp_replace(${texte}, '\\s+', ' ', 'g'), '${COUPE}')
+         WITH ORDINALITY AS ph(p, ord)
+    WHERE to_tsvector('${LANGUE}', ph.p) @@ ${tq}
+    ORDER BY (to_tsvector('${LANGUE}', ph.p) @@ phraseto_tsquery('${LANGUE}', ${exacte})) IS TRUE DESC,
+             ph.ord
+    LIMIT 1),
+    ts_headline('${LANGUE}', ${texte}, ${tq}, '${FENETRE}'))`;
+}
+
+/**
  * Normalise le filtre de rubrique.
  *
  * « 4 » doit rendre 4 et toutes ses sous-rubriques — c'est ainsi qu'on cherche
@@ -224,22 +303,23 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
   // Le même élargissement que la recherche : sans quoi l'aperçu surlignerait
   // « QT » et pas « torsade de pointes », qui est pourtant ce qui a fait
   // remonter la rubrique.
-  const tq = composerTsquery(elargir(q).atomes, 4);
+  const tq = composerTsquery(elargir(q).atomes, 5);
   const { rows } = await pool.query(
-    `SELECT s.numero, s.libelle, m.denomination_medicament AS denomination,
-            ts_headline('${LANGUE}', s.texte, ${tq.sql},
-              'MaxWords=44, MinWords=22, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'
-            ) AS extrait
+    `SELECT s.numero, s.libelle, s.document_type AS type,
+            m.denomination_medicament AS denomination,
+            ${phraseSql('s.texte', tq.sql, '$4::text')} AS extrait
      FROM docs.rcp_sections s
      JOIN dbpm.cis_bdpm m ON m.code_cis = s.code_cis
      WHERE s.code_cis = $1 AND s.document_type = $2 AND s.position = $3`,
-    [String(cis), String(type), p, ...tq.params],
+    [String(cis), String(type), p, expressionExacte(q), ...tq.params],
   );
   return rows[0] ?? null;
 }
 
 export async function chercherDansDocuments(pool, requete, options = {}) {
-  const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [] };
+  const vide = {
+    resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [], exacte: false,
+  };
   const q = String(requete ?? '').trim();
   if (!q) return vide;
 
@@ -260,14 +340,18 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
   const { atomes, elargissements } = elargir(q);
-  // Les trois paramètres fixes d'abord, les atomes ensuite : leur nombre varie.
-  const tq = composerTsquery(atomes, 4);
+  // Les quatre paramètres fixes d'abord, les atomes ensuite : leur nombre varie.
+  const tq = composerTsquery(atomes, 5);
+  const exacte = expressionExacte(q);
 
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq),
      trouve AS (
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
-              s.texte, ts_rank_cd(${VECTEUR}, q.tq) AS score
+              s.texte, ts_rank_cd(${VECTEUR}, q.tq) AS score,
+              CASE WHEN $4::text IS NULL THEN true
+                   ELSE ${VECTEUR} @@ phraseto_tsquery('${LANGUE}', $4::text) END AS exact,
+              ${RANG} AS rang
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
@@ -344,18 +428,21 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      ),
      enrichi AS (SELECT t.*, m.signature FROM trouve t JOIN molecule m USING (code_cis)),
      -- Une entrée par rubrique et par molécule, portée par sa meilleure
-     -- occurrence : le numéro affiché doit mener quelque part de précis.
+     -- occurrence : le numéro affiché doit mener quelque part de précis. Le
+     -- type de document fait partie de la clé : la rubrique 4 d'une notice
+     -- (les effets indésirables) n'est pas le chapitre 4 d'un RCP.
      par_rubrique AS (
-       SELECT DISTINCT ON (signature, numero)
-              signature, numero, libelle, code_cis, document_type, position, score
+       SELECT DISTINCT ON (signature, document_type, numero)
+              signature, numero, libelle, code_cis, document_type, position, score, exact
        FROM enrichi
        WHERE coalesce(numero, '') <> ''
-       ORDER BY signature, numero, score DESC, code_cis
+       ORDER BY signature, document_type, numero, exact DESC, score DESC, code_cis
      ),
      chapeau AS (
        SELECT signature,
               jsonb_agg(jsonb_build_object(
                 'numero', numero, 'libelle', libelle, 'cis', code_cis,
+                'type', document_type, 'exact', exact,
                 'ancre', document_type || '-' || position)
                 -- 10 vient après 4.8, ce que l'ordre alphabétique ignore.
                 -- substring rend NULL sur ce qui n'est pas un chiffre au lieu
@@ -366,7 +453,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                 -- NULLS FIRST sur le second rang : « 4 » est le chapitre, il
                 -- ouvre ses sous-rubriques au lieu de les suivre. Il se rangeait
                 -- entre 4.9 et 5.3, ce que l'écran a montré tout de suite.
-                ORDER BY substring(numero from '^[0-9]+')::int NULLS LAST,
+                ORDER BY document_type <> 'rcp',
+                         substring(numero from '^[0-9]+')::int NULLS LAST,
                          substring(numero from '[.]([0-9]+)')::int NULLS FIRST,
                          numero) AS rubriques
        FROM par_rubrique GROUP BY signature
@@ -374,13 +462,17 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      meilleur AS (
        SELECT DISTINCT ON (signature)
               signature, code_cis, document_type, position, numero, libelle, texte, score
-       FROM enrichi ORDER BY signature, score DESC, code_cis
+       FROM enrichi ORDER BY signature, exact DESC, rang, score DESC, code_cis
      ),
+     -- Le classement : l'expression exacte d'abord, puis la rubrique qui
+     -- répond le mieux à la question du comptoir, puis le score.
      resume AS (
-       SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score
+       SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score,
+              bool_or(exact) AS exact,
+              coalesce(min(rang) FILTER (WHERE exact), min(rang)) AS rang
        FROM enrichi GROUP BY signature
      )
-     SELECT r.signature, r.specialites, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
+     SELECT r.signature, r.specialites, r.exact, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
             b.code_cis, b.numero, b.libelle,
             b.document_type || '-' || b.position AS ancre,
             m.denomination_medicament AS denomination,
@@ -388,23 +480,23 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
             -- lit tel quel, et deux lignes du même groupe ne peuvent pas
             -- s'intituler différemment selon leur représentant.
             CASE WHEN r.signature LIKE 'cis:%' THEN NULL ELSE r.signature END AS molecule,
-            -- L'extrait ne se calcule que sur ce qu'on rend : c'est de loin la
-            -- fonction la plus coûteuse de la requête.
-            ts_headline('${LANGUE}', b.texte, q.tq,
-              'MaxWords=38, MinWords=18, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'
-            ) AS extrait,
+            -- L'extrait ne se montre que filtré sur une rubrique : sans filtre,
+            -- chaque point de la ligne a le sien, demandé au survol. Le
+            -- calculer ici coûterait pour une phrase que personne ne verrait.
+            CASE WHEN $1::text IS NULL THEN NULL
+                 ELSE ${phraseSql('b.texte', 'q.tq', '$4::text')} END AS extrait,
             (SELECT count(*)::int FROM trouve) AS occurrences
      FROM resume r
      JOIN meilleur b USING (signature)
      LEFT JOIN chapeau c USING (signature)
      JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
-     ORDER BY r.score DESC, r.specialites DESC, b.code_cis
+     ORDER BY r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $2 OFFSET $3`,
     // Une ligne de plus que demandé : c'est ainsi qu'on sait s'il existe une
     // page suivante sans compter les molécules distinctes, ce que la requête
     // ne fait nulle part — `occurrences` compte les rubriques avant
     // regroupement, et servirait de plancher trompeur.
-    [rubrique, limite + 1, decalage, ...tq.params],
+    [rubrique, limite + 1, decalage, exacte, ...tq.params],
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;
@@ -414,6 +506,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   return {
     decalage,
     suite,
+    // Une expression à plusieurs mots : la vue distingue alors les
+    // occurrences exactes des mots dispersés. Sinon, rien à distinguer.
+    exacte: Boolean(exacte),
     // Ce qu'on a cherché en plus de ce qui a été tapé : le lecteur doit le
     // savoir, et pouvoir le refuser en citant sa requête.
     elargissements,

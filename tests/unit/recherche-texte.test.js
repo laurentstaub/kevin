@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery,
+  chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
   normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
 } from '../../src/recherche-texte.js';
 
@@ -195,5 +195,30 @@ describe('composition de la requête tsquery', () => {
     const { sql, params } = composerTsquery([], 4);
     assert.equal(params.length, 0);
     assert.match(sql, /websearch_to_tsquery\('french_nu', ''\)/);
+  });
+});
+
+describe('expression exacte', () => {
+  // Plusieurs mots tapés sans guillemets : la rubrique qui les porte dans
+  // l'ordre passe devant celle qui les disperse.
+  it('retient une expression de plusieurs mots', () => {
+    assert.equal(expressionExacte(' insuffisance hépatique sévère '), 'insuffisance hépatique sévère');
+  });
+
+  // Rien à distinguer : un mot seul, une locution déjà entre guillemets, une
+  // requête qui porte un opérateur.
+  it('ne distingue rien quand il n’y a rien à distinguer', () => {
+    for (const q of ['QT', '"torsade de pointes"', 'QT -torsade', 'QT or torsade', '']) {
+      assert.equal(expressionExacte(q), null, q);
+    }
+  });
+
+  it('passe en quatrième paramètre, avant les atomes', async () => {
+    const vus = [];
+    const pool = { query: async (_s, p) => { vus.push(p); return { rows: [] }; } };
+    await chercherDansDocuments(pool, 'insuffisance hépatique');
+    assert.equal(vus[0][3], 'insuffisance hépatique');
+    await chercherDansDocuments(pool, 'QT');
+    assert.equal(vus[1][3], null);
   });
 });
