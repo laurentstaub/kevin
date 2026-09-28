@@ -25,9 +25,15 @@ export function chargerBiosimilaires(chemin = path.join(ROOT, 'data', 'biosimila
   const brut = JSON.parse(readFileSync(chemin, 'utf8'));
   liste = {
     source: brut.source,
-    references: brut.groupes.flatMap((g) => g.references.map(normal)),
-    biosimilaires: brut.groupes.flatMap((g) => g.biosimilaires.map(normal)),
+    substitution: brut.substitution,
+    groupes: brut.groupes.map((g) => ({
+      ...g,
+      references: g.references.map(normal),
+      biosimilaires: g.biosimilaires.map(normal),
+    })),
   };
+  liste.references = liste.groupes.flatMap((g) => g.references);
+  liste.biosimilaires = liste.groupes.flatMap((g) => g.biosimilaires);
   return liste;
 }
 
@@ -49,3 +55,28 @@ export function statutBiologique(denomination) {
 /** Les noms des biosimilaires, normalisés, pour la requête du portrait. */
 export const nomsBiosimilaires = () => lire().biosimilaires;
 export const sourceBiosimilaires = () => lire().source;
+
+/**
+ * Le groupe biologique d'une spécialité, et s'il est substituable au comptoir.
+ *
+ * Onze groupes sur vingt-six le sont (arrêté du 20 février 2025, modifié en
+ * dernier lieu le 10 avril 2026). La règle commune tient en une phrase ; les
+ * conditions propres à certaines molécules — dosage, dispositif — ne sont pas
+ * recopiées ici : elles changent d'un arrêté à l'autre, et la page renvoie au
+ * texte plutôt que d'en afficher une version qui aurait vieilli.
+ *
+ * @returns {null | { substance, substituable, role: 'reference'|'biosimilaire' }}
+ */
+export function groupeBiologique(denomination) {
+  for (const g of lire().groupes) {
+    if (g.biosimilaires.some((n) => commencePar(denomination, n))) {
+      return { substance: g.substance, substituable: Boolean(g.substituable), role: 'biosimilaire' };
+    }
+    if (g.references.some((n) => commencePar(denomination, n))) {
+      return { substance: g.substance, substituable: Boolean(g.substituable), role: 'reference' };
+    }
+  }
+  return null;
+}
+
+export const substitutionBiosimilaires = () => lire().substitution;

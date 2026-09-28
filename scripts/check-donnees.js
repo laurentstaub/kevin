@@ -12,6 +12,9 @@
  * À enchaîner après chaque chargement, pas à lancer quand on s'inquiète.
  */
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { ROOT } from '../src/config.js';
 import { createPool } from '../src/db.js';
 import { falaise, plancher, age } from '../src/controles.js';
 
@@ -143,6 +146,24 @@ try {
       : jours >= rupture ? 'rupture' : jours >= alerte ? 'alerte' : 'ok';
     dire(etat, `${libelle} — ${jours === null ? 'date absente' : `il y a ${jours} jours`}`,
       etat === 'rupture' ? `au-delà de ${rupture} jours, la chaîne est à l'arrêt` : null);
+  }
+
+  // Les listes relevées à la main. Aucune n'a de fichier officiel qu'un
+  // script puisse recharger : c'est ici qu'on apprend qu'elles vieillissent.
+  // Non vérifiée, une liste est en alerte ; vieille de plus de 60 jours
+  // aussi — l'ANSM a modifié celle des biosimilaires trois fois à l'été 2026.
+  {
+    const b = JSON.parse(readFileSync(path.join(ROOT, 'data', 'biosimilaires.json'), 'utf8'));
+    for (const [libelle, bloc, date] of [
+      ['Liste des biosimilaires (ANSM)', b.source, b.source.mise_a_jour],
+      ['Biosimilaires substituables (arrêté)', b.substitution, b.substitution?.arrete_le],
+    ]) {
+      const jours = age(bloc?.extraite_le ?? date, MAINTENANT);
+      const etat = !bloc?.verifiee_le || jours === null || jours >= 60 ? 'alerte' : 'ok';
+      dire(etat, `${libelle} — texte du ${date ?? '?'}, relevé il y a ${jours ?? '?'} jours`,
+        !bloc?.verifiee_le ? 'jamais vérifiée contre la source : dater verifiee_le dans data/biosimilaires.json'
+          : jours >= 60 ? 'à relever de nouveau sur le site de l\'ANSM' : null);
+    }
   }
 
   // Pour mémoire, sans verdict : c'est une propriété du monde pharmaceutique,

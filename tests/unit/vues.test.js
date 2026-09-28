@@ -529,6 +529,13 @@ describe('page de classe', () => {
     assert.match(html, /1 spécialité non commercialisée/);
   });
 
+  it('dit la substitution des biosimilaires quand le groupe l’autorise', () => {
+    const html = page({ substitution: { arrete_le: '2026-04-10', url_arrete: 'https://a', url_conditions: 'https://b' } });
+    assert.match(html, /Substituable en officine/);
+    assert.match(html, /arrêté du 10 avril 2026/);
+    assert.doesNotMatch(page({}), /Substituable en officine/);
+  });
+
   it('se rend sans portrait ni chapeau', () => {
     const html = page({});
     assert.doesNotMatch(html, /class="portrait"/);

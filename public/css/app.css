@@ -448,6 +448,21 @@
   border-bottom-color: var(--accent);
 }
 
+/* La substitution des biosimilaires : un encart de règle, sobre, avant la
+   liste qu'il concerne. */
+.substitution {
+  max-width: var(--measure);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-pale);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.substitution p { margin: 0; }
+.substitution strong { font-weight: 600; }
+.substitution-source { margin-top: var(--sp-1) !important; font-size: var(--fs-xs); color: var(--muted); }
+
 /* ---------- Spécialités d'une molécule ---------- */
 
 /* Une ligne par spécialité, le laboratoire aligné à droite : le même patron

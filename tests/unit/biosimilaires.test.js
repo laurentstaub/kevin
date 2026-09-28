@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { statutBiologique } from '../../src/biosimilaires.js';
+import { statutBiologique, groupeBiologique } from '../../src/biosimilaires.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
 
 describe('biosimilaires', () => {
@@ -23,5 +23,13 @@ describe('biosimilaires', () => {
       { id: '2', denomination: 'LOVENOX 2 000 UI (20 mg)/0,2 ml, solution injectable', forme_pharmaceutique: 'solution injectable', titulaires: 'S' },
     ]);
     assert.deepEqual(f.noms.map((n) => [n.nom, n.biologique]), [['LOVENOX', 'reference'], ['INHIXA', 'biosimilaire']]);
+  });
+
+  // Onze groupes substituables au comptoir ; le rituximab ne l'est pas.
+  it('dit si le groupe est substituable en officine', () => {
+    assert.deepEqual(groupeBiologique('INHIXA 4 000 UI, solution injectable'),
+      { substance: 'énoxaparine', substituable: true, role: 'biosimilaire' });
+    assert.equal(groupeBiologique('TRUXIMA 500 mg, solution').substituable, false);
+    assert.equal(groupeBiologique('DOLIPRANE 1000 mg'), null);
   });
 });

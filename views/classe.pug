@@ -171,6 +171,25 @@ block content
     //- Elles étaient regroupées par nom commercial, « 3 dosages et formes »
     //- cachant le 5 mg et le 10 mg derrière un clic ; c'est pourtant la
     //- spécialité qu'on cherche ici.
+    //- Biosimilaires substituables : la règle commune, en une ligne, et le
+    //- texte. Les conditions propres à la molécule (dosage, dispositif) ne
+    //- sont pas recopiées — elles changent d'un arrêté à l'autre.
+    if substitution
+      aside.substitution
+        p
+          strong Substituable en officine.
+          |  Le pharmacien peut substituer au sein du groupe biologique similaire,
+          |  sauf mention « non substituable » justifiée par le prescripteur ; il en
+          |  informe le prescripteur et le patient, et assure la continuité de la
+          |  dispensation.
+        p.substitution-source
+          | Conditions propres à la molécule :
+          |
+          a(href=substitution.url_arrete target="_blank" rel="noopener noreferrer") arrêté du #{new Date(substitution.arrete_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          |  ·
+          |
+          a(href=substitution.url_conditions target="_blank" rel="noopener noreferrer") règles de dispensation (ameli)
+
     if feuille
       - var nombre = function (g) { return g.reduce(function (t, f) { return t + f.total }, 0) }
       section.groupe

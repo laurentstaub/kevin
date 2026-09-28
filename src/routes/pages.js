@@ -7,6 +7,7 @@ import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
 import { regrouperSpecialites } from '../specialites.js';
+import { groupeBiologique, substitutionBiosimilaires } from '../biosimilaires.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -123,7 +124,13 @@ export function pageRoutes(pool) {
       // que pour les fiches — non relu, il ne paraît qu'en développement.
       const chapeau = lireFiche(code.toLowerCase(), DOSSIER_CLASSES);
 
+      // Un groupe biologique substituable : la page le dit, avec la règle et
+      // le texte. Le groupe se lit sur les spécialités de la molécule.
+      const groupe = specialitesListe.map((sp) => groupeBiologique(sp.denomination)).find(Boolean);
+      const substitution = groupe?.substituable ? { ...substitutionBiosimilaires(), substance: groupe.substance } : null;
+
       res.render('classe', {
+        substitution,
         classe, feuille, molecules, railActif: code[0],
         // Rangées par forme, puis par nom, les dosages à la suite.
         commercialisees: regrouperSpecialites(specialitesListe.filter((sp) => sp.commercialise)),
