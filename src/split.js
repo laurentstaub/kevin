@@ -101,11 +101,11 @@ function horsBalise(contenu) {
   let profondeur = 0;
 
   BALISE.lastIndex = 0;
-  let m;
-  while ((m = BALISE.exec(contenu))) {
-    if (profondeur === 0 && m.index > depuis) segments.push([depuis, m.index]);
-    const autonome = m[3] === '/' || VIDES.has(m[2].toLowerCase());
-    if (!autonome) profondeur = Math.max(0, profondeur + (m[1] === '/' ? -1 : 1));
+  let correspondance;
+  while ((correspondance = BALISE.exec(contenu))) {
+    if (profondeur === 0 && correspondance.index > depuis) segments.push([depuis, correspondance.index]);
+    const autonome = correspondance[3] === '/' || VIDES.has(correspondance[2].toLowerCase());
+    if (!autonome) profondeur = Math.max(0, profondeur + (correspondance[1] === '/' ? -1 : 1));
     depuis = BALISE.lastIndex;
   }
   if (profondeur === 0 && depuis < contenu.length) segments.push([depuis, contenu.length]);
@@ -123,10 +123,10 @@ function coupure(contenu) {
   for (const [debut, fin] of horsBalise(contenu)) {
     const segment = contenu.slice(debut, fin);
     CONDUITE.lastIndex = 0;
-    let m;
-    while ((m = CONDUITE.exec(segment))) {
-      const nom = contenu.slice(0, debut + m.index);
-      const dose = contenu.slice(debut + m.index + m[0].length);
+    let correspondance;
+    while ((correspondance = CONDUITE.exec(segment))) {
+      const nom = contenu.slice(0, debut + correspondance.index);
+      const dose = contenu.slice(debut + correspondance.index + correspondance[0].length);
       if (detaguer(nom).trim() && detaguer(dose).trim()) return [nom, dose];
     }
   }
@@ -170,13 +170,13 @@ export function splitDocument(html, type = 'doc') {
   }
 
   // Bornes de chaque titre dans le HTML réécrit.
-  const bornes = [...marque.matchAll(TITRES_MARQUES)].map((m) => ({
-    id: m[2],
-    debut: m.index,
-    fin: m.index + m[0].length,
+  const bornes = [...marque.matchAll(TITRES_MARQUES)].map((correspondance) => ({
+    id: correspondance[2],
+    debut: correspondance.index,
+    fin: correspondance.index + correspondance[0].length,
   }));
 
-  const parId = new Map(bornes.map((b) => [b.id, b]));
+  const parId = new Map(bornes.map((borne) => [borne.id, borne]));
 
   const sections = titres.map((titre, i) => {
     const borne = parId.get(titre.id);
@@ -211,16 +211,16 @@ export function splitDocument(html, type = 'doc') {
   // ne bougent pas entre le découpage et l'affichage.
   const ancres = new Map(
     sections
-      .filter((s) => s.numero)
-      .map((s) => [s.numero, { id: `${type}-${s.position}`, libelle: s.libelle }]),
+      .filter((section) => section.numero)
+      .map((section) => [section.numero, { id: `${type}-${section.position}`, libelle: section.libelle }]),
   );
-  for (const s of sections) s.html = renvois(s.html, ancres);
+  for (const section of sections) section.html = renvois(section.html, ancres);
 
   // Une rubrique socle absente signale un découpage incomplet : son contenu a
   // silencieusement fusionné dans la précédente. Sur un RCP, « 4.3
   // Contre-indications » avalée par la posologie ne se voit pas à la lecture.
-  const trouves = new Set(sections.map((s) => s.numero));
-  const manquantes = attendues.filter((n) => !trouves.has(n));
+  const trouves = new Set(sections.map((section) => section.numero));
+  const manquantes = attendues.filter((attendue) => !trouves.has(attendue));
 
   return {
     sections,

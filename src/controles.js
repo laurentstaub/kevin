@@ -13,13 +13,13 @@
  */
 
 /** Part d'une cohorte qui a ce qu'elle devrait avoir. */
-export const couverture = (c) => {
-  const total = c.avec + c.sans;
-  return total === 0 ? null : c.avec / total;
+export const couverture = (cohorte) => {
+  const total = cohorte.avec + cohorte.sans;
+  return total === 0 ? null : cohorte.avec / total;
 };
 
 export function mediane(nombres) {
-  const tri = [...nombres].filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  const tri = [...nombres].filter((nombre) => Number.isFinite(nombre)).sort((a, b) => a - b);
   if (tri.length === 0) return null;
   const milieu = Math.floor(tri.length / 2);
   return tri.length % 2 ? tri[milieu] : (tri[milieu - 1] + tri[milieu]) / 2;
@@ -51,12 +51,12 @@ export function falaise(cohortes, {
   recentes = 3,
 } = {}) {
   const series = (cohortes ?? [])
-    .filter((c) => Number.isFinite(c.periode) && c.avec + c.sans >= volumeMin)
-    .map((c) => ({ ...c, couverture: couverture(c) }))
+    .filter((cohorte) => Number.isFinite(cohorte.periode) && cohorte.avec + cohorte.sans >= volumeMin)
+    .map((cohorte) => ({ ...cohorte, couverture: couverture(cohorte) }))
     .sort((a, b) => b.periode - a.periode);
 
   const anciennes = series.slice(recentes);
-  const reference = mediane(anciennes.map((c) => c.couverture));
+  const reference = mediane(anciennes.map((ancienne) => ancienne.couverture));
 
   // Sans norme établie, on ne peut rien condamner. Le dire vaut mieux que
   // rendre un verdict vert sur une base qu'on n'a pas su juger.
@@ -67,11 +67,11 @@ export function falaise(cohortes, {
     return { reference, etat: 'norme trop basse', ruptures: [], alertes: [], derniereSaine: null };
   }
 
-  const ruptures = series.filter((c) => c.couverture < reference * seuilRupture);
+  const ruptures = series.filter((serie) => serie.couverture < reference * seuilRupture);
   const alertes = series.filter(
-    (c) => c.couverture >= reference * seuilRupture && c.couverture < reference * seuilAlerte,
+    (serie) => serie.couverture >= reference * seuilRupture && serie.couverture < reference * seuilAlerte,
   );
-  const derniereSaine = series.find((c) => c.couverture >= reference * seuilAlerte)?.periode ?? null;
+  const derniereSaine = series.find((serie) => serie.couverture >= reference * seuilAlerte)?.periode ?? null;
 
   return {
     reference,

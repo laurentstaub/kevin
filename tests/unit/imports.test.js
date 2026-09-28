@@ -9,7 +9,7 @@ describe('estImportation', () => {
   });
 
   it('ne confond pas avec les autres procédures', () => {
-    for (const p of [
+    for (const cas of [
       'Procédure nationale',
       'Procédure décentralisée',
       'Procédure centralisée',
@@ -19,7 +19,7 @@ describe('estImportation', () => {
       undefined,
       '',
     ]) {
-      assert.equal(estImportation(p), false, String(p));
+      assert.equal(estImportation(cas), false, String(cas));
     }
   });
 });
@@ -50,15 +50,15 @@ describe('regrouperVariantes', () => {
 
   it('met le produit d’origine en tête de groupe, quel que soit l’ordre reçu', () => {
     const groupes = regrouperVariantes(VENTOLINE);
-    const cent = groupes.find((g) => g.denomination_medicament.includes('100'));
+    const cent = groupes.find((groupe) => groupe.denomination_medicament.includes('100'));
 
     assert.equal(cent.id, '64720167', 'le CIS national représente le groupe');
     assert.equal(cent.importation, false);
   });
 
   it('compte les importations écartées', () => {
-    const cent = regrouperVariantes(VENTOLINE).find((g) =>
-      g.denomination_medicament.includes('100'),
+    const cent = regrouperVariantes(VENTOLINE).find((variante) =>
+      variante.denomination_medicament.includes('100'),
     );
     assert.equal(cent.importations, 3);
   });

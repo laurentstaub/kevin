@@ -32,7 +32,7 @@ export const DOSSIER_CALCULS = path.join(ROOT, 'data', 'fiches');
 /** Les chapeaux des pages de classe : `fiches/classes/m01a.md` pour M01A. */
 export const DOSSIER_CLASSES = path.join(DOSSIER_FICHES, 'classes');
 
-const echapper = (s) => String(s)
+const echapper = (texte) => String(texte)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
@@ -59,14 +59,14 @@ function enLigne(texte) {
  * YAML, suffisant pour des métadonnées plates, sans dépendance.
  */
 export function lireEnTete(source) {
-  const m = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source);
-  if (!m) return { meta: {}, corps: source };
+  const entete = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source);
+  if (!entete) return { meta: {}, corps: source };
   const meta = {};
-  for (const ligne of m[1].split(/\r?\n/)) {
+  for (const ligne of entete[1].split(/\r?\n/)) {
     const i = ligne.indexOf(':');
     if (i > 0) meta[ligne.slice(0, i).trim()] = ligne.slice(i + 1).trim();
   }
-  return { meta, corps: source.slice(m[0].length) };
+  return { meta, corps: source.slice(entete[0].length) };
 }
 
 /**
@@ -96,7 +96,7 @@ export function decouper(corps) {
 
   const vider = () => {
     if (paragraphe.length) blocs.push({ type: 'html', html: `<p>${enLigne(paragraphe.join(' '))}</p>` });
-    if (liste.length) blocs.push({ type: 'html', html: `<ul>${liste.map((l) => `<li>${enLigne(l)}</li>`).join('')}</ul>` });
+    if (liste.length) blocs.push({ type: 'html', html: `<ul>${liste.map((element) => `<li>${enLigne(element)}</li>`).join('')}</ul>` });
     paragraphe = [];
     liste = [];
   };
@@ -108,8 +108,8 @@ export function decouper(corps) {
     const titre = /^(#{2,3})\s+(.+)$/.exec(ligne);
     if (titre) {
       vider();
-      const n = titre[1].length;
-      blocs.push({ type: 'html', html: `<h${n}>${enLigne(titre[2])}</h${n}>` });
+      const niveau = titre[1].length;
+      blocs.push({ type: 'html', html: `<h${niveau}>${enLigne(titre[2])}</h${niveau}>` });
       continue;
     }
     const puce = /^[-*]\s+(.+)$/.exec(ligne);
@@ -135,8 +135,8 @@ export function lireFiche(slug, dossier = DOSSIER_FICHES) {
 export function listerFiches(dossier = DOSSIER_FICHES) {
   if (!existsSync(dossier)) return [];
   return readdirSync(dossier)
-    .filter((f) => f.endsWith('.md') && !f.startsWith('_') && f !== 'README.md')
-    .map((f) => lireFiche(f.replace(/\.md$/, ''), dossier))
+    .filter((fichier) => fichier.endsWith('.md') && !fichier.startsWith('_') && fichier !== 'README.md')
+    .map((fichier) => lireFiche(fichier.replace(/\.md$/, ''), dossier))
     .filter(Boolean);
 }
 

@@ -46,30 +46,30 @@ export function organiser(rubriques, etats) {
     });
   }
 
-  for (const r of rubriques) {
-    if (!parType.has(r.document_type)) parType.set(r.document_type, creer(r.document_type));
+  for (const rubrique of rubriques) {
+    if (!parType.has(rubrique.document_type)) parType.set(rubrique.document_type, creer(rubrique.document_type));
 
-    const essentielles = socle(r.document_type);
-    const texte = r.texte ?? '';
+    const essentielles = socle(rubrique.document_type);
+    const texte = rubrique.texte ?? '';
 
-    parType.get(r.document_type).rubriques.push({
-      id: `${r.document_type}-${r.position}`,
-      numero: r.numero,
-      libelle: r.libelle,
-      profondeur: r.profondeur,
-      canonical: r.canonical,
-      html: r.html,
+    parType.get(rubrique.document_type).rubriques.push({
+      id: `${rubrique.document_type}-${rubrique.position}`,
+      numero: rubrique.numero,
+      libelle: rubrique.libelle,
+      profondeur: rubrique.profondeur,
+      canonical: rubrique.canonical,
+      html: rubrique.html,
       // « 4. Données cliniques » n'a pas de contenu propre : c'est une
       // charnière avant 4.1. Elle sépare, elle ne se déplie pas.
       charniere: texte.trim() === '',
       // Le socle : ce qu'un RCP complet comporte toujours. Sert au contraste
       // du libellé, pas à l'ouverture.
-      essentielle: essentielles.includes(r.numero),
+      essentielle: essentielles.includes(rubrique.numero),
       // La rubrique 4 est la partie clinique du RCP : indications, posologie,
       // contre-indications, mises en garde, interactions, grossesse, conduite,
       // effets indésirables, surdosage. C'est tout ce qu'on vient lire devant
       // un patient — elle est dépliée d'office, à sa place dans le document.
-      clinique: /^4(\.|$)/.test(r.numero),
+      clinique: /^4(\.|$)/.test(rubrique.numero),
     });
   }
 
@@ -107,11 +107,11 @@ export async function getSections(pool, cis) {
  * Entrées de sommaire d'un document découpé, plan entier.
  */
 export function planDe(doc) {
-  return doc.rubriques.map((r) => ({
-    id: r.id,
-    number: r.numero,
-    label: r.libelle,
-    depth: r.profondeur,
-    canonical: r.canonical,
+  return doc.rubriques.map((rubrique) => ({
+    id: rubrique.id,
+    number: rubrique.numero,
+    label: rubrique.libelle,
+    depth: rubrique.profondeur,
+    canonical: rubrique.canonical,
   }));
 }

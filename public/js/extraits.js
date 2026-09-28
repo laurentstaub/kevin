@@ -18,20 +18,20 @@
  * second suit le lien.
  */
 (function () {
-  var table = document.querySelector('.trouvailles');
+  const table = document.querySelector('.trouvailles');
   if (!table || !window.fetch) return;
 
-  var requete = new URLSearchParams(window.location.search).get('q');
+  const requete = new URLSearchParams(window.location.search).get('q');
   if (!requete) return;
 
-  var CIBLE = '[data-cis]';
-  table.querySelectorAll(CIBLE).forEach(function (el) { el.removeAttribute('title'); });
+  const CIBLE = '[data-cis]';
+  table.querySelectorAll(CIBLE).forEach((el) => { el.removeAttribute('title'); });
 
-  var cache = new Map();
-  var toucher = false;
-  var bulle = null;
-  var attente = null;
-  var courant = null;
+  const cache = new Map();
+  let toucher = false;
+  let bulle = null;
+  let attente = null;
+  let courant = null;
 
   function boite() {
     if (!bulle) {
@@ -44,39 +44,39 @@
   }
 
   function placer(cible) {
-    var b = boite();
-    var r = cible.getBoundingClientRect();
-    b.style.visibility = 'hidden';
-    b.hidden = false;
-    var h = b.getBoundingClientRect().height;
+    const bulleCourante = boite();
+    const rect = cible.getBoundingClientRect();
+    bulleCourante.style.visibility = 'hidden';
+    bulleCourante.hidden = false;
+    const hauteur = bulleCourante.getBoundingClientRect().height;
     // Au-dessus si la place y est, sinon dessous : un aperçu qui sort de
     // l'écran par le haut ne se lit pas davantage qu'un aperçu absent.
-    var dessus = r.top > h + 16;
-    b.style.top = (window.scrollY + (dessus ? r.top - h - 8 : r.bottom + 8)) + 'px';
-    var largeur = b.getBoundingClientRect().width;
-    var gauche = r.left + r.width / 2 - largeur / 2;
-    b.style.left = Math.max(8, Math.min(gauche, window.innerWidth - largeur - 8)) + 'px';
-    b.style.visibility = '';
+    const dessus = rect.top > hauteur + 16;
+    bulleCourante.style.top = (window.scrollY + (dessus ? rect.top - hauteur - 8 : rect.bottom + 8)) + 'px';
+    const largeur = bulleCourante.getBoundingClientRect().width;
+    const gauche = rect.left + rect.width / 2 - largeur / 2;
+    bulleCourante.style.left = Math.max(8, Math.min(gauche, window.innerWidth - largeur - 8)) + 'px';
+    bulleCourante.style.visibility = '';
   }
 
   function montrer(cible, donnee) {
     if (courant !== cible) return;
-    var b = boite();
-    b.innerHTML = '';
-    var tete = document.createElement('p');
+    const bulleCourante = boite();
+    bulleCourante.innerHTML = '';
+    const tete = document.createElement('p');
     tete.className = 'apercu-tete';
     tete.textContent = (donnee.type === 'notice' ? 'Notice · ' : '') + donnee.numero + ' ' + donnee.libelle;
-    var corps = document.createElement('p');
+    const corps = document.createElement('p');
     corps.className = 'apercu-texte';
     // La phrase vient de ts_headline : seuls <mark> et l'échappement de
     // Postgres s'y trouvent, le reste est le texte du document.
     corps.innerHTML = donnee.extrait;
-    var source = document.createElement('p');
+    const source = document.createElement('p');
     source.className = 'apercu-source';
     source.textContent = donnee.denomination;
-    b.appendChild(tete);
-    b.appendChild(corps);
-    b.appendChild(source);
+    bulleCourante.appendChild(tete);
+    bulleCourante.appendChild(corps);
+    bulleCourante.appendChild(source);
     placer(cible);
   }
 
@@ -88,45 +88,45 @@
 
   function demander(cible) {
     courant = cible;
-    var cle = cible.dataset.cis + '|' + cible.dataset.type + '|' + cible.dataset.position;
+    const cle = cible.dataset.cis + '|' + cible.dataset.type + '|' + cible.dataset.position;
     if (cache.has(cle)) return montrer(cible, cache.get(cle));
 
-    var url = '/extrait?q=' + encodeURIComponent(requete)
+    const url = '/extrait?q=' + encodeURIComponent(requete)
       + '&cis=' + encodeURIComponent(cible.dataset.cis)
       + '&type=' + encodeURIComponent(cible.dataset.type)
       + '&position=' + encodeURIComponent(cible.dataset.position);
 
     return fetch(url)
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d) { cache.set(cle, d); montrer(cible, d); } })
-      .catch(function () { /* un aperçu absent ne casse rien */ });
+      .then((reponse) => { return reponse.ok ? reponse.json() : null; })
+      .then((donnee) => { if (donnee) { cache.set(cle, donnee); montrer(cible, donnee); } })
+      .catch(() => { /* un aperçu absent ne casse rien */ });
   }
 
   function viser(e) {
     if (toucher) return;
-    var cible = e.target.closest(CIBLE);
+    const cible = e.target.closest(CIBLE);
     if (!cible) return;
     clearTimeout(attente);
     // Un délai court : sans lui, traverser la ligne déclencherait huit requêtes.
-    attente = setTimeout(function () { demander(cible); }, 120);
+    attente = setTimeout(() => { demander(cible); }, 120);
   }
 
   table.addEventListener('mouseover', viser);
-  table.addEventListener('mouseout', function (e) {
+  table.addEventListener('mouseout', (e) => {
     if (!toucher && e.target.closest(CIBLE)) cacher();
   });
 
-  table.addEventListener('pointerdown', function (e) { toucher = e.pointerType === 'touch'; });
-  table.addEventListener('click', function (e) {
-    var cible = e.target.closest(CIBLE);
+  table.addEventListener('pointerdown', (e) => { toucher = e.pointerType === 'touch'; });
+  table.addEventListener('click', (e) => {
+    const cible = e.target.closest(CIBLE);
     if (!cible || !toucher) return;
     if (courant === cible && bulle && !bulle.hidden) return; // second appui : le lien
     e.preventDefault();
     demander(cible);
   });
   table.addEventListener('focusin', viser);
-  table.addEventListener('focusout', function () { if (!toucher) cacher(); });
+  table.addEventListener('focusout', () => { if (!toucher) cacher(); });
   window.addEventListener('scroll', cacher, { passive: true });
-  document.addEventListener('click', function (e) { if (!e.target.closest(CIBLE)) cacher(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cacher(); });
+  document.addEventListener('click', (e) => { if (!e.target.closest(CIBLE)) cacher(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cacher(); });
 }());

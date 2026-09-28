@@ -38,13 +38,13 @@ async function toutesLesTrouvailles(termes, rubriques) {
   const vues = new Map();
   for (const rubrique of rubriques) {
     for (let decalage = 0; decalage < PLAFOND; decalage += 100) {
-      const d = await chercherDansDocuments(pool, termes.join(' '), { rubrique, limite: 100, decalage });
-      for (const r of d.resultats) {
-        const deja = vues.get(r.molecule);
+      const recherche = await chercherDansDocuments(pool, termes.join(' '), { rubrique, limite: 100, decalage });
+      for (const resultat of recherche.resultats) {
+        const deja = vues.get(resultat.molecule);
         if (deja) deja.rubriques.add(rubrique);
-        else vues.set(r.molecule, { ...r, rubriques: new Set([rubrique]) });
+        else vues.set(resultat.molecule, { ...resultat, rubriques: new Set([rubrique]) });
       }
-      if (!d.suite) break;
+      if (!recherche.suite) break;
     }
   }
   return [...vues.values()];
@@ -54,9 +54,9 @@ let enErreur = 0;
 
 try {
   for (const fiche of listerFiches()) {
-    const blocListe = fiche.blocs.find((b) => b.type === 'directive' && b.nom === 'substances');
+    const blocListe = fiche.blocs.find((bloc) => bloc.type === 'directive' && bloc.nom === 'substances');
     if (!blocListe) continue;
-    const blocCitations = fiche.blocs.find((b) => b.type === 'directive' && b.nom === 'citations');
+    const blocCitations = fiche.blocs.find((bloc) => bloc.type === 'directive' && bloc.nom === 'citations');
     const rubriques = blocCitations?.options.rubriques ?? ['4.4', '4.5'];
     const termes = blocCitations?.options.termes ?? [];
 
@@ -95,7 +95,7 @@ try {
     if (termes.length) {
       const trouvees = await toutesLesTrouvailles(termes, rubriques);
       const candidats = trouvees
-        .filter((t) => !t.sansMolecule && !dejaInscrite(t.molecule, liste.inscriptions))
+        .filter((trouvee) => !trouvee.sansMolecule && !dejaInscrite(trouvee.molecule, liste.inscriptions))
         .sort((a, b) => a.molecule.localeCompare(b.molecule, 'fr'));
 
       const texte = [
@@ -107,12 +107,12 @@ try {
         '',
         `${candidats.length} candidat(s), calculé le ${new Date().toISOString().slice(0, 10)}.`,
         '',
-        ...candidats.flatMap((c) => [
-          `## ${c.molecule}`,
+        ...candidats.flatMap((candidat) => [
+          `## ${candidat.molecule}`,
           '',
-          `${c.specialites} spécialité(s) · rubriques ${[...c.rubriques].join(', ')} · [${c.denomination}](/product/${c.code_cis}#${c.ancre})`,
+          `${candidat.specialites} spécialité(s) · rubriques ${[...candidat.rubriques].join(', ')} · [${candidat.denomination}](/product/${candidat.code_cis}#${candidat.ancre})`,
           '',
-          `> ${String(c.extrait).replace(/<\/?mark>/g, '**')}`,
+          `> ${String(candidat.extrait).replace(/<\/?mark>/g, '**')}`,
           '',
         ]),
       ].join('\n');

@@ -156,17 +156,17 @@ export const ORDRE_REPRESENTANT = `
  */
 export function etiqueter(groupes) {
   const occurrences = new Map();
-  for (const g of groupes) {
-    const cle = g.racine ?? '';
+  for (const groupe of groupes) {
+    const cle = groupe.racine ?? '';
     occurrences.set(cle, (occurrences.get(cle) ?? 0) + 1);
   }
 
-  return groupes.map((g) => {
-    const racine = g.racine ?? g.denomination_medicament ?? '';
-    const homonyme = occurrences.get(g.racine ?? '') > 1;
-    const titulaire = g.titulaires?.trim();
+  return groupes.map((groupe) => {
+    const racine = groupe.racine ?? groupe.denomination_medicament ?? '';
+    const homonyme = occurrences.get(groupe.racine ?? '') > 1;
+    const titulaire = groupe.titulaires?.trim();
     return {
-      ...g,
+      ...groupe,
       libelle: homonyme && titulaire ? `${racine} — ${titulaire}` : racine,
     };
   });

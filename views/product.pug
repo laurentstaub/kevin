@@ -6,27 +6,27 @@ block styles
   link(rel="stylesheet", href=`/css/product.css?v=${v}`)
 
 block content
-  mixin choixForme(v)
-    if v.courante
-      span.forme-choix.actif(aria-current="true")= v.variante
+  mixin choixForme(choix)
+    if choix.courante
+      span.forme-choix.actif(aria-current="true")= choix.variante
     else
       a.forme-choix(
-        href=`/product/${v.id}`
-        class=(v.commercialise === false ? 'forme-retiree' : '')
-        title=(v.commercialise === false ? 'Non commercialisé' : null)
-      )= v.variante
+        href=`/product/${choix.id}`
+        class=(choix.commercialise === false ? 'forme-retiree' : '')
+        title=(choix.commercialise === false ? 'Non commercialisé' : null)
+      )= choix.variante
 
-  mixin rubrique(r, ouverte)
-    if r.charniere
-      h4.charniere(id=r.id)
-        span.num= r.numero
-        span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
+  mixin rubrique(entree, ouverte)
+    if entree.charniere
+      h4.charniere(id=entree.id)
+        span.num= entree.numero
+        span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
     else
-      details.rubrique(id=r.id open=ouverte class=`rub-n${r.profondeur}` class=(r.essentielle ? 'essentielle' : null))
+      details.rubrique(id=entree.id open=ouverte class=`rub-n${entree.profondeur}` class=(entree.essentielle ? 'essentielle' : null))
         summary.rubrique-tete
-          span.num= r.numero
-          span(class=r.canonical || r.libelle !== r.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= r.libelle
-        .rubrique-corps!= r.html
+          span.num= entree.numero
+          span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
+        .rubrique-corps!= entree.html
 
   +barreSituation(product.denomination_medicament)
 
@@ -78,31 +78,31 @@ block content
       //- empilées pour deux dosages et deux boîtes, c'était trois lignes de
       //- trop. Le repli ne sert qu'aux produits qui débordent vraiment — un
       //- Doliprane a dix-sept présentations, un Seresta en a deux.
-      - var SEUIL_REPLI = 8
-      - var forme = product.forme_pharmaceutique
-      - var soeurs = variantes || []
-      - var memeForme = soeurs.filter(function (v) { return v.forme_pharmaceutique === forme })
-      - var autresFormes = soeurs.filter(function (v) { return v.forme_pharmaceutique !== forme })
-      - var replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
-      - var enTete = replier ? memeForme : soeurs
-      - var conditionnements = (product.cip_products || []).length
+      - const SEUIL_REPLI = 8
+      - const forme = product.forme_pharmaceutique
+      - const soeurs = variantes || []
+      - const memeForme = soeurs.filter((variante) => variante.forme_pharmaceutique === forme)
+      - const autresFormes = soeurs.filter((variante) => variante.forme_pharmaceutique !== forme)
+      - const replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
+      - const enTete = replier ? memeForme : soeurs
+      - const conditionnements = (product.cip_products || []).length
 
       if soeurs.length > 1 || conditionnements > 0
         nav.formes(aria-label="Dosages, formes et conditionnements")
           ul.formes-liste
             if soeurs.length > 1
-              each v in enTete
+              each soeur in enTete
                 li
-                  +choixForme(v)
+                  +choixForme(soeur)
 
               if replier
                 li
                   details.formes-autres
                     summary.formes-plus #{autresFormes.length} autre#{autresFormes.length > 1 ? 's' : ''} forme#{autresFormes.length > 1 ? 's' : ''}
                     ul.formes-liste
-                      each v in autresFormes
+                      each soeur in autresFormes
                         li
-                          +choixForme(v)
+                          +choixForme(soeur)
 
             //- Les présentations sont les codes CIP rattachés au CIS affiché :
             //- elles décrivent la boîte, pas le médicament. Leur place est donc
@@ -143,7 +143,7 @@ block content
       //- support d'ordonnance, durée maximale, fractionnement. Tout vient de
       //- `cis_cpd_bdpm`, donnée publique. Meddispar, édité par l'Ordre, rédige
       //- la conduite à tenir : il n'est pas ouvert, on y renvoie sans le copier.
-      - var nbConditions = delivrance.groupes.reduce(function (n, g) { return n + g.conditions.length }, 0)
+      - const nbConditions = delivrance.groupes.reduce((total, groupe) => total + groupe.conditions.length, 0)
       details.bloc#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
@@ -160,16 +160,16 @@ block content
               //- d'où sa pose ici plutôt que dans `classer`.
               if remboursement
                 span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
-              each m in delivrance.resume
+              each mention in delivrance.resume
                 //- La mention qui empêche de délivrer se distingue par son
                 //- poids, pas par sa couleur : un code rouge/vert serait
                 //- illisible pour une part notable des lecteurs, et c'est
                 //- justement la mention qu'il ne faut pas manquer.
                 span.mention(
-                  class=(m.portee === 'bloque' ? 'mention-bloque'
-                    : m.cle === 'classement' ? 'mention-classement' : null)
-                  title=(m.long !== m.court ? m.long : null)
-                )= m.court
+                  class=(mention.portee === 'bloque' ? 'mention-bloque'
+                    : mention.cle === 'classement' ? 'mention-classement' : null)
+                  title=(mention.long !== mention.court ? mention.long : null)
+                )= mention.court
           else if nbConditions > 0
             span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
           else
@@ -178,17 +178,17 @@ block content
         if nbConditions > 0 || remboursement
           if nbConditions > 0
             dl.axes
-              each g in delivrance.groupes
-                dt.axe-titre= g.titre
+              each groupe in delivrance.groupes
+                dt.axe-titre= groupe.titre
                 dd.axe-valeur
-                  each c in g.conditions
+                  each condition in groupe.conditions
                     //- Le libellé entier reste en infobulle : on met en forme,
                     //- on ne réécrit pas. La casse d'origine y est intacte.
-                    p.condition(title=c.brut)
-                      if c.population
-                        span.condition-population= c.population
+                    p.condition(title=condition.brut)
+                      if condition.population
+                        span.condition-population= condition.population
                       span.condition-texte
-                        each seg in c.segments
+                        each seg in condition.segments
                           if seg.fort
                             strong= seg.texte
                           else
@@ -292,8 +292,8 @@ block content
                   //- RCP se cite par ses rubriques, et l'ordre officiel est
                   //- celui que le lecteur connaît. Seule l'ouverture est
                   //- dirigée — toute la rubrique 4 est dépliée, le reste attend.
-                  each r in doc.rubriques
-                    +rubrique(r, r.clinique === true)
+                  each rubrique in doc.rubriques
+                    +rubrique(rubrique, rubrique.clinique === true)
 
               else if doc.html
                 .document-corps!= doc.html
@@ -319,8 +319,8 @@ block content
           //-
           //- Ne pas le dire laisserait entendre qu'une liste officielle
           //- autorise ce que le pharmacien lit sous ce titre.
-          - var officiels = substitutions.filter(function (s) { return s.role !== 'Même DCI' }).length
-          - var voisins = substitutions.length - officiels
+          - const officiels = substitutions.filter((substitution) => substitution.role !== 'Même DCI').length
+          - const voisins = substitutions.length - officiels
           if genericGroup
             p.section-meta Groupe générique · #{genericGroup}
           p.section-meta.provenance

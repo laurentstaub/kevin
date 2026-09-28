@@ -17,7 +17,7 @@ import { chargerThesaurus } from '../../src/thesaurus.js';
  * cite doit sortir entier, et ce qui n'est pas relu ne doit pas sortir.
  */
 
-const html = (corps) => decouper(corps).filter((b) => b.type === 'html').map((b) => b.html).join('');
+const html = (corps) => decouper(corps).filter((bloc) => bloc.type === 'html').map((bloc) => bloc.html).join('');
 
 describe('fiches — Markdown', () => {
   it('échappe le HTML brut', () => {
@@ -69,7 +69,7 @@ describe('fiches — lecture et publication', () => {
   });
 
   it('ignore le modèle et le README', () => {
-    assert.deepEqual(listerFiches(dossier).map((f) => f.slug).sort(), ['brouillon', 'relue']);
+    assert.deepEqual(listerFiches(dossier).map((fiche) => fiche.slug).sort(), ['brouillon', 'relue']);
   });
 
   it('refuse un slug qui sort du dossier', () => {
@@ -110,10 +110,10 @@ describe('calcul d’une fiche', () => {
   });
 
   it('prend la première spécialité qui cite, avec son ancre', () => {
-    const r = choisirCitations([ligne('1', 'Rien.'), ligne('2', 'Allongement du QT.')], ['QT']);
-    assert.equal(r.manque, false);
-    assert.equal(r.specialite.cis, '2');
-    assert.deepEqual(r.citations[0], { numero: '4.4', libelle: 'Mises en garde', ancre: 'rcp-7', phrase: 'Allongement du QT.' });
+    const choix = choisirCitations([ligne('1', 'Rien.'), ligne('2', 'Allongement du QT.')], ['QT']);
+    assert.equal(choix.manque, false);
+    assert.equal(choix.specialite.cis, '2');
+    assert.deepEqual(choix.citations[0], { numero: '4.4', libelle: 'Mises en garde', ancre: 'rcp-7', phrase: 'Allongement du QT.' });
   });
 
   it('dit quand aucun RCP ne cite, au lieu de se taire', () => {

@@ -24,7 +24,7 @@ const MEDDISPAR = 'https://www.meddispar.fr';
  * corps du bloc : on abrège l'accès, jamais la donnée.
  */
 const UNITES = { jour: 'j', jours: 'j', semaine: 'sem.', semaines: 'sem.', mois: 'mois' };
-const abreger = (n, unite) => `${n} ${UNITES[unite.toLowerCase()] ?? unite}`;
+const abreger = (nombre, unite) => `${nombre} ${UNITES[unite.toLowerCase()] ?? unite}`;
 const mention = (court, long) => ({ court, long: long ?? court });
 
 /**
@@ -66,7 +66,7 @@ const REGLES = [
     cle: 'cadre',
     portee: 'bloque',
     motif: /usage professionnel/i,
-    resume: (m) => mention('Usage professionnel', m.input),
+    resume: (correspondance) => mention('Usage professionnel', correspondance.input),
   },
   {
     cle: 'cadre',
@@ -116,13 +116,13 @@ const REGLES = [
     cle: 'duree',
     portee: 'verifier',
     motif: /prescription limit[ée]e? [àa] (\d+) (semaines?|mois|jours?)/i,
-    resume: (m) => mention(`${abreger(m[1], m[2])} max`, `Prescription limitée à ${m[1]} ${m[2]}`),
+    resume: (correspondance) => mention(`${abreger(correspondance[1], correspondance[2])} max`, `Prescription limitée à ${correspondance[1]} ${correspondance[2]}`),
   },
   {
     cle: 'fractionnement',
     portee: 'verifier',
     motif: /d[ée]livrance fractionn[ée]e? de (\d+) (jours?|semaines?)/i,
-    resume: (m) => mention(`Fractionné ${abreger(m[1], m[2])}`, `Délivrance fractionnée, ${m[1]} ${m[2]}`),
+    resume: (correspondance) => mention(`Fractionné ${abreger(correspondance[1], correspondance[2])}`, `Délivrance fractionnée, ${correspondance[1]} ${correspondance[2]}`),
   },
   {
     cle: 'chevauchement',
@@ -241,7 +241,7 @@ const rang = (portee) => {
  *
  * @returns {{population:string|null, texte:string, accent:string|null, brut:string}}
  */
-const capitale = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+const capitale = (texte) => (texte ? texte.charAt(0).toUpperCase() + texte.slice(1) : texte);
 
 /**
  * Les capitales de la source désignent une discipline — sauf trois sigles.
@@ -301,12 +301,12 @@ export function presenter(condition) {
   const segments = [];
   let depuis = 0;
   CRIE.lastIndex = 0;
-  let m;
-  while ((m = CRIE.exec(texte))) {
-    if (SIGLES.has(m[0].trim())) continue;
-    if (m.index > depuis) segments.push({ texte: texte.slice(depuis, m.index), fort: false });
-    segments.push({ texte: capitale(m[0].toLowerCase()), fort: true });
-    depuis = m.index + m[0].length;
+  let cri;
+  while ((cri = CRIE.exec(texte))) {
+    if (SIGLES.has(cri[0].trim())) continue;
+    if (cri.index > depuis) segments.push({ texte: texte.slice(depuis, cri.index), fort: false });
+    segments.push({ texte: capitale(cri[0].toLowerCase()), fort: true });
+    depuis = cri.index + cri[0].length;
   }
   if (depuis < texte.length) segments.push({ texte: texte.slice(depuis), fort: false });
 
@@ -318,14 +318,14 @@ export function presenter(condition) {
  * @returns {{ resume: {cle,court,long}[], groupes: object[], liens: object[] }}
  */
 export function classer(libelles) {
-  const conditions = [...new Set((libelles ?? []).map((l) => String(l ?? '').trim()).filter(Boolean))];
+  const conditions = [...new Set((libelles ?? []).map((libelle) => String(libelle ?? '').trim()).filter(Boolean))];
 
   const parAxe = new Map();
   const resume = new Map();
   const liens = new Map();
 
   for (const condition of conditions) {
-    const regle = REGLES.find((r) => r.motif.test(condition));
+    const regle = REGLES.find((candidate) => candidate.motif.test(condition));
     const cle = regle?.cle ?? 'autres';
 
     if (!parAxe.has(cle)) parAxe.set(cle, []);
@@ -336,13 +336,13 @@ export function classer(libelles) {
       // libellé, donc l'ordre des conditions est arbitraire. Sans ce rang, deux
       // spécialités portant les mêmes mentions les afficheraient dans deux
       // ordres différents selon l'alphabet de leurs libellés.
-      const m = {
+      const entree = {
         cle,
         portee: regle.portee,
         ordre: REGLES.indexOf(regle),
         ...regle.resume(condition.match(regle.motif)),
       };
-      if (!resume.has(m.court)) resume.set(m.court, m);
+      if (!resume.has(entree.court)) resume.set(entree.court, entree);
     }
 
     if (regle?.lien) liens.set(regle.lien.url, regle.lien);
@@ -357,7 +357,7 @@ export function classer(libelles) {
     resume: mentions,
     // Une seule question compte avant toutes les autres : est-ce que ça sort
     // de la pharmacie ? La vue s'en sert pour dire non d'emblée.
-    bloque: mentions.some((m) => m.portee === 'bloque'),
+    bloque: mentions.some((entree) => entree.portee === 'bloque'),
     groupes: AXES.filter(([cle]) => parAxe.has(cle)).map(([cle, titre]) => ({
       cle,
       titre,
@@ -396,9 +396,9 @@ export function classer(libelles) {
  * ligne.
  */
 export function pourcentage(valeur) {
-  const n = Number(valeur);
-  if (valeur === null || valeur === undefined || valeur === '' || !Number.isFinite(n)) return null;
-  const chiffres = Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+  const nombre = Number(valeur);
+  if (valeur === null || valeur === undefined || valeur === '' || !Number.isFinite(nombre)) return null;
+  const chiffres = Number.isInteger(nombre) ? String(nombre) : nombre.toFixed(2).replace('.', ',');
   return `${chiffres}\u00A0%`;
 }
 
@@ -429,5 +429,5 @@ export async function getDelivrance(pool, cis) {
     [cis],
   );
 
-  return classer(rows.map((r) => r.condition));
+  return classer(rows.map((row) => row.condition));
 }

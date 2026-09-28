@@ -8,7 +8,7 @@ const LIGATURES = { œ: 'oe', Œ: 'OE', æ: 'ae', Æ: 'AE', ß: 'ss' };
 export function deaccent(value) {
   if (typeof value !== 'string') return '';
   return value
-    .replace(/[œŒæÆß]/g, (c) => LIGATURES[c])
+    .replace(/[œŒæÆß]/g, (ligature) => LIGATURES[ligature])
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .normalize('NFC');
@@ -16,7 +16,7 @@ export function deaccent(value) {
 
 /** Tronque proprement sur une limite de mot. */
 export function truncate(value, max = 160) {
-  const s = String(value ?? '');
-  if (s.length <= max) return s;
-  return `${s.slice(0, s.lastIndexOf(' ', max))}…`;
+  const texte = String(value ?? '');
+  if (texte.length <= max) return texte;
+  return `${texte.slice(0, texte.lastIndexOf(' ', max))}…`;
 }

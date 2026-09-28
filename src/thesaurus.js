@@ -42,13 +42,13 @@ const MOTS_MAX = 6;
  * séparateurs qui distinguent « anti-vitamine K » de « antivitamine K » ou
  * « CYP 3A4 » de « CYP3A4 ». On compare des squelettes, pas des graphies.
  */
-const cle = (s) => deaccent(String(s)).toLowerCase().replace(/[\s'’\-–.]+/g, '');
+const cle = (texte) => deaccent(String(texte)).toLowerCase().replace(/[\s'’\-–.]+/g, '');
 
 function charger(chemin = path.join(ROOT, 'data', 'thesaurus.json')) {
   const { groupes } = JSON.parse(readFileSync(chemin, 'utf8'));
   const parCle = new Map();
   for (const groupe of groupes) {
-    const membres = groupe.map((t) => String(t).trim()).filter(Boolean);
+    const membres = groupe.map((terme) => String(terme).trim()).filter(Boolean);
     if (membres.length < 2) continue;
     for (const terme of membres) {
       // Un terme présent dans deux groupes rejoint le premier : le fichier
@@ -84,14 +84,14 @@ const citer = (terme) => (/\s/.test(terme) ? `"${terme.replace(/"/g, '')}"` : te
  *   reconnu et remplacé, pour le dire au lecteur.
  */
 export function elargir(requete) {
-  const q = String(requete ?? '').trim();
-  if (!q) return { atomes: [], elargissements: [] };
+  const saisie = String(requete ?? '').trim();
+  if (!saisie) return { atomes: [], elargissements: [] };
 
   // Des guillemets, c'est une demande d'exactitude : on la respecte à la
   // lettre et on laisse websearch_to_tsquery faire la locution.
-  if (q.includes('"')) return { atomes: [[q]], elargissements: [] };
+  if (saisie.includes('"')) return { atomes: [[saisie]], elargissements: [] };
 
-  const mots = q.split(/\s+/).slice(0, config.search.maxTerms + MOTS_MAX);
+  const mots = saisie.split(/\s+/).slice(0, config.search.maxTerms + MOTS_MAX);
   const atomes = [];
   const elargissements = [];
   let i = 0;
@@ -99,10 +99,10 @@ export function elargir(requete) {
   while (i < mots.length && atomes.length < config.search.maxTerms) {
     // Le terme le plus long d'abord : « intervalle QT » avant « QT ».
     let trouve = null;
-    for (let n = Math.min(MOTS_MAX, mots.length - i); n >= 1 && !trouve; n -= 1) {
-      const candidat = mots.slice(i, i + n).join(' ');
+    for (let taille = Math.min(MOTS_MAX, mots.length - i); taille >= 1 && !trouve; taille -= 1) {
+      const candidat = mots.slice(i, i + taille).join(' ');
       const groupe = index().get(cle(candidat));
-      if (groupe) trouve = { n, candidat, groupe };
+      if (groupe) trouve = { n: taille, candidat, groupe };
     }
 
     if (trouve) {
@@ -110,7 +110,7 @@ export function elargir(requete) {
       atomes.push(alternatives.map(citer));
       elargissements.push({
         terme: trouve.candidat,
-        vers: alternatives.filter((a) => cle(a) !== cle(trouve.candidat)),
+        vers: alternatives.filter((alternative) => cle(alternative) !== cle(trouve.candidat)),
       });
       i += trouve.n;
     } else {

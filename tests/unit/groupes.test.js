@@ -21,7 +21,7 @@ describe('etiqueter', () => {
     ]);
 
     assert.deepEqual(
-      rendus.map((r) => r.libelle),
+      rendus.map((rendu) => rendu.libelle),
       ['GLUCOSE — BAXTER', 'GLUCOSE — AGUETTANT', 'DOLIPRANE'],
     );
   });
@@ -36,6 +36,6 @@ describe('etiqueter', () => {
       { racine: 'GLUCOSE', titulaires: null },
       { racine: 'GLUCOSE', titulaires: '   ' },
     ]);
-    for (const r of rendus) assert.equal(r.libelle, 'GLUCOSE');
+    for (const rendu of rendus) assert.equal(rendu.libelle, 'GLUCOSE');
   });
 });

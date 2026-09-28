@@ -4,7 +4,7 @@ import { splitDocument, detaguer, PARSER_VERSION, composerDoses } from '../../sr
 import { socle } from '../../src/rcp-plan.js';
 
 const rubrique = (numero, titre, ...corps) =>
-  `<p><a name="x">${numero}. ${titre}</a></p>` + corps.map((c) => `<p>${c}</p>`).join('');
+  `<p><a name="x">${numero}. ${titre}</a></p>` + corps.map((paragraphe) => `<p>${paragraphe}</p>`).join('');
 
 const RCP_COMPLET =
   rubrique('1', 'DENOMINATION DU MEDICAMENT', 'ASPIRINE ARROW 75 mg') +
@@ -35,14 +35,14 @@ describe('splitDocument', () => {
   it('produit une rubrique par titre', () => {
     const { sections } = splitDocument(RCP_COMPLET, 'rcp');
     assert.deepEqual(
-      sections.map((s) => s.numero),
+      sections.map((section) => section.numero),
       ['1', '2', '3', '4.1', '4.2', '4.3', '4.4', '4.8', '6.1'],
     );
   });
 
   it('rattache à chaque rubrique le contenu qui la suit, et lui seul', () => {
     const { sections } = splitDocument(RCP_COMPLET, 'rcp');
-    const posologie = sections.find((s) => s.numero === '4.2');
+    const posologie = sections.find((section) => section.numero === '4.2');
     assert.match(posologie.texte, /75 mg par jour/);
     assert.match(posologie.texte, /Avaler avec/);
     // Le contenu de la rubrique suivante ne doit pas déborder.
@@ -51,21 +51,21 @@ describe('splitDocument', () => {
 
   it('conserve le HTML et le texte nu côte à côte', () => {
     const { sections } = splitDocument(RCP_COMPLET, 'rcp');
-    const s = sections.find((x) => x.numero === '4.3');
-    assert.match(s.html, /<p>/);
-    assert.equal(s.texte, 'Ulcère en évolution.');
+    const section = sections.find((section) => section.numero === '4.3');
+    assert.match(section.html, /<p>/);
+    assert.equal(section.texte, 'Ulcère en évolution.');
   });
 
   it('normalise les libellés sur le plan type', () => {
     const { sections } = splitDocument(RCP_COMPLET, 'rcp');
-    const s = sections.find((x) => x.numero === '1');
-    assert.equal(s.libelle, 'Dénomination du médicament');
-    assert.equal(s.canonical, true);
+    const section = sections.find((section) => section.numero === '1');
+    assert.equal(section.libelle, 'Dénomination du médicament');
+    assert.equal(section.canonical, true);
   });
 
   it('numérote les positions dans l’ordre du document', () => {
     const { sections } = splitDocument(RCP_COMPLET, 'rcp');
-    assert.deepEqual(sections.map((s) => s.position), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.deepEqual(sections.map((section) => section.position), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it('déclare complet un RCP qui a toutes ses rubriques socle', () => {
@@ -107,7 +107,7 @@ describe('socle', () => {
 
   it('ne signale pas une notice complète comme partielle', () => {
     const notice = ['1', '2', '3', '4', '5', '6']
-      .map((n) => rubrique(n, `Rubrique ${n} du produit`, 'Contenu.'))
+      .map((numero) => rubrique(numero, `Rubrique ${numero} du produit`, 'Contenu.'))
       .join('');
     assert.equal(splitDocument(notice, 'notice').statut, 'ok');
   });
@@ -239,15 +239,15 @@ describe('titre sans numéro', () => {
 
   it('lui donne une chaîne vide, jamais null', () => {
     const { sections } = splitDocument(NOTICE, 'notice');
-    for (const s of sections) {
-      assert.notEqual(s.numero, null, `« ${s.libelle} » sans numéro`);
-      assert.equal(typeof s.numero, 'string');
+    for (const section of sections) {
+      assert.notEqual(section.numero, null, `« ${section.libelle} » sans numéro`);
+      assert.equal(typeof section.numero, 'string');
     }
   });
 
   it('ne perd pas le texte qui suit le titre non numéroté', () => {
     const { sections } = splitDocument(NOTICE, 'notice');
-    const intercalaire = sections.find((s) => s.numero === '');
+    const intercalaire = sections.find((section) => section.numero === '');
     assert.ok(intercalaire, 'le titre intercalaire est conservé');
     assert.equal(intercalaire.libelle, 'Enfants et adolescents');
     assert.match(intercalaire.texte, /pas recommandé avant douze ans/);

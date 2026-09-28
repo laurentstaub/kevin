@@ -22,7 +22,7 @@ const TOLERANT = process.argv.includes('--tolerant');
 const MAINTENANT = new Date();
 const pool = createPool({ statement_timeout: 0 });
 
-const pct = (x) => (x === null ? '—' : `${(x * 100).toFixed(1)} %`);
+const pct = (part) => (part === null ? '—' : `${(part * 100).toFixed(1)} %`);
 const verdicts = [];
 
 /**
@@ -77,10 +77,10 @@ try {
     verdict(docs.etat),
     `Collecte des documents — norme ${pct(docs.reference)}`,
     docs.ruptures.length > 0
-      ? `effondrement sur ${docs.ruptures.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
+      ? `effondrement sur ${docs.ruptures.map((rupture) => `${rupture.periode} (${pct(rupture.couverture)})`).join(', ')}`
         + ` — dernière année conforme : ${docs.derniereSaine ?? 'aucune'}`
       : docs.alertes.length > 0
-        ? `en retrait sur ${docs.alertes.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
+        ? `en retrait sur ${docs.alertes.map((alerte) => `${alerte.periode} (${pct(alerte.couverture)})`).join(', ')}`
         : null,
   );
 
@@ -95,9 +95,9 @@ try {
     verdict(atc.etat),
     `Classification ATC — norme ${pct(atc.reference)}`,
     atc.ruptures.length > 0
-      ? `effondrement sur ${atc.ruptures.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
+      ? `effondrement sur ${atc.ruptures.map((rupture) => `${rupture.periode} (${pct(rupture.couverture)})`).join(', ')}`
       : atc.alertes.length > 0
-        ? `en retrait sur ${atc.alertes.map((c) => `${c.periode} (${pct(c.couverture)})`).join(', ')}`
+        ? `en retrait sur ${atc.alertes.map((alerte) => `${alerte.periode} (${pct(alerte.couverture)})`).join(', ')}`
         : null,
   );
 
@@ -109,9 +109,9 @@ try {
      FROM (SELECT DISTINCT code_cis FROM dbpm.cis_documents
            WHERE coalesce(html_content, '') <> '' OR coalesce(file_path, '') <> '') d`,
   );
-  const v = plancher(decoupe, { minimum: 0.95, libelle: 'Découpage des documents collectés' });
-  dire(v.etat, `${v.libelle} — ${pct(v.part)}`,
-    v.etat === 'rupture' ? `attendu au moins ${pct(v.minimum)} — relancer build-sections` : null);
+  const verdictDecoupe = plancher(decoupe, { minimum: 0.95, libelle: 'Découpage des documents collectés' });
+  dire(verdictDecoupe.etat, `${verdictDecoupe.libelle} — ${pct(verdictDecoupe.part)}`,
+    verdictDecoupe.etat === 'rupture' ? `attendu au moins ${pct(verdictDecoupe.minimum)} — relancer build-sections` : null);
 
   // ---- 4. Depuis quand rien n'a été écrit ? ------------------------------
   // La date de la dernière écriture est le seul chiffre qui ne se laisse pas
@@ -153,10 +153,10 @@ try {
   // Non vérifiée, une liste est en alerte ; vieille de plus de 60 jours
   // aussi — l'ANSM a modifié celle des biosimilaires trois fois à l'été 2026.
   {
-    const b = JSON.parse(readFileSync(path.join(ROOT, 'data', 'biosimilaires.json'), 'utf8'));
+    const biosimilaires = JSON.parse(readFileSync(path.join(ROOT, 'data', 'biosimilaires.json'), 'utf8'));
     for (const [libelle, bloc, date] of [
-      ['Liste des biosimilaires (ANSM)', b.source, b.source.mise_a_jour],
-      ['Biosimilaires substituables (arrêté)', b.substitution, b.substitution?.arrete_le],
+      ['Liste des biosimilaires (ANSM)', biosimilaires.source, biosimilaires.source.mise_a_jour],
+      ['Biosimilaires substituables (arrêté)', biosimilaires.substitution, biosimilaires.substitution?.arrete_le],
     ]) {
       const jours = age(bloc?.extraite_le ?? date, MAINTENANT);
       const etat = !bloc?.verifiee_le || jours === null || jours >= 60 ? 'alerte' : 'ok';
@@ -173,10 +173,10 @@ try {
     dates.amm ? `${age(dates.amm, MAINTENANT)} jours` : 'date absente'
   } (indicatif ; fraîcheur du chargement : check-bdpm)`);
 
-  const ruptures = verdicts.filter((x) => x.etat === 'rupture');
-  const flous = verdicts.filter((x) => x.etat === 'indeterminable');
+  const ruptures = verdicts.filter((constat) => constat.etat === 'rupture');
+  const flous = verdicts.filter((constat) => constat.etat === 'indeterminable');
   console.log(`\n${verdicts.length} contrôles — ${ruptures.length} en rupture, `
-    + `${verdicts.filter((x) => x.etat === 'alerte').length} en alerte`
+    + `${verdicts.filter((constat) => constat.etat === 'alerte').length} en alerte`
     + `${flous.length > 0 ? `, ${flous.length} sans verdict` : ''}\n`);
 
   if (ruptures.length > 0 && !TOLERANT) process.exitCode = 1;

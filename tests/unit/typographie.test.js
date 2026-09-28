@@ -139,9 +139,9 @@ describe('substances en interaction', () => {
   // Les quatre niveaux du thésaurus sont un répertoire clos, comme les
   // intitulés du modèle QRD.
   it('promeut les niveaux de gravité en sous-titres', () => {
-    for (const n of ['Associations contre-indiquées', 'Associations déconseillées',
+    for (const libelle of ['Associations contre-indiquées', 'Associations déconseillées',
       "Associations faisant l'objet de précautions d'emploi", 'Associations à prendre en compte']) {
-      assert.match(sousTitres(`<p>${n}</p>`), /^<h5 class="sous-titre">/, n);
+      assert.match(sousTitres(`<p>${libelle}</p>`), /^<h5 class="sous-titre">/, libelle);
     }
   });
 });
@@ -163,8 +163,8 @@ describe('renvois entre rubriques', () => {
   });
 
   it('traite une énumération de rubriques', () => {
-    const r = renvois('<p>Voir rubriques 4.3 et 4.6.</p>', ancres);
-    assert.match(r, /href="#rcp-5"[^>]*>4\.3<\/a> et <a class="renvoi" href="#rcp-8"[^>]*>4\.6<\/a>/);
+    const rendu = renvois('<p>Voir rubriques 4.3 et 4.6.</p>', ancres);
+    assert.match(rendu, /href="#rcp-5"[^>]*>4\.3<\/a> et <a class="renvoi" href="#rcp-8"[^>]*>4\.6<\/a>/);
   });
 
   // La notice cite parfois le RCP : la rubrique visée n'est pas dans le même
@@ -182,7 +182,7 @@ describe('renvois entre rubriques', () => {
       ['4.6', { id: 'rcp-2', libelle: 'Grossesse' }],
       ['6.1', { id: 'rcp-9', libelle: 'Liste des excipients' }],
     ]);
-    const lie = (t) => (renvois(`<p>${t}</p>`, ancres).match(/class="renvoi"/g) ?? []).length;
+    const lie = (texte) => (renvois(`<p>${texte}</p>`, ancres).match(/class="renvoi"/g) ?? []).length;
 
     assert.equal(lie('mentionnés à la rubrique 6.1.'), 1, 'à la rubrique');
     assert.equal(lie('Voir rubrique 4.4.'), 1, 'majuscule initiale');
@@ -206,20 +206,20 @@ describe('renvois entre rubriques', () => {
   // savoir, et revenir si ce n'était pas ça. Nommer la destination avant le
   // clic est tout ce qui distingue un renvoi d'une devinette.
   it('nomme sa destination en infobulle', () => {
-    const r = renvois('<p>voir rubrique 4.6</p>', ancres);
-    assert.match(r, /title="4\.6 — Fertilité, grossesse et allaitement"/);
+    const rendu = renvois('<p>voir rubrique 4.6</p>', ancres);
+    assert.match(rendu, /title="4\.6 — Fertilité, grossesse et allaitement"/);
   });
 
   it('échappe l’intitulé mis en attribut', () => {
     const piege = new Map([['4.1', { id: 'rcp-0', libelle: 'Guillemet " et esperluette &' }]]);
-    const r = renvois('<p>voir rubrique 4.1</p>', piege);
-    assert.match(r, /title="4\.1 — Guillemet &quot; et esperluette &amp;"/);
+    const rendu = renvois('<p>voir rubrique 4.1</p>', piege);
+    assert.match(rendu, /title="4\.1 — Guillemet &quot; et esperluette &amp;"/);
   });
 
   it('lie sans infobulle quand l’intitulé manque', () => {
     const sansLibelle = new Map([['4.1', { id: 'rcp-0' }]]);
-    const r = renvois('<p>voir rubrique 4.1</p>', sansLibelle);
-    assert.match(r, /<a class="renvoi" href="#rcp-0">4\.1<\/a>/);
+    const rendu = renvois('<p>voir rubrique 4.1</p>', sansLibelle);
+    assert.match(rendu, /<a class="renvoi" href="#rcp-0">4\.1<\/a>/);
   });
 
   it('rend le document intact sans table d’ancres', () => {

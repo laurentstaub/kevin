@@ -17,7 +17,7 @@ const pool = createPool({ statement_timeout: 0 });
 
 const titre = (texte) => console.log(`\n\x1b[1m${texte}\x1b[0m\n${'─'.repeat(texte.length)}`);
 const ligne = (cle, valeur) => console.log(`  ${String(cle).padEnd(38)} ${valeur}`);
-const pourcent = (n, total) => (total === 0 ? '—' : `${Math.round((n / total) * 100)} %`);
+const pourcent = (nombre, total) => (total === 0 ? '—' : `${Math.round((nombre / total) * 100)} %`);
 
 async function essayer(sql, params = []) {
   try {
@@ -28,8 +28,8 @@ async function essayer(sql, params = []) {
 }
 
 async function compter(table) {
-  const r = await essayer(`SELECT count(*)::int AS n FROM ${table}`);
-  return Array.isArray(r) ? r[0].n : null;
+  const resultat = await essayer(`SELECT count(*)::int AS n FROM ${table}`);
+  return Array.isArray(resultat) ? resultat[0].n : null;
 }
 
 // ---------------------------------------------------------------- schémas
@@ -50,9 +50,9 @@ if (tables.erreur) {
 }
 
 const parSchema = new Map();
-for (const t of tables) {
-  if (!parSchema.has(t.table_schema)) parSchema.set(t.table_schema, []);
-  parSchema.get(t.table_schema).push(t.table_name);
+for (const table of tables) {
+  if (!parSchema.has(table.table_schema)) parSchema.set(table.table_schema, []);
+  parSchema.get(table.table_schema).push(table.table_name);
 }
 
 for (const [schema, noms] of parSchema) {
@@ -70,8 +70,8 @@ for (const table of [
   'dbpm.cis_gener_bdpm',
   'dbpm.cis_documents',
 ]) {
-  const n = await compter(table);
-  ligne(table, n === null ? '\x1b[33mabsente\x1b[0m' : n.toLocaleString('fr-FR'));
+  const nombre = await compter(table);
+  ligne(table, nombre === null ? '\x1b[33mabsente\x1b[0m' : nombre.toLocaleString('fr-FR'));
 }
 
 // -------------------------------------------------------------- documents
@@ -87,7 +87,7 @@ if (!aDocuments) {
     SELECT document_type, count(*)::int AS n
     FROM dbpm.cis_documents GROUP BY 1 ORDER BY 2 DESC
   `);
-  for (const t of types) ligne(t.document_type ?? '(null)', t.n.toLocaleString('fr-FR'));
+  for (const type of types) ligne(type.document_type ?? '(null)', type.n.toLocaleString('fr-FR'));
 
   const formats = await essayer(`
     SELECT
@@ -101,16 +101,16 @@ if (!aDocuments) {
     FROM dbpm.cis_documents
   `);
 
-  const f = formats[0];
+  const format = formats[0];
   console.log('');
-  ligne('total', f.total.toLocaleString('fr-FR'));
-  ligne('avec contenu HTML', `${f.avec_html.toLocaleString('fr-FR')}  (${pourcent(f.avec_html, f.total)})`);
-  ligne('avec URL de document', `${f.avec_url.toLocaleString('fr-FR')}  (${pourcent(f.avec_url, f.total)})`);
+  ligne('total', format.total.toLocaleString('fr-FR'));
+  ligne('avec contenu HTML', `${format.avec_html.toLocaleString('fr-FR')}  (${pourcent(format.avec_html, format.total)})`);
+  ligne('avec URL de document', `${format.avec_url.toLocaleString('fr-FR')}  (${pourcent(format.avec_url, format.total)})`);
   ligne(
     'URL seule, sans HTML  → cas PDF',
-    `\x1b[33m${f.pdf_seul.toLocaleString('fr-FR')}\x1b[0m  (${pourcent(f.pdf_seul, f.total)})`,
+    `\x1b[33m${format.pdf_seul.toLocaleString('fr-FR')}\x1b[0m  (${pourcent(format.pdf_seul, format.total)})`,
   );
-  ligne('ni HTML ni URL', f.vides.toLocaleString('fr-FR'));
+  ligne('ni HTML ni URL', format.vides.toLocaleString('fr-FR'));
 
   const tailles = await essayer(`
     SELECT
@@ -120,9 +120,9 @@ if (!aDocuments) {
     FROM dbpm.cis_documents WHERE coalesce(html_content, '') <> ''
   `);
   if (Array.isArray(tailles) && tailles[0].median !== null) {
-    const t = tailles[0];
+    const taille = tailles[0];
     console.log('');
-    ligne('longueur HTML (min / médiane / max)', `${t.mini} / ${t.median} / ${t.maxi} signes`);
+    ligne('longueur HTML (min / médiane / max)', `${taille.mini} / ${taille.median} / ${taille.maxi} signes`);
   }
 
   const domaines = await essayer(`
@@ -134,9 +134,9 @@ if (!aDocuments) {
   if (Array.isArray(domaines) && domaines.length > 0) {
     titre('Domaines des documents (à reporter dans DOCUMENT_HOSTS)');
     const autorises = config.documentHosts;
-    for (const d of domaines) {
-      const ok = autorises.some((a) => d.hote === a || d.hote?.endsWith(`.${a}`));
-      ligne(d.hote ?? '(?)', `${d.n.toLocaleString('fr-FR')}  ${ok ? '✓ autorisé' : '\x1b[33m✗ bloqué\x1b[0m'}`);
+    for (const domaine of domaines) {
+      const ok = autorises.some((autorise) => domaine.hote === autorise || domaine.hote?.endsWith(`.${autorise}`));
+      ligne(domaine.hote ?? '(?)', `${domaine.n.toLocaleString('fr-FR')}  ${ok ? '✓ autorisé' : '\x1b[33m✗ bloqué\x1b[0m'}`);
     }
   }
 
@@ -165,7 +165,7 @@ if (!aDocuments) {
       if (sections.length > 0) {
         avecPlan += 1;
         totalRubriques += sections.length;
-        normalisees += sections.filter((s) => s.canonical).length;
+        normalisees += sections.filter((section) => section.canonical).length;
       } else if (echecs.length < 5) {
         echecs.push(doc);
       }
@@ -204,8 +204,8 @@ if (!aDocuments) {
 titre('Tables hors BDPM (projet ruptures)');
 
 for (const table of ['public.incidents', 'public.produits']) {
-  const n = await compter(table);
-  ligne(table, n === null ? 'absente' : `${n.toLocaleString('fr-FR')}  (non utilisée par cette application)`);
+  const nombre = await compter(table);
+  ligne(table, nombre === null ? 'absente' : `${nombre.toLocaleString('fr-FR')}  (non utilisée par cette application)`);
 }
 
 console.log('');

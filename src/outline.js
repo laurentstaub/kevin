@@ -84,10 +84,10 @@ const compare = (a, b) => {
  * rencontré ancrerait la suite au mauvais endroit.
  */
 export function coherentes(candidats) {
-  const eligibles = candidats.filter((c) => parts(c.number)[0] <= RUBRIQUE_MAX);
+  const eligibles = candidats.filter((candidat) => parts(candidat.number)[0] <= RUBRIQUE_MAX);
   if (eligibles.length === 0) return [];
 
-  const numeros = eligibles.map((c) => parts(c.number));
+  const numeros = eligibles.map((eligible) => parts(eligible.number));
   const longueur = eligibles.map(() => 1);
   const parent = eligibles.map(() => -1);
 
@@ -123,19 +123,19 @@ function renderHeading(number, label, canonical) {
 function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
   const candidats = [];
 
-  for (const m of html.matchAll(motif)) {
-    const raw = decode(stripTags(m[3])).replace(/\s+/g, ' ').trim();
+  for (const correspondance of html.matchAll(motif)) {
+    const raw = decode(stripTags(correspondance[3])).replace(/\s+/g, ' ').trim();
     if (!raw || raw.length > LONGUEUR_MAX) continue;
 
     const { number, label, canonical } = splitHeading(raw);
     if (exigerNumero && !number) continue;
 
     candidats.push({
-      match: m[0],
+      match: correspondance[0],
       number,
       label,
       canonical,
-      depth: number ? depthOf(number) : profondeurParDefaut(m[1]),
+      depth: number ? depthOf(number) : profondeurParDefaut(correspondance[1]),
       numbered: number !== null,
     });
   }
@@ -165,18 +165,18 @@ export function outline(html, type = 'doc') {
   //    sont alors l'habillage de la page — le <h1> reprend la dénomination
   //    déjà affichée au-dessus — et sont retirés du corps.
   const habillage = [];
-  if (candidats.filter((c) => c.numbered).length < 3) {
-    habillage.push(...candidats.filter((c) => !c.numbered));
+  if (candidats.filter((candidat) => candidat.numbered).length < 3) {
+    habillage.push(...candidats.filter((candidat) => !candidat.numbered));
     candidats = coherentes(
       reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 }),
     );
   }
 
-  if (candidats.filter((c) => c.numbered).length < 3) return { html, sections: [] };
+  if (candidats.filter((candidat) => candidat.numbered).length < 3) return { html, sections: [] };
 
   // Tout ce qui précède la première rubrique numérotée est le titre du
   // document : déjà affiché au-dessus, il est retiré du corps comme du plan.
-  const premier = candidats.findIndex((c) => c.numbered);
+  const premier = candidats.findIndex((candidat) => candidat.numbered);
   const aRetirer = candidats.slice(0, premier);
   const aPoser = candidats.slice(premier);
 

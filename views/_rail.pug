@@ -30,20 +30,20 @@
 mixin railPlan(sections, documents)
   p.rail-titre Cette fiche
   nav.rail-groupe.rail-plan
-    each s in sections
-      a.rail-lien.rail-seul(href=`#${s.id}`)= s.label
+    each section in sections
+      a.rail-lien.rail-seul(href=`#${section.id}`)= section.label
 
       //- Les rubriques s'imbriquent sous la section qui les porte. Un jeu par
       //- document : documents.js révèle celui de l'onglet actif, comme il le
       //- fait déjà des panneaux.
-      if s.id === 'documents' && documents
+      if section.id === 'documents' && documents
         each doc, i in documents
           if doc.rubriques && doc.rubriques.length > 0
             .rail-sous(data-doc=doc.type hidden=(i > 0))
-              each r in doc.rubriques
-                a.rail-lien.rail-rubrique(href=`#${r.id}` class=`rail-p${r.profondeur}`)
-                  span.rail-code= r.numero
-                  span.rail-label= r.libelle
+              each rubrique in doc.rubriques
+                a.rail-lien.rail-rubrique(href=`#${rubrique.id}` class=`rail-p${rubrique.profondeur}`)
+                  span.rail-code= rubrique.numero
+                  span.rail-label= rubrique.libelle
 
 //- @param {Array}  classes    classes ATC de niveau 1, les plus fournies d'abord
 //- @param {string} actif      la lettre ATC de la page en cours, s'il y en a une
@@ -60,13 +60,13 @@ mixin rail(classes, actif, sections, documents)
     if classes && classes.length
       p.rail-titre Classes thérapeutiques
       nav.rail-groupe
-        each c in classes
+        each classe in classes
           //- Le libellé CNAM arrive en capitales sans accents. Composé tel
           //- quel, quatorze fois de suite, il crie ; en bas de casse il se
           //- lit. Le code reste en clair : c'est lui qu'on retient.
-          a.rail-lien(href=`/classe/${c.code}`
-            class=(actif === c.code ? 'rail-actif' : null)
-            aria-current=(actif === c.code ? 'page' : null)
-            title=`${c.code} — ${c.label}`)
-            span.rail-code= c.code
-            span.rail-label.rail-label-crie= c.label
+          a.rail-lien(href=`/classe/${classe.code}`
+            class=(actif === classe.code ? 'rail-actif' : null)
+            aria-current=(actif === classe.code ? 'page' : null)
+            title=`${classe.code} — ${classe.label}`)
+            span.rail-code= classe.code
+            span.rail-label.rail-label-crie= classe.label

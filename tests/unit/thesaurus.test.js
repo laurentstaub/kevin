@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { elargir } from '../../src/thesaurus.js';
 
-const alternatives = (q, i = 0) => elargir(q).atomes[i];
+const alternatives = (saisie, i = 0) => elargir(saisie).atomes[i];
 
 describe('elargir', () => {
   it('laisse passer un mot inconnu tel quel', () => {
@@ -52,7 +52,7 @@ describe('elargir', () => {
   it('décrit l’élargissement sans y répéter le terme tapé', () => {
     const [e] = elargir('cyp3a4').elargissements;
     assert.equal(e.terme, 'cyp3a4');
-    assert.ok(!e.vers.some((v) => v.toLowerCase().replace(/\s/g, '') === 'cyp3a4'));
+    assert.ok(!e.vers.some((cible) => cible.toLowerCase().replace(/\s/g, '') === 'cyp3a4'));
     assert.ok(e.vers.includes('cytochrome 3A4'));
   });
 

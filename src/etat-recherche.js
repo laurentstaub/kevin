@@ -83,7 +83,7 @@ export function lireEtat(query = {}, mode = 'nom') {
 export function lien(etat, changements = {}) {
   const suite = { ...etat, ...changements };
   const cles = Object.keys(changements);
-  if (cles.length > 0 && !cles.every((c) => c === 'page')) suite.page = 1;
+  if (cles.length > 0 && !cles.every((cle) => cle === 'page')) suite.page = 1;
 
   const mode = MODES[suite.mode] ? suite.mode : 'nom';
   const params = new URLSearchParams();

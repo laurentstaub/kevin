@@ -50,7 +50,7 @@ export async function checkDatabase(pool) {
     `SELECT table_name FROM information_schema.tables
      WHERE table_schema = 'dbpm' ORDER BY table_name`,
   );
-  report.tables = tables.map((r) => r.table_name);
+  report.tables = tables.map((table) => table.table_name);
 
   return report;
 }

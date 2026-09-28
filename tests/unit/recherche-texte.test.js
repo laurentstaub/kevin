@@ -72,7 +72,7 @@ describe('rechercheAbsente', () => {
  * On ne teste pas Postgres — on teste ce qu'on lui demande et ce qu'on fait de
  * sa réponse, qui est exactement là où la pagination peut mentir.
  */
-const faussePool = (n) => {
+const faussePool = (nombre) => {
   const vues = [];
   const ligne = (i) => ({
     code_cis: String(60000000 + i),
@@ -90,7 +90,7 @@ const faussePool = (n) => {
     appels: vues,
     query: async (_texte, params) => {
       vues.push(params);
-      return { rows: Array.from({ length: n }, (_, i) => ligne(i)) };
+      return { rows: Array.from({ length: nombre }, (_, i) => ligne(i)) };
     },
   };
 };
@@ -101,16 +101,16 @@ describe('pagination de la recherche plein texte', () => {
   // que ce qu'on affiche, et sa présence répond à la question.
   it('demande une ligne de plus et ne la montre pas', async () => {
     const pool = faussePool(21);
-    const d = await chercherDansDocuments(pool, 'intervalle QT', { limite: 20 });
+    const recherche = await chercherDansDocuments(pool, 'intervalle QT', { limite: 20 });
     assert.equal(pool.appels[0][1], 21, 'limite + 1 dans la requête');
-    assert.equal(d.resultats.length, 20, 'la ligne témoin ne s’affiche pas');
-    assert.equal(d.suite, true);
+    assert.equal(recherche.resultats.length, 20, 'la ligne témoin ne s’affiche pas');
+    assert.equal(recherche.suite, true);
   });
 
   it('annonce la fin quand la dernière page est incomplète', async () => {
-    const d = await chercherDansDocuments(faussePool(7), 'intervalle QT', { limite: 20 });
-    assert.equal(d.suite, false);
-    assert.equal(d.resultats.length, 7);
+    const recherche = await chercherDansDocuments(faussePool(7), 'intervalle QT', { limite: 20 });
+    assert.equal(recherche.suite, false);
+    assert.equal(recherche.resultats.length, 7);
   });
 
   it('traduit la page en décalage', async () => {
@@ -141,8 +141,8 @@ describe('extraitDeRubrique', () => {
     const vus = [];
     return {
       vus,
-      query: async (_sql, p) => {
-        vus.push(p);
+      query: async (_sql, params) => {
+        vus.push(params);
         return { rows: [{ numero: '4.5', libelle: 'Interactions', denomination: 'PROGRAF', extrait: 'x' }] };
       },
     };
@@ -150,12 +150,12 @@ describe('extraitDeRubrique', () => {
 
   it('désigne la rubrique par sa clé primaire', async () => {
     const pool = espion();
-    const r = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '12', requete: 'QT' });
+    const extrait = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '12', requete: 'QT' });
     // Les trois clés d'abord, puis les atomes de la requête — leur nombre
     // varie avec le thésaurus, ils ne peuvent donc venir qu'en dernier.
     assert.deepEqual(pool.vus[0].slice(0, 3), ['66297965', 'rcp', 12]);
     assert.ok(pool.vus[0].slice(3).includes('QT'));
-    assert.equal(r.numero, '4.5');
+    assert.equal(extrait.numero, '4.5');
   });
 
   // Les trois paramètres viennent de l'URL, donc de n'importe où. Les vérifier
@@ -208,14 +208,14 @@ describe('expression exacte', () => {
   // Rien à distinguer : un mot seul, une locution déjà entre guillemets, une
   // requête qui porte un opérateur.
   it('ne distingue rien quand il n’y a rien à distinguer', () => {
-    for (const q of ['QT', '"torsade de pointes"', 'QT -torsade', 'QT or torsade', '']) {
-      assert.equal(expressionExacte(q), null, q);
+    for (const saisie of ['QT', '"torsade de pointes"', 'QT -torsade', 'QT or torsade', '']) {
+      assert.equal(expressionExacte(saisie), null, saisie);
     }
   });
 
   it('passe en quatrième paramètre, avant les atomes', async () => {
     const vus = [];
-    const pool = { query: async (_s, p) => { vus.push(p); return { rows: [] }; } };
+    const pool = { query: async (_s, params) => { vus.push(params); return { rows: [] }; } };
     await chercherDansDocuments(pool, 'insuffisance hépatique');
     assert.equal(vus[0][3], 'insuffisance hépatique');
     await chercherDansDocuments(pool, 'QT');

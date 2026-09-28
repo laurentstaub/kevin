@@ -122,7 +122,7 @@ export const COLONNES = [
  */
 export const PRIORITE = ['4.3', '4.2', '4.4', '4.5', '4.6', '4.8', '4.1', '5.1'];
 
-const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((n) => `'${n}'`).join(', ')}]::text[], s.numero), ${PRIORITE.length})
+const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((numero) => `'${numero}'`).join(', ')}]::text[], s.numero), ${PRIORITE.length})
   + CASE WHEN s.document_type = 'rcp' THEN 0 ELSE ${PRIORITE.length + 1} END`;
 
 /**
@@ -142,9 +142,9 @@ const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((n) => `'${n}'`).join
  * @returns {string|null}
  */
 export function expressionExacte(requete) {
-  const q = String(requete ?? '').trim();
-  if (!q || q.includes('"') || /(^|\s)-\S|\sor\s/i.test(q)) return null;
-  return q.split(/[^\p{L}\p{N}]+/u).filter(Boolean).length >= 2 ? q : null;
+  const saisie = String(requete ?? '').trim();
+  if (!saisie || saisie.includes('"') || /(^|\s)-\S|\sor\s/i.test(saisie)) return null;
+  return saisie.split(/[^\p{L}\p{N}]+/u).filter(Boolean).length >= 2 ? saisie : null;
 }
 
 /**
@@ -227,8 +227,8 @@ export function normaliserRubrique(valeur) {
 export function composerTsquery(atomes, depart) {
   const params = [];
   const groupes = atomes.map((alternatives) => {
-    const morceaux = alternatives.map((a) => {
-      params.push(a);
+    const morceaux = alternatives.map((alternative) => {
+      params.push(alternative);
       return `websearch_to_tsquery('${LANGUE}', $${depart + params.length - 1})`;
     });
     return morceaux.length === 1 ? morceaux[0] : `(${morceaux.join(' || ')})`;
@@ -295,15 +295,15 @@ export function rechercheAbsente(err) {
  * position — et non par un identifiant qu'il faudrait inventer.
  */
 export async function extraitDeRubrique(pool, { cis, type, position, requete }) {
-  const q = String(requete ?? '').trim();
-  const p = Math.trunc(Number(position));
-  if (!q || !/^\d{6,10}$/.test(String(cis ?? '')) || !Number.isFinite(p)) return null;
+  const saisie = String(requete ?? '').trim();
+  const rang = Math.trunc(Number(position));
+  if (!saisie || !/^\d{6,10}$/.test(String(cis ?? '')) || !Number.isFinite(rang)) return null;
   if (!['rcp', 'notice'].includes(String(type))) return null;
 
   // Le même élargissement que la recherche : sans quoi l'aperçu surlignerait
   // « QT » et pas « torsade de pointes », qui est pourtant ce qui a fait
   // remonter la rubrique.
-  const tq = composerTsquery(elargir(q).atomes, 5);
+  const tq = composerTsquery(elargir(saisie).atomes, 5);
   const { rows } = await pool.query(
     `SELECT s.numero, s.libelle, s.document_type AS type,
             m.denomination_medicament AS denomination,
@@ -311,7 +311,7 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
      FROM docs.rcp_sections s
      JOIN dbpm.cis_bdpm m ON m.code_cis = s.code_cis
      WHERE s.code_cis = $1 AND s.document_type = $2 AND s.position = $3`,
-    [String(cis), String(type), p, expressionExacte(q), ...tq.params],
+    [String(cis), String(type), rang, expressionExacte(saisie), ...tq.params],
   );
   return rows[0] ?? null;
 }
@@ -320,8 +320,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const vide = {
     resultats: [], total: 0, borne: false, decalage: 0, suite: false, elargissements: [], exacte: false,
   };
-  const q = String(requete ?? '').trim();
-  if (!q) return vide;
+  const saisie = String(requete ?? '').trim();
+  if (!saisie) return vide;
 
   const rubrique = normaliserRubrique(options.rubrique);
   // `Math.min` et `Math.max` propagent NaN sans broncher : borner ne suffit
@@ -329,8 +329,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   // page « ?page=douze » envoyait NaN dans le OFFSET et Postgres refusait la
   // requête entière — une saisie d'URL faisait tomber la recherche.
   const entier = (valeur, defaut) => {
-    const n = Math.trunc(Number(valeur));
-    return Number.isFinite(n) ? n : defaut;
+    const nombre = Math.trunc(Number(valeur));
+    return Number.isFinite(nombre) ? nombre : defaut;
   };
 
   const limite = Math.min(Math.max(1, entier(options.limite ?? PAR_PAGE, PAR_PAGE)), 100);
@@ -339,10 +339,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   // panne. Le décalage est borné là où la recherche s'arrête.
   const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
-  const { atomes, elargissements } = elargir(q);
+  const { atomes, elargissements } = elargir(saisie);
   // Les quatre paramètres fixes d'abord, les atomes ensuite : leur nombre varie.
   const tq = composerTsquery(atomes, 5);
-  const exacte = expressionExacte(q);
+  const exacte = expressionExacte(saisie);
 
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq),
@@ -512,8 +512,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     // Ce qu'on a cherché en plus de ce qui a été tapé : le lecteur doit le
     // savoir, et pouvoir le refuser en citant sa requête.
     elargissements,
-    resultats: page.map(({ occurrences: _, molecule, denomination, ...r }) => ({
-      ...r,
+    resultats: page.map(({ occurrences: _, molecule, denomination, ...reste }) => ({
+      ...reste,
       denomination,
       // Deux spécialités sur treize mille six cents n'ont pas de composition
       // enregistrée : leur dénomination tient lieu de titre, faute de mieux.

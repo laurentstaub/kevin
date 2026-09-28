@@ -13,7 +13,7 @@ if (!report.reachable) {
 }
 
 const missing = ['cis_bdpm', 'cis_compo_bdpm', 'cis_cip_bdpm'].filter(
-  (t) => !report.tables.includes(t),
+  (table) => !report.tables.includes(table),
 );
 if (missing.length > 0) {
   console.error(`[db] tables BDPM manquantes dans le schéma dbpm : ${missing.join(', ')}`);

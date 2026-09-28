@@ -33,7 +33,7 @@ const sql = await readFile(chemin, 'utf8');
 const pool = createPool({ statement_timeout: 0 });
 const client = await pool.connect();
 
-client.on('notice', (n) => console.log(`  ${n.message}`));
+client.on('notice', (avis) => console.log(`  ${avis.message}`));
 
 console.log(`Application de sql/${fichier}…`);
 const depart = Date.now();

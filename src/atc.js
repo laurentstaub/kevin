@@ -35,12 +35,12 @@ export async function getClasseAtc(pool, cis) {
     [cis],
   );
 
-  return rows.map((r, i) => ({
-    code: r.atc_code,
+  return rows.map((row, i) => ({
+    code: row.atc_code,
     // Vingt-quatre codes de niveau 5 n'ont pas de libellé. Afficher « B03AC01 »
     // à un pharmacien ne lui apprend rien : on reprend celui du parent.
-    label: utilisable(r) ? r.atc_label : (rows[i - 1]?.atc_label ?? r.atc_code),
-    level: r.atc_level,
+    label: utilisable(row) ? row.atc_label : (rows[i - 1]?.atc_label ?? row.atc_code),
+    level: row.atc_level,
   }));
 }
 
@@ -84,7 +84,7 @@ export function resumerClasse(chaine) {
   if (!Array.isArray(chaine) || chaine.length === 0) return null;
 
   const feuille = chaine.at(-1);
-  const contexte = chaine.filter((n) => n.level <= 2 && n.code !== feuille.code);
+  const contexte = chaine.filter((niveau) => niveau.level <= 2 && niveau.code !== feuille.code);
 
   // Chaîne trop courte pour avoir un contexte distinct de la feuille : on
   // montre la feuille elle-même plutôt qu'une ligne vide.
@@ -137,7 +137,7 @@ export async function getClasse(pool, code) {
     [code],
   );
 
-  const classe = chaine.find((c) => c.code === code);
+  const classe = chaine.find((niveau) => niveau.code === code);
   if (!classe) return null;
 
   // Les enfants se déduisent du code, pas de `parent_atc_code`. La hiérarchie
@@ -323,8 +323,8 @@ export async function getPortraitClasse(pool, code, biosimilaires = nomsBiosimil
      LEFT JOIN cpd d USING (code_cis)`,
     [code, biosimilaires],
   );
-  const p = rows[0];
-  return p && p.specialites > 0 ? p : null;
+  const portrait = rows[0];
+  return portrait && portrait.specialites > 0 ? portrait : null;
 }
 
 /**
@@ -340,23 +340,23 @@ export async function getPortraitClasse(pool, code, biosimilaires = nomsBiosimil
  *
  * @returns {{ valeur: string, libelle: string }[]}
  */
-export function lirePortrait(p) {
-  if (!p?.specialites) return [];
-  const part = (n) => `${Math.round((100 * n) / p.specialites)} %`;
-  const compte = (n) => n.toLocaleString('fr-FR');
-  const pluriel = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
+export function lirePortrait(portrait) {
+  if (!portrait?.specialites) return [];
+  const part = (nombre) => `${Math.round((100 * nombre) / portrait.specialites)}\u00A0%`;
+  const compte = (nombre) => nombre.toLocaleString('fr-FR');
+  const pluriel = (nombre, un, plusieurs) => (nombre > 1 ? plusieurs : un);
 
   return [
     // Une classe de biologiques n'a pas de génériques, elle a des
     // biosimilaires : « 0 % génériques » sur l'énoxaparine était juste et
     // trompeur. Le pourcentage de génériques ne se tait que dans ce cas.
-    (p.generiques || !p.biosimilaires) && { valeur: part(p.generiques), libelle: 'génériques' },
-    p.biosimilaires && { valeur: part(p.biosimilaires), libelle: 'biosimilaires' },
-    { valeur: part(p.remboursables), libelle: 'remboursables' },
-    p.liste1 && { valeur: part(p.liste1), libelle: 'liste I' },
-    p.liste2 && { valeur: part(p.liste2), libelle: 'liste II' },
-    p.stupefiants && { valeur: compte(p.stupefiants), libelle: pluriel(p.stupefiants, 'stupéfiant', 'stupéfiants') },
-    p.assimiles && { valeur: compte(p.assimiles), libelle: pluriel(p.assimiles, 'assimilé stupéfiant', 'assimilés stupéfiants') },
-    p.hopital && { valeur: compte(p.hopital), libelle: 'usage hospitalier' },
+    (portrait.generiques || !portrait.biosimilaires) && { valeur: part(portrait.generiques), libelle: 'génériques' },
+    portrait.biosimilaires && { valeur: part(portrait.biosimilaires), libelle: 'biosimilaires' },
+    { valeur: part(portrait.remboursables), libelle: 'remboursables' },
+    portrait.liste1 && { valeur: part(portrait.liste1), libelle: 'liste I' },
+    portrait.liste2 && { valeur: part(portrait.liste2), libelle: 'liste II' },
+    portrait.stupefiants && { valeur: compte(portrait.stupefiants), libelle: pluriel(portrait.stupefiants, 'stupéfiant', 'stupéfiants') },
+    portrait.assimiles && { valeur: compte(portrait.assimiles), libelle: pluriel(portrait.assimiles, 'assimilé stupéfiant', 'assimilés stupéfiants') },
+    portrait.hopital && { valeur: compte(portrait.hopital), libelle: 'usage hospitalier' },
   ].filter(Boolean);
 }

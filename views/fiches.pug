@@ -14,12 +14,12 @@ block content
       p.vide Aucune fiche publiée pour l'instant.
     else
       ul.liste
-        each f in fiches
+        each fiche in fiches
           li
-            a.resultat(href=`/fiches/${f.slug}`)
-              span.resultat-nom= f.meta.titre || f.slug
-              if f.meta.relu
-                span.resultat-dci Relu le #{f.meta.relu}
+            a.resultat(href=`/fiches/${fiche.slug}`)
+              span.resultat-nom= fiche.meta.titre || fiche.slug
+              if fiche.meta.relu
+                span.resultat-dci Relu le #{fiche.meta.relu}
               else
                 span.resultat-dci Brouillon
 

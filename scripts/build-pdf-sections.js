@@ -35,10 +35,10 @@ import { splitDocument, PARSER_VERSION } from '../src/split.js';
 const execFileP = promisify(execFile);
 
 const args = process.argv.slice(2);
-const flag = (n) => args.includes(`--${n}`);
-const valeur = (n, d) => {
-  const i = args.indexOf(`--${n}`);
-  return i !== -1 && args[i + 1] ? args[i + 1] : d;
+const flag = (option) => args.includes(`--${option}`);
+const valeur = (option, defaut) => {
+  const i = args.indexOf(`--${option}`);
+  return i !== -1 && args[i + 1] ? args[i + 1] : defaut;
 };
 
 const TOUT = flag('all');
@@ -47,7 +47,7 @@ const LIMITE = Number.parseInt(valeur('limit', ''), 10) || null;
 // Rejouer quelques spécialités nommément, sans reparcourir les deux mille autres.
 const CIS = valeur('cis', '')
   .split(',')
-  .map((s) => s.trim())
+  .map((cis) => cis.trim())
   .filter(Boolean);
 const PAUSE = Number.parseInt(valeur('pause', '400'), 10); // ms entre deux fiches BDPM
 // L'EMA sert les PDF beaucoup moins volontiers que la BDPM ne sert ses fiches.
@@ -62,7 +62,7 @@ const LIENS = path.join(CACHE, 'liens.json');
 const UA = { 'User-Agent': 'dr-kevin/2.0 (découpage de RCP, usage interne)' };
 
 const empreinte = (buf) => createHash('sha1').update(buf).digest('hex');
-const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+const dormir = (ms) => new Promise((reveil) => setTimeout(reveil, ms));
 
 // ------------------------------------------------------------- prérequis
 
@@ -88,7 +88,7 @@ if (!TOUT) {
     `SELECT code_cis, source_hash, parser_version
      FROM docs.document_parse WHERE source = 'bdpm_pdf'`,
   );
-  for (const r of rows) connu.set(r.code_cis, `${r.source_hash}|${r.parser_version}`);
+  for (const row of rows) connu.set(row.code_cis, `${row.source_hash}|${row.parser_version}`);
 }
 
 // La dénomination sert à choisir la bonne forme dans un PDF qui les décrit
@@ -163,7 +163,7 @@ async function resoudreLien(cis) {
   // lien « Vers le RCP et la notice ». Son absence n'est pas une anomalie : la
   // BDPM répond « le médicament demandé n'existe pas ou n'entre pas dans le
   // périmètre » pour des AMM retirées dont le CIS traîne encore en base.
-  const url = [...page.matchAll(PDF_DANS_PAGE)].map((m) => safeDocumentUrl(m[0])).find(Boolean);
+  const url = [...page.matchAll(PDF_DANS_PAGE)].map((lien) => safeDocumentUrl(lien[0])).find(Boolean);
 
   liens[cis] = url ?? null;
   liensModifies += 1;
@@ -260,10 +260,10 @@ const dejaDecoupe = new Map();
 
 let abandonsSuite = 0;
 let arreteTot = false;
-let n = 0;
+let rang = 0;
 for (const cible of cibles) {
-  n += 1;
-  process.stdout.write(`\r  ${n} / ${cibles.length}…`);
+  rang += 1;
+  process.stdout.write(`\r  ${rang} / ${cibles.length}…`);
 
   let url;
   try {
@@ -327,10 +327,10 @@ for (const cible of cibles) {
 
   bilan.traites += 1;
 
-  const rcp = resultats.find((r) => r.type === 'rcp');
+  const rcp = resultats.find((resultat) => resultat.type === 'rcp');
   const statut = rcp?.statut ?? 'echec';
   bilan[statut] += 1;
-  bilan.rubriques += resultats.reduce((s, r) => s + r.sections.length, 0);
+  bilan.rubriques += resultats.reduce((somme, resultat) => somme + resultat.sections.length, 0);
 
   if (statut !== 'ok') {
     soucis.push({
@@ -345,20 +345,20 @@ for (const cible of cibles) {
   try {
     await client.query('BEGIN');
 
-    for (const r of resultats) {
+    for (const resultat of resultats) {
       await client.query(
         'DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2',
-        [cible.code_cis, r.type],
+        [cible.code_cis, resultat.type],
       );
 
-      for (const s of r.sections) {
+      for (const section of resultat.sections) {
         await client.query(
           `INSERT INTO docs.rcp_sections
              (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte, source)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bdpm_pdf')`,
           [
-            cible.code_cis, r.type, s.position, s.numero,
-            s.libelle, s.profondeur, s.canonical, s.html, s.texte,
+            cible.code_cis, resultat.type, section.position, section.numero,
+            section.libelle, section.profondeur, section.canonical, section.html, section.texte,
           ],
         );
       }
@@ -375,7 +375,7 @@ for (const cible of cibles) {
            manquantes = excluded.manquantes,
            source = excluded.source,
            parsed_at = now()`,
-        [cible.code_cis, r.type, hash, PARSER_VERSION, r.sections.length, r.statut, r.manquantes],
+        [cible.code_cis, resultat.type, hash, PARSER_VERSION, resultat.sections.length, resultat.statut, resultat.manquantes],
       );
     }
 
@@ -399,8 +399,8 @@ if (arreteTot) {
   );
 }
 
-const pct = (x) => (bilan.traites === 0 ? '—' : `${Math.round((x / bilan.traites) * 100)} %`);
-const nb = (x) => x.toLocaleString('fr-FR');
+const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
+const nb = (nombre) => nombre.toLocaleString('fr-FR');
 
 console.log(`\n\n${'─'.repeat(52)}`);
 console.log(`  fiches BDPM lues        ${nb(bilan.pages)}`);
@@ -417,7 +417,7 @@ console.log(`  rubriques écrites       ${nb(bilan.rubriques)}`);
 
 if (soucis.length > 0) {
   console.log(`\n  ${soucis.length} document(s) à regarder (20 premiers) :`);
-  for (const s of soucis.slice(0, 20)) console.log(`    ${s.cis}  ${s.motif}`);
+  for (const souci of soucis.slice(0, 20)) console.log(`    ${souci.cis}  ${souci.motif}`);
 }
 
 console.log(`\n  Cache dans ${path.relative(ROOT, CACHE)} — supprimable sans risque.\n`);

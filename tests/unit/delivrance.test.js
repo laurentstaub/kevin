@@ -11,10 +11,10 @@ const MORPHINE = [
   'délivrance fractionnée de 7 jours',
 ];
 
-const courts = (c) => c.resume.map((m) => m.court);
+const courts = (classement) => classement.resume.map((mention) => mention.court);
 
 /** Le libellé d'origine, tel que la vue le garde en infobulle. */
-const bruts = (groupe) => groupe.conditions.map((c) => c.brut);
+const bruts = (groupe) => groupe.conditions.map((condition) => condition.brut);
 
 describe('classer', () => {
   // Écrit en toutes lettres, le résumé occupait deux lignes dans l'en-tête du
@@ -32,7 +32,7 @@ describe('classer', () => {
   });
 
   it('garde le libellé entier derrière chaque abréviation', () => {
-    const par = (court) => classer(MORPHINE).resume.find((m) => m.court === court);
+    const par = (court) => classer(MORPHINE).resume.find((mention) => mention.court === court);
     assert.equal(par('Ordo sécurisée').long, 'Ordonnance sécurisée');
     assert.equal(par('28 j max').long, 'Prescription limitée à 28 jours');
     assert.equal(par('Liste I').long, 'Liste I', 'rien à développer, long = court');
@@ -46,8 +46,8 @@ describe('classer', () => {
   });
 
   it('porte l’axe de chaque mention, pour que la vue sache la détacher', () => {
-    const classement = classer(MORPHINE).resume.filter((m) => m.cle === 'classement');
-    assert.deepEqual(classement.map((m) => m.court), ['Stupéfiant', 'Liste I']);
+    const classement = classer(MORPHINE).resume.filter((mention) => mention.cle === 'classement');
+    assert.deepEqual(classement.map((mention) => mention.court), ['Stupéfiant', 'Liste I']);
   });
 
   it('suit l’ordre de la portée, pas celui de la base', () => {
@@ -59,7 +59,7 @@ describe('classer', () => {
 
   it('range chaque condition sous son axe', () => {
     const groupes = classer(MORPHINE).groupes;
-    const par = (cle) => groupes.find((g) => g.cle === cle);
+    const par = (cle) => groupes.find((groupe) => groupe.cle === cle);
 
     assert.deepEqual(bruts(par('classement')), ['liste I', 'stupéfiants']);
     assert.equal(par('duree').conditions.length, 1);
@@ -85,22 +85,22 @@ describe('classer', () => {
   // l'ordonnance vient de l'hôpital, la boîte se délivre en ville. Les
   // confondre, c'est refuser à tort.
   it('ne bloque pas sur une prescription hospitalière', () => {
-    const c = classer(['prescription hospitalière']);
-    assert.equal(c.bloque, false);
-    assert.deepEqual(courts(c), ['Prescr. hosp.']);
+    const classement = classer(['prescription hospitalière']);
+    assert.equal(classement.bloque, false);
+    assert.deepEqual(courts(classement), ['Prescr. hosp.']);
   });
 
   it('remonte ce qui est à vérifier avant de délivrer', () => {
-    const c = classer([
+    const classement = classer([
       "prescription nécessitant la signature annuelle par le médecin et la patiente d'une attestation d'information",
       'prescription nécessitant la remise d’un carnet patient',
       'délivrance après vérification du recueil de l’accord de soins',
     ]);
-    assert.deepEqual(courts(c), ['Attestation', 'Accord de soins', 'Carnet patient']);
+    assert.deepEqual(courts(classement), ['Attestation', 'Accord de soins', 'Carnet patient']);
   });
 
   it('reconnaît la spécialité requise quelle qu’en soit la formule', () => {
-    const forme = (l) => courts(classer([l]));
+    const forme = (libelle) => courts(classer([libelle]));
     assert.deepEqual(forme('prescription réservée aux spécialistes et services ONCOLOGIE MEDICALE'), ['Spécialiste']);
     assert.deepEqual(forme('prescription réservée aux médecins compétents en CANCEROLOGIE'), ['Spécialiste']);
     assert.deepEqual(forme('prescription initiale réservée à certains spécialistes'), ['Spécialiste']);
@@ -115,17 +115,17 @@ describe('classer', () => {
   // dont la lecture a échoué. Le vide doit être un vide net.
   it('rend un classement vide sans condition', () => {
     for (const rien of [[], null, undefined, ['', '   ']]) {
-      const c = classer(rien);
-      assert.deepEqual(c.resume, [], String(rien));
-      assert.deepEqual(c.groupes, []);
-      assert.deepEqual(c.liens, []);
+      const classement = classer(rien);
+      assert.deepEqual(classement.resume, [], String(rien));
+      assert.deepEqual(classement.groupes, []);
+      assert.deepEqual(classement.liens, []);
     }
   });
 
   it('dédoublonne les libellés répétés', () => {
-    const c = classer(['liste I', 'liste I']);
-    assert.deepEqual(bruts(c.groupes[0]), ['liste I']);
-    assert.deepEqual(courts(c), ['Liste I']);
+    const classement = classer(['liste I', 'liste I']);
+    assert.deepEqual(bruts(classement.groupes[0]), ['liste I']);
+    assert.deepEqual(courts(classement), ['Liste I']);
   });
 });
 
@@ -134,8 +134,8 @@ describe('conditions non reconnues', () => {
   // pire que de l'afficher brut : le lecteur perdrait l'information sans le
   // savoir. Les 163 libellés de la base évoluent, les règles suivront.
   it('sortent verbatim plutôt que d’être perdues', () => {
-    const c = classer(['condition inédite de la BDPM 2027']);
-    const autres = c.groupes.find((g) => g.cle === 'autres');
+    const classement = classer(['condition inédite de la BDPM 2027']);
+    const autres = classement.groupes.find((groupe) => groupe.cle === 'autres');
 
     assert.equal(autres.titre, 'Autres conditions');
     assert.deepEqual(bruts(autres), ['condition inédite de la BDPM 2027']);
@@ -146,7 +146,7 @@ describe('conditions non reconnues', () => {
   });
 
   it('passent après les axes connus', () => {
-    const cles = classer(['zzz inconnu', 'liste II']).groupes.map((g) => g.cle);
+    const cles = classer(['zzz inconnu', 'liste II']).groupes.map((groupe) => groupe.cle);
     assert.deepEqual(cles, ['classement', 'autres']);
   });
 });
@@ -173,7 +173,7 @@ describe('liens Meddispar', () => {
     ]).liens;
 
     assert.equal(liens.length, 2);
-    for (const l of liens) assert.match(l.url, /\/Criteres$/);
+    for (const lien of liens) assert.match(lien.url, /\/Criteres$/);
   });
 
   it('restent absents quand rien ne les appelle', () => {
@@ -182,10 +182,10 @@ describe('liens Meddispar', () => {
 });
 
 describe('presenter', () => {
-  const rendu = (c) => {
-    const r = presenter(c);
-    return (r.population ? `[${r.population}] ` : '')
-      + r.segments.map((s) => (s.fort ? `**${s.texte}**` : s.texte)).join('');
+  const rendu = (classement) => {
+    const presente = presenter(classement);
+    return (presente.population ? `[${presente.population}] ` : '')
+      + presente.segments.map((segment) => (segment.fort ? `**${segment.texte}**` : segment.texte)).join('');
   };
 
   // La source porte sa structure dans la ponctuation : le deux-points sépare

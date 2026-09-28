@@ -25,7 +25,7 @@
 
 import { statutBiologique } from './biosimilaires.js';
 
-const nombre = (s) => Number(String(s).replace(/\s/g, '').replace(',', '.'));
+const nombre = (texte) => Number(String(texte).replace(/\s/g, '').replace(',', '.'));
 
 /** « DUROGESIC 100 microgrammes/heure, dispositif transdermique » → parties. */
 export function decomposer(denomination) {
@@ -34,8 +34,8 @@ export function decomposer(denomination) {
   // des décimales, « 0,33 mg/ml ».
   const virgule = texte.indexOf(', ');
   const tete = (virgule >= 0 ? texte.slice(0, virgule) : texte).trim();
-  const m = /^(.*?)\s+(\d.*)$/.exec(tete);
-  return m ? { nom: m[1].trim(), dosage: m[2].trim() } : { nom: tete, dosage: '' };
+  const parties = /^(.*?)\s+(\d.*)$/.exec(tete);
+  return parties ? { nom: parties[1].trim(), dosage: parties[2].trim() } : { nom: tete, dosage: '' };
 }
 
 /**
@@ -50,7 +50,7 @@ export function decomposer(denomination) {
  * Null quand rien ne se lit, et `regrouperSpecialites` décide ensuite si la
  * tête suffit à distinguer les spécialités d'une ligne.
  */
-const NOMBRE = String.raw`(\d{1,3}(?:[\s  ]\d{3})+|\d+)(?:[.,](\d+))?`;
+const NOMBRE = String.raw`(\d{1,3}(?:[\s\u00a0\u202f]\d{3})+|\d+)(?:[.,](\d+))?`;
 function lireDosage(dosage) {
   const entier = new RegExp(`^${NOMBRE}\\s*([^\\d\\s][^\\d]*)$`).exec(dosage);
   const tete = entier ?? new RegExp(`^${NOMBRE}\\s*([A-Za-zµμ%]+(?:/[A-Za-zµμ]+)?)(?=[\\s(]|$)`).exec(dosage);
@@ -59,13 +59,13 @@ function lireDosage(dosage) {
   return {
     valeur: nombre(chiffre),
     // L'espace des milliers devient insécable : « 4 000 » ne se coupe plus.
-    chiffre: chiffre.replace(/[\s ]/g, ' '),
+    chiffre: chiffre.replace(/[\s\u00a0]/g, '\u202f'),
     unite: tete[3].trim(),
     detail: entier ? null : dosage,
   };
 }
 
-const minuscule = (s) => String(s ?? '').trim().toLowerCase();
+const minuscule = (texte) => String(texte ?? '').trim().toLowerCase();
 
 /**
  * @param {Array<{id, denomination, forme_pharmaceutique, titulaires,
@@ -77,58 +77,58 @@ const minuscule = (s) => String(s ?? '').trim().toLowerCase();
 export function regrouperSpecialites(lignes) {
   const formes = new Map();
 
-  for (const l of lignes) {
-    const forme = minuscule(l.forme_pharmaceutique) || 'forme non précisée';
+  for (const ligne of lignes) {
+    const forme = minuscule(ligne.forme_pharmaceutique) || 'forme non précisée';
     if (!formes.has(forme)) formes.set(forme, { forme, total: 0, noms: new Map() });
-    const f = formes.get(forme);
-    f.total += 1;
+    const groupeForme = formes.get(forme);
+    groupeForme.total += 1;
 
-    const { nom, dosage } = decomposer(l.denomination);
-    const cle = `${nom}|${l.titulaires ?? ''}|${Boolean(l.importation)}`;
-    if (!f.noms.has(cle)) {
-      f.noms.set(cle, {
-        nom, titulaires: l.titulaires, princeps: false, importation: Boolean(l.importation),
-        biologique: statutBiologique(l.denomination), brut: [],
+    const { nom, dosage } = decomposer(ligne.denomination);
+    const cle = `${nom}|${ligne.titulaires ?? ''}|${Boolean(ligne.importation)}`;
+    if (!groupeForme.noms.has(cle)) {
+      groupeForme.noms.set(cle, {
+        nom, titulaires: ligne.titulaires, princeps: false, importation: Boolean(ligne.importation),
+        biologique: statutBiologique(ligne.denomination), brut: [],
       });
     }
-    const n = f.noms.get(cle);
-    n.princeps ||= Boolean(l.princeps);
-    n.brut.push({ id: l.id, dosage, denomination: l.denomination });
+    const groupeNom = groupeForme.noms.get(cle);
+    groupeNom.princeps ||= Boolean(ligne.princeps);
+    groupeNom.brut.push({ id: ligne.id, dosage, denomination: ligne.denomination });
   }
 
   return [...formes.values()]
     // La forme la plus fournie d'abord : c'est, presque toujours, la plus
     // délivrée — le patch de fentanyl, le comprimé de paracétamol.
     .sort((a, b) => b.total - a.total)
-    .map((f) => ({
-      forme: f.forme,
-      total: f.total,
+    .map((groupeForme) => ({
+      forme: groupeForme.forme,
+      total: groupeForme.total,
       // La référence d'abord — princeps du Répertoire ou médicament biologique
       // de référence : LOVENOX avant INHIXA, que l'alphabet mettait devant.
       // Le tri est stable, l'ordre de la requête vaut pour le reste.
-      noms: [...f.noms.values()]
+      noms: [...groupeForme.noms.values()]
         .sort((a, b) => Number(b.princeps || b.biologique === 'reference')
           - Number(a.princeps || a.biologique === 'reference'))
-        .map(({ brut, ...n }) => {
-        const lus = brut.map((b) => ({ ...b, lu: lireDosage(b.dosage) }));
-        const unites = new Set(lus.map((b) => b.lu?.unite));
-        const chiffres = new Set(lus.map((b) => b.lu?.valeur));
+        .map(({ brut, ...groupeNom }) => {
+        const lus = brut.map((entree) => ({ ...entree, lu: lireDosage(entree.dosage) }));
+        const unites = new Set(lus.map((entree) => entree.lu?.unite));
+        const chiffres = new Set(lus.map((entree) => entree.lu?.valeur));
         // Une seule unité, et des chiffres qui suffisent à distinguer chaque
         // spécialité : on écrit l'unité une fois, à la fin. Deux « 0,33 mg »
         // qui ne diffèrent que par « SANS SUCRE » s'écrivent en entier.
-        const commune = lus.every((b) => b.lu) && unites.size === 1 && chiffres.size === lus.length
+        const commune = lus.every((entree) => entree.lu) && unites.size === 1 && chiffres.size === lus.length
           ? [...unites][0] : null;
         const ordonnes = commune ? [...lus].sort((a, b) => a.lu.valeur - b.lu.valeur) : lus;
         return {
-          ...n,
+          ...groupeNom,
           unite: commune,
-          dosages: ordonnes.map((b) => ({
-            id: b.id,
+          dosages: ordonnes.map((entree) => ({
+            id: entree.id,
             // Ce que la tête tait — « (40 mg)/0,4 mL » — reste en infobulle.
-            detail: commune ? b.lu.detail : null,
+            detail: commune ? entree.lu.detail : null,
             // Sans dosage, le lien porte la dénomination entière : c'est la
             // seule chose qui distingue deux spécialités du même nom.
-            libelle: commune ? b.lu.chiffre : (b.dosage || b.denomination),
+            libelle: commune ? entree.lu.chiffre : (entree.dosage || entree.denomination),
           })),
         };
       }),

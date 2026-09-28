@@ -53,12 +53,12 @@ block content
         //- nôtre.
         if documents.elargissements && documents.elargissements.length > 0
           p.elargi
-            each e, i in documents.elargissements
+            each elargissement, i in documents.elargissements
               if i > 0
                 |  ·
-              | « #{e.terme} » cherché aussi comme
+              | « #{elargissement.terme} » cherché aussi comme
               |
-              span.elargi-vers= e.vers.join(', ')
+              span.elargi-vers= elargissement.vers.join(', ')
             |
             a.elargi-exact(href=lien(etat, { requete: `"${query.replace(/"/g, '')}"` })
               title="Chercher les mots tapés, et rien d'autre") mot pour mot
@@ -85,8 +85,8 @@ block content
       //- n'en montrait que vingt : le lecteur en concluait, à raison, qu'il
       //- manquait quelque chose. On ne numérote pas les pages — cent cinquante
       //- numéros ne se choisissent pas — on avance et on recule.
-      - var premier = documents.decalage + 1
-      - var dernier = documents.decalage + documents.resultats.length
+      - const premier = documents.decalage + 1
+      - const dernier = documents.decalage + documents.resultats.length
       nav.pages(aria-label="Pagination des résultats")
         if page > 1
           a.page-prec(href=lien(etat, { page: page - 1 })) ← Précédents

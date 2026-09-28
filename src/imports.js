@@ -29,22 +29,22 @@ const cle = (denomination) => deaccent(String(denomination ?? '')).toLowerCase()
 export function regrouperVariantes(resultats) {
   const parNom = new Map();
 
-  for (const r of resultats) {
-    const k = cle(r.denomination_medicament);
-    const importation = estImportation(r.type_procedure_amm);
+  for (const resultat of resultats) {
+    const cleProduit = cle(resultat.denomination_medicament);
+    const importation = estImportation(resultat.type_procedure_amm);
 
-    if (!parNom.has(k)) {
-      parNom.set(k, { ...r, importation, importations: importation ? 1 : 0 });
+    if (!parNom.has(cleProduit)) {
+      parNom.set(cleProduit, { ...resultat, importation, importations: importation ? 1 : 0 });
       continue;
     }
 
-    const groupe = parNom.get(k);
+    const groupe = parNom.get(cleProduit);
     if (importation) {
       groupe.importations += 1;
       // Le produit d'origine représente le groupe, quel que soit l'ordre
       // dans lequel la recherche l'a rendu.
     } else if (groupe.importation) {
-      parNom.set(k, { ...r, importation: false, importations: groupe.importations });
+      parNom.set(cleProduit, { ...resultat, importation: false, importations: groupe.importations });
     }
   }
 

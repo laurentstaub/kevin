@@ -65,14 +65,14 @@ export function equilibrer(html) {
   const aRetirer = [];
 
   BALISE.lastIndex = 0;
-  let m;
-  while ((m = BALISE.exec(html))) {
-    const nom = m[2].toLowerCase();
-    if (m[3] === '/' || VIDES.has(nom)) continue;
+  let balise;
+  while ((balise = BALISE.exec(html))) {
+    const nom = balise[2].toLowerCase();
+    if (balise[3] === '/' || VIDES.has(nom)) continue;
 
-    if (m[1] === '/') {
+    if (balise[1] === '/') {
       const ouverte = pile.lastIndexOf(nom);
-      if (ouverte === -1) aRetirer.push([m.index, m.index + m[0].length]);
+      if (ouverte === -1) aRetirer.push([balise.index, balise.index + balise[0].length]);
       else pile.length = ouverte;
     } else {
       pile.push(nom);
@@ -91,7 +91,7 @@ const texteNu = (html) => String(html ?? '').replace(/<[^>]+>/g, ' ').replace(/\
 /** Combien de titres numérotés distincts — la signature d'un document QRD. */
 export function rubriquesVues(html) {
   const vues = new Set();
-  for (const m of String(html ?? '').matchAll(RUBRIQUE)) vues.add(m[1]);
+  for (const correspondance of String(html ?? '').matchAll(RUBRIQUE)) vues.add(correspondance[1]);
   return vues.size;
 }
 

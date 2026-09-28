@@ -17,7 +17,7 @@ export const PHRASES_MAX = 2;
 /** Une phrase plus longue est presque toujours une énumération mal ponctuée. */
 const LONGUEUR_MAX = 600;
 
-const normal = (s) => deaccent(String(s)).toLowerCase();
+const normal = (texte) => deaccent(String(texte)).toLowerCase();
 
 /**
  * Découpe en phrases, sans couper sur « p. ex. », « 50 mg. Chez… » ni sur les
@@ -31,7 +31,7 @@ export function phrases(texte) {
     // Une puce coupe aussi : les contre-indications sont souvent une liste
     // sans point final, qui restait sinon d'un seul bloc.
     .split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])|\s*[•▪]\s*/)
-    .map((p) => p.trim())
+    .map((phrase) => phrase.trim())
     .filter(Boolean);
 }
 
@@ -42,10 +42,10 @@ export function phrases(texte) {
  * n'importe quelle suite de lettres.
  */
 export function motifs(termes) {
-  const alternatives = termes.flatMap((t) => elargir(t).atomes.flat())
-    .map((a) => a.replace(/"/g, ''));
-  return [...new Set(alternatives)].map((a) => {
-    const echappe = normal(a).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  const alternatives = termes.flatMap((terme) => elargir(terme).atomes.flat())
+    .map((atome) => atome.replace(/"/g, ''));
+  return [...new Set(alternatives)].map((atome) => {
+    const echappe = normal(atome).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
     return new RegExp(`(^|[^a-z0-9])${echappe}`, 'i');
   });
 }
@@ -53,6 +53,6 @@ export function motifs(termes) {
 /** Les phrases d'un texte qui portent l'un des motifs, dans leur ordre. */
 export function phrasesPertinentes(texte, regexes, max = PHRASES_MAX) {
   return phrases(texte)
-    .filter((p) => p.length <= LONGUEUR_MAX && regexes.some((r) => r.test(normal(p))))
+    .filter((phrase) => phrase.length <= LONGUEUR_MAX && regexes.some((regex) => regex.test(normal(phrase))))
     .slice(0, max);
 }

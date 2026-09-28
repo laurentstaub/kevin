@@ -41,8 +41,8 @@ try {
             max(length(atc_code)) AS maxi, count(*)::int AS codes
      FROM ref.atc_classification GROUP BY 1 ORDER BY 1`,
   );
-  for (const n of niveaux) {
-    dit(`niveau ${n.niveau}`, `${n.codes} codes, longueur ${n.mini}${n.mini === n.maxi ? '' : ` à ${n.maxi}`}`);
+  for (const niveau of niveaux) {
+    dit(`niveau ${niveau.niveau}`, `${niveau.codes} codes, longueur ${niveau.mini}${niveau.mini === niveau.maxi ? '' : ` à ${niveau.maxi}`}`);
   }
 
   console.log(`\n=== Ce que la page « ${code} » reçoit ===\n`);
@@ -67,15 +67,15 @@ try {
 
     const molecules = await getMoleculesDeClasse(pool, code);
     dit('molécules rendues', molecules.length);
-    for (const m of molecules.slice(0, 5)) {
-      console.log(`     ${m.code}  ${String(m.produits).padStart(4)} produits  ${m.label}`);
+    for (const molecule of molecules.slice(0, 5)) {
+      console.log(`     ${molecule.code}  ${String(molecule.produits).padStart(4)} produits  ${molecule.label}`);
     }
   }
 
   // Si la liste est vide, c'est ici qu'on voit pourquoi : soit aucun code de
   // niveau 5 sous ce préfixe, soit aucune correspondance vers une spécialité.
   console.log(`\n=== Décomposition, préfixe « ${code} » ===\n`);
-  const { rows: [d] } = await pool.query(
+  const { rows: [detail] } = await pool.query(
     `SELECT
        (SELECT count(*)::int FROM ref.atc_classification
         WHERE atc_level = 5 AND atc_code LIKE $1 || '%')                      AS codes_n5,
@@ -89,10 +89,10 @@ try {
         WHERE a.atc_code LIKE $1 || '%')                                      AS avec_specialite`,
     [code],
   );
-  dit('codes de niveau 5 sous ce préfixe', d.codes_n5);
-  dit('codes portés par une spécialité', d.codes_utilises);
-  dit('jointure exacte niveau 5', d.jointure_exacte);
-  dit('correspondances vers cis_bdpm', d.avec_specialite);
+  dit('codes de niveau 5 sous ce préfixe', detail.codes_n5);
+  dit('codes portés par une spécialité', detail.codes_utilises);
+  dit('jointure exacte niveau 5', detail.jointure_exacte);
+  dit('correspondances vers cis_bdpm', detail.avec_specialite);
   console.log('');
 } finally {
   await pool.end();

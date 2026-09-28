@@ -18,7 +18,7 @@ import path from 'node:path';
 import { ROOT } from './config.js';
 import { deaccent } from './text.js';
 
-const normal = (s) => deaccent(String(s ?? '')).toUpperCase().trim();
+const normal = (texte) => deaccent(String(texte ?? '')).toUpperCase().trim();
 
 let liste = null;
 export function chargerBiosimilaires(chemin = path.join(ROOT, 'data', 'biosimilaires.json')) {
@@ -26,29 +26,29 @@ export function chargerBiosimilaires(chemin = path.join(ROOT, 'data', 'biosimila
   liste = {
     source: brut.source,
     substitution: brut.substitution,
-    groupes: brut.groupes.map((g) => ({
-      ...g,
-      references: g.references.map(normal),
-      biosimilaires: g.biosimilaires.map(normal),
+    groupes: brut.groupes.map((groupe) => ({
+      ...groupe,
+      references: groupe.references.map(normal),
+      biosimilaires: groupe.biosimilaires.map(normal),
     })),
   };
-  liste.references = liste.groupes.flatMap((g) => g.references);
-  liste.biosimilaires = liste.groupes.flatMap((g) => g.biosimilaires);
+  liste.references = liste.groupes.flatMap((groupe) => groupe.references);
+  liste.biosimilaires = liste.groupes.flatMap((groupe) => groupe.biosimilaires);
   return liste;
 }
 
 const lire = () => liste ?? chargerBiosimilaires();
 
 const commencePar = (denomination, nom) => {
-  const d = normal(denomination);
-  return d === nom || d.startsWith(`${nom} `) || d.startsWith(`${nom},`);
+  const normalisee = normal(denomination);
+  return normalisee === nom || normalisee.startsWith(`${nom} `) || normalisee.startsWith(`${nom},`);
 };
 
 /** @returns {'reference'|'biosimilaire'|null} */
 export function statutBiologique(denomination) {
-  const l = lire();
-  if (l.biosimilaires.some((n) => commencePar(denomination, n))) return 'biosimilaire';
-  if (l.references.some((n) => commencePar(denomination, n))) return 'reference';
+  const listes = lire();
+  if (listes.biosimilaires.some((biosimilaire) => commencePar(denomination, biosimilaire))) return 'biosimilaire';
+  if (listes.references.some((reference) => commencePar(denomination, reference))) return 'reference';
   return null;
 }
 
@@ -68,12 +68,12 @@ export const sourceBiosimilaires = () => lire().source;
  * @returns {null | { substance, substituable, role: 'reference'|'biosimilaire' }}
  */
 export function groupeBiologique(denomination) {
-  for (const g of lire().groupes) {
-    if (g.biosimilaires.some((n) => commencePar(denomination, n))) {
-      return { substance: g.substance, substituable: Boolean(g.substituable), role: 'biosimilaire' };
+  for (const groupe of lire().groupes) {
+    if (groupe.biosimilaires.some((biosimilaire) => commencePar(denomination, biosimilaire))) {
+      return { substance: groupe.substance, substituable: Boolean(groupe.substituable), role: 'biosimilaire' };
     }
-    if (g.references.some((n) => commencePar(denomination, n))) {
-      return { substance: g.substance, substituable: Boolean(g.substituable), role: 'reference' };
+    if (groupe.references.some((reference) => commencePar(denomination, reference))) {
+      return { substance: groupe.substance, substituable: Boolean(groupe.substituable), role: 'reference' };
     }
   }
   return null;

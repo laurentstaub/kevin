@@ -48,24 +48,24 @@ block content
                 th(scope="col") Substance
                 th(scope="col") Ce qu'en dit le RCP
             tbody
-              each l in calcul.lignes
+              each ligne in calcul.lignes
                 tr
                   th(scope="row")
-                    span.substance= l.substance
-                    if l.specialite
-                      a.specialite(href=`/product/${l.specialite.cis}`)= l.specialite.denomination
-                    if l.origine === 'ajout'
+                    span.substance= ligne.substance
+                    if ligne.specialite
+                      a.specialite(href=`/product/${ligne.specialite.cis}`)= ligne.specialite.denomination
+                    if ligne.origine === 'ajout'
                       //- Hors de l'amorce ANSM : l'inscription est un choix
                       //- éditorial, et le lecteur doit pouvoir le distinguer.
-                      span.origine(title=l.motif || null) Ajout du #{l.valide_le}
+                      span.origine(title=ligne.motif || null) Ajout du #{ligne.valide_le}
                   td
-                    if l.citations.length
-                      each c in l.citations
+                    if ligne.citations.length
+                      each citation in ligne.citations
                         blockquote.citation
-                          p= c.phrase
+                          p= citation.phrase
                           footer
-                            a(href=`/product/${l.specialite.cis}#${c.ancre}`) #{c.numero} #{c.libelle}
-                    else if l.specialite
+                            a(href=`/product/${ligne.specialite.cis}#${citation.ancre}`) #{citation.numero} #{citation.libelle}
+                    else if ligne.specialite
                       p.manque Aucune phrase trouvée dans les rubriques #{calcul.rubriques.join(', ')} de ce RCP.
                     else
                       p.manque Aucune spécialité commercialisée.

@@ -45,8 +45,8 @@ export function reparer(texte) {
   if (!texte || !/[ÃÂ]|â€/.test(texte)) return null;
 
   const octets = [];
-  for (const c of texte) {
-    const point = CP1252.get(c) ?? c.codePointAt(0);
+  for (const caractere of texte) {
+    const point = CP1252.get(caractere) ?? caractere.codePointAt(0);
     if (point > 0xff) return null; // hors d'atteinte : ce n'est pas du mojibake
     octets.push(point);
   }
@@ -76,11 +76,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   let total = 0;
   const exemples = [];
 
-  for (const { s, t, c } of colonnes) {
+  for (const { s: schema, t: nomTable, c: nomColonne } of colonnes) {
     // Les identifiants viennent d'information_schema, pas d'une entrée : ils
     // sont mis entre guillemets par précaution, pas par méfiance.
-    const table = `"${s}"."${t}"`;
-    const colonne = `"${c}"`;
+    const table = `"${schema}"."${nomTable}"`;
+    const colonne = `"${nomColonne}"`;
 
     // Présélection large en SQL — le tri fin se fait dans reparer().
     const { rows } = await pool.query(
@@ -90,15 +90,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     );
 
     const atraiter = rows
-      .map((r) => ({ ctid: r.ctid, clair: reparer(r.v), avant: r.v }))
-      .filter((r) => r.clair !== null);
+      .map((row) => ({ ctid: row.ctid, clair: reparer(row.v), avant: row.v }))
+      .filter((ligne) => ligne.clair !== null);
 
     if (atraiter.length === 0) continue;
 
     total += atraiter.length;
-    console.log(`  ${`${s}.${t}.${c}`.padEnd(46)} ${atraiter.length.toLocaleString('fr-FR').padStart(8)}`);
+    console.log(`  ${`${schema}.${nomTable}.${nomColonne}`.padEnd(46)} ${atraiter.length.toLocaleString('fr-FR').padStart(8)}`);
     if (exemples.length < 5) {
-      exemples.push({ ou: `${s}.${t}.${c}`, ...atraiter[0] });
+      exemples.push({ ou: `${schema}.${nomTable}.${nomColonne}`, ...atraiter[0] });
     }
 
     if (!ECRIRE) continue;
@@ -106,13 +106,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      for (const r of atraiter) {
-        await client.query(`UPDATE ${table} SET ${colonne} = $1 WHERE ctid = $2`, [r.clair, r.ctid]);
+      for (const ligne of atraiter) {
+        await client.query(`UPDATE ${table} SET ${colonne} = $1 WHERE ctid = $2`, [ligne.clair, ligne.ctid]);
       }
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');
-      console.error(`    échec sur ${s}.${t}.${c} : ${err.message}`);
+      console.error(`    échec sur ${schema}.${nomTable}.${nomColonne} : ${err.message}`);
     } finally {
       client.release();
     }

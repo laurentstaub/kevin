@@ -9,7 +9,7 @@
 import { deaccent } from './text.js';
 import { motifs, phrasesPertinentes, PHRASES_MAX } from './citations.js';
 
-const echapperRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const echapperRegex = (texte) => texte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Le motif Postgres qui retrouve une substance dans `denomination_substance`,
@@ -59,18 +59,18 @@ export function choisirCitations(lignes, termes, max = PHRASES_MAX) {
   const regexes = motifs(termes);
 
   const parCis = new Map();
-  for (const l of lignes) {
-    if (!parCis.has(l.code_cis)) parCis.set(l.code_cis, []);
-    parCis.get(l.code_cis).push(l);
+  for (const ligne of lignes) {
+    if (!parCis.has(ligne.code_cis)) parCis.set(ligne.code_cis, []);
+    parCis.get(ligne.code_cis).push(ligne);
   }
 
   for (const [cis, sections] of parCis) {
     const citations = [];
-    for (const s of sections) {
-      for (const phrase of phrasesPertinentes(s.texte, regexes, max - citations.length)) {
+    for (const section of sections) {
+      for (const phrase of phrasesPertinentes(section.texte, regexes, max - citations.length)) {
         citations.push({
-          numero: s.numero, libelle: s.libelle,
-          ancre: `${s.document_type}-${s.position}`, phrase,
+          numero: section.numero, libelle: section.libelle,
+          ancre: `${section.document_type}-${section.position}`, phrase,
         });
       }
       if (citations.length >= max) break;
@@ -100,5 +100,5 @@ export function choisirCitations(lignes, termes, max = PHRASES_MAX) {
 export function dejaInscrite(molecule, inscriptions) {
   const mots = new Set(deaccent(String(molecule)).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
   return inscriptions.some((i) => deaccent(String(i.substance)).toLowerCase()
-    .split(/[^a-z0-9]+/).filter(Boolean).every((m) => mots.has(m)));
+    .split(/[^a-z0-9]+/).filter(Boolean).every((mot) => mots.has(mot)));
 }

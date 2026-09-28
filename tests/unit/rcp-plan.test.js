@@ -38,9 +38,9 @@ describe('canonicalLabel', () => {
 
 describe('splitHeading', () => {
   it('sépare le numéro du libellé', () => {
-    const h = splitHeading('4.2 Posologie et mode d’administration');
-    assert.equal(h.number, '4.2');
-    assert.ok(h.label.startsWith('Posologie'));
+    const titre = splitHeading('4.2 Posologie et mode d’administration');
+    assert.equal(titre.number, '4.2');
+    assert.ok(titre.label.startsWith('Posologie'));
   });
 
   it('absorbe le point après le numéro', () => {
@@ -48,20 +48,20 @@ describe('splitHeading', () => {
   });
 
   it('normalise le libellé quand il est au plan type', () => {
-    const h = splitHeading('5. PROPRIETES PHARMACOLOGIQUES');
-    assert.equal(h.label, 'Propriétés pharmacologiques');
-    assert.equal(h.canonical, true);
+    const titre = splitHeading('5. PROPRIETES PHARMACOLOGIQUES');
+    assert.equal(titre.label, 'Propriétés pharmacologiques');
+    assert.equal(titre.canonical, true);
   });
 
   it('conserve un libellé hors plan type tel quel', () => {
-    const h = splitHeading('9. MENTIONS PARTICULIERES DU LABORATOIRE');
-    assert.equal(h.label, 'MENTIONS PARTICULIERES DU LABORATOIRE');
-    assert.equal(h.canonical, false);
+    const titre = splitHeading('9. MENTIONS PARTICULIERES DU LABORATOIRE');
+    assert.equal(titre.label, 'MENTIONS PARTICULIERES DU LABORATOIRE');
+    assert.equal(titre.canonical, false);
   });
 
   it('laisse un titre non numéroté intact', () => {
-    const h = splitHeading('RESUME DES CARACTERISTIQUES DU PRODUIT');
-    assert.equal(h.number, null);
-    assert.equal(h.label, 'RESUME DES CARACTERISTIQUES DU PRODUIT');
+    const titre = splitHeading('RESUME DES CARACTERISTIQUES DU PRODUIT');
+    assert.equal(titre.number, null);
+    assert.equal(titre.label, 'RESUME DES CARACTERISTIQUES DU PRODUIT');
   });
 });

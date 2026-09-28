@@ -24,9 +24,9 @@ function horsBalise(html) {
   const zones = [];
   let depuis = 0;
   BALISE.lastIndex = 0;
-  let m;
-  while ((m = BALISE.exec(html))) {
-    if (m.index > depuis) zones.push([depuis, m.index]);
+  let correspondance;
+  while ((correspondance = BALISE.exec(html))) {
+    if (correspondance.index > depuis) zones.push([depuis, correspondance.index]);
     depuis = BALISE.lastIndex;
   }
   if (depuis < html.length) zones.push([depuis, html.length]);
@@ -129,19 +129,19 @@ export function listes(html) {
   };
 
   PARAGRAPHE.lastIndex = 0;
-  let m;
-  while ((m = PARAGRAPHE.exec(source))) {
-    const avant = source.slice(curseur, m.index);
-    const rang = rangDePuce(detaguer(m[2]));
+  let correspondance;
+  while ((correspondance = PARAGRAPHE.exec(source))) {
+    const avant = source.slice(curseur, correspondance.index);
+    const rang = rangDePuce(detaguer(correspondance[2]));
 
     // Entre deux puces, seul du blanc peut s'intercaler sans rompre la liste.
     if (avant.trim()) { vider(); sortie += avant; }
     else if (paquet.length === 0) sortie += avant;
 
-    if (rang === 0) { vider(); sortie += m[0]; }
-    else paquet.push({ rang, html: sansPuce(m[2], rang).trim() });
+    if (rang === 0) { vider(); sortie += correspondance[0]; }
+    else paquet.push({ rang, html: sansPuce(correspondance[2], rang).trim() });
 
-    curseur = m.index + m[0].length;
+    curseur = correspondance.index + correspondance[0].length;
   }
 
   vider();
@@ -150,8 +150,8 @@ export function listes(html) {
 
 // ----------------------------------------------------------- les intitulés
 
-const sansAccents = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-const clef = (s) => sansAccents(s).toLowerCase().replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+const sansAccents = (texte) => texte.normalize('NFD').replace(/[̀-ͯ]/g, '');
+const clef = (texte) => sansAccents(texte).toLowerCase().replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
 
 /**
  * Les articulations internes du modèle QRD.
@@ -295,7 +295,7 @@ export function interactions(html) {
  *
  * @param {Map<string, {id:string, libelle:string}>} cibles - par numéro
  */
-const echapper = (t) => String(t ?? '')
+const echapper = (texte) => String(texte ?? '')
   .replace(/&/g, '&amp;')
   .replace(/"/g, '&quot;')
   .replace(/</g, '&lt;')
@@ -328,11 +328,11 @@ export function renvois(html, cibles) {
   // texte, ce qui est le bon échec.
   for (const [debut, fin] of horsBalise(source)) {
     sortie += source.slice(depuis, debut);
-    sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (n) => {
-      const cible = cibles.get(n);
-      if (!cible?.id) return n;
-      const titre = cible.libelle ? ` title="${echapper(`${n} — ${cible.libelle}`)}"` : '';
-      return `<a class="renvoi" href="#${cible.id}"${titre}>${n}</a>`;
+    sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (numero) => {
+      const cible = cibles.get(numero);
+      if (!cible?.id) return numero;
+      const titre = cible.libelle ? ` title="${echapper(`${numero} — ${cible.libelle}`)}"` : '';
+      return `<a class="renvoi" href="#${cible.id}"${titre}>${numero}</a>`;
     }));
     depuis = fin;
   }

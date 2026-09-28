@@ -84,26 +84,26 @@ export function retirerHabillage(texte) {
     const auBord = bords(lignes);
     const vues = new Set(
       lignes
-        .map((l, i) => (auBord.has(i) ? l.trim() : ''))
-        .filter((l) => l && l.length <= 90),
+        .map((ligne, i) => (auBord.has(i) ? ligne.trim() : ''))
+        .filter((ligne) => ligne && ligne.length <= 90),
     );
-    for (const l of vues) frequence.set(l, (frequence.get(l) ?? 0) + 1);
+    for (const vue of vues) frequence.set(vue, (frequence.get(vue) ?? 0) + 1);
   }
 
   const seuil = Math.max(3, Math.ceil(feuillets.length / 3));
-  const habillage = new Set([...frequence].filter(([, n]) => n >= seuil).map(([l]) => l));
+  const habillage = new Set([...frequence].filter(([, nombre]) => nombre >= seuil).map(([ligne]) => ligne));
 
   return feuillets
     .map((feuillet) => {
       const lignes = feuillet.split('\n');
       const auBord = bords(lignes);
       return lignes
-        .filter((l, i) => {
-          const t = l.trim();
-          if (!t) return true;
+        .filter((ligne, i) => {
+          const propre = ligne.trim();
+          if (!propre) return true;
           if (!auBord.has(i)) return true;
-          if (habillage.has(t)) return false;
-          return !/^\d{1,4}(\s*\/\s*\d{1,4})?$/.test(t); // numéro de page
+          if (habillage.has(propre)) return false;
+          return !/^\d{1,4}(\s*\/\s*\d{1,4})?$/.test(propre); // numéro de page
         })
         .join('\n');
     })
@@ -139,9 +139,9 @@ export function decouperAnnexes(texte) {
   if (bornes.length === 0) return new Map([['rcp', lignes.join('\n')]]);
 
   const parType = new Map();
-  bornes.forEach((borne, k) => {
+  bornes.forEach((borne, rang) => {
     if (!borne.type || borne.type === 'etiquetage-notice') return;
-    const fin = bornes[k + 1]?.i ?? lignes.length;
+    const fin = bornes[rang + 1]?.i ?? lignes.length;
     const bloc = lignes.slice(borne.i, fin).join('\n');
     // Un en-tête d'annexe se répète : on recolle les morceaux.
     parType.set(borne.type, `${parType.get(borne.type) ?? ''}\n${bloc}`);
@@ -149,11 +149,11 @@ export function decouperAnnexes(texte) {
 
   // « ANNEXE III » sans suffixe regroupe étiquetage puis notice : on ne garde
   // que ce qui suit le début de la notice.
-  const groupee = bornes.find((b) => b.type === 'etiquetage-notice');
+  const groupee = bornes.find((borne) => borne.type === 'etiquetage-notice');
   if (groupee && !parType.has('notice')) {
     const fin = bornes[bornes.indexOf(groupee) + 1]?.i ?? lignes.length;
     const bloc = lignes.slice(groupee.i, fin);
-    const debut = bloc.findIndex((l) => DEBUT_NOTICE.test(l));
+    const debut = bloc.findIndex((ligne) => DEBUT_NOTICE.test(ligne));
     if (debut !== -1) parType.set('notice', bloc.slice(debut).join('\n'));
   }
 
@@ -175,13 +175,13 @@ export function decouperAnnexes(texte) {
  * (« 4 » puis « 4.1 ») est vide elle aussi, mais la suivante est plus profonde.
  */
 function sansSommaire(candidats, lignes) {
-  const profondeur = (n) => n.split('.').length;
-  const rang = (n) => Number(n.split('.')[0]);
+  const profondeur = (numero) => numero.split('.').length;
+  const rang = (numero) => Number(numero.split('.')[0]);
   // Deux titres se suivent dans un sommaire s'ils sont séparés par du vide, au
   // même niveau, et que la numérotation progresse : « 6 » puis « 1 », c'est le
   // corps qui commence, pas la suite de la liste.
   const colles = (a, b) =>
-    lignes.slice(a.i + 1, b.i).every((l) => !l.trim()) &&
+    lignes.slice(a.i + 1, b.i).every((ligne) => !ligne.trim()) &&
     profondeur(b.number) <= profondeur(a.number) &&
     rang(b.number) > rang(a.number);
 
@@ -189,7 +189,7 @@ function sansSommaire(candidats, lignes) {
   let debut = 0;
   for (let i = 0; i < candidats.length; i += 1) {
     if (i + 1 < candidats.length && colles(candidats[i], candidats[i + 1])) continue;
-    if (i - debut >= 2) for (let k = debut; k <= i; k += 1) aRetirer.add(k);
+    if (i - debut >= 2) for (let indice = debut; indice <= i; indice += 1) aRetirer.add(indice);
     debut = i + 1;
   }
 
@@ -208,14 +208,14 @@ function sansSommaire(candidats, lignes) {
 export function versHtml(texte, type = 'doc') {
   const lignes = String(texte ?? '')
     .split('\n')
-    .map((l) => l.replace(/\s+$/, ''))
-    .filter((l, i, tab) => l.trim() || tab[i - 1]?.trim()); // pas deux vides d'affilée
+    .map((ligne) => ligne.replace(/\s+$/, ''))
+    .filter((ligne, i, tab) => ligne.trim() || tab[i - 1]?.trim()); // pas deux vides d'affilée
 
   let candidats = [];
   lignes.forEach((ligne, i) => {
-    const t = ligne.trim();
-    if (!t || t.length > LONGUEUR_TITRE_MAX || !NUMERO_TITRE.test(t)) return;
-    const { number, label } = splitHeading(t);
+    const propre = ligne.trim();
+    if (!propre || propre.length > LONGUEUR_TITRE_MAX || !NUMERO_TITRE.test(propre)) return;
+    const { number, label } = splitHeading(propre);
     if (number) candidats.push({ i, number, label });
   });
 
@@ -223,14 +223,14 @@ export function versHtml(texte, type = 'doc') {
   // même forme qu'un plan : seule la tournure du libellé tranche. On ne filtre
   // que si le plan se reconnaît vraiment — sinon la source fait foi.
   if (type === 'notice') {
-    const plan = candidats.filter((c) => rubriqueNotice(c.number, c.label));
+    const plan = candidats.filter((candidat) => rubriqueNotice(candidat.number, candidat.label));
     if (plan.length >= 4) candidats = plan;
   }
 
-  const titres = new Set(coherentes(sansSommaire(candidats, lignes)).map((c) => c.i));
+  const titres = new Set(coherentes(sansSommaire(candidats, lignes)).map((candidat) => candidat.i));
 
-  const echapper = (s) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const echapper = (brut) =>
+    brut.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const html = [];
   let paragraphe = [];
@@ -279,16 +279,16 @@ export function versHtml(texte, type = 'doc') {
 
   for (let i = 0; i < lignes.length; i += 1) {
     const ligne = lignes[i];
-    const t = ligne.trim();
+    const propre = ligne.trim();
 
     if (titres.has(i)) {
       viderTout();
-      html.push(`<h2>${echapper(t)}</h2>`);
+      html.push(`<h2>${echapper(propre)}</h2>`);
       continue;
     }
 
     // La ligne vide est la seule marque de fin de paragraphe d'un PDF.
-    if (!t) {
+    if (!propre) {
       viderTout();
       continue;
     }
@@ -297,7 +297,7 @@ export function versHtml(texte, type = 'doc') {
     if (puce) {
       viderTableau();
       viderParagraphe();
-      liste.push([t.slice(puce[0].trimStart().length)]);
+      liste.push([propre.slice(puce[0].trimStart().length)]);
       listeIndent = puce[0].length;
       continue;
     }
@@ -317,12 +317,12 @@ export function versHtml(texte, type = 'doc') {
     // La suite d'un élément de liste est en retrait sous sa puce ; une ligne
     // revenue à la marge ouvre autre chose.
     if (liste.length > 0 && retrait(ligne) >= listeIndent - 1) {
-      liste.at(-1).push(t);
+      liste.at(-1).push(propre);
       continue;
     }
 
     viderListe();
-    paragraphe.push(t);
+    paragraphe.push(propre);
   }
 
   viderTout();
@@ -345,15 +345,15 @@ export function separerRepetitions(texte, type) {
 
   const lignes = String(texte ?? '').split('\n');
   const debuts = [];
-  lignes.forEach((l, i) => {
-    if (motif.test(l)) debuts.push(i);
+  lignes.forEach((ligne, i) => {
+    if (motif.test(ligne)) debuts.push(i);
   });
   if (debuts.length < 2) return [lignes.join('\n')];
 
-  return debuts.map((d, k) => lignes.slice(d, debuts[k + 1] ?? lignes.length).join('\n'));
+  return debuts.map((debut, rang) => lignes.slice(debut, debuts[rang + 1] ?? lignes.length).join('\n'));
 }
 
-const mots = (s) => deaccent(String(s ?? '')).toLowerCase().match(/[a-z0-9]+/g) ?? [];
+const mots = (texte) => deaccent(String(texte ?? '')).toLowerCase().match(/[a-z0-9]+/g) ?? [];
 
 /**
  * Choisit la reprise qui correspond à la spécialité.
@@ -372,9 +372,9 @@ export function choisirBloc(blocs, denomination) {
 
   for (const bloc of blocs) {
     const tete = mots(bloc.slice(0, 400));
-    const n = attendus.filter((m) => tete.includes(m)).length;
-    if (n > score) {
-      score = n;
+    const nombre = attendus.filter((attendu) => tete.includes(attendu)).length;
+    if (nombre > score) {
+      score = nombre;
       meilleur = bloc;
     }
   }

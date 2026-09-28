@@ -20,7 +20,7 @@ describe('outline', () => {
 
   it('écarte le titre du document quand les rubriques sont numérotées', () => {
     const { sections } = outline(rcp, 'rcp');
-    assert.ok(!sections.some((s) => s.label.startsWith('RESUME')));
+    assert.ok(!sections.some((section) => section.label.startsWith('RESUME')));
   });
 
   it('sort le numéro du libellé dans le corps du document', () => {
@@ -39,8 +39,8 @@ describe('outline', () => {
 
   it('déduit la profondeur de la numérotation', () => {
     const { sections } = outline(rcp, 'rcp');
-    assert.equal(sections.find((s) => s.number === '4').depth, 1);
-    assert.equal(sections.find((s) => s.number === '4.1').depth, 2);
+    assert.equal(sections.find((section) => section.number === '4').depth, 1);
+    assert.equal(sections.find((section) => section.number === '4.1').depth, 2);
   });
 
   it('ne produit pas de plan sous trois entrées', () => {
@@ -96,7 +96,7 @@ describe('outline — en-tête du document', () => {
 });
 
 describe('outline — balisages réels', () => {
-  const rubriques = (html) => outline(html, 'rcp').sections.map((s) => s.number);
+  const rubriques = (html) => outline(html, 'rcp').sections.map((section) => section.number);
 
   it('reconnaît les titres en <p> avec ancre, balisage de la BDPM', () => {
     const bdpm =
@@ -155,7 +155,7 @@ describe('outline — faux positifs du corps de texte', () => {
   it('n’érige pas « 3 ans. » en rubrique 3', () => {
     const { sections } = outline(rcp, 'rcp');
     assert.deepEqual(
-      sections.map((s) => s.number),
+      sections.map((section) => section.number),
       ['1', '6', '6.3', '6.4', '6.5', '7'],
     );
   });
@@ -179,7 +179,7 @@ describe('outline — faux positifs du corps de texte', () => {
 
 describe('coherentes', () => {
   const suite = (...numeros) => coherentes(numeros.map((number) => ({ number })));
-  const numeros = (r) => r.map((c) => c.number);
+  const numeros = (resultat) => resultat.map((candidat) => candidat.number);
 
   it('garde une progression complète', () => {
     assert.deepEqual(numeros(suite('1', '2', '4', '4.1', '4.2', '5')), [
@@ -212,7 +212,7 @@ describe('coherentes', () => {
 });
 
 describe('outline — pièges du balisage BDPM', () => {
-  const rubriques = (html) => outline(html, 'rcp').sections.map((s) => s.number);
+  const rubriques = (html) => outline(html, 'rcp').sections.map((section) => section.number);
 
   it('ne se laisse pas berner par le <h1> titre de page', () => {
     // Une page BDPM contient un seul <h1> — son titre — et les rubriques sont
@@ -249,7 +249,7 @@ describe('outline — pièges du balisage BDPM', () => {
       `<p><a name="b">${long}</a></p>` +
       '<p><a name="c">3. Comment prendre ce médicament ?</a></p>';
     assert.deepEqual(
-      outline(notice, 'notice').sections.map((s) => s.number),
+      outline(notice, 'notice').sections.map((section) => section.number),
       ['1', '2', '3'],
     );
   });

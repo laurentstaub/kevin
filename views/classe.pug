@@ -13,9 +13,9 @@ include _recherche.pug
 //- renseignement qui appartient à la page de l'abacavir, pas à celle de la
 //- classe.
 
-mixin specialites(n)
-  if n > 0
-    | #{n.toLocaleString('fr-FR')} spécialité#{n > 1 ? 's' : ''} commercialisée#{n > 1 ? 's' : ''}
+mixin specialites(nombre)
+  if nombre > 0
+    | #{nombre.toLocaleString('fr-FR')} spécialité#{nombre > 1 ? 's' : ''} commercialisée#{nombre > 1 ? 's' : ''}
   else
     | Aucune spécialité commercialisée
 
@@ -23,45 +23,45 @@ mixin specialites(n)
 //- chacun lien vers sa spécialité. « ABSTRAL 100 · 200 · 300 microgrammes »
 //- au lieu de trois lignes qui ne diffèrent que d'un chiffre.
 mixin formes(groupes)
-  each f in groupes
+  each groupeForme in groupes
     //- Une seule forme : pas de sous-titre, il ne distinguerait rien.
     if groupes.length > 1
       h3.forme-titre
-        | #{f.forme.charAt(0).toUpperCase() + f.forme.slice(1)}
-        span.compte= f.total.toLocaleString('fr-FR')
+        | #{groupeForme.forme.charAt(0).toUpperCase() + groupeForme.forme.slice(1)}
+        span.compte= groupeForme.total.toLocaleString('fr-FR')
     ul.liste.specialites-liste
-      each n in f.noms
+      each groupeNom in groupeForme.noms
         li
           .specialite-ligne
             span.specialite-nom
-              if n.dosages.length === 1
-                - var seul = n.dosages[0]
+              if groupeNom.dosages.length === 1
+                - const seul = groupeNom.dosages[0]
                 a.specialite-lien(href=`/product/${seul.id}`)
-                  = n.nom
-                  if seul.libelle.indexOf(n.nom) !== 0
-                    |  #{seul.libelle}#{n.unite ? ' ' + n.unite : ''}
+                  = groupeNom.nom
+                  if seul.libelle.indexOf(groupeNom.nom) !== 0
+                    |  #{seul.libelle}#{groupeNom.unite ? ' ' + groupeNom.unite : ''}
               else
-                = n.nom
+                = groupeNom.nom
               //- La mention suit le nom, avant les dosages : elle qualifie
               //- le nom, et se retrouve à la même place d'une ligne à l'autre.
-              if n.princeps
+              if groupeNom.princeps
                 span.marque Princeps
-              else if n.biologique === 'reference'
+              else if groupeNom.biologique === 'reference'
                 span.marque(title="Médicament biologique de référence de son groupe biosimilaire (ANSM)") Référence
-              if n.biologique === 'biosimilaire'
+              if groupeNom.biologique === 'biosimilaire'
                 span.marque(title="Inscrit sur la liste de référence des groupes biologiques similaires (ANSM)") Biosimilaire
-              if n.importation
+              if groupeNom.importation
                 span.marque Importation parallèle
-              if n.dosages.length > 1
+              if groupeNom.dosages.length > 1
                 span.specialite-dosages
-                  each d, i in n.dosages
+                  each dosage, i in groupeNom.dosages
                     if i > 0
                       span.sep-point  · 
-                    a.specialite-dosage(href=`/product/${d.id}` title=d.detail)= d.libelle
-                  if n.unite
-                    |  #{n.unite}
-            if n.titulaires
-              span.specialite-labo= n.titulaires
+                    a.specialite-dosage(href=`/product/${dosage.id}` title=dosage.detail)= dosage.libelle
+                  if groupeNom.unite
+                    |  #{groupeNom.unite}
+            if groupeNom.titulaires
+              span.specialite-labo= groupeNom.titulaires
 
 block content
   +barreSituation(classe.label)
@@ -91,12 +91,12 @@ block content
       //- La physionomie de la classe, en chiffres que la base connaît déjà.
       if portrait.length
         dl.portrait
-          each p in portrait
+          each mesure in portrait
             .portrait-item
               //- dt avant dd, comme le veut une liste de définitions ;
               //- l'affichage met le chiffre au-dessus (column-reverse).
-              dt.portrait-libelle= p.libelle
-              dd.portrait-valeur= p.valeur
+              dt.portrait-libelle= mesure.libelle
+              dd.portrait-valeur= mesure.valeur
         p.portrait-base Source : BDPM
 
     //- Le chapeau : quelques phrases de pharmacien, signées et relues. Il
@@ -142,9 +142,9 @@ block content
     //- est là, replié, parce qu'une liste écourtée en silence se lit comme une
     //- liste complète.
     if molecules && molecules.length > 0
-      - var TETE = 20
-      - var principales = molecules.slice(0, TETE)
-      - var reste = molecules.slice(TETE)
+      - const TETE = 20
+      - const principales = molecules.slice(0, TETE)
+      - const reste = molecules.slice(TETE)
       nav.classes.classes-molecules(aria-label="Molécules de la classe")
         h2.classes-titre
           | Molécules · #{molecules.length.toLocaleString('fr-FR')}
@@ -191,7 +191,7 @@ block content
           a(href=substitution.url_conditions target="_blank" rel="noopener noreferrer") règles de dispensation (ameli)
 
     if feuille
-      - var nombre = function (g) { return g.reduce(function (t, f) { return t + f.total }, 0) }
+      - const nombre = (groupesFormes) => groupesFormes.reduce((total, groupeForme) => total + groupeForme.total, 0)
       section.groupe
         h2.groupe-titre
           | Spécialités commercialisées
@@ -200,7 +200,7 @@ block content
         //- Les retirées restent consultables — on cherche aussi ce qu'un patient
         //- prenait — mais repliées : elles ne sont pas la réponse au comptoir.
         if retirees.length > 0
-          - var nRetirees = nombre(retirees)
+          - const nRetirees = nombre(retirees)
           details.molecules-reste
             summary.molecules-plus #{nRetirees.toLocaleString('fr-FR')} spécialité#{nRetirees > 1 ? 's' : ''} non commercialisée#{nRetirees > 1 ? 's' : ''}
             +formes(retirees)

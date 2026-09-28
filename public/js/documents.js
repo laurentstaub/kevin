@@ -10,7 +10,7 @@
 
 const documents = document.querySelector('#documents');
 const onglets = documents ? [...documents.querySelectorAll('.onglet')] : [];
-const panneaux = onglets.map((o) => document.getElementById(o.getAttribute('aria-controls')));
+const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
 
 // Un panneau replié reste « until-found » : caché, mais fouillé par la
 // recherche du navigateur, qui l'ouvrira si le mot cherché s'y trouve. Là où
@@ -56,9 +56,9 @@ onglets.forEach((onglet, i) => {
  */
 function sousRubriques(charniere) {
   const suite = [];
-  for (let n = charniere.nextElementSibling; n; n = n.nextElementSibling) {
-    if (n.classList.contains('charniere') || n.classList.contains('rub-n1')) break;
-    if (n.tagName === 'DETAILS') suite.push(n);
+  for (let voisin = charniere.nextElementSibling; voisin; voisin = voisin.nextElementSibling) {
+    if (voisin.classList.contains('charniere') || voisin.classList.contains('rub-n1')) break;
+    if (voisin.tagName === 'DETAILS') suite.push(voisin);
   }
   return suite;
 }
@@ -78,12 +78,12 @@ function reveler(id) {
   if (indice !== -1) activerOnglet(indice);
 
   // La cible peut être elle-même un <details> — une rubrique, une section.
-  for (let n = cible; n; n = n.parentElement) {
-    if (n.tagName === 'DETAILS') n.open = true;
+  for (let noeud = cible; noeud; noeud = noeud.parentElement) {
+    if (noeud.tagName === 'DETAILS') noeud.open = true;
   }
 
   if (cible.classList.contains('charniere')) {
-    for (const d of sousRubriques(cible)) d.open = true;
+    for (const rubrique of sousRubriques(cible)) rubrique.open = true;
   }
 
   return cible;
@@ -107,8 +107,8 @@ for (const bouton of document.querySelectorAll('.deplier')) {
     if (!panneau) return;
 
     const blocs = [...panneau.querySelectorAll('details.rubrique')];
-    const ouvrir = blocs.some((d) => !d.open);
-    for (const d of blocs) d.open = ouvrir;
+    const ouvrir = blocs.some((bloc) => !bloc.open);
+    for (const bloc of blocs) bloc.open = ouvrir;
     bouton.textContent = ouvrir ? 'Tout replier' : 'Tout déplier';
   });
 }
@@ -287,7 +287,7 @@ if (rail && documents) {
   // Le plan suit l'onglet. Sans ça, le rail nommerait les rubriques d'un
   // document caché — le pire défaut possible pour un sommaire.
   const suivreOnglet = () => {
-    const actif = onglets.findIndex((o) => o.getAttribute('aria-selected') === 'true');
+    const actif = onglets.findIndex((onglet) => onglet.getAttribute('aria-selected') === 'true');
     const type = panneaux[actif]?.dataset.type;
     for (const jeu of jeux) jeu.hidden = type ? jeu.dataset.doc !== type : false;
   };
@@ -423,7 +423,7 @@ for (const charniere of document.querySelectorAll('.charniere')) {
   charniere.append(bouton);
 
   const etat = () => {
-    const ouvert = groupe.some((d) => d.open);
+    const ouvert = groupe.some((bloc) => bloc.open);
     charniere.classList.toggle('ouverte', ouvert);
     bouton.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
     return ouvert;
@@ -431,13 +431,13 @@ for (const charniere of document.querySelectorAll('.charniere')) {
 
   bouton.addEventListener('click', () => {
     const fermer = etat();
-    for (const d of groupe) d.open = !fermer;
+    for (const bloc of groupe) bloc.open = !fermer;
     etat();
   });
 
   // Ouvrir ou fermer une sous-rubrique à la main doit se voir sur la
   // charnière : deux états qui se contredisent valent moins que pas d'état.
-  for (const d of groupe) d.addEventListener('toggle', etat);
+  for (const bloc of groupe) bloc.addEventListener('toggle', etat);
 
   etat();
 }

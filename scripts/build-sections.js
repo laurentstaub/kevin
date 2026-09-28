@@ -50,8 +50,8 @@ if (!TOUT) {
   const { rows } = await pool.query(
     'SELECT code_cis, document_type, source_hash, parser_version FROM docs.document_parse',
   );
-  for (const r of rows) {
-    connu.set(`${r.code_cis}|${r.document_type}`, `${r.source_hash}|${r.parser_version}`);
+  for (const row of rows) {
+    connu.set(`${row.code_cis}|${row.document_type}`, `${row.source_hash}|${row.parser_version}`);
   }
 }
 
@@ -112,7 +112,7 @@ while (restant > 0) {
     bilan.traites += 1;
     bilan[statut] += 1;
     bilan.rubriques += sections.length;
-    for (const n of manquantes) manquantesFreq.set(n, (manquantesFreq.get(n) ?? 0) + 1);
+    for (const manquante of manquantes) manquantesFreq.set(manquante, (manquantesFreq.get(manquante) ?? 0) + 1);
     if (statut === 'echec' && echecs.length < 20) echecs.push(cle);
 
     if (SEC) continue;
@@ -127,14 +127,14 @@ while (restant > 0) {
         [doc.code_cis, doc.document_type],
       );
 
-      for (const s of sections) {
+      for (const section of sections) {
         await client.query(
           `INSERT INTO docs.rcp_sections
              (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
-            doc.code_cis, doc.document_type, s.position, s.numero,
-            s.libelle, s.profondeur, s.canonical, s.html, s.texte,
+            doc.code_cis, doc.document_type, section.position, section.numero,
+            section.libelle, section.profondeur, section.canonical, section.html, section.texte,
           ],
         );
       }
@@ -167,7 +167,7 @@ while (restant > 0) {
 
 // ------------------------------------------------------------------ bilan
 
-const pct = (n) => (bilan.traites === 0 ? '—' : `${Math.round((n / bilan.traites) * 100)} %`);
+const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
 
 console.log(`\n\n${'─'.repeat(52)}`);
 console.log(`  sautés (inchangés)      ${bilan.sautes.toLocaleString('fr-FR')}`);
@@ -184,8 +184,8 @@ if (bilan.traites) {
 
 if (manquantesFreq.size > 0) {
   console.log('\n  Rubriques socle les plus souvent absentes :');
-  for (const [numero, n] of [...manquantesFreq].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
-    console.log(`    ${numero.padEnd(6)} ${n.toLocaleString('fr-FR')}`);
+  for (const [numero, nombre] of [...manquantesFreq].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+    console.log(`    ${numero.padEnd(6)} ${nombre.toLocaleString('fr-FR')}`);
   }
 }
 

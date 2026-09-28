@@ -27,22 +27,22 @@ import { createPool } from '../src/db.js';
 import { extraireDocument, lienPdf, pageSansDocument } from '../src/document-bdpm.js';
 
 const args = process.argv.slice(2);
-const flag = (n) => args.includes(`--${n}`);
-const valeur = (n, d) => {
-  const i = args.indexOf(`--${n}`);
-  return i !== -1 && args[i + 1] ? args[i + 1] : d;
+const flag = (option) => args.includes(`--${option}`);
+const valeur = (option, defaut) => {
+  const i = args.indexOf(`--${option}`);
+  return i !== -1 && args[i + 1] ? args[i + 1] : defaut;
 };
 
 const SEC = flag('dry-run');
 const MONTRER = flag('montrer');
 const LIMITE = Number.parseInt(valeur('limit', ''), 10) || null;
 const PAUSE = Number.parseInt(valeur('pause', '400'), 10);
-const CIS = valeur('cis', '').split(',').map((s) => s.trim()).filter(Boolean);
+const CIS = valeur('cis', '').split(',').map((cis) => cis.trim()).filter(Boolean);
 
 const CACHE = path.join(ROOT, '.cache', 'documents');
 const VUS = path.join(CACHE, 'vus.json');
 const UA = { 'User-Agent': 'dr-kevin/2.0 (collecte de RCP, usage interne)' };
-const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+const dormir = (ms) => new Promise((reveil) => setTimeout(reveil, ms));
 
 // Depuis la refonte, affichageDoc.php redirige vers /medicament/<CIS>/extrait,
 // une seule page qui porte le RCP puis la notice — quel que soit `typedoc`. On
@@ -78,7 +78,7 @@ const { rows: cibles } = await pool.query(
   [CIS.length > 0 ? CIS : null],
 );
 
-const restants = cibles.filter((c) => CIS.length > 0 || !vus[c.code_cis]);
+const restants = cibles.filter((cible) => CIS.length > 0 || !vus[cible.code_cis]);
 console.log(`\n${cibles.length.toLocaleString('fr-FR')} spécialité(s) sans document`
   + `${restants.length !== cibles.length ? `, ${cibles.length - restants.length} déjà constatée(s) sans` : ''}`
   + `${SEC ? ' — à blanc' : ''}\n`);
@@ -126,16 +126,16 @@ for (const [i, cible] of restants.entries()) {
     if (page === null) absent = true;
     else if (pageSansDocument(page)) absent = true;
     else {
-      for (const t of TYPES) {
-        const doc = extraireDocument(page, t.plan);
-        if (doc) trouves.push({ ...t, ...doc });
+      for (const type of TYPES) {
+        const doc = extraireDocument(page, type.plan);
+        if (doc) trouves.push({ ...type, ...doc });
       }
 
       // Une fiche restée à l'ancienne forme peut servir la notice à part. On
       // n'insiste que si le RCP, lui, a bien été trouvé en HTML : sur une
       // spécialité centralisée il n'y a aucun texte à espérer, et redemander
       // la même page ne rapporte qu'une redirection de plus.
-      if (trouves.length > 0 && !trouves.some((d) => d.document_type === 'notice')) {
+      if (trouves.length > 0 && !trouves.some((trouve) => trouve.document_type === 'notice')) {
         const autre = await demander('N');
         const doc = autre && extraireDocument(autre, 'notice');
         if (doc) trouves.push({ document_type: 'notice', plan: 'notice', ...doc });
@@ -160,16 +160,16 @@ for (const [i, cible] of restants.entries()) {
   if (trouves.length > 0) {
     bilan.html += trouves.length;
     if (!SEC) {
-      for (const d of trouves) {
+      for (const trouve of trouves) {
         await pool.query(
           `INSERT INTO dbpm.cis_documents (code_cis, document_type, html_content, last_updated)
            VALUES ($1, $2, $3, now())`,
-          [cis, d.document_type, d.html],
+          [cis, trouve.document_type, trouve.html],
         );
       }
     }
-    console.log(`  ${cis}  ${trouves.map((d) => `${d.document_type} ${d.rubriques} rub. `
-      + `${d.signes.toLocaleString('fr-FR')} signes`).join('  |  ')}`);
+    console.log(`  ${cis}  ${trouves.map((trouve) => `${trouve.document_type} ${trouve.rubriques} rub. `
+      + `${trouve.signes.toLocaleString('fr-FR')} signes`).join('  |  ')}`);
   } else if (pdf) {
     bilan.pdf += 1;
     if (!SEC) {
@@ -208,7 +208,7 @@ console.log(`\n${bilan.html} document(s) en HTML, ${bilan.pdf} renvoi(s) vers un
 if (bilan.redirections > 0) {
   console.log(`${bilan.redirections} redirection(s) — vérifier config.documentBaseUrl`);
 }
-for (const s of soucis.slice(0, 10)) console.log(`  ${s}`);
+for (const souci of soucis.slice(0, 10)) console.log(`  ${souci}`);
 if (!SEC && bilan.html > 0) console.log('\nEnsuite : npm run build-sections');
 
 await pool.end();

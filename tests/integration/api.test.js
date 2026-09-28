@@ -42,8 +42,8 @@ describe('API', { skip }, () => {
   describe('GET /api/search', () => {
     it('trouve une spécialité par sa dénomination', async () => {
       const res = await request(app).get('/api/search?q=aspirine').expect(200);
-      const noms = res.body.results.brandMatches.map((r) => r.denomination_medicament);
-      assert.ok(noms.some((n) => n.includes('ASPIRINE UPSA')));
+      const noms = res.body.results.brandMatches.map((resultat) => resultat.denomination_medicament);
+      assert.ok(noms.some((nom) => nom.includes('ASPIRINE UPSA')));
       // Les correspondances de marque contiennent toutes le terme cherché.
       for (const nom of noms) assert.match(nom.toLowerCase(), /aspirine/);
     });
@@ -58,16 +58,16 @@ describe('API', { skip }, () => {
       const actifs = res.body.results.activeIngredientMatches;
       assert.ok(actifs.length >= 3);
       // Ces produits ne portent pas le terme dans leur nom : c'est attendu.
-      for (const r of actifs) assert.match(r.active_ingredients.toLowerCase(), /paracetamol/);
+      for (const actif of actifs) assert.match(actif.active_ingredients.toLowerCase(), /paracetamol/);
     });
 
     it('remonte les spécialités qui ne portent pas la substance dans leur nom', async () => {
       const res = await request(app).get('/api/search?q=paracetamol').expect(200);
-      const actifs = res.body.results.activeIngredientMatches.map((r) => r.denomination_medicament);
+      const actifs = res.body.results.activeIngredientMatches.map((resultat) => resultat.denomination_medicament);
 
       // La promesse du produit : « paracétamol » doit mener à DOLIPRANE.
-      assert.ok(actifs.some((n) => n.startsWith('DOLIPRANE')));
-      assert.ok(actifs.some((n) => n.startsWith('DAFALGAN')));
+      assert.ok(actifs.some((actif) => actif.startsWith('DOLIPRANE')));
+      assert.ok(actifs.some((actif) => actif.startsWith('DAFALGAN')));
 
       // Et ceux que la dénomination rend déjà n'ont rien à faire ici : ce
       // serait un doublon, et surtout ils évinceraient les précédents.
@@ -81,8 +81,8 @@ describe('API', { skip }, () => {
 
     it('exige tous les termes d’une requête multi-mots', async () => {
       const res = await request(app).get('/api/search?q=aspirine%20500').expect(200);
-      for (const r of res.body.results.brandMatches) {
-        const nom = r.denomination_medicament.toLowerCase();
+      for (const resultat of res.body.results.brandMatches) {
+        const nom = resultat.denomination_medicament.toLowerCase();
         assert.match(nom, /aspirine/);
         assert.match(nom, /500/);
       }
@@ -124,7 +124,7 @@ describe('API', { skip }, () => {
 
       assert.equal(resultats.dci, true, 'le terme est reconnu comme une molécule');
 
-      const noms = resultats.produits.map((r) => r.libelle);
+      const noms = resultats.produits.map((produit) => produit.libelle);
       assert.equal(noms.length, 2);
       for (const nom of noms) assert.doesNotMatch(nom, /^PARACETAMOL /);
       assert.ok(noms.includes('DOLIPRANE'), `DOLIPRANE attendu, reçu : ${noms.join(', ')}`);
@@ -192,7 +192,7 @@ describe('API', { skip }, () => {
     it('résume la classe dans l’en-tête, sans la chaîne entière', async () => {
       const res = await request(app).get('/product/61111114').expect(200);
       const fil = res.text.match(/<nav class="atc"[\s\S]*?<\/nav>/)?.[0] ?? '';
-      const maillons = [...fil.matchAll(/class="atc-maillon"[^>]*>([^<]+)</g)].map((m) => m[1]);
+      const maillons = [...fil.matchAll(/class="atc-maillon"[^>]*>([^<]+)</g)].map((correspondance) => correspondance[1]);
 
       assert.deepEqual(maillons, ['Système nerveux', 'ANALGESIQUES']);
 
@@ -217,10 +217,10 @@ describe('API', { skip }, () => {
         `SELECT atc_code, atc_label, atc_level FROM ref.atc_classification
          WHERE 'N02BE71' LIKE atc_code || '%' ORDER BY atc_level`,
       );
-      const chaine = rows.map((r) => ({
-        code: r.atc_code,
-        label: r.atc_label,
-        level: r.atc_level,
+      const chaine = rows.map((row) => ({
+        code: row.atc_code,
+        label: row.atc_label,
+        level: row.atc_level,
       }));
 
       // La feuille N02BE71 n'a pas de libellé : getClasseAtc reprend celui du
@@ -259,7 +259,7 @@ describe('API', { skip }, () => {
       // DAFALGAN aussi. Cinq CIS pour quatre produits.
       const res = await request(app).get('/classe/N02BE01').expect(200);
       const noms = [...res.text.matchAll(/<span class="resultat-nom">\s*([A-Z][^<\n]*)/g)]
-        .map((m) => m[1].trim());
+        .map((correspondance) => correspondance[1].trim());
 
       assert.deepEqual(noms.sort(), [
         'DAFALGAN',
@@ -299,8 +299,8 @@ describe('API', { skip }, () => {
     it('place Substituer après Documents, dans la page comme dans le rail', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
 
-      const blocs = [...res.text.matchAll(/<details class="bloc" id="(\w+)"/g)].map((m) => m[1]);
-      const rail = [...res.text.matchAll(/<a class="rail-lien" href="#(\w+)">/g)].map((m) => m[1]);
+      const blocs = [...res.text.matchAll(/<details class="bloc" id="(\w+)"/g)].map((correspondance) => correspondance[1]);
+      const rail = [...res.text.matchAll(/<a class="rail-lien" href="#(\w+)">/g)].map((correspondance) => correspondance[1]);
 
       for (const ordre of [blocs, rail]) {
         const documents = ordre.indexOf('documents');
@@ -321,7 +321,7 @@ describe('API', { skip }, () => {
      */
     it('propose la marque avant les génériques homonymes de la molécule', async () => {
       const res = await request(app).get('/api/suggest?q=paracetamol').expect(200);
-      const noms = res.body.suggestions.map((s) => s.name);
+      const noms = res.body.suggestions.map((suggestion) => suggestion.name);
 
       assert.ok(noms.length > 0);
       assert.equal(noms[0], 'DOLIPRANE', `reçu : ${noms.join(', ')}`);
@@ -346,7 +346,7 @@ describe('API', { skip }, () => {
 
     it('rétrograde ce qui n’est plus commercialisé', async () => {
       const res = await request(app).get('/api/search?q=paracetamol&filter=specialty').expect(200);
-      const noms = res.body.results.brandMatches.map((r) => r.libelle);
+      const noms = res.body.results.brandMatches.map((resultat) => resultat.libelle);
 
       // ARROW et TEVA sont par ailleurs identiques : seul l'état de
       // commercialisation les départage.
@@ -361,7 +361,7 @@ describe('API', { skip }, () => {
       // sont donc à égalité de rang, et rien ne doit les départager par un
       // critère emprunté à la dénomination.
       const resultats = await searchMedications(pool, parseQuery('paracetamol'));
-      for (const r of resultats.activeIngredientMatches) assert.equal(r.rank, 0);
+      for (const resultat of resultats.activeIngredientMatches) assert.equal(resultat.rank, 0);
     });
   });
 
@@ -384,15 +384,15 @@ describe('API', { skip }, () => {
 
     it('remonte le groupe générique avec le type', async () => {
       const res = await request(app).get('/api/product/61111111').expect(200);
-      const generique = res.body.related.find((p) => p.match_type === 'generic');
+      const generique = res.body.related.find((apparente) => apparente.match_type === 'generic');
       assert.match(generique.denomination_medicament, /ASPIRINE PROTECT/);
       assert.equal(generique.type_generique, '1');
     });
 
     it('remonte les produits partageant le principe actif', async () => {
       const res = await request(app).get('/api/product/61111114').expect(200);
-      const noms = res.body.related.map((p) => p.denomination_medicament);
-      assert.ok(noms.some((n) => n.includes('DAFALGAN')));
+      const noms = res.body.related.map((apparente) => apparente.denomination_medicament);
+      assert.ok(noms.some((nom) => nom.includes('DAFALGAN')));
       assert.ok(!noms.includes('DOLIPRANE 1000 mg, comprimé'));
     });
 
@@ -485,13 +485,13 @@ describe('API', { skip }, () => {
 
     it('n’applique aucun coin arrondi au-delà de 2 px', async () => {
       const css = await request(app).get('/css/product.css').expect(200);
-      const rayons = [...css.text.matchAll(/border-radius:\s*(\d+)px/g)].map((m) => Number(m[1]));
-      assert.ok(rayons.every((r) => r <= 2), `rayons trouvés : ${rayons}`);
+      const rayons = [...css.text.matchAll(/border-radius:\s*(\d+)px/g)].map((correspondance) => Number(correspondance[1]));
+      assert.ok(rayons.every((rayon) => rayon <= 2), `rayons trouvés : ${rayons}`);
     });
 
     it('trie les présentations par quantité, pas par ordre alphabétique', async () => {
       const res = await request(app).get('/api/product/61111111').expect(200);
-      const libelles = res.body.product.cip_products.map((c) => c.libelle_presentation);
+      const libelles = res.body.product.cip_products.map((presentation) => presentation.libelle_presentation);
       assert.deepEqual(libelles, [
         'Boîte de 20 comprimés effervescents',
         'Boîte de 30 comprimés effervescents',

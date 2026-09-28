@@ -37,10 +37,10 @@ describe('isValidCis', () => {
 
 describe('parseQuery', () => {
   it('découpe en termes normalisés', () => {
-    const q = parseQuery('  ASPIRINE   500  ');
-    assert.deepEqual(q.terms, ['aspirine', '500']);
-    assert.equal(q.raw, 'ASPIRINE   500');
-    assert.equal(q.tooShort, false);
+    const requete = parseQuery('  ASPIRINE   500  ');
+    assert.deepEqual(requete.terms, ['aspirine', '500']);
+    assert.equal(requete.raw, 'ASPIRINE   500');
+    assert.equal(requete.tooShort, false);
   });
 
   it('signale les requêtes trop courtes', () => {

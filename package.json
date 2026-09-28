@@ -24,7 +24,8 @@
     "diag-atc": "node scripts/diag-atc.js",
     "audit-documents": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_documents.sql",
     "check-donnees": "node scripts/check-donnees.js",
-    "collect-documents": "node scripts/collect-documents.js"
+    "collect-documents": "node scripts/collect-documents.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "express": "^5.1.0",
@@ -33,6 +34,9 @@
     "sanitize-html": "^2.17.6"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
     "supertest": "^7.0.0"
   },
   "license": "ISC"

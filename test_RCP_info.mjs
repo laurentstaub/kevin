@@ -30,10 +30,10 @@ const opt = (nom) => {
   return i !== -1 ? (args[i + 1] ?? true) : null;
 };
 
-const G = '\x1b[32m';
-const R = '\x1b[31m';
-const D = '\x1b[2m';
-const N = '\x1b[0m';
+const VERT = '\x1b[32m';
+const ROUGE = '\x1b[31m';
+const PALE = '\x1b[2m';
+const NORMAL = '\x1b[0m';
 
 let reussis = 0;
 let echoues = 0;
@@ -41,21 +41,21 @@ let echoues = 0;
 function verifier(intitule, condition, detail = '') {
   if (condition) {
     reussis += 1;
-    console.log(`  ${G}✓${N} ${intitule}`);
+    console.log(`  ${VERT}✓${NORMAL} ${intitule}`);
   } else {
     echoues += 1;
-    console.log(`  ${R}✗${N} ${intitule}${detail ? `\n      ${D}${detail}${N}` : ''}`);
+    console.log(`  ${ROUGE}✗${NORMAL} ${intitule}${detail ? `\n      ${PALE}${detail}${NORMAL}` : ''}`);
   }
 }
 
-const titre = (t) => console.log(`\n${t}\n${'─'.repeat(t.length)}`);
+const titre = (texte) => console.log(`\n${texte}\n${'─'.repeat(texte.length)}`);
 
 // ═══════════════════════════════════════════════ cas construits
 
 /** Balisage réel de la BDPM : titres en <p class="AmmAnnexeTitre*"> + ancre. */
 const rubrique = (numero, libelle, ...corps) =>
   `<p class="AmmAnnexeTitre1"><a name="Rcp${numero.replace('.', '')}">${numero}. ${libelle}</a>&nbsp;&nbsp;</p>` +
-  corps.map((c) => `<p class="AmmCorpsTexte">${c}</p>`).join('');
+  corps.map((paragraphe) => `<p class="AmmCorpsTexte">${paragraphe}</p>`).join('');
 
 const RCP_REEL =
   '<title>Résumé des caractéristiques du produit - Base de données publique des médicaments</title>' +
@@ -78,7 +78,7 @@ const RCP_REEL =
 titre('Détection des rubriques');
 {
   const { sections } = outline(RCP_REEL, 'rcp');
-  const numeros = sections.map((s) => s.number);
+  const numeros = sections.map((section) => section.number);
 
   verifier(
     'le <h1> titre de page ne masque pas les rubriques en <p>',
@@ -88,7 +88,7 @@ titre('Détection des rubriques');
   verifier('la première rubrique est bien la 1', numeros[0] === '1');
   verifier(
     '« 3 ans. » n’est pas pris pour la rubrique 3',
-    numeros.filter((n) => n === '3').length === 1,
+    numeros.filter((numero) => numero === '3').length === 1,
   );
   verifier('« 30 comprimés… » n’est pas pris pour une rubrique', !numeros.includes('30'));
   verifier(
@@ -100,7 +100,7 @@ titre('Détection des rubriques');
 titre('Normalisation des libellés');
 {
   const { sections } = outline(RCP_REEL, 'rcp');
-  const par = (n) => sections.find((s) => s.number === n);
+  const par = (numero) => sections.find((section) => section.number === numero);
 
   verifier(
     'casse et accents rétablis depuis le plan QRD',
@@ -120,14 +120,14 @@ titre('Normalisation des libellés');
         rubrique('10', 'AUTRE CHOSE', 'y') +
         rubrique('11', 'ENCORE UNE', 'z'),
       'rcp',
-    ).sections.every((s) => s.canonical === false),
+    ).sections.every((section) => section.canonical === false),
   );
 }
 
 titre('Découpage en rubriques');
 {
   const { sections, statut, manquantes } = splitDocument(RCP_REEL, 'rcp');
-  const par = (n) => sections.find((s) => s.numero === n);
+  const par = (numero) => sections.find((section) => section.numero === numero);
 
   verifier('chaque rubrique porte son contenu', par('4.2').texte.includes('75 mg par jour'));
   verifier(
@@ -141,7 +141,7 @@ titre('Découpage en rubriques');
     par('4.3').texte === 'Ulcère gastro-duodénal en évolution.',
     `obtenu : « ${par('4.3').texte} »`,
   );
-  verifier('les positions suivent l’ordre du document', sections.every((s, i) => s.position === i));
+  verifier('les positions suivent l’ordre du document', sections.every((section, i) => section.position === i));
   verifier('un RCP complet est déclaré complet', statut === 'ok', `manquantes : ${manquantes}`);
 }
 
@@ -151,10 +151,10 @@ titre('Contrôle qualité');
     rubrique('1', 'DENOMINATION DU MEDICAMENT', 'X') +
     rubrique('2', 'COMPOSITION QUALITATIVE ET QUANTITATIVE', 'Y') +
     rubrique('3', 'FORME PHARMACEUTIQUE', 'Z');
-  const r = splitDocument(tronque, 'rcp');
+  const resultat = splitDocument(tronque, 'rcp');
 
-  verifier('un RCP amputé est signalé', r.statut === 'partiel');
-  verifier('les rubriques absentes sont listées', r.manquantes.includes('4.3'));
+  verifier('un RCP amputé est signalé', resultat.statut === 'partiel');
+  verifier('les rubriques absentes sont listées', resultat.manquantes.includes('4.3'));
 
   const vide = splitDocument('<p>Le médicament demandé n’existe pas dans la base</p>', 'rcp');
   verifier('un document sans rubrique est en échec', vide.statut === 'echec');
@@ -261,7 +261,7 @@ const PDF_EMA = [
     '6',
   ],
 ]
-  .map((p) => p.join('\n'))
+  .map((paragraphe) => paragraphe.join('\n'))
   .join('\f');
 
 titre('PDF — nettoyage de la page');
@@ -269,7 +269,7 @@ titre('PDF — nettoyage de la page');
   verifier('les pages sont séparées par le saut de page', pages(PDF_EMA).length === 6);
 
   const propre = retirerHabillage(PDF_EMA);
-  const nom = propre.split('\n').filter((l) => l.trim() === 'KEYVAX 50 mg, solution injectable');
+  const nom = propre.split('\n').filter((ligne) => ligne.trim() === 'KEYVAX 50 mg, solution injectable');
 
   verifier(
     'l’en-tête répété est retiré',
@@ -282,7 +282,7 @@ titre('PDF — nettoyage de la page');
   );
   verifier(
     'les numéros de page sont retirés',
-    !propre.split('\n').some((l) => /^\s*[1-6]\s*$/.test(l)),
+    !propre.split('\n').some((ligne) => /^\s*[1-6]\s*$/.test(ligne)),
   );
 }
 
@@ -320,7 +320,7 @@ titre('PDF — reconstruction du HTML');
 titre('PDF — découpage final');
 {
   const docs = pdfEnDocuments(PDF_EMA);
-  const par = (t) => docs.find((d) => d.type === t);
+  const par = (type) => docs.find((doc) => doc.type === type);
 
   verifier('un PDF donne deux documents', docs.length === 2 && par('rcp') && par('notice'));
 
@@ -331,11 +331,11 @@ titre('PDF — découpage final');
   verifier('la notice issue du PDF est complète', notice.statut === 'ok', `manque : ${notice.manquantes}`);
   verifier(
     'les libellés sont rétablis depuis le plan QRD',
-    rcp.sections.find((s) => s.numero === '4.2')?.libelle === "Posologie et mode d'administration",
+    rcp.sections.find((section) => section.numero === '4.2')?.libelle === "Posologie et mode d'administration",
   );
   verifier(
     'le tableau survit au découpage et à l’assainissement',
-    rcp.sections.find((s) => s.numero === '4.2')?.texte.includes('Maximum par jour'),
+    rcp.sections.find((section) => section.numero === '4.2')?.texte.includes('Maximum par jour'),
   );
   verifier('la notice a ses six rubriques', notice.sections.length === 6);
 }
@@ -390,15 +390,15 @@ titre('PDF — spécialité à plusieurs formes');
   const html = versHtml(choisirBloc(blocs, 'KEYVAX 200 mg, solution injectable'));
   verifier('« 12 ans… » n’est pas pris pour la rubrique 12', !html.includes('<h2>12 ans'));
 
-  const r = splitDocument(sanitizeDocument(html), 'rcp');
-  verifier('le RCP de la forme retenue est complet', r.statut === 'ok', `manque : ${r.manquantes}`);
+  const resultat = splitDocument(sanitizeDocument(html), 'rcp');
+  verifier('le RCP de la forme retenue est complet', resultat.statut === 'ok', `manque : ${resultat.manquantes}`);
   verifier(
     'la rubrique 10 ne déborde pas sur la forme suivante',
-    !r.sections.find((s) => s.numero === '10')?.texte.includes('KEYVAX'),
+    !resultat.sections.find((section) => section.numero === '10')?.texte.includes('KEYVAX'),
   );
   verifier(
     '« Informations cliniques » est reconnu comme rubrique 4',
-    r.sections.find((s) => s.numero === '4')?.canonical === true,
+    resultat.sections.find((section) => section.numero === '4')?.canonical === true,
   );
 }
 
@@ -406,7 +406,7 @@ titre('PDF — sommaire de notice');
 {
   // Structure réelle d'une notice EMA, relevée sur Keppra : le « Que contient
   // cette notice ? » énumère les six rubriques avant le corps.
-  const rubrique = (n, titre, corps) => `${n}.    ${titre}\n\n${corps}\n`;
+  const rubrique = (numero, titre, corps) => `${numero}.    ${titre}\n\n${corps}\n`;
   const intitules = [
     "Qu'est-ce que Keppra et dans quels cas est-il utilise",
     'Quelles sont les informations a connaitre avant de prendre Keppra',
@@ -421,27 +421,27 @@ titre('PDF — sommaire de notice');
     'Keppra 250 mg comprime pelliculé', '',
     'Veuillez lire attentivement cette notice avant de prendre ce medicament.', '',
     'Que contient cette notice ? :',
-    ...intitules.map((t, i) => `${i + 1}.   ${t}`),
+    ...intitules.map((intitule, i) => `${i + 1}.   ${intitule}`),
     '', '',
-    ...intitules.map((t, i) => rubrique(i + 1, t, `Contenu de la rubrique ${i + 1}.`)),
+    ...intitules.map((intitule, i) => rubrique(i + 1, intitule, `Contenu de la rubrique ${i + 1}.`)),
   ].join('\n');
 
-  const r = splitDocument(sanitizeDocument(versHtml(notice)), 'notice');
+  const resultat = splitDocument(sanitizeDocument(versHtml(notice)), 'notice');
 
   verifier(
     'le sommaire n’est pas pris pour le corps',
-    r.sections.length === 6,
-    `${r.sections.length} rubrique(s)`,
+    resultat.sections.length === 6,
+    `${resultat.sections.length} rubrique(s)`,
   );
-  verifier('la notice est complète', r.statut === 'ok', `manque : ${r.manquantes}`);
+  verifier('la notice est complète', resultat.statut === 'ok', `manque : ${resultat.manquantes}`);
   verifier(
     'chaque rubrique porte son contenu',
-    r.sections.every((s, i) => s.texte.includes(`rubrique ${i + 1}.`)),
+    resultat.sections.every((section, i) => section.texte.includes(`rubrique ${i + 1}.`)),
   );
   verifier(
     'la dernière rubrique n’avale pas le reste',
-    r.sections.at(-1).texte.length < 200,
-    `${r.sections.at(-1).texte.length} signes`,
+    resultat.sections.at(-1).texte.length < 200,
+    `${resultat.sections.at(-1).texte.length} signes`,
   );
 
   // Une procédure numérotée dans le corps a la forme d'un plan (relevé sur
@@ -468,20 +468,20 @@ titre('PDF — sommaire de notice');
     'Flacon de poudre et seringue de solvant.', '',
   ].join('\n');
 
-  const p = splitDocument(sanitizeDocument(versHtml(avecProcedure, 'notice')), 'notice');
+  const decoupe = splitDocument(sanitizeDocument(versHtml(avecProcedure, 'notice')), 'notice');
 
   verifier(
     'une procédure numérotée n’est pas prise pour le plan',
-    p.sections.length === 6,
-    `${p.sections.length} rubrique(s) : ${p.sections.map((s) => s.numero).join(', ')}`,
+    decoupe.sections.length === 6,
+    `${decoupe.sections.length} rubrique(s) : ${decoupe.sections.map((section) => section.numero).join(', ')}`,
   );
   verifier(
     'la rubrique 3 garde la procédure dans son contenu',
-    p.sections.find((s) => s.numero === '3')?.texte.includes('Retirez le connecteur'),
+    decoupe.sections.find((section) => section.numero === '3')?.texte.includes('Retirez le connecteur'),
   );
   verifier(
     'les rubriques suivantes ne sont pas décalées',
-    p.sections.find((s) => s.numero === '5')?.texte.includes('refrigerateur'),
+    decoupe.sections.find((section) => section.numero === '5')?.texte.includes('refrigerateur'),
   );
 }
 
@@ -507,11 +507,11 @@ titre('PDF — rédactions réelles du plan de notice');
     ['7', "Instructions d'utilisation"],
   ];
 
-  const rates = attendus.filter(([n, l]) => !rubriqueNotice(n, l));
+  const rates = attendus.filter(([numero, libelle]) => !rubriqueNotice(numero, libelle));
   verifier(
     'toutes les rédactions relevées sont reconnues',
     rates.length === 0,
-    rates.map(([n, l]) => `${n} — ${l}`).join('\n      '),
+    rates.map(([numero, libelle]) => `${numero} — ${libelle}`).join('\n      '),
   );
 
   // Les étapes d'une procédure ne doivent jamais passer pour un plan.
@@ -523,7 +523,7 @@ titre('PDF — rédactions réelles du plan de notice');
   ];
   verifier(
     'les étapes d’une procédure restent hors plan',
-    procedure.every(([n, l]) => !rubriqueNotice(n, l)),
+    procedure.every(([numero, libelle]) => !rubriqueNotice(numero, libelle)),
   );
 }
 
@@ -538,11 +538,11 @@ function mesurer(source, docs) {
     const { sections, statut, manquantes } = splitDocument(sanitizeDocument(html), type);
 
     if (!parType.has(type)) parType.set(type, { ok: 0, partiel: 0, echec: 0, rubriques: 0 });
-    const b = parType.get(type);
-    b[statut] += 1;
-    b.rubriques += sections.length;
+    const bilanType = parType.get(type);
+    bilanType[statut] += 1;
+    bilanType.rubriques += sections.length;
 
-    for (const m of manquantes) manque.set(`${type} ${m}`, (manque.get(`${type} ${m}`) ?? 0) + 1);
+    for (const manquante of manquantes) manque.set(`${type} ${manquante}`, (manque.get(`${type} ${manquante}`) ?? 0) + 1);
     if (statut === 'echec' && echecs.length < 5) {
       echecs.push({ cis, type, extrait: html.replace(/\s+/g, ' ').slice(0, 200) });
     }
@@ -550,26 +550,26 @@ function mesurer(source, docs) {
 
   titre(`Documents réels — ${source}`);
 
-  for (const [type, b] of parType) {
-    const total = b.ok + b.partiel + b.echec;
-    const p = (x) => `${((x / total) * 100).toFixed(1).padStart(5)} %`;
+  for (const [type, bilanType] of parType) {
+    const total = bilanType.ok + bilanType.partiel + bilanType.echec;
+    const pourcent = (nombre) => `${((nombre / total) * 100).toFixed(1).padStart(5)} %`;
     console.log(`\n  ${type}  (${total.toLocaleString('fr-FR')})`);
-    console.log(`    complet  ${String(b.ok).padStart(6)}  ${p(b.ok)}`);
-    console.log(`    partiel  ${String(b.partiel).padStart(6)}  ${p(b.partiel)}`);
-    console.log(`    échec    ${String(b.echec).padStart(6)}  ${p(b.echec)}`);
-    console.log(`    ${D}rubriques par document : ${(b.rubriques / total).toFixed(1)}${N}`);
+    console.log(`    complet  ${String(bilanType.ok).padStart(6)}  ${pourcent(bilanType.ok)}`);
+    console.log(`    partiel  ${String(bilanType.partiel).padStart(6)}  ${pourcent(bilanType.partiel)}`);
+    console.log(`    échec    ${String(bilanType.echec).padStart(6)}  ${pourcent(bilanType.echec)}`);
+    console.log(`    ${PALE}rubriques par document : ${(bilanType.rubriques / total).toFixed(1)}${NORMAL}`);
   }
 
   if (manque.size > 0) {
     console.log('\n  Rubriques socle absentes :');
-    for (const [k, v] of [...manque].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
-      console.log(`    ${k.padEnd(14)} ${v.toLocaleString('fr-FR')}`);
+    for (const [cle, nombre] of [...manque].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+      console.log(`    ${cle.padEnd(14)} ${nombre.toLocaleString('fr-FR')}`);
     }
   }
 
   for (const e of echecs) {
-    console.log(`\n  ${R}échec${N} ${e.cis} ${e.type}`);
-    console.log(`    ${D}${e.extrait}${N}`);
+    console.log(`\n  ${ROUGE}échec${NORMAL} ${e.cis} ${e.type}`);
+    console.log(`    ${PALE}${e.extrait}${NORMAL}`);
   }
 }
 
@@ -577,21 +577,21 @@ const TYPES = ['rcp', 'rcp_notice', 'notice'];
 
 /** Lecture d'un dump pg_dump : le bloc COPY dbpm.cis_documents. */
 async function depuisDump(fichier, max) {
-  const desechapper = (s) =>
-    s.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
+  const desechapper = (texte) =>
+    texte.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
 
   const docs = [];
   let dedans = false;
 
   const rl = createInterface({ input: createReadStream(fichier), crlfDelay: Infinity });
-  for await (const l of rl) {
+  for await (const ligne of rl) {
     if (!dedans) {
-      if (l.startsWith('COPY dbpm.cis_documents ')) dedans = true;
+      if (ligne.startsWith('COPY dbpm.cis_documents ')) dedans = true;
       continue;
     }
-    if (l === '\\.') break;
+    if (ligne === '\\.') break;
 
-    const [, cis, type, html] = l.split('\t');
+    const [, cis, type, html] = ligne.split('\t');
     if (!TYPES.includes(type) || html === '\\N') continue;
 
     docs.push({ cis, type, html: desechapper(html) });
@@ -645,10 +645,10 @@ if (opt('bilan')) {
     `  ${'source'.padEnd(12)}${'type'.padEnd(12)}${'statut'.padEnd(10)}` +
       `${'documents'.padStart(10)}${'rubriques'.padStart(12)}`,
   );
-  for (const r of rows) {
+  for (const row of rows) {
     console.log(
-      `  ${r.source.padEnd(12)}${r.document_type.padEnd(12)}${r.statut.padEnd(10)}` +
-        `${r.n.toLocaleString('fr-FR').padStart(10)}${(r.rubriques ?? 0).toLocaleString('fr-FR').padStart(12)}`,
+      `  ${row.source.padEnd(12)}${row.document_type.padEnd(12)}${row.statut.padEnd(10)}` +
+        `${row.n.toLocaleString('fr-FR').padStart(10)}${(row.rubriques ?? 0).toLocaleString('fr-FR').padStart(12)}`,
     );
   }
 }
@@ -674,11 +674,11 @@ if (typeof cis === 'string') {
   if (enBase.length > 0) {
     for (const etat of etats) {
       titre(`CIS ${cis} — ${etat.document_type} (${etat.statut}, ${etat.source})`);
-      if (etat.manquantes.length) console.log(`  ${D}manquantes : ${etat.manquantes.join(', ')}${N}\n`);
-      for (const r of enBase.filter((x) => x.document_type === etat.document_type)) {
+      if (etat.manquantes.length) console.log(`  ${PALE}manquantes : ${etat.manquantes.join(', ')}${NORMAL}\n`);
+      for (const ligne of enBase.filter((ligneBase) => ligneBase.document_type === etat.document_type)) {
         console.log(
-          `  ${r.numero.padEnd(6)} ${r.libelle.slice(0, 52).padEnd(54)} ` +
-            `${D}${String(r.signes).padStart(6)} signes${r.canonical ? ' ✓' : ''}${N}`,
+          `  ${ligne.numero.padEnd(6)} ${ligne.libelle.slice(0, 52).padEnd(54)} ` +
+            `${PALE}${String(ligne.signes).padStart(6)} signes${ligne.canonical ? ' ✓' : ''}${NORMAL}`,
         );
       }
     }
@@ -693,14 +693,14 @@ if (typeof cis === 'string') {
         row.document_type,
       );
       titre(`CIS ${cis} — ${row.document_type} (${statut}, pas encore en base)`);
-      if (manquantes.length) console.log(`  ${D}manquantes : ${manquantes.join(', ')}${N}\n`);
-      for (const s of sections) {
+      if (manquantes.length) console.log(`  ${PALE}manquantes : ${manquantes.join(', ')}${NORMAL}\n`);
+      for (const section of sections) {
         console.log(
-          `  ${s.numero.padEnd(6)} ${s.libelle.slice(0, 52).padEnd(54)} ${D}${s.texte.length} signes${N}`,
+          `  ${section.numero.padEnd(6)} ${section.libelle.slice(0, 52).padEnd(54)} ${PALE}${section.texte.length} signes${NORMAL}`,
         );
       }
       if (sections.length === 0) {
-        console.log(`  ${D}${(row.html_content ?? '').replace(/\s+/g, ' ').slice(0, 400)}${N}`);
+        console.log(`  ${PALE}${(row.html_content ?? '').replace(/\s+/g, ' ').slice(0, 400)}${NORMAL}`);
       }
     }
   }

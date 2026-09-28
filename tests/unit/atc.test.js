@@ -12,18 +12,18 @@ const CHAINE = [
 
 describe('resumerClasse', () => {
   it('ne garde que le contexte : groupe anatomique et classe thérapeutique', () => {
-    const r = resumerClasse(CHAINE);
+    const resume = resumerClasse(CHAINE);
     assert.deepEqual(
-      r.contexte.map((n) => n.code),
+      resume.contexte.map((niveau) => niveau.code),
       ['N', 'N02'],
     );
-    assert.equal(r.feuille.code, 'N02BE01');
+    assert.equal(resume.feuille.code, 'N02BE01');
   });
 
   it('écarte la taxonomie chimique et la DCI', () => {
     // Cent six signes en capitales rompaient le bandeau d'identité ; « ANILIDES »
     // ne sert pas au comptoir et « PARACETAMOL » est déjà affiché plus haut.
-    const codes = resumerClasse(CHAINE).contexte.map((n) => n.code);
+    const codes = resumerClasse(CHAINE).contexte.map((niveau) => niveau.code);
     for (const inutile of ['N02B', 'N02BE', 'N02BE01']) {
       assert.ok(!codes.includes(inutile), `${inutile} ne doit pas être dans l'en-tête`);
     }
@@ -31,9 +31,9 @@ describe('resumerClasse', () => {
 
   it('montre la feuille elle-même quand la chaîne n’a pas de contexte', () => {
     const seule = [{ code: 'V', label: 'Divers', level: 1 }];
-    const r = resumerClasse(seule);
-    assert.deepEqual(r.contexte, seule);
-    assert.equal(r.feuille.code, 'V');
+    const resume = resumerClasse(seule);
+    assert.deepEqual(resume.contexte, seule);
+    assert.equal(resume.feuille.code, 'V');
   });
 
   it('rend null sans classe — un tiers des spécialités', () => {
@@ -74,6 +74,6 @@ describe('lirePortrait', () => {
   it('dit les biosimilaires, et tait les génériques absents', () => {
     const lignes = lirePortrait({ ...base, generiques: 0, biosimilaires: 300 });
     assert.equal(lignes[0].libelle, 'biosimilaires');
-    assert.ok(!lignes.some((l) => l.libelle === 'génériques'));
+    assert.ok(!lignes.some((ligne) => ligne.libelle === 'génériques'));
   });
 });

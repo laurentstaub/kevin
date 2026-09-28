@@ -32,14 +32,14 @@ describe('organiser', () => {
     const parType = organiser(RUBRIQUES, ETATS);
     assert.deepEqual([...parType.keys()].sort(), ['notice', 'rcp']);
     assert.deepEqual(
-      parType.get('rcp').rubriques.map((r) => r.numero),
+      parType.get('rcp').rubriques.map((entree) => entree.numero),
       ['1', '4', '4.1', '5.1'],
     );
   });
 
   it('distingue les rubriques du socle', () => {
     const rcp = organiser(RUBRIQUES, ETATS).get('rcp');
-    const par = (n) => rcp.rubriques.find((r) => r.numero === n);
+    const par = (numero) => rcp.rubriques.find((entree) => entree.numero === numero);
 
     assert.equal(par('1').essentielle, true, 'dénomination');
     assert.equal(par('4.1').essentielle, true, 'indications');
@@ -53,12 +53,12 @@ describe('organiser', () => {
 
   it('n’ouvre aucune rubrique d’office', () => {
     const rcp = organiser(RUBRIQUES, ETATS).get('rcp');
-    assert.ok(rcp.rubriques.every((r) => r.ouverte === undefined));
+    assert.ok(rcp.rubriques.every((entree) => entree.ouverte === undefined));
   });
 
   it('marque comme charnière une rubrique sans contenu propre', () => {
     const rcp = organiser(RUBRIQUES, ETATS).get('rcp');
-    const par = (n) => rcp.rubriques.find((r) => r.numero === n);
+    const par = (numero) => rcp.rubriques.find((entree) => entree.numero === numero);
 
     assert.equal(par('4').charniere, true, '« 4. Données cliniques » précède 4.1');
     assert.equal(par('4.1').charniere, false);
@@ -106,18 +106,18 @@ describe('rubriques ouvertes', () => {
     [],
   ).get('rcp');
 
-  const par = (n) => RCP.rubriques.find((r) => r.numero === n);
+  const par = (numero) => RCP.rubriques.find((entree) => entree.numero === numero);
 
   it('conserve l’ordre du document', () => {
     assert.deepEqual(
-      RCP.rubriques.map((r) => r.numero),
+      RCP.rubriques.map((entree) => entree.numero),
       ['1', '4', '4.1', '4.2', '4.8', '5.1', '6.1'],
     );
   });
 
   it('déplie toute la rubrique 4, chapeau compris', () => {
-    for (const n of ['4', '4.1', '4.2', '4.8']) {
-      assert.equal(par(n).clinique, true, n);
+    for (const numero of ['4', '4.1', '4.2', '4.8']) {
+      assert.equal(par(numero).clinique, true, numero);
     }
   });
 
@@ -137,7 +137,7 @@ describe('rubriques ouvertes', () => {
       [],
     ).get('rcp');
 
-    const trouve = (n) => doc.rubriques.find((r) => r.numero === n);
+    const trouve = (numero) => doc.rubriques.find((entree) => entree.numero === numero);
     assert.equal(trouve('4.9').clinique, true);
     assert.equal(trouve('40').clinique, false);
   });
@@ -194,29 +194,29 @@ describe('withSections', () => {
     const fusion = () => withSections(porteur, organiser(RUBRIQUES, ETATS));
 
     it('crée le RCP et la notice absents de cis_documents', () => {
-      const types = fusion().map((d) => d.type).sort();
+      const types = fusion().map((document) => document.type).sort();
       assert.deepEqual(types, ['main', 'notice', 'rcp']);
     });
 
     it('leur donne leurs rubriques', () => {
-      const rcp = fusion().find((d) => d.type === 'rcp');
+      const rcp = fusion().find((document) => document.type === 'rcp');
       assert.equal(rcp.rubriques.length, 4);
       assert.equal(rcp.source, 'bdpm_pdf');
     });
 
     it('leur transmet le lien et la date du document porteur', () => {
-      const rcp = fusion().find((d) => d.type === 'rcp');
+      const rcp = fusion().find((document) => document.type === 'rcp');
       assert.match(rcp.url, /\/medicament\/60966449\/extrait$/);
       assert.equal(rcp.lastUpdated, '2025-05-06');
     });
 
     it('retire le document porteur, devenu vide', () => {
-      assert.equal(fusion().some((d) => d.type === 'rcp_notice'), false);
+      assert.equal(fusion().some((document) => document.type === 'rcp_notice'), false);
     });
 
     it('garde le porteur tant que rien n’est découpé', () => {
       const intact = withSections(porteur, new Map());
-      assert.equal(intact.some((d) => d.type === 'rcp_notice'), true);
+      assert.equal(intact.some((document) => document.type === 'rcp_notice'), true);
     });
   });
 });

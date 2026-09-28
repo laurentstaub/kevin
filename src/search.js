@@ -243,8 +243,8 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   const produits = dci
     ? etiqueter(rows)
     : [
-        ...etiqueter(rows.filter((r) => r.match_type === 'brand')),
-        ...etiqueter(rows.filter((r) => r.match_type === 'active')),
+        ...etiqueter(rows.filter((row) => row.match_type === 'brand')),
+        ...etiqueter(rows.filter((row) => row.match_type === 'active')),
       ];
 
   return {
@@ -254,8 +254,8 @@ export async function searchMedications(pool, query, filter = 'all', options = {
     dci,
     substance,
     produits,
-    brandMatches: produits.filter((r) => r.match_type === 'brand'),
-    activeIngredientMatches: produits.filter((r) => r.match_type === 'active'),
+    brandMatches: produits.filter((produit) => produit.match_type === 'brand'),
+    activeIngredientMatches: produits.filter((produit) => produit.match_type === 'active'),
     total: rows.length,
   };
 }

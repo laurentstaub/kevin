@@ -132,7 +132,7 @@ export function withSections(documents, parType) {
 
 /** Regroupe par type, dans l'ordre d'affichage voulu. */
 export function groupByType(documents) {
-  const grouped = Object.fromEntries(DOCUMENT_TYPES.map((t) => [t, []]));
+  const grouped = Object.fromEntries(DOCUMENT_TYPES.map((type) => [type, []]));
   for (const doc of documents) {
     if (grouped[doc.type]) grouped[doc.type].push(doc);
   }
@@ -140,5 +140,5 @@ export function groupByType(documents) {
 }
 
 export function isEmpty(grouped) {
-  return DOCUMENT_TYPES.every((t) => grouped[t].length === 0);
+  return DOCUMENT_TYPES.every((type) => grouped[type].length === 0);
 }

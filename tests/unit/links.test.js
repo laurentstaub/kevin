@@ -23,16 +23,16 @@ describe('productLinks', () => {
 
   it('construit le lien vers la fiche officielle avec le CIS', () => {
     const { official } = productLinks(product);
-    assert.match(official.find((l) => l.key === 'bdpm').url, /61111111/);
+    assert.match(official.find((lien) => lien.key === 'bdpm').url, /61111111/);
   });
 
   it('construit le pont vers le suivi des ruptures', () => {
     const { official } = productLinks(product);
-    assert.match(official.find((l) => l.key === 'availability').url, /antheosdata/);
+    assert.match(official.find((lien) => lien.key === 'availability').url, /antheosdata/);
   });
 
   it('encode les termes de recherche', () => {
-    const pubmed = productLinks(product).scientific.find((l) => l.key === 'pubmed');
+    const pubmed = productLinks(product).scientific.find((lien) => lien.key === 'pubmed');
     assert.match(pubmed.url, /ACIDE%20ACETYLSALICYLIQUE/);
     assert.ok(!pubmed.url.includes(' '));
   });
@@ -95,7 +95,7 @@ describe('lien Meddispar', () => {
 
   it('renvoie vers l’index de la lettre quand la dispensation est particulière', () => {
     const lien = productLinks(restreint, { dispensationParticuliere: true })
-      .official.find((l) => l.key === 'meddispar');
+      .official.find((entree) => entree.key === 'meddispar');
     assert.match(lien.url, /meddispar\.fr/);
     assert.match(lien.url, /letter=S/);
   });
@@ -104,7 +104,7 @@ describe('lien Meddispar', () => {
   // boîte d’ibuprofène enverrait chercher une fiche qui n’existe pas.
   it('se tait pour une spécialité sans condition de délivrance', () => {
     for (const contexte of [{}, { dispensationParticuliere: false }]) {
-      const trouve = productLinks(restreint, contexte).official.find((l) => l.key === 'meddispar');
+      const trouve = productLinks(restreint, contexte).official.find((lien) => lien.key === 'meddispar');
       assert.equal(trouve, undefined);
     }
   });

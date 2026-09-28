@@ -131,7 +131,7 @@ export async function getRelatedProducts(pool, cis, activeIngredients) {
   const remaining = config.search.relatedLimit - byId.size;
   const substances = (activeIngredients ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map((substance) => substance.trim())
     .filter(Boolean);
 
   if (remaining > 0 && substances.length > 0) {
@@ -188,5 +188,5 @@ export function roleOf(row) {
 
 /** Libellé du groupe générique, s'il y en a un. Métadonnée, pas ligne de tableau. */
 export function genericGroupLabel(related) {
-  return related.find((r) => r.libelle_groupe_generique)?.libelle_groupe_generique ?? null;
+  return related.find((apparente) => apparente.libelle_groupe_generique)?.libelle_groupe_generique ?? null;
 }

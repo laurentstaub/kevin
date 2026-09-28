@@ -18,11 +18,11 @@ describe('biosimilaires', () => {
 
   // LOVENOX avant INHIXA, que l'ordre alphabétique mettait devant.
   it('met la référence en tête de sa forme', () => {
-    const [f] = regrouperSpecialites([
+    const [forme] = regrouperSpecialites([
       { id: '1', denomination: 'INHIXA 2 000 UI (20 mg)/0,2 mL, solution injectable', forme_pharmaceutique: 'solution injectable', titulaires: 'T' },
       { id: '2', denomination: 'LOVENOX 2 000 UI (20 mg)/0,2 ml, solution injectable', forme_pharmaceutique: 'solution injectable', titulaires: 'S' },
     ]);
-    assert.deepEqual(f.noms.map((n) => [n.nom, n.biologique]), [['LOVENOX', 'reference'], ['INHIXA', 'biosimilaire']]);
+    assert.deepEqual(forme.noms.map((nom) => [nom.nom, nom.biologique]), [['LOVENOX', 'reference'], ['INHIXA', 'biosimilaire']]);
   });
 
   // Onze groupes substituables au comptoir ; le rituximab ne l'est pas.

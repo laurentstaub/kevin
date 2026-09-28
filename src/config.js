@@ -9,14 +9,14 @@ const envFile = path.join(ROOT, '.env');
 if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const int = (value, fallback) => {
-  const n = Number.parseInt(value ?? '', 10);
-  return Number.isFinite(n) ? n : fallback;
+  const nombre = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(nombre) ? nombre : fallback;
 };
 
 const list = (value) =>
   (value ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map((origine) => origine.trim())
     .filter(Boolean);
 
 export const config = {

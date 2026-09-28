@@ -90,7 +90,7 @@ export function apiRoutes(pool) {
       const { id: cis, type } = req.params;
       if (!isValidCis(cis) || !DOCUMENT_TYPES.includes(type)) return next();
 
-      const doc = (await getDocuments(pool, cis)).find((d) => d.type === type);
+      const doc = (await getDocuments(pool, cis)).find((document) => document.type === type);
       if (!doc) return next();
 
       res.json({
