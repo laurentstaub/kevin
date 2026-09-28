@@ -448,6 +448,39 @@
   border-bottom-color: var(--accent);
 }
 
+/* ---------- Spécialités d'une molécule ---------- */
+
+/* Une ligne par spécialité, le laboratoire aligné à droite : le même patron
+   que les listes de classes, et la moitié de la hauteur de la ligne de
+   recherche, dont le laboratoire occupait une seconde ligne. */
+.specialites-liste li { border-bottom: var(--rule-width) solid var(--rule); }
+
+.specialite-lien {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--sp-2);
+  align-items: baseline;
+  padding: 0.45rem 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.specialite-lien:hover .specialite-nom { text-decoration: underline; text-underline-offset: 2px; }
+.specialite-nom { font-size: var(--fs-sm); }
+.specialite-labo {
+  max-width: 14rem;
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Au téléphone, le laboratoire à droite volait la moitié de la largeur au
+   nom : il passe dessous, en petit. */
+@media (max-width: 600px) {
+  .specialite-lien { grid-template-columns: minmax(0, 1fr); }
+  .specialite-labo { max-width: none; text-align: left; }
+}
+
 /* ---------- Classes thérapeutiques ---------- */
 
 /* Entrée par le besoin plutôt que par le nom. Une ligne par classe — code,

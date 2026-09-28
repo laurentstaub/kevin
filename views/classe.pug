@@ -19,17 +19,20 @@ mixin specialites(n)
   else
     | Aucune spécialité commercialisée
 
+//- Une ligne par spécialité : la dénomination, le laboratoire à droite. La
+//- ligne de recherche — nom, puis laboratoire dessous, en capitales espacées
+//- — doublait la hauteur de chaque entrée pour un renseignement secondaire.
 mixin ligneSpecialite(sp)
   li
-    a.resultat(href=`/product/${sp.id}`)
-      span.resultat-nom
+    a.specialite-lien(href=`/product/${sp.id}`)
+      span.specialite-nom
         = sp.denomination
         if sp.princeps
           span.marque Princeps
         if sp.importation
           span.marque Importation parallèle
       if sp.titulaires
-        span.resultat-dci= sp.titulaires
+        span.specialite-labo= sp.titulaires
 
 block content
   +barreSituation(classe.label)
@@ -146,7 +149,7 @@ block content
         h2.groupe-titre
           | Spécialités commercialisées
           span.compte #{commercialisees.length.toLocaleString('fr-FR')}
-        ul.liste
+        ul.liste.specialites-liste
           each sp in commercialisees
             +ligneSpecialite(sp)
         //- Les retirées restent consultables — on cherche aussi ce qu'un patient
@@ -154,7 +157,7 @@ block content
         if retirees.length > 0
           details.molecules-reste
             summary.molecules-plus #{retirees.length.toLocaleString('fr-FR')} spécialité#{retirees.length > 1 ? 's' : ''} non commercialisée#{retirees.length > 1 ? 's' : ''}
-            ul.liste
+            ul.liste.specialites-liste
               each sp in retirees
                 +ligneSpecialite(sp)
 
