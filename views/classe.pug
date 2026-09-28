@@ -6,12 +6,28 @@ include _recherche.pug
 //-
 //- Une classe montre ses enfants directs ; seule la feuille — la molécule, ou
 //- l'association — montre ses spécialités. Plus haut, la liste des spécialités
-//- doublait les sous-classes et devait être tronquée : sur six cents produits
+//- doublait les sous-classes et devait être tronquée : sur mille spécialités
 //- on n'en voyait que le début de l'alphabet, ce qui n'apprend rien et laisse
 //- croire que la classe s'arrête à B. Et douze ABACAVIR d'affilée ne disent
 //- qu'une chose, que l'abacavir existe chez douze laboratoires — un
 //- renseignement qui appartient à la page de l'abacavir, pas à celle de la
 //- classe.
+
+mixin specialites(n)
+  if n > 0
+    | #{n.toLocaleString('fr-FR')} spécialité#{n > 1 ? 's' : ''} commercialisée#{n > 1 ? 's' : ''}
+  else
+    | Aucune spécialité commercialisée
+
+mixin ligneSpecialite(sp)
+  li
+    a.resultat(href=`/product/${sp.id}`)
+      span.resultat-nom
+        = sp.denomination
+        if sp.importation
+          span.marque Importation parallèle
+      if sp.titulaires
+        span.resultat-dci= sp.titulaires
 
 block content
   +barreSituation(classe.label)
@@ -32,12 +48,13 @@ block content
       //- second n'était pas un décompte mais une troncature déguisée en
       //- information. Et le code figurait ici en plus du fil, qui se termine
       //- déjà par lui : sur « J », la page affichait « J » deux fois de suite.
-      if classe.produits
-        p.page-meta #{classe.produits.toLocaleString('fr-FR')} produit#{classe.produits > 1 ? 's' : ''}
+      //- Une unité, et une seule, sur toute la page : la spécialité
+      //- commercialisée — un dosage, une forme, un code CIS. Les pourcentages
+      //- du portrait portent sur elle aussi.
+      p.page-meta
+        +specialites(classe.specialites)
 
       //- La physionomie de la classe, en chiffres que la base connaît déjà.
-      //- Le dénominateur se dit : ce sont les spécialités commercialisées,
-      //- pas les produits de la ligne au-dessus.
       if portrait.length
         dl.portrait
           each p in portrait
@@ -46,8 +63,7 @@ block content
               //- l'affichage met le chiffre au-dessus (column-reverse).
               dt.portrait-libelle= p.libelle
               dd.portrait-valeur= p.valeur
-        p.portrait-base
-          | Sur #{specialites.toLocaleString('fr-FR')} spécialité#{specialites > 1 ? 's' : ''} commercialisée#{specialites > 1 ? 's' : ''} · BDPM
+        p.portrait-base Source : BDPM
 
     //- Le chapeau : quelques phrases de pharmacien, signées et relues. Il
     //- n'existe que là où il apporte quelque chose — une classe sans chapeau
@@ -76,7 +92,8 @@ block content
               a.classe-lien(href=`/classe/${enfant.code}`)
                 span.classe-code= enfant.code
                 span.classe-label= enfant.label
-                span.classe-compte #{enfant.produits.toLocaleString('fr-FR')} produits
+                span.classe-compte
+                  +specialites(enfant.specialites)
 
     //- Ce que la classe contient, et non comment elle se découpe.
     //-
@@ -100,7 +117,8 @@ block content
               a.classe-lien(href=`/classe/${molecule.code}`)
                 span.classe-code= molecule.code
                 span.classe-label= molecule.label
-                span.classe-compte #{molecule.produits.toLocaleString('fr-FR')} produit#{molecule.produits > 1 ? 's' : ''}
+                span.classe-compte
+                  +specialites(molecule.specialites)
         if reste.length > 0
           details.molecules-reste
             summary.molecules-plus #{reste.length.toLocaleString('fr-FR')} autre#{reste.length > 1 ? 's' : ''} molécule#{reste.length > 1 ? 's' : ''}
@@ -110,32 +128,31 @@ block content
                   a.classe-lien(href=`/classe/${molecule.code}`)
                     span.classe-code= molecule.code
                     span.classe-label= molecule.label
-                    span.classe-compte #{molecule.produits.toLocaleString('fr-FR')} produit#{molecule.produits > 1 ? 's' : ''}
+                    span.classe-compte
+                      +specialites(molecule.specialites)
 
+    //- À la feuille, les spécialités elles-mêmes : une ligne par code CIS.
+    //- Elles étaient regroupées par nom commercial, « 3 dosages et formes »
+    //- cachant le 5 mg et le 10 mg derrière un clic ; c'est pourtant la
+    //- spécialité qu'on cherche ici.
     if feuille
+      - var commercialisees = specialitesListe.filter(function (s) { return s.commercialise })
+      - var retirees = specialitesListe.filter(function (s) { return !s.commercialise })
       section.groupe
         h2.groupe-titre
-          | Produits
-          span.compte #{produits.length.toLocaleString('fr-FR')}
+          | Spécialités commercialisées
+          span.compte #{commercialisees.length.toLocaleString('fr-FR')}
         ul.liste
-          each produit in produits
-            li
-              a.resultat(href=`/product/${produit.id}`)
-                span.resultat-nom
-                  = produit.racine
-                  if produit.importation
-                    span.marque Importation parallèle
-                  if produit.commercialise === false
-                    span.marque Non commercialisé
-                span.resultat-dci
-                  if produit.active_ingredients
-                    = produit.active_ingredients
-                  if produit.active_ingredients && produit.forme_pharmaceutique
-                    span.sep
-                  if produit.forme_pharmaceutique
-                    = produit.forme_pharmaceutique
-                if produit.presentations > 1
-                  span.resultat-etendue= `${produit.presentations} dosages et formes`
+          each sp in commercialisees
+            +ligneSpecialite(sp)
+        //- Les retirées restent consultables — on cherche aussi ce qu'un patient
+        //- prenait — mais repliées : elles ne sont pas la réponse au comptoir.
+        if retirees.length > 0
+          details.molecules-reste
+            summary.molecules-plus #{retirees.length.toLocaleString('fr-FR')} spécialité#{retirees.length > 1 ? 's' : ''} non commercialisée#{retirees.length > 1 ? 's' : ''}
+            ul.liste
+              each sp in retirees
+                +ligneSpecialite(sp)
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)

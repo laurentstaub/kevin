@@ -27,7 +27,7 @@ import {
   resumerClasse,
   getClassesPrincipales,
   getClasse,
-  getProduitsDeClasse,
+  getSpecialitesDeClasse,
   getMoleculesDeClasse,
   getPortraitClasse,
   lirePortrait,
@@ -98,7 +98,7 @@ export function pageRoutes(pool) {
 
       // Les spécialités n'apparaissent qu'à la feuille. Plus haut, elles
       // doublaient les sous-classes et devaient être tronquées : sur une classe
-      // de six cents produits, on n'en voyait que le début de l'alphabet, ce
+      // de mille spécialités, on n'en voyait que le début de l'alphabet, ce
       // qui n'apprend rien et laisse croire que la classe s'arrête à B.
       const feuille = classe.level === FEUILLE || classe.enfants.length === 0;
 
@@ -107,8 +107,8 @@ export function pageRoutes(pool) {
       // seconde liste répéterait la première mot pour mot.
       const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
 
-      const [{ produits, total }, molecules, portrait] = await Promise.all([
-        feuille ? getProduitsDeClasse(pool, code) : { produits: [], total: null },
+      const [specialitesListe, molecules, portrait] = await Promise.all([
+        feuille ? getSpecialitesDeClasse(pool, code) : [],
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
         // Le portrait est un plus : une table de conditions absente ne doit
         // pas emporter la page, qui se rend alors comme avant qu'il existe.
@@ -123,9 +123,8 @@ export function pageRoutes(pool) {
       const chapeau = lireFiche(code.toLowerCase(), DOSSIER_CLASSES);
 
       res.render('classe', {
-        classe, produits, total, feuille, molecules, railActif: code[0],
+        classe, specialitesListe, feuille, molecules, railActif: code[0],
         portrait: lirePortrait(portrait),
-        specialites: portrait?.specialites ?? 0,
         chapeau: chapeau && visible(chapeau) ? chapeau : null,
       });
     }),

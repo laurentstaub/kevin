@@ -1,5 +1,4 @@
-import { config } from './config.js';
-import { racineSql, importSql, ORDRE_REPRESENTANT } from './groupes.js';
+import { importSql } from './groupes.js';
 
 /**
  * Classification ATC (schéma `ref`).
@@ -45,12 +44,21 @@ export async function getClasseAtc(pool, cis) {
 }
 
 /**
- * Les quatorze groupes anatomiques, avec le nombre de produits de chacun.
+ * L'unité de compte des pages de classe : la spécialité commercialisée.
  *
- * Le décompte porte sur les produits — la racine de marque — et non sur les
- * codes CIS : annoncer « 2 327 » là où la classe mène à 960 produits ferait
- * attendre une liste quatre fois plus longue qu'elle ne l'est.
+ * Trois niveaux, et trois seulement, parce que ce sont ceux du métier et de la
+ * réglementation : la molécule (la DCI), la spécialité (un dosage et une
+ * forme — un code CIS), la présentation (une boîte — un code CIP). Les pages
+ * comptaient d'abord des « produits » — un nom commercial, tous dosages
+ * confondus — unité maison que rien ne définissait, et qui côtoyait sous le
+ * même titre des pourcentages calculés sur les spécialités.
+ *
+ * Commercialisées seulement : une classe se lit pour ce qu'on peut délivrer.
+ * Les spécialités retirées restent listées à la feuille, marquées comme
+ * telles, mais ne gonflent pas les décomptes.
  */
+const SPECIALITES = `count(DISTINCT m.code_cis) FILTER (WHERE m.etat_commercialisation = 'Commercialisée')`;
+
 /**
  * Ce qu'on garde de la chaîne pour l'en-tête d'une fiche.
  *
@@ -96,16 +104,16 @@ export async function getClassesPrincipales(pool) {
 
   const { rows } = await pool.query(
     `SELECT c.atc_code AS code, c.atc_label AS label,
-            count(DISTINCT ${racineSql('m')}) AS produits
+            ${SPECIALITES}::int AS specialites
      FROM ref.atc_classification c
      JOIN ref.cis_atc_mapping a ON a.atc_code LIKE c.atc_code || '%'
      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
      WHERE c.atc_level = 1
      GROUP BY 1, 2
-     ORDER BY count(DISTINCT ${racineSql('m')}) DESC`,
+     ORDER BY 3 DESC`,
   );
 
-  const valeur = rows.map((r) => ({ ...r, produits: Number(r.produits) }));
+  const valeur = rows;
   cacheClasses = { a: Date.now(), valeur };
   return valeur;
 }
@@ -142,7 +150,7 @@ export async function getClasse(pool, code) {
   // elles descendent. On saute donc l'étage absent au lieu de buter dessus.
   const { rows: enfants } = await pool.query(
     `SELECT c.atc_code AS code, c.atc_label AS label, c.atc_level AS level,
-            count(DISTINCT ${racineSql('m')}) AS produits
+            ${SPECIALITES}::int AS specialites
      FROM ref.atc_classification c
      JOIN ref.cis_atc_mapping a ON a.atc_code LIKE c.atc_code || '%'
      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
@@ -151,17 +159,14 @@ export async function getClasse(pool, code) {
        AND c.atc_level = (SELECT min(atc_level) FROM ref.atc_classification
                           WHERE atc_code LIKE $1 || '%' AND atc_code <> $1)
      GROUP BY 1, 2, 3
-     HAVING count(DISTINCT ${racineSql('m')}) > 0
      ORDER BY c.atc_code`,
     [code],
   );
 
   // Le total de la classe est compté ici, et non additionné depuis les enfants :
-  // un produit dont les codes CIS se répartissent sur deux sous-classes serait
-  // compté deux fois par la somme. Le décompte porte sur la racine de marque —
-  // annoncer les CIS ferait attendre une liste quatre fois plus longue.
+  // une association classée sous deux codes serait comptée deux fois.
   const { rows: compte } = await pool.query(
-    `SELECT count(DISTINCT ${racineSql('m')})::int AS produits
+    `SELECT ${SPECIALITES}::int AS specialites
      FROM ref.cis_atc_mapping a
      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
      WHERE a.atc_code LIKE $1 || '%'`,
@@ -171,72 +176,35 @@ export async function getClasse(pool, code) {
   return {
     ...classe,
     chaine,
-    produits: compte[0]?.produits ?? 0,
-    enfants: enfants.map((e) => ({ ...e, produits: Number(e.produits) })),
+    specialites: compte[0]?.specialites ?? 0,
+    enfants,
   };
 }
 
 /**
- * Produits d'une classe, regroupés comme dans la recherche.
+ * Les spécialités d'une molécule — une ligne par code CIS.
  *
- * Classés commercialisés d'abord, puis par ordre alphabétique : on parcourt une
- * classe pour voir ce qu'elle contient, et un ordre alphabétique se retrouve,
- * là où un classement par pertinence n'aurait ici rien à mesurer.
+ * Elles étaient regroupées par nom commercial, comme dans la recherche : douze
+ * lignes pour douze laboratoires, chacune annonçant « 3 dosages et formes ».
+ * Mais à la feuille, c'est la spécialité qu'on cherche — le 5 mg ou le 10 mg,
+ * la gélule ou le comprimé — et le regroupement la cachait derrière un clic.
+ *
+ * Commercialisées d'abord, puis par dénomination : l'ordre alphabétique met
+ * côte à côte les dosages d'un même nom.
  */
-export async function getProduitsDeClasse(pool, code, { limit = config.search.limit } = {}) {
+export async function getSpecialitesDeClasse(pool, code) {
   const { rows } = await pool.query(
-    `
-    WITH lignes AS (
-      SELECT
-        m.code_cis,
-        m.denomination_medicament,
-        m.forme_pharmaceutique,
-        m.titulaires,
-        ${racineSql('m')} AS racine,
-        f_unaccent(lower(${racineSql('m')})) AS racine_cle,
-        ${importSql('m')} AS import,
-        (m.etat_commercialisation = 'Commercialisée') AS commercialise,
-        (m.statut_administratif_amm = 'Autorisation active') AS actif,
-        (SELECT string_agg(DISTINCT denomination_substance, ', '
-                           ORDER BY denomination_substance)
-         FROM dbpm.cis_compo_bdpm WHERE code_cis = m.code_cis) AS active_ingredients
-      FROM ref.cis_atc_mapping a
-      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
-      WHERE a.atc_code LIKE $1 || '%'
-    ),
-    representants AS (
-      SELECT DISTINCT ON (racine_cle, coalesce(titulaires, ''))
-        racine_cle, coalesce(titulaires, '') AS titulaire_cle,
-        code_cis AS id, racine, denomination_medicament,
-        forme_pharmaceutique, titulaires, active_ingredients
-      FROM lignes
-      ORDER BY racine_cle, coalesce(titulaires, ''), ${ORDRE_REPRESENTANT}
-    ),
-    agregats AS (
-      SELECT racine_cle, coalesce(titulaires, '') AS titulaire_cle,
-             bool_or(commercialise) AS commercialise,
-             count(*)::int AS presentations,
-             count(*) FILTER (WHERE import)::int AS importations,
-             bool_and(import) AS importation
-      FROM lignes
-      GROUP BY racine_cle, coalesce(titulaires, '')
-    )
-    SELECT r.id, r.racine, r.denomination_medicament, r.forme_pharmaceutique,
-           r.titulaires, r.active_ingredients,
-           a.commercialise, a.presentations, a.importations, a.importation,
-           count(*) OVER () AS total
-    FROM agregats a
-    JOIN representants r USING (racine_cle, titulaire_cle)
-    ORDER BY a.commercialise DESC, r.racine, r.denomination_medicament
-    LIMIT $2
-    `,
-    [code, limit],
+    `SELECT DISTINCT m.code_cis AS id, m.denomination_medicament AS denomination,
+            m.titulaires,
+            (m.etat_commercialisation = 'Commercialisée') AS commercialise,
+            ${importSql('m')} AS importation
+     FROM ref.cis_atc_mapping a
+     JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
+     WHERE a.atc_code LIKE $1 || '%'
+     ORDER BY commercialise DESC, denomination, id`,
+    [code],
   );
-
-  return {
-    produits: rows.map(({ total, ...r }) => r),
-    total: rows.length > 0 ? Number(rows[0].total) : 0,
-  };
+  return rows;
 }
 
 
@@ -249,7 +217,7 @@ export async function getProduitsDeClasse(pool, code, { limit = config.search.li
  * pour l'apprendre est un parcours, pas une réponse. Cette liste aplatit
  * l'arbre : toutes les feuilles de la classe, d'un coup.
  *
- * L'ordre est le nombre de spécialités, faute de mieux. Ce n'est pas l'usage
+ * L'ordre est le nombre de spécialités commercialisées, faute de mieux. Ce n'est pas l'usage
  * réel — pour cela il faudrait les volumes de l'Assurance Maladie, qui ne sont
  * pas dans cette base — mais c'en est un indice honnête : une molécule qui
  * porte quinze génériques est ancienne et répandue. Le défaut connu de ce
@@ -260,14 +228,13 @@ export async function getProduitsDeClasse(pool, code, { limit = config.search.li
 export async function getMoleculesDeClasse(pool, code) {
   const { rows } = await pool.query(
     `SELECT c.atc_code AS code, c.atc_label AS label,
-            count(DISTINCT ${racineSql('m')})::int AS produits
+            ${SPECIALITES}::int AS specialites
      FROM ref.atc_classification c
      JOIN ref.cis_atc_mapping a ON a.atc_code = c.atc_code
      JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
      WHERE c.atc_level = $1 AND c.atc_code LIKE $2 || '%' AND c.atc_code <> $2
      GROUP BY 1, 2
-     HAVING count(DISTINCT ${racineSql('m')}) > 0
-     ORDER BY count(DISTINCT ${racineSql('m')}) DESC, c.atc_label, c.atc_code`,
+     ORDER BY 3 DESC, c.atc_label, c.atc_code`,
     [FEUILLE, code],
   );
 
@@ -282,10 +249,9 @@ export async function getMoleculesDeClasse(pool, code) {
  * chiffres que la base connaît déjà — la part de génériques, la part
  * remboursable, le régime de délivrance. Pas une définition : une physionomie.
  *
- * Le dénominateur est la **spécialité commercialisée**, et non le produit de
- * l'en-tête : le statut générique, le remboursement et la liste se portent
- * spécialité par spécialité, et une marque peut en couvrir de statuts
- * différents. Les spécialités retirées ne comptent pas — une classe dont on
+ * Le dénominateur est la **spécialité commercialisée**, celle de l'en-tête :
+ * le statut générique, le remboursement et la liste se portent spécialité par
+ * spécialité. Les spécialités retirées ne comptent pas — une classe dont on
  * a cessé de commercialiser les princeps paraîtrait moins générique qu'elle
  * ne l'est au comptoir.
  *

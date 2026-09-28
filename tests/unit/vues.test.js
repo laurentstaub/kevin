@@ -486,21 +486,38 @@ describe('rendu des gabarits', () => {
 
 describe('page de classe', () => {
   const CLASSE = {
-    code: 'M01A', label: 'ANTIINFLAMMATOIRES NON STEROIDIENS', level: 3, produits: 129,
+    code: 'M01A', label: 'ANTIINFLAMMATOIRES NON STEROIDIENS', level: 3, specialites: 600,
     chaine: [{ code: 'M', label: 'Muscle', level: 1 }, { code: 'M01A', label: 'AINS', level: 3 }],
     enfants: [],
   };
   const page = (extra) => rendre('classe', {
-    classe: CLASSE, produits: [], total: 0, feuille: false, molecules: [],
-    portrait: [], specialites: 0, chapeau: null, ...extra,
+    classe: CLASSE, specialitesListe: [], feuille: false, molecules: [],
+    portrait: [], chapeau: null, ...extra,
   });
 
-  it('montre le portrait et son dénominateur', () => {
-    const html = page({
-      portrait: [{ valeur: '41\u00A0%', libelle: 'génériques' }], specialites: 600,
-    });
+  // Une seule unité sur la page : la spécialité commercialisée. Le mot
+  // « produit », unité maison que rien ne définissait, a disparu.
+  it('compte en spécialités, et montre le portrait', () => {
+    const html = page({ portrait: [{ valeur: '41\u00A0%', libelle: 'génériques' }] });
     assert.match(html, /class="portrait-valeur">41/);
-    assert.match(html, /Sur 600 spécialités commercialisées/);
+    assert.match(html, /600 spécialités commercialisées/);
+    assert.doesNotMatch(html, /produit/i);
+  });
+
+  // À la feuille, une ligne par code CIS ; les retirées sont repliées.
+  it('liste les spécialités de la molécule, une par code CIS', () => {
+    const html = page({
+      feuille: true,
+      specialitesListe: [
+        { id: '60000001', denomination: 'AMLOR 5 mg, gélule', titulaires: 'VIATRIS', commercialise: true },
+        { id: '60000002', denomination: 'AMLOR 10 mg, gélule', titulaires: 'VIATRIS', commercialise: true },
+        { id: '60000003', denomination: 'AMLODIPINE X 5 mg, comprimé', titulaires: 'X', commercialise: false },
+      ],
+    });
+    assert.match(html, /href="\/product\/60000001"/);
+    assert.match(html, /AMLOR 10 mg, gélule/);
+    assert.match(html, /Spécialités commercialisées<span class="compte">2</);
+    assert.match(html, /1 spécialité non commercialisée/);
   });
 
   it('se rend sans portrait ni chapeau', () => {
