@@ -3,7 +3,9 @@ import { config } from '../config.js';
 import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre } from '../etat-recherche.js';
-import { lireFiche, listerFiches, lireCalcul, publiee } from '../fiches.js';
+import {
+  lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
+} from '../fiches.js';
 import { searchMedications } from '../search.js';
 import {
   getProduct,
@@ -27,11 +29,19 @@ import {
   getClasse,
   getProduitsDeClasse,
   getMoleculesDeClasse,
+  getPortraitClasse,
+  lirePortrait,
   FEUILLE,
 } from '../atc.js';
 
 export function pageRoutes(pool) {
   const router = Router();
+
+  /**
+   * Une fiche, ou un chapeau de classe, non relus existent dans le dépôt et se
+   * prévisualisent en développement ; en production, ils n'ont pas d'adresse.
+   */
+  const visible = (fiche) => config.env !== 'production' || publiee(fiche);
 
   /**
    * Le rail est sur toutes les pages, il se charge donc une fois pour toutes.
@@ -97,13 +107,26 @@ export function pageRoutes(pool) {
       // seconde liste répéterait la première mot pour mot.
       const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
 
-      const [{ produits, total }, molecules] = await Promise.all([
+      const [{ produits, total }, molecules, portrait] = await Promise.all([
         feuille ? getProduitsDeClasse(pool, code) : { produits: [], total: null },
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
+        // Le portrait est un plus : une table de conditions absente ne doit
+        // pas emporter la page, qui se rend alors comme avant qu'il existe.
+        getPortraitClasse(pool, code).catch((err) => {
+          console.error('[atc] portrait indisponible pour', code, err.message);
+          return null;
+        }),
       ]);
+
+      // Le chapeau signé, s'il existe : fiches/classes/<code>.md. Même règle
+      // que pour les fiches — non relu, il ne paraît qu'en développement.
+      const chapeau = lireFiche(code.toLowerCase(), DOSSIER_CLASSES);
 
       res.render('classe', {
         classe, produits, total, feuille, molecules, railActif: code[0],
+        portrait: lirePortrait(portrait),
+        specialites: portrait?.specialites ?? 0,
+        chapeau: chapeau && visible(chapeau) ? chapeau : null,
       });
     }),
   );
@@ -223,7 +246,6 @@ export function pageRoutes(pool) {
    * n'existe pas. Une page médicale publiée sans relecture datée serait
    * exactement ce que la relecture existe pour empêcher.
    */
-  const visible = (fiche) => config.env !== 'production' || publiee(fiche);
 
   router.get(
     '/fiches',

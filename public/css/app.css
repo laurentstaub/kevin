@@ -179,6 +179,41 @@
   letter-spacing: -0.01em;
 }
 
+/* Le portrait d'une classe : des chiffres en ligne, le libellé dessous. Pas
+   de cartes ni d'encadrés — une rangée de mesures, comme une ligne de
+   tableau sans filets. */
+.portrait {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0 0;
+}
+
+.portrait-item { display: flex; flex-direction: column-reverse; }
+.portrait-valeur {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.portrait-libelle { font-size: var(--fs-xs); color: var(--faint); }
+.portrait-base { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--faint); }
+
+/* Un texte non relu, visible en développement seulement : fiches et chapeaux. */
+.brouillon {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-1) var(--sp-2);
+  background: #fff4d6;
+  border-left: 3px solid #c99a1a;
+  font-size: var(--fs-sm);
+}
+
+/* Le chapeau signé : du texte de lecture, à la mesure d'une colonne. */
+.chapeau { max-width: var(--measure); margin: 0 0 var(--sp-4); }
+.chapeau .brouillon { margin: 0 0 var(--sp-2); }
+.chapeau-texte p { font-family: var(--font-lecture); line-height: 1.6; margin: 0 0 var(--sp-2); }
+.chapeau-signature { font-size: var(--fs-xs); color: var(--faint); margin: 0; }
+
 /* ---------- Champ de recherche ---------- */
 
 .search-wrapper {
@@ -1355,5 +1390,5 @@ a.point:focus-visible {
    faut la respiration que la fiche produit reçoit de son en-tête. */
 .doc-entete {
   margin: 0 0 var(--sp-3);
-  padding-top: var(--sp-5);
+  padding-top: var(--sp-4);
 }

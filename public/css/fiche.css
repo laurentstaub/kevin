@@ -1,15 +1,8 @@
 /* Fiche thématique. Une page de lecture : même colonne que le RCP, même
    police de lecture pour ce qui est cité. */
 
-.brouillon {
-  margin: var(--sp-3) 0 0;
-  padding: var(--sp-1) var(--sp-2);
-  background: #fff4d6;
-  border-left: 3px solid #c99a1a;
-  font-size: var(--fs-sm);
-}
 
-.fiche-entete { padding-top: var(--sp-5); margin-bottom: var(--sp-4); }
+.fiche-entete { padding-top: var(--sp-4); margin-bottom: var(--sp-4); }
 
 .fiche-meta {
   display: flex;

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { resumerClasse } from '../../src/atc.js';
+import { resumerClasse, lirePortrait } from '../../src/atc.js';
 
 const CHAINE = [
   { code: 'N', label: 'Système nerveux', level: 1 },
@@ -40,5 +40,33 @@ describe('resumerClasse', () => {
     assert.equal(resumerClasse([]), null);
     assert.equal(resumerClasse(null), null);
     assert.equal(resumerClasse(undefined), null);
+  });
+});
+
+describe('lirePortrait', () => {
+  const base = {
+    specialites: 600, generiques: 246, remboursables: 468,
+    liste1: 390, liste2: 0, stupefiants: 3, assimiles: 0, hopital: 0,
+  };
+
+  // Deux proportions toujours ; le régime de délivrance seulement s'il
+  // concerne quelqu'un, et les régimes rares en nombre, pas en pourcentage.
+  it('dit les proportions, et tait ce qui ne concerne personne', () => {
+    assert.deepEqual(lirePortrait(base), [
+      { valeur: '41 %', libelle: 'génériques' },
+      { valeur: '78 %', libelle: 'remboursables' },
+      { valeur: '65 %', libelle: 'liste I' },
+      { valeur: '3', libelle: 'stupéfiants' },
+    ]);
+  });
+
+  it('accorde au singulier', () => {
+    const [, , , stup] = lirePortrait({ ...base, stupefiants: 1 });
+    assert.equal(stup.libelle, 'stupéfiant');
+  });
+
+  it('ne dit rien d’une classe sans spécialité commercialisée', () => {
+    assert.deepEqual(lirePortrait(null), []);
+    assert.deepEqual(lirePortrait({ ...base, specialites: 0 }), []);
   });
 });

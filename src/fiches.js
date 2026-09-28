@@ -29,6 +29,8 @@ import { ROOT } from './config.js';
 
 export const DOSSIER_FICHES = path.join(ROOT, 'fiches');
 export const DOSSIER_CALCULS = path.join(ROOT, 'data', 'fiches');
+/** Les chapeaux des pages de classe : `fiches/classes/m01a.md` pour M01A. */
+export const DOSSIER_CLASSES = path.join(DOSSIER_FICHES, 'classes');
 
 const echapper = (s) => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

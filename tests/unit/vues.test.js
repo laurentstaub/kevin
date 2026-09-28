@@ -483,3 +483,38 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /cherché aussi comme/);
   });
 });
+
+describe('page de classe', () => {
+  const CLASSE = {
+    code: 'M01A', label: 'ANTIINFLAMMATOIRES NON STEROIDIENS', level: 3, produits: 129,
+    chaine: [{ code: 'M', label: 'Muscle', level: 1 }, { code: 'M01A', label: 'AINS', level: 3 }],
+    enfants: [],
+  };
+  const page = (extra) => rendre('classe', {
+    classe: CLASSE, produits: [], total: 0, feuille: false, molecules: [],
+    portrait: [], specialites: 0, chapeau: null, ...extra,
+  });
+
+  it('montre le portrait et son dénominateur', () => {
+    const html = page({
+      portrait: [{ valeur: '41\u00A0%', libelle: 'génériques' }], specialites: 600,
+    });
+    assert.match(html, /class="portrait-valeur">41/);
+    assert.match(html, /Sur 600 spécialités commercialisées/);
+  });
+
+  it('se rend sans portrait ni chapeau', () => {
+    const html = page({});
+    assert.doesNotMatch(html, /class="portrait"/);
+    assert.doesNotMatch(html, /class="chapeau"/);
+  });
+
+  it('montre le chapeau signé, et le dit brouillon tant qu’il n’est pas relu', () => {
+    const chapeau = { slug: 'm01a', meta: { auteur: 'Dr L. Staub' }, blocs: [{ type: 'html', html: '<p>Texte.</p>' }] };
+    const html = page({ chapeau });
+    assert.match(html, /<p>Texte\.<\/p>/);
+    assert.match(html, /Dr L\. Staub/);
+    assert.match(html, /Brouillon/);
+    assert.doesNotMatch(page({ chapeau: { ...chapeau, meta: { auteur: 'A', relu: '2026-09-28' } } }), /Brouillon/);
+  });
+});

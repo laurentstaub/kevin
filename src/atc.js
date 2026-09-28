@@ -273,3 +273,100 @@ export async function getMoleculesDeClasse(pool, code) {
 
   return rows;
 }
+
+/**
+ * Le portrait chiffré d'une classe.
+ *
+ * Une page de classe listait des codes et des libellés : juste, mais sec. Ce
+ * qu'un pharmacien veut savoir d'une classe tient pourtant en quelques
+ * chiffres que la base connaît déjà — la part de génériques, la part
+ * remboursable, le régime de délivrance. Pas une définition : une physionomie.
+ *
+ * Le dénominateur est la **spécialité commercialisée**, et non le produit de
+ * l'en-tête : le statut générique, le remboursement et la liste se portent
+ * spécialité par spécialité, et une marque peut en couvrir de statuts
+ * différents. Les spécialités retirées ne comptent pas — une classe dont on
+ * a cessé de commercialiser les princeps paraîtrait moins générique qu'elle
+ * ne l'est au comptoir.
+ *
+ * Les motifs de délivrance reprennent ceux de `delivrance.js`, qui classe ces
+ * mêmes libellés sur la fiche produit : une spécialité comptée « liste I » ici
+ * s'affiche « Liste I » là-bas.
+ *
+ * @returns {Promise<null|{ specialites: number, generiques: number,
+ *   remboursables: number, liste1: number, liste2: number,
+ *   stupefiants: number, assimiles: number, hopital: number }>}
+ */
+export async function getPortraitClasse(pool, code) {
+  const { rows } = await pool.query(
+    `WITH cis AS (
+       SELECT DISTINCT m.code_cis
+       FROM ref.cis_atc_mapping a
+       JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
+       WHERE a.atc_code LIKE $1 || '%'
+         AND m.etat_commercialisation = 'Commercialisée'
+     ),
+     cpd AS (
+       SELECT p.code_cis,
+              bool_or(p.condition_prescription_delivrance ~* '^\\s*liste I\\s*$') AS liste1,
+              bool_or(p.condition_prescription_delivrance ~* '^\\s*liste II\\s*$') AS liste2,
+              bool_or(p.condition_prescription_delivrance ~* '^\\s*stup[ée]fiants?\\s*$') AS stupefiant,
+              bool_or(p.condition_prescription_delivrance
+                      ~* 'assimil[ée].*stup[ée]fiant|stup[ée]fiant.*assimil') AS assimile,
+              bool_or(p.condition_prescription_delivrance ~* 'usage hospitalier') AS hopital
+       FROM dbpm.cis_cpd_bdpm p
+       WHERE p.code_cis IN (SELECT code_cis FROM cis)
+       GROUP BY p.code_cis
+     )
+     SELECT count(*)::int AS specialites,
+            -- 1 générique, 2 complémentarité posologique, 4 substituable :
+            -- tout ce qui n'est pas le princeps (0) d'un groupe.
+            count(*) FILTER (WHERE EXISTS (
+              SELECT 1 FROM dbpm.cis_gener_bdpm g
+              WHERE g.code_cis = c.code_cis AND g.type_generique IN ('1', '2', '4')))::int AS generiques,
+            count(*) FILTER (WHERE EXISTS (
+              SELECT 1 FROM dbpm.cis_cip_bdpm p
+              WHERE p.code_cis = c.code_cis
+                AND nullif(btrim(p.taux_remboursement::text), '') IS NOT NULL))::int AS remboursables,
+            count(*) FILTER (WHERE d.liste1)::int AS liste1,
+            count(*) FILTER (WHERE d.liste2)::int AS liste2,
+            count(*) FILTER (WHERE d.stupefiant)::int AS stupefiants,
+            count(*) FILTER (WHERE d.assimile)::int AS assimiles,
+            count(*) FILTER (WHERE d.hopital)::int AS hopital
+     FROM cis c
+     LEFT JOIN cpd d USING (code_cis)`,
+    [code],
+  );
+  const p = rows[0];
+  return p && p.specialites > 0 ? p : null;
+}
+
+/**
+ * Ce que le portrait affiche, et dans quel ordre.
+ *
+ * Deux proportions toujours — elles décrivent toute classe — puis le régime
+ * de délivrance, qui ne se dit que s'il concerne quelqu'un : « 0 stupéfiant »
+ * sur la page des antigoutteux est une ligne pour ne rien apprendre. Les
+ * régimes rares se comptent en spécialités plutôt qu'en pourcentage :
+ * « 0 % » arrondi cacherait les trois stupéfiants d'une classe de six cents.
+ *
+ * Pure, pour être testée sans base.
+ *
+ * @returns {{ valeur: string, libelle: string }[]}
+ */
+export function lirePortrait(p) {
+  if (!p?.specialites) return [];
+  const part = (n) => `${Math.round((100 * n) / p.specialites)} %`;
+  const compte = (n) => n.toLocaleString('fr-FR');
+  const pluriel = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
+
+  return [
+    { valeur: part(p.generiques), libelle: 'génériques' },
+    { valeur: part(p.remboursables), libelle: 'remboursables' },
+    p.liste1 && { valeur: part(p.liste1), libelle: 'liste I' },
+    p.liste2 && { valeur: part(p.liste2), libelle: 'liste II' },
+    p.stupefiants && { valeur: compte(p.stupefiants), libelle: pluriel(p.stupefiants, 'stupéfiant', 'stupéfiants') },
+    p.assimiles && { valeur: compte(p.assimiles), libelle: pluriel(p.assimiles, 'assimilé stupéfiant', 'assimilés stupéfiants') },
+    p.hopital && { valeur: compte(p.hopital), libelle: 'usage hospitalier' },
+  ].filter(Boolean);
+}

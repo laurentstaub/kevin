@@ -20,3 +20,9 @@ Une fiche est un fichier Markdown de ce dossier, publié à `/fiches/<nom-du-fic
 ## Règle éditoriale
 
 Tout ce qui porte sur une molécule est cité du RCP, jamais réécrit. Le texte libre dit pourquoi la fiche existe et comment la lire ; il ne résume aucun RCP.
+
+## Chapeaux des pages de classe
+
+`fiches/classes/<code>.md`, code ATC en minuscules (`m01a.md`), s'affiche en
+tête de `/classe/M01A`. Même format, même règle de publication (`relu:`), sans
+directive de calcul : deux ou trois phrases signées. Modèle : `classes/_modele.md`.

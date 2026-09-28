@@ -35,6 +35,38 @@ block content
       if classe.produits
         p.page-meta #{classe.produits.toLocaleString('fr-FR')} produit#{classe.produits > 1 ? 's' : ''}
 
+      //- La physionomie de la classe, en chiffres que la base connaît déjà.
+      //- Le dénominateur se dit : ce sont les spécialités commercialisées,
+      //- pas les produits de la ligne au-dessus.
+      if portrait.length
+        dl.portrait
+          each p in portrait
+            .portrait-item
+              //- dt avant dd, comme le veut une liste de définitions ;
+              //- l'affichage met le chiffre au-dessus (column-reverse).
+              dt.portrait-libelle= p.libelle
+              dd.portrait-valeur= p.valeur
+        p.portrait-base
+          | Sur #{specialites.toLocaleString('fr-FR')} spécialité#{specialites > 1 ? 's' : ''} commercialisée#{specialites > 1 ? 's' : ''} · BDPM
+
+    //- Le chapeau : quelques phrases de pharmacien, signées et relues. Il
+    //- n'existe que là où il apporte quelque chose — une classe sans chapeau
+    //- n'est pas une classe inachevée.
+    if chapeau
+      section.chapeau
+        if !chapeau.meta.relu
+          p.brouillon
+            strong Brouillon
+            |  — non relu, non publié.
+        each bloc in chapeau.blocs
+          if bloc.type === 'html'
+            .chapeau-texte!= bloc.html
+        p.chapeau-signature
+          if chapeau.meta.auteur
+            = chapeau.meta.auteur
+          if chapeau.meta.relu
+            |  · relu le #{new Date(chapeau.meta.relu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+
     if classe.enfants.length > 0
       nav.classes(aria-label="Sous-classes")
         h2.classes-titre Sous-classes
