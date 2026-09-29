@@ -62,9 +62,8 @@ block content
           span.sep
           span.marque Importation parallèle
 
-      //- Choix du dosage et de la forme (la recherche regroupe par produit) :
-      //- dosages, formes et conditionnements sur un seul rang. Les autres formes
-      //- ne sont repliées qu'au-delà de SEUIL_REPLI variantes.
+      //- Autres dosages et formes du même nom, sur un rang ; les autres formes ne
+      //- sont repliées qu'au-delà de SEUIL_REPLI variantes.
       - const SEUIL_REPLI = 8
       - const forme = product.forme_pharmaceutique
       - const soeurs = variantes || []
@@ -72,41 +71,21 @@ block content
       - const autresFormes = soeurs.filter((variante) => variante.forme_pharmaceutique !== forme)
       - const replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
       - const enTete = replier ? memeForme : soeurs
-      - const conditionnements = (product.cip_products || []).length
-
-      if soeurs.length > 1 || conditionnements > 0
-        nav.formes(aria-label="Dosages, formes et conditionnements")
+      if soeurs.length > 1
+        nav.formes(aria-label="Autres dosages et formes")
           ul.formes-liste
-            if soeurs.length > 1
-              each soeur in enTete
-                li
-                  +choixForme(soeur)
-
-              if replier
-                li
-                  details.formes-autres
-                    summary.formes-plus #{autresFormes.length} autre#{autresFormes.length > 1 ? 's' : ''} forme#{autresFormes.length > 1 ? 's' : ''}
-                    ul.formes-liste
-                      each soeur in autresFormes
-                        li
-                          +choixForme(soeur)
-
-            //- Présentations (codes CIP du CIS affiché) : la boîte, sur le rang des dosages.
-            if conditionnements > 0
+            each soeur in enTete
               li
-                details.presentations#presentations
-                  summary.presentations-tete
-                    | #{conditionnements} conditionnement#{conditionnements > 1 ? 's' : ''}
-                  table.t-presentations
-                    thead
-                      tr
-                        th(scope="col") CIP 13
-                        th(scope="col") Conditionnement
-                    tbody
-                      each cip in product.cip_products
-                        tr
-                          td.code= cip.code_cip13 || cip.code_cip7
-                          td= cip.libelle_presentation
+                +choixForme(soeur)
+
+            if replier
+              li
+                details.formes-autres
+                  summary.formes-plus #{autresFormes.length} autre#{autresFormes.length > 1 ? 's' : ''} forme#{autresFormes.length > 1 ? 's' : ''}
+                  ul.formes-liste
+                    each soeur in autresFormes
+                      li
+                        +choixForme(soeur)
 
   //- Colonne unique centrée, sans sommaire latéral : le document replié sert de plan.
   .corps

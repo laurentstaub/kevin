@@ -1,4 +1,5 @@
 import { config } from './config.js';
+import { formesDuProduit } from './specialites.js';
 import { deaccent } from './text.js';
 import {
   racineSql,
@@ -170,6 +171,12 @@ export async function searchMedications(pool, query, filter = 'all', options = {
         bool_or(princeps) AS princeps,
         min(nb_substances) AS nb_substances,
         count(*)::int AS presentations,
+        -- Les spécialités du groupe, pour afficher chaque dosage en lien.
+        json_agg(json_build_object(
+          'id', code_cis, 'denomination', denomination_medicament,
+          'forme_pharmaceutique', forme_pharmaceutique, 'titulaires', titulaires,
+          'princeps', princeps, 'commercialise', commercialise, 'importation', import
+        ) ORDER BY denomination_medicament, code_cis) AS specialites,
         count(*) FILTER (WHERE import)::int AS importations,
         bool_and(import) AS importation,
         -- Trouvé par sa composition et non par son nom : le produit ne
@@ -195,7 +202,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
     )
     SELECT id, racine, denomination_medicament, forme_pharmaceutique, titulaires,
            active_ingredients, match_type, rank, presentations, importations,
-           importation, commercialise, princeps, nb_substances, marque_propre,
+           importation, commercialise, princeps, nb_substances, marque_propre, specialites,
            (SELECT substance FROM dci) IS NOT NULL AS dci,
            (SELECT substance FROM dci) AS substance_dci
     FROM classes
@@ -203,7 +210,9 @@ export async function searchMedications(pool, query, filter = 'all', options = {
     ORDER BY n, match_type
   `;
 
-  const { rows } = await pool.query(sql, params);
+  const { rows: bruts } = await pool.query(sql, params);
+  // Dosages rangés par forme, comme sur la page d'une molécule.
+  const rows = bruts.map(({ specialites, ...row }) => ({ ...row, formes: formesDuProduit(specialites) }));
   const dci = rows[0]?.dci === true;
   const substance = dci ? (rows[0]?.substance_dci ?? null) : null;
 

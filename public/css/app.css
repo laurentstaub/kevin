@@ -679,6 +679,16 @@
   margin-top: 0.15em;
 }
 
+/* Résultat de recherche : pas de lien global, les dosages sont les liens. */
+.resultat-produit .specialite-ligne { padding: 0; }
+.resultat-produit .specialite-nom { font-size: var(--fs-base); }
+.resultat-forme {
+  margin-top: 0.25em;
+  font-size: var(--fs-sm);
+}
+.resultat-forme .specialite-dosages { margin-left: 0.4em; }
+.resultat-forme-nom { color: var(--muted); }
+
 /* Précision sur la ligne, en retrait. */
 .resultat-etendue {
   display: block;

@@ -20,30 +20,6 @@
   text-wrap: balance;
 }
 
-/* Codes CIP du dosage affiché : détail de conditionnement, dépliable. */
-.presentations {
-  max-width: var(--measure);
-}
-
-.presentations-tete {
-  display: inline-block;
-  padding: var(--sp-1) 0;
-  font-size: var(--fs-xs);
-  color: var(--accent);
-  cursor: pointer;
-  list-style: none;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.presentations-tete::-webkit-details-marker {
-  display: none;
-}
-
-.presentations .t-presentations {
-  margin-bottom: var(--sp-1);
-}
-
 /* ---------- Dosages et formes ---------- */
 
 /* Liens alignés, pas des boutons : dosage courant plein, les autres cliquables. */
@@ -186,7 +162,6 @@ td.forme {
 
 .t-substitution thead th:nth-child(2) { width: 11rem; }
 .t-substitution thead th:nth-child(3) { width: 8rem; }
-.t-presentations thead th:first-child { width: 11rem; }
 
 /* Rôle codé par l'encre, pas par rouge/vert ; seul le princeps ressort. */
 .role {
@@ -1000,8 +975,7 @@ td.forme {
   /* Commandes inutiles sur papier. */
   .rubriques-controle,
   .barre-repere,
-  .formes-plus,
-  .presentations-tete {
+  .formes-plus {
     display: none;
   }
 

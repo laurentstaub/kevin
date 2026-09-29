@@ -1,37 +1,34 @@
 extends layout.pug
 include _recherche.pug
 include _resultats-documents.pug
+include _dosages.pug
 
 //- Une ligne par produit (racine de marque), pas par code CIS, avec le nombre
 //- de présentations et d'importations regroupées.
+//- Un produit trouvé : nom et mentions, laboratoire, puis une ligne par forme
+//- avec ses dosages en liens. Le nom n'est pas un lien : on choisit le dosage,
+//- comme sur la page d'une molécule.
 mixin produit(result)
   li
-    a.resultat(href=`/product/${result.id}`)
-      span.resultat-nom
-        = result.libelle
-        //- La marque explique le rang : le princeps passe devant ses génériques.
-        if result.princeps
-          span.marque Princeps
-        if result.importation
-          span.marque Importation parallèle
-        if result.commercialise === false
-          span.marque Non commercialisé
-      span.resultat-dci
-        if result.active_ingredients
-          = result.active_ingredients
-        if result.active_ingredients && result.forme_pharmaceutique
-          span.sep
-        if result.forme_pharmaceutique
-          = result.forme_pharmaceutique
-      if result.presentations > 1 || result.importations > 0
-        span.resultat-etendue
-          //- Pas « présentations » : la fiche réserve ce mot aux conditionnements CIP.
-          if result.presentations > 1
-            = `${result.presentations} dosages et formes`
-          if result.presentations > 1 && result.importations > 0
-            span.sep
-          if result.importations > 0
-            = `${result.importations} importation${result.importations > 1 ? 's' : ''} parallèle${result.importations > 1 ? 's' : ''}`
+    .resultat.resultat-produit
+      .specialite-ligne
+        span.specialite-nom
+          = result.libelle
+          if result.princeps
+            span.marque Princeps
+          if result.importation
+            span.marque Importation parallèle
+          if result.commercialise === false
+            span.marque Non commercialisé
+        if result.titulaires
+          span.specialite-labo= result.titulaires
+      if result.active_ingredients
+        span.resultat-dci= result.active_ingredients
+      each groupeForme in result.formes || []
+        each groupeNom in groupeForme.noms
+          .resultat-forme
+            span.resultat-forme-nom= groupeForme.forme
+            +dosages(groupeNom)
 
 block content
   //- Bandeau pleine largeur en aplat sombre : seule page sans texte long.

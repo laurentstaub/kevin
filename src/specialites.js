@@ -39,6 +39,16 @@ function lireDosage(dosage) {
   };
 }
 
+/**
+ * Les formes et dosages d'un produit de la recherche : les commercialisées
+ * seules, sauf si aucune ne l'est.
+ */
+export function formesDuProduit(specialites) {
+  const toutes = Array.isArray(specialites) ? specialites : [];
+  const vivantes = toutes.filter((specialite) => specialite.commercialise);
+  return regrouperSpecialites(vivantes.length ? vivantes : toutes);
+}
+
 /** Unités abrégées : « 12 µg/h » plutôt que « 12 microgrammes/heure ». */
 export const abregerUnite = (texte) => String(texte ?? '')
   .replace(/microgrammes?/gi, 'µg')

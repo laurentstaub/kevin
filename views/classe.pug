@@ -1,6 +1,7 @@
 extends layout.pug
 include _barre.pug
 include _recherche.pug
+include _dosages.pug
 
 //- Classe thérapeutique : fil, enfants directs et molécules ; seule la feuille
 //- (molécule ou association) liste ses spécialités.
@@ -35,14 +36,7 @@ mixin formes(groupes)
                 span.marque(title="Inscrit sur la liste de référence des groupes biologiques similaires (ANSM)") Biosimilaire
               if groupeNom.importation
                 span.marque Importation parallèle
-              //- Un lien souligné par dosage ; l'unité commune une seule fois, à la fin.
-              span.specialite-dosages
-                each dosage, i in groupeNom.dosages
-                  if i > 0
-                    span.sep-point  · 
-                  a.dosage-lien(href=`/product/${dosage.id}` title=dosage.denomination)= dosage.etiquette
-                if groupeNom.uniteCourte
-                  |  #{groupeNom.uniteCourte}
+              +dosages(groupeNom)
             if groupeNom.titulaires
               span.specialite-labo= groupeNom.titulaires
 

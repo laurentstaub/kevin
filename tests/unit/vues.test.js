@@ -198,6 +198,25 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=intervalle\+QT"/);
   });
 
+  // Un résultat par nom : chaque dosage est un lien vers sa spécialité.
+  it('un résultat par nom liste ses dosages cliquables', () => {
+    const produit = {
+      libelle: 'DROLEPTAN', titulaires: 'PANPHARMA', princeps: true,
+      active_ingredients: 'DROPÉRIDOL',
+      formes: [{ forme: 'solution injectable', total: 1, noms: [{
+        nom: 'DROLEPTAN', uniteCourte: 'mg/ml',
+        dosages: [{ id: '61234567', etiquette: '2,5', denomination: 'DROLEPTAN 2,5 mg/ml' }],
+      }] }],
+    };
+    const html = rendre('search_page', {
+      query: 'droleptan', filter: 'all', classes: [],
+      results: { brandMatches: [produit], activeIngredientMatches: [], total: 1 },
+    });
+    assert.match(html, /href="\/product\/61234567"/);
+    assert.match(html, /solution injectable/);
+    assert.doesNotMatch(html, /dosages et formes/);
+  });
+
   // Chaque rubrique pointe sur sa meilleure occurrence, pas sur la spécialité de l'extrait.
   it('chaque rubrique porte sa propre ancre', () => {
     const html = rendre('documents', {

@@ -1,0 +1,10 @@
+//- Liens de dosage d'un nom : un lien souligné par spécialité, l'unité commune
+//- une seule fois à la fin. Partagé par la page d'une molécule et la recherche.
+mixin dosages(groupeNom)
+  span.specialite-dosages
+    each dosage, i in groupeNom.dosages
+      if i > 0
+        span.sep-point  · 
+      a.dosage-lien(href=`/product/${dosage.id}` title=dosage.denomination)= dosage.etiquette
+    if groupeNom.uniteCourte
+      |  #{groupeNom.uniteCourte}
