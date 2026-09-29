@@ -459,11 +459,11 @@ describe('page de classe', () => {
     });
     assert.match(html, /Spécialités commercialisées<span class="compte">3</);
     assert.match(html, /Dispositif transdermique<span class="compte">2</);
-    assert.match(html, /href="\/product\/1"[^>]*>12\u00A0µg\/h<\/a>.*href="\/product\/2"[^>]*>100\u00A0µg\/h<\/a>/s);
+    assert.match(html, /href="\/product\/1"[^>]*>12<\/a>.*href="\/product\/2"[^>]*>100<\/a> µg\/h/s);
     assert.match(html, /<span class="marque">Princeps/);
-    // Une seule spécialité : un bouton aussi ; le nom n'est jamais un lien.
+    // Une seule spécialité : un lien aussi ; le nom n'est jamais un lien.
     assert.match(html, /<span class="specialite-nom">ABSTRAL/);
-    assert.match(html, /href="\/product\/3"[^>]*>100\u00A0µg<\/a>/);
+    assert.match(html, /href="\/product\/3"[^>]*>100<\/a> µg/);
     assert.match(html, /1 spécialité non commercialisée/);
   });
 

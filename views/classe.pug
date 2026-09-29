@@ -35,9 +35,14 @@ mixin formes(groupes)
                 span.marque(title="Inscrit sur la liste de référence des groupes biologiques similaires (ANSM)") Biosimilaire
               if groupeNom.importation
                 span.marque Importation parallèle
+              //- Un lien souligné par dosage ; l'unité commune une seule fois, à la fin.
               span.specialite-dosages
-                each dosage in groupeNom.dosages
-                  a.dosage-bouton(href=`/product/${dosage.id}` title=dosage.denomination)= dosage.etiquette
+                each dosage, i in groupeNom.dosages
+                  if i > 0
+                    span.sep-point  · 
+                  a.dosage-lien(href=`/product/${dosage.id}` title=dosage.denomination)= dosage.etiquette
+                if groupeNom.uniteCourte
+                  |  #{groupeNom.uniteCourte}
             if groupeNom.titulaires
               span.specialite-labo= groupeNom.titulaires
 

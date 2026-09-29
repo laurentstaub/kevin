@@ -88,10 +88,11 @@ describe('regrouperSpecialites', () => {
     assert.deepEqual(forme.noms[0].dosages.map((dosage) => dosage.libelle), ['500 mg/30 mg', '500 mg/8 mg']);
   });
 
-  // Le bouton porte le dosage et l'unité abrégée ; « Fiche » s'il n'y a pas de dosage.
-  it('étiquette chaque bouton', () => {
+  // Le lien porte le chiffre, l'unité abrégée s'écrit une fois ; « Fiche » sans dosage.
+  it('étiquette chaque lien', () => {
     const [patch] = regrouperSpecialites([sp('1', 'DUROGESIC 12 microgrammes/heure, patch', 'patch')]);
-    assert.equal(patch.noms[0].dosages[0].etiquette, '12\u00A0µg/h');
+    assert.equal(patch.noms[0].dosages[0].etiquette, '12');
+    assert.equal(patch.noms[0].uniteCourte, 'µg/h');
     const [sirop] = regrouperSpecialites([sp('2', 'DRILL TOUX SECHE, sirop', 'sirop')]);
     assert.equal(sirop.noms[0].dosages[0].etiquette, 'Fiche');
     assert.equal(abregerUnite('100 milligrammes/5 ml'), '100 mg/5 ml');

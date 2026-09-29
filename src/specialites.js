@@ -39,7 +39,7 @@ function lireDosage(dosage) {
   };
 }
 
-/** Unités abrégées sur les boutons de dosage : « 12 µg/h » plutôt que « 12 microgrammes/heure ». */
+/** Unités abrégées : « 12 µg/h » plutôt que « 12 microgrammes/heure ». */
 export const abregerUnite = (texte) => String(texte ?? '')
   .replace(/microgrammes?/gi, 'µg')
   .replace(/milligrammes?/gi, 'mg')
@@ -97,15 +97,18 @@ export function regrouperSpecialites(lignes) {
         return {
           ...groupeNom,
           unite: commune,
+          // Unité commune, abrégée, écrite une fois après les liens.
+          uniteCourte: commune ? abregerUnite(commune) : null,
           dosages: ordonnes.map((entree) => ({
             id: entree.id,
             // Complément du dosage, en infobulle.
             detail: commune ? entree.lu.detail : null,
             // Sans dosage lisible : dénomination entière, seule à distinguer les spécialités.
             libelle: commune ? entree.lu.chiffre : (entree.dosage || entree.denomination),
-            // Texte du bouton : dosage et unité ; « Fiche » s'il n'y a pas de dosage.
+            // Texte du lien : le chiffre si l'unité est commune, sinon le dosage entier ;
+            // « Fiche » s'il n'y a pas de dosage.
             etiquette: commune
-              ? `${entree.lu.chiffre}\u00A0${abregerUnite(commune)}`
+              ? entree.lu.chiffre
               : (entree.dosage ? abregerUnite(entree.dosage) : 'Fiche'),
             denomination: entree.denomination,
           })),
