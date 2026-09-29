@@ -435,16 +435,15 @@
 .dosage-lien {
   /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
   padding: 0.2em 0.1em;
-  /* Vert plus vif que --accent, contraste 5:1 sur blanc ; trait au vert du bouton Chercher. */
+  /* Vert plus vif que --accent, contraste 5:1 sur blanc ; trait fin de la même couleur. */
   color: #15803d;
   text-decoration: underline;
-  text-decoration-color: var(--accent-vif);
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   white-space: nowrap;
 }
 .dosage-lien:hover,
-.dosage-lien:focus-visible { text-decoration-thickness: 3px; }
+.dosage-lien:focus-visible { text-decoration-thickness: 2px; }
 .sep-point { color: var(--faint); }
 
 .specialite-labo {
