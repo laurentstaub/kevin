@@ -39,6 +39,12 @@ function lireDosage(dosage) {
   };
 }
 
+/** Unités abrégées sur les boutons de dosage : « 12 µg/h » plutôt que « 12 microgrammes/heure ». */
+export const abregerUnite = (texte) => String(texte ?? '')
+  .replace(/microgrammes?/gi, 'µg')
+  .replace(/milligrammes?/gi, 'mg')
+  .replace(/\s*\/\s*heure\b/gi, '/h');
+
 const minuscule = (texte) => String(texte ?? '').trim().toLowerCase();
 
 /**
@@ -97,6 +103,11 @@ export function regrouperSpecialites(lignes) {
             detail: commune ? entree.lu.detail : null,
             // Sans dosage lisible : dénomination entière, seule à distinguer les spécialités.
             libelle: commune ? entree.lu.chiffre : (entree.dosage || entree.denomination),
+            // Texte du bouton : dosage et unité ; « Fiche » s'il n'y a pas de dosage.
+            etiquette: commune
+              ? `${entree.lu.chiffre}\u00A0${abregerUnite(commune)}`
+              : (entree.dosage ? abregerUnite(entree.dosage) : 'Fiche'),
+            denomination: entree.denomination,
           })),
         };
       }),

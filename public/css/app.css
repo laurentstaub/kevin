@@ -428,14 +428,27 @@
 }
 
 .specialite-nom { font-size: var(--fs-sm); color: var(--ink); }
-.specialite-lien { color: inherit; text-decoration: none; }
-.specialite-lien:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* Chaque dosage est un lien vers sa spécialité. */
-.specialite-dosages { margin-left: 0.5em; font-variant-numeric: tabular-nums; }
-.specialite-dosage { color: var(--accent); text-decoration: none; white-space: nowrap; }
-.specialite-dosage:hover { text-decoration: underline; text-underline-offset: 2px; }
-.sep-point { color: var(--faint); }
+/* Un bouton par dosage : seul élément cliquable de la ligne. */
+.specialite-dosages { margin-left: 0.5em; }
+.dosage-bouton {
+  display: inline-block;
+  margin: 0.15em 0.35em 0.15em 0;
+  padding: 0.05em 0.55em;
+  /* Teinté, bordé d'accent : se distingue des mentions grises (Princeps…), qui ne se cliquent pas. */
+  border: var(--rule-width) solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--accent-pale);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dosage-bouton:hover,
+.dosage-bouton:focus-visible { background: var(--accent); color: #fff; }
 
 .specialite-labo {
   max-width: 14rem;
@@ -461,6 +474,8 @@
 @media (max-width: 600px) {
   .specialite-ligne { grid-template-columns: minmax(0, 1fr); }
   .specialite-labo { max-width: none; text-align: left; }
+  /* Cible tactile confortable. */
+  .dosage-bouton { padding: 0.25em 0.7em; }
 }
 
 /* ---------- Classes thérapeutiques ---------- */
