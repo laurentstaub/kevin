@@ -315,9 +315,8 @@ td.forme {
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.35rem 0;
-  /* Sous-rubrique (4.1…) : plus petite et sans gras que le chapitre (4). */
   font-size: var(--fs-sm);
-  font-weight: 400;
+  font-weight: 600;
   cursor: pointer;
   list-style: none;
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
@@ -344,15 +343,10 @@ td.forme {
   color: var(--ink);
 }
 
-/* Chapitre (1, 2, 4…) : un cran au-dessus des sous-rubriques, sous le bloc. */
+/* Rubrique de premier niveau : charnière du document. */
 .rubrique.rub-n1 > .rubrique-tete {
   font-size: var(--fs-base);
-  font-weight: 600;
-}
-
-/* Numéros : repères, jamais en gras. */
-.rubrique-tete .num,
-.charniere .num {
+  font-family: var(--font-head);
   font-weight: 400;
 }
 
@@ -381,8 +375,9 @@ td.forme {
   grid-template-columns: 2.4rem 1fr;
   gap: 0.5rem;
   align-items: baseline;
+  font-family: var(--font-head);
   font-size: var(--fs-base);
-  font-weight: 600;
+  font-weight: 400;
   margin: var(--sp-1) 0 0;
   padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);

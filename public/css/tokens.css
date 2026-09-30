@@ -32,9 +32,7 @@
   --accent-pale: #e4f0e6;
 
   /* Typographie */
-  /* Une seule police pour l'interface et les titres ; le serif est réservé au
-     texte long des documents (--font-lecture). */
-  --font-head: var(--font-body);
+  --font-head: Georgia, 'Times New Roman', serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
   /* Serif de lecture pour les textes longs, parmi les polices système. */
@@ -106,13 +104,10 @@ h1,
 h2,
 h3 {
   font-family: var(--font-head);
-  line-height: 1.2;
-  font-weight: 600;
+  line-height: 1.15;
+  font-weight: 400;
   margin: 0;
 }
-
-/* Grand corps : graisse moyenne, le gras y pèse trop. */
-h1 { font-weight: 500; letter-spacing: -0.01em; }
 
 a {
   color: var(--lien);
