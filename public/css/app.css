@@ -571,9 +571,7 @@
   display: none;
 }
 
-/* Un repliable n'est pas un lien : signe « + / − », pas de soulignement. */
-.molecules-plus::before { content: '+ '; color: var(--faint); }
-details[open] > .molecules-plus::before { content: '− '; }
+/* Repliable : triangle (règle commune en fin de fichier), pas de soulignement. */
 .molecules-plus:hover { color: var(--ink); }
 
 /* ---------- Fil ATC ---------- */
@@ -1058,7 +1056,7 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
   color: var(--ink);
 }
 
-/* Molécule à une seule spécialité : lien. Repliable : signe « + / − ». */
+/* Molécule à une seule spécialité : lien. Plusieurs : repliable à triangle. */
 a.trouvaille-molecule {
   color: var(--lien);
   text-decoration: underline;
@@ -1082,14 +1080,7 @@ a.trouvaille-molecule {
 
 .trouvaille-details > summary::-webkit-details-marker { display: none; }
 
-.trouvaille-details > summary::before {
-  content: '+';
-  flex: none;
-  width: 1em;
-  color: var(--faint);
-}
-
-.trouvaille-details[open] > summary::before { content: '−'; }
+.trouvaille-details > summary::before { flex: none; width: 1em; }
 .trouvaille-details > summary:hover { color: var(--ink); }
 
 .cellule-molecule .trouvaille-molecule {
@@ -1368,4 +1359,45 @@ a.point:focus-visible {
 .doc-entete {
   margin: 0 0 var(--sp-3);
   padding-top: var(--sp-4);
+}
+
+/* ---------- Repliables ---------- */
+
+/* Un seul signe pour tout ce qui se déplie : triangle ▸, pivoté d'un quart de
+   tour à l'ouverture. Jamais souligné : le soulignement est réservé aux liens. */
+.bloc-tete .section-titre::before,
+.rubrique-tete .num::before,
+.charniere .num::before,
+.formes-plus::before,
+.molecules-plus::before,
+.trouvaille-details > summary::before {
+  content: '▸';
+  display: inline-block;
+  font-size: 0.85em;
+  margin-right: 0.35em;
+  color: var(--faint);
+  font-family: var(--font-body);
+  font-weight: 400;
+  transition: transform 0.15s;
+}
+
+.bloc[open] > .bloc-tete .section-titre::before,
+.rubrique[open] > .rubrique-tete .num::before,
+.charniere.ouverte .num::before,
+details[open] > .formes-plus::before,
+details[open] > .molecules-plus::before,
+.trouvaille-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* Titre de bloc en grand corps : triangle ramené à la taille du texte courant. */
+.bloc-tete .section-titre::before { font-size: 0.6em; vertical-align: 0.2em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bloc-tete .section-titre::before,
+  .rubrique-tete .num::before,
+  .charniere .num::before,
+  .formes-plus::before,
+  .molecules-plus::before,
+  .trouvaille-details > summary::before { transition: none; }
 }

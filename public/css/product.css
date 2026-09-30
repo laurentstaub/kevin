@@ -107,18 +107,6 @@
   white-space: nowrap;
 }
 
-.bloc-tete::after {
-  content: '+';
-  color: var(--faint);
-  font-size: var(--fs-md);
-  line-height: 1;
-  align-self: center;
-}
-
-.bloc[open] > .bloc-tete::after {
-  content: '−';
-}
-
 .bloc-tete:hover .section-titre {
   color: var(--accent);
 }
@@ -245,9 +233,7 @@ td.forme {
   display: none;
 }
 
-/* Un repliable n'est pas un lien : signe « + / − », pas de soulignement. */
-.formes-plus::before { content: '+ '; color: var(--faint); }
-details[open] > .formes-plus::before { content: '− '; }
+/* Repliable : triangle (règle commune en fin d'app.css), pas de soulignement. */
 .formes-plus:hover { color: var(--ink); }
 
 /* ---------- Onglets RCP / Notice ---------- */
@@ -348,18 +334,6 @@ details[open] > .formes-plus::before { content: '− '; }
   color: var(--accent);
 }
 
-/* Repère d'ouverture dans la gouttière du numéro : un signe, pas un chevron. */
-.rubrique-tete .num::after {
-  content: '+';
-  color: var(--faint);
-  font-weight: 400;
-  margin-left: 0.35em;
-}
-
-.rubrique[open] > .rubrique-tete .num::after {
-  content: '−';
-}
-
 /* Rubrique du socle : mise en avant par le contraste, pas la couleur. */
 .rubrique .lab {
   color: var(--muted);
@@ -429,18 +403,6 @@ details[open] > .formes-plus::before { content: '− '; }
   color: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-/* Même « + / − » que les rubriques. */
-.charniere .num::after {
-  content: '+';
-  color: var(--faint);
-  font-weight: 400;
-  margin-left: 0.35em;
-}
-
-.charniere.ouverte .num::after {
-  content: '−';
 }
 
 /* Pas d'air entre une charnière et sa première rubrique : elles forment un bloc. */
@@ -965,10 +927,10 @@ details[open] > .formes-plus::before { content: '− '; }
     display: none;
   }
 
-  /* Le « + / − » annonce un pli qui n'existe plus sur papier. */
-  .rubrique-tete .num::after,
-  .charniere .num::after,
-  .bloc-tete::after {
+  /* Le triangle annonce un pli qui n'existe plus sur papier. */
+  .rubrique-tete .num::before,
+  .charniere .num::before,
+  .bloc-tete .section-titre::before {
     content: none;
   }
 
