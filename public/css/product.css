@@ -44,33 +44,22 @@
 }
 
 .forme-choix {
-  display: inline-block;
-  padding: 0.15em 0.5em;
-  border: var(--rule-width) solid var(--rule-medium);
-  border-radius: var(--radius-control);
-  background: var(--bg);
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  text-decoration: none;
+  /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
+  padding: 0.2em 0.1em;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 
-a.forme-choix:hover {
-  border-color: var(--rule-strong);
-  color: var(--ink);
-}
-
-/* Dosage affiché : aplat en accent pour ressortir parmi une quinzaine. */
+/* Dosage affiché : texte plein, ni lien ni soulignement. */
 .forme-choix.actif {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
 }
 
 /* Encore autorisé, plus distribué : lisible, mais en retrait. */
 .forme-choix.forme-retiree {
-  border-style: dashed;
-  opacity: 0.65;
+  color: var(--faint);
+  text-decoration-style: dashed;
 }
 
 .identite .page-meta {
@@ -253,16 +242,19 @@ td.forme {
   display: inline-block;
   padding: var(--sp-1) 0;
   font-size: var(--fs-xs);
-  color: var(--accent);
+  color: var(--muted);
   cursor: pointer;
   list-style: none;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .formes-plus::-webkit-details-marker {
   display: none;
 }
+
+/* Un repliable n'est pas un lien : signe « + / − », pas de soulignement. */
+.formes-plus::before { content: '+ '; color: var(--faint); }
+details[open] > .formes-plus::before { content: '− '; }
+.formes-plus:hover { color: var(--ink); }
 
 /* ---------- Onglets RCP / Notice ---------- */
 

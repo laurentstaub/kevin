@@ -24,6 +24,9 @@
      --accent-vif jamais (1,66 sur blanc) : aplat de l'action, une par écran. */
   --accent: #1b5e33;
   --accent-vif: #7bd44f;
+  /* Liens : vert vif, 5,02 sur blanc, 3,35 face à l'encre. Toujours soulignés
+     dans le contenu ; la navigation ne se souligne qu'au survol. */
+  --lien: #15803d;
   --accent-soft: #a9cdb4;
   /* État sélectionné : doit se distinguer de --bg-tint. Encre 14,31, accent 6,64. */
   --accent-pale: #e4f0e6;
@@ -107,10 +110,13 @@ h3 {
 }
 
 a {
-  color: var(--accent);
+  color: var(--lien);
   text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
 }
+
+a:hover,
+a:focus-visible { text-decoration-thickness: 2px; }
 
 /* Tableaux : filets horizontaux seuls, pas de fond alterné. */
 table {

@@ -303,6 +303,7 @@
 
 .retour:hover {
   color: var(--accent);
+  text-decoration: underline;
 }
 
 /* ---------- Suggestions ---------- */
@@ -393,6 +394,7 @@
 
 .filtre:hover {
   color: var(--ink);
+  text-decoration: underline;
 }
 
 .filtre.actif {
@@ -435,8 +437,7 @@
 .dosage-lien {
   /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
   padding: 0.2em 0.1em;
-  /* Vert plus vif que --accent, contraste 5:1 sur blanc ; trait fin de la même couleur. */
-  color: #15803d;
+  color: var(--lien);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -515,10 +516,15 @@
   color: var(--ink);
 }
 
-.classe-lien:hover .classe-label {
+/* Seul le libellé porte le lien visible : code et compte restent des repères. */
+.classe-lien .classe-label {
+  color: var(--lien);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
+
+.classe-lien:hover .classe-label { text-decoration-thickness: 2px; }
 
 /* Code en accent : repère visuel autant qu'information. */
 .classe-code {
@@ -556,16 +562,19 @@
   display: inline-block;
   padding: var(--sp-1) 0;
   font-size: var(--fs-xs);
-  color: var(--accent);
+  color: var(--muted);
   cursor: pointer;
   list-style: none;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .molecules-plus::-webkit-details-marker {
   display: none;
 }
+
+/* Un repliable n'est pas un lien : signe « + / − », pas de soulignement. */
+.molecules-plus::before { content: '+ '; color: var(--faint); }
+details[open] > .molecules-plus::before { content: '− '; }
+.molecules-plus:hover { color: var(--ink); }
 
 /* ---------- Fil ATC ---------- */
 
@@ -586,13 +595,10 @@
   font-family: var(--font-mono);
   text-transform: none;
   letter-spacing: 0;
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.atc-code:hover {
+  color: var(--lien);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .atc-etiquette {
@@ -609,14 +615,10 @@
 }
 
 .atc-maillon {
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.atc-maillon:hover {
-  color: var(--accent);
+  color: var(--lien);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 /* ---------- Résultats ---------- */
@@ -661,10 +663,14 @@
   color: var(--ink);
 }
 
-.resultat:hover .resultat-nom {
+a.resultat .resultat-nom {
+  color: var(--lien);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
+
+a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
 
 .resultat-nom {
   display: block;
@@ -854,6 +860,7 @@
 .rail-lien:hover {
   background: var(--bg);
   color: var(--ink);
+  text-decoration: underline;
 }
 
 /* Même aplat que l'onglet sélectionné : un seul signe pour « vous êtes ici ». */
@@ -1044,12 +1051,14 @@
   vertical-align: bottom;
   font-size: var(--fs-sm);
   color: var(--ink);
-  text-decoration: none;
 }
 
-.trouvaille-molecule:hover {
+/* Molécule à une seule spécialité : lien. Repliable : signe « + / − ». */
+a.trouvaille-molecule {
+  color: var(--lien);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 /* Nom tronqué, compte toujours visible : flex plutôt qu'une largeur calculée. */
@@ -1069,13 +1078,14 @@
 .trouvaille-details > summary::-webkit-details-marker { display: none; }
 
 .trouvaille-details > summary::before {
-  content: '▸';
+  content: '+';
   flex: none;
   width: 1em;
   color: var(--faint);
 }
 
-.trouvaille-details[open] > summary::before { content: '▾'; }
+.trouvaille-details[open] > summary::before { content: '−'; }
+.trouvaille-details > summary:hover { color: var(--ink); }
 
 .cellule-molecule .trouvaille-molecule {
   flex: 0 1 auto;
@@ -1145,12 +1155,13 @@ a.point:focus-visible {
   margin: 0 0.2em;
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
-  text-decoration: none;
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .autre.point-epars { color: var(--faint); }
-.autre:hover { text-decoration: underline; }
 
 /* Filtrée, la phrase suit la molécule. */
 .trouvailles .ligne-phrase td {
