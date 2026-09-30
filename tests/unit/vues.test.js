@@ -160,6 +160,27 @@ describe('rendu des gabarits', () => {
     assert.match(html, /class="barre"/);
   });
 
+  // Le dosage affiché est dans le titre : la liste ne porte que les autres.
+  it('les autres dosages omettent le dosage affiché', () => {
+    const forme = 'poudre et solvant pour solution injectable';
+    const html = rendre('product', produit({
+      variantes: [
+        { id: '1', variante: '10 microgrammes', forme_pharmaceutique: forme, courante: false },
+        { id: '2', variante: '20 microgrammes', forme_pharmaceutique: forme, courante: true },
+      ],
+    }));
+    assert.match(html, /href="\/product\/1">10 microgrammes/);
+    assert.doesNotMatch(html, /forme-choix[^>]*>20 microgrammes/);
+  });
+
+  // Seul dosage : pas de liste.
+  it('un seul dosage, pas de liste d’autres dosages', () => {
+    const html = rendre('product', produit({
+      variantes: [{ id: '2', variante: '20 microgrammes', forme_pharmaceutique: 'x', courante: true }],
+    }));
+    assert.doesNotMatch(html, /Autres dosages et formes/);
+  });
+
   // Autre table que les conditions : sinon la mention de l'en-tête annoncerait un bloc vide.
   it('la prise en charge restreinte s’affiche sans condition de délivrance', () => {
     const html = rendre('product', produit({ remboursement: REMBOURSEMENT }));

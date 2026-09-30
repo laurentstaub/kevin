@@ -7,14 +7,11 @@ block styles
 
 block content
   mixin choixForme(choix)
-    if choix.courante
-      span.forme-choix.actif(aria-current="true")= choix.variante
-    else
-      a.forme-choix(
-        href=`/product/${choix.id}`
-        class=(choix.commercialise === false ? 'forme-retiree' : '')
-        title=(choix.commercialise === false ? 'Non commercialisé' : null)
-      )= choix.variante
+    a.forme-choix(
+      href=`/product/${choix.id}`
+      class=(choix.commercialise === false ? 'forme-retiree' : '')
+      title=(choix.commercialise === false ? 'Non commercialisé' : null)
+    )= choix.variante
 
   mixin rubrique(entree, ouverte)
     if entree.charniere
@@ -63,15 +60,16 @@ block content
           span.marque Importation parallèle
 
       //- Autres dosages et formes du même nom, sur un rang ; les autres formes ne
-      //- sont repliées qu'au-delà de SEUIL_REPLI variantes.
+      //- sont repliées qu'au-delà de SEUIL_REPLI variantes. Le dosage affiché est
+      //- dans le titre : il n'est pas répété.
       - const SEUIL_REPLI = 8
       - const forme = product.forme_pharmaceutique
-      - const soeurs = variantes || []
+      - const soeurs = (variantes || []).filter((variante) => !variante.courante)
       - const memeForme = soeurs.filter((variante) => variante.forme_pharmaceutique === forme)
       - const autresFormes = soeurs.filter((variante) => variante.forme_pharmaceutique !== forme)
       - const replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
       - const enTete = replier ? memeForme : soeurs
-      if soeurs.length > 1
+      if soeurs.length > 0
         nav.formes(aria-label="Autres dosages et formes")
           ul.formes-liste
             each soeur in enTete
