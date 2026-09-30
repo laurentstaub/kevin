@@ -258,7 +258,7 @@ td.forme {
   margin-bottom: calc(-1 * var(--rule-width));
   padding: 0 0 var(--sp-1);
   font-family: var(--font-head);
-  font-size: var(--fs-md);
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.15;
   color: var(--faint);
@@ -360,8 +360,10 @@ span.onglet {
   font-weight: 700;
 }
 
-/* Titres serif de la fiche en gras : blocs et chapitres dominent les sous-rubriques. */
+/* Titres serif de la fiche en gras : blocs et chapitres dominent les sous-rubriques.
+   Blocs et onglets à 1,2 rem : un cran au-dessus des chapitres (1 rem). */
 .bloc-tete .section-titre {
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
