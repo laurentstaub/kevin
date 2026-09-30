@@ -1074,3 +1074,10 @@ td.forme {
   line-height: 1.6;
   color: var(--ink);
 }
+
+/* Requête venue de la recherche dans les documents. */
+mark.surligne {
+  background: var(--accent-pale);
+  color: inherit;
+  padding: 0 0.1em;
+}

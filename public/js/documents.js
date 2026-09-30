@@ -378,3 +378,60 @@ for (const charniere of document.querySelectorAll('.charniere')) {
 
   etat();
 }
+
+// ---------------------------------------------------------------------------
+// Surlignage de la requête venue de « Dans les documents » (?q=…).
+// Mots de 2 lettres et plus, hors mots vides ; accents et pluriels ignorés.
+// Approximation du stemming de Postgres : suffixe libre de 0 à 4 lettres.
+
+const MOTS_VIDES = new Set(['au', 'aux', 'avec', 'ce', 'dans', 'de', 'des', 'du', 'en', 'et',
+  'la', 'le', 'les', 'ou', 'par', 'pas', 'pour', 'sur', 'un', 'une']);
+
+const ACCENTS = { a: '[aàâä]', e: '[eéèêë]', i: '[iîï]', o: '[oôö]', u: '[uùûü]', c: '[cç]' };
+
+function motifRequete(requete) {
+  const racines = requete.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((mot) => mot.length >= 2 && !MOTS_VIDES.has(mot))
+    // Pluriel retiré : « pointes » trouve « pointe ».
+    .map((mot) => (mot.length > 3 ? mot.replace(/[sx]$/, '') : mot));
+  if (racines.length === 0) return null;
+  const alternatives = [...new Set(racines)]
+    .map((racine) => [...racine].map((lettre) => ACCENTS[lettre] ?? lettre).join(''));
+  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternatives.join('|')})\\p{L}{0,4}(?![\\p{L}\\p{N}])`, 'giu');
+}
+
+function surligner(racine, motif) {
+  const marcheur = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  const noeuds = [];
+  while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
+
+  for (const noeud of noeuds) {
+    const texte = noeud.nodeValue;
+    motif.lastIndex = 0;
+    if (!motif.test(texte)) continue;
+    motif.lastIndex = 0;
+    const fragment = document.createDocumentFragment();
+    let debut = 0;
+    for (const trouve of texte.matchAll(motif)) {
+      fragment.append(texte.slice(debut, trouve.index));
+      const marque = document.createElement('mark');
+      marque.className = 'surligne';
+      marque.textContent = trouve[0];
+      fragment.append(marque);
+      debut = trouve.index + trouve[0].length;
+    }
+    fragment.append(texte.slice(debut));
+    noeud.replaceWith(fragment);
+  }
+}
+
+const requete = new URLSearchParams(location.search).get('q');
+const motif = requete && motifRequete(requete);
+
+if (motif && documents) {
+  for (const article of documents.querySelectorAll('.document')) surligner(article, motif);
+  // Premier passage surligné de la rubrique visée, au centre de l'écran.
+  const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  cible?.querySelector('mark.surligne')?.scrollIntoView({ block: 'center' });
+}

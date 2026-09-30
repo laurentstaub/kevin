@@ -11,6 +11,8 @@
 mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, lien)
   - const cles = colonnes.map((colonne) => colonne[0])
   - const colonnesVues = rubrique ? [] : colonnes
+  //- Transmise à la fiche, qui la surligne.
+  - const q = `?q=${encodeURIComponent(requete)}`
 
   //- Légende inutile pour un mot seul ou une locution entre guillemets (tout est plein).
   if recherche.exacte && !rubrique
@@ -53,19 +55,24 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
           + (recherche.exacte && !rub.exact ? ' — mots séparés' : '');
 
       tbody.trouvaille
+        - const formes = trouvaille.formes || []
         tr
           th.cellule-molecule(scope="row")
-            //- Sans composition enregistrée : la dénomination mène à la fiche.
-            if trouvaille.sansMolecule
-              a.trouvaille-molecule(href=`/product/${trouvaille.code_cis}#${trouvaille.ancre}`)= trouvaille.molecule
+            //- Plusieurs spécialités : la molécule déplie ses dosages (ligne suivante).
+            //- Une seule : lien direct vers son passage, requête surlignée.
+            if formes.length && trouvaille.specialites > 1
+              details.trouvaille-details
+                summary
+                  span.trouvaille-molecule(title=trouvaille.molecule)= trouvaille.molecule
+                  span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
             else
-              a.trouvaille-molecule(
-                href=lien(etat, { mode: 'nom', requete: trouvaille.molecule, filtre: 'active' })
-                title=trouvaille.molecule
-              )= trouvaille.molecule
-            //- Nombre de spécialités du groupe, sur la même ligne.
-            if trouvaille.specialites > 1
-              span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
+              span.trouvaille-tete
+                a.trouvaille-molecule(
+                  href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`
+                  title=trouvaille.molecule
+                )= trouvaille.molecule
+                if trouvaille.specialites > 1
+                  span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
 
           //- Point plein : expression telle quelle ; creux : mots dispersés.
           //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.
@@ -75,7 +82,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                 - const rub = par[colonne[0]]
                 a.point(
                   class=recherche.exacte && !rub.exact ? 'point-epars' : null
-                  href=`/product/${rub.cis}#${rub.ancre}`
+                  href=`/product/${rub.cis}${q}#${rub.ancre}`
                   title=long(rub)
                   aria-label=long(rub)
                   data-cis=rub.cis
@@ -88,13 +95,28 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
               each rub in autres
                 a.autre(
                   class=recherche.exacte && !rub.exact ? 'point-epars' : null
-                  href=`/product/${rub.cis}#${rub.ancre}`
+                  href=`/product/${rub.cis}${q}#${rub.ancre}`
                   title=long(rub)
                   aria-label=long(rub)
                   data-cis=rub.cis
                   data-type=rub.ancre.split('-')[0]
                   data-position=rub.ancre.split('-')[1]
                 )= court(rub)
+
+        //- Dépliée par la molécule ; masquée par CSS tant qu'elle est repliée.
+        if formes.length && trouvaille.specialites > 1
+          tr.ligne-dosages
+            td(colspan=1 + colonnesVues.length + (rubrique ? 0 : 1))
+              each groupeForme in formes
+                p.dosages-forme= groupeForme.forme
+                each groupeNom in groupeForme.noms
+                  .resultat-forme
+                    span.dosages-nom= groupeNom.nom
+                    if groupeNom.princeps
+                      span.marque Princeps
+                    if groupeNom.importation
+                      span.marque Importation
+                    +dosages(groupeNom, requete)
 
         //- Filtré sur une rubrique, la phrase s'affiche d'office.
         if rubrique && trouvaille.extrait
@@ -103,7 +125,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
               //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
               p.trouvaille-extrait!= trouvaille.extrait
               p.preuve-source
-                a(href=`/product/${trouvaille.code_cis}#${trouvaille.ancre}`)= trouvaille.denomination
+                a(href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`)= trouvaille.denomination
 
   if resume && recherche.total > recherche.resultats.length
     p.trouvailles-suite

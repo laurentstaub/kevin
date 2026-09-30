@@ -74,6 +74,13 @@ const TROUVAILLE = {
     { numero: '4.4', libelle: 'Mises en garde', cis: '66297965', ancre: 'rcp-12' },
     { numero: '4.8', libelle: 'Effets indésirables', cis: '66297966', ancre: 'rcp-21' },
   ],
+  formes: [{ forme: 'comprimé', total: 2, noms: [{
+    nom: 'OLANZAPINE ALPHA', princeps: false, importation: false, uniteCourte: 'mg',
+    dosages: [
+      { id: '66297965', etiquette: '5', denomination: 'OLANZAPINE ALPHA 5 mg', ancre: 'rcp-12' },
+      { id: '66297966', etiquette: '10', denomination: 'OLANZAPINE ALPHA 10 mg', ancre: 'rcp-21' },
+    ],
+  }] }],
 };
 
 // Cas rare : la dénomination sert de titre et le lien va à la fiche.
@@ -84,6 +91,8 @@ const SANS_MOLECULE = {
   denomination: 'SPECIALITE SANS COMPOSITION',
   sansMolecule: true,
   specialites: 1,
+  code_cis: '66297967',
+  formes: [],
   rubriques: [{ numero: '4.4', libelle: 'Mises en garde', cis: '66297967', ancre: 'rcp-12' }],
 };
 
@@ -222,18 +231,20 @@ describe('rendu des gabarits', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /href="\/product\/66297965#rcp-12"/);
-    assert.match(html, /href="\/product\/66297966#rcp-21"/);
+    assert.match(html, /href="\/product\/66297965\?q=intervalle%20QT#rcp-12"/);
+    assert.match(html, /href="\/product\/66297966\?q=intervalle%20QT#rcp-21"/);
     assert.match(html, /66 spécialités/);
   });
 
-  // Sans molécule, lien vers la fiche plutôt qu'une recherche vide.
-  it('la molécule mène à ses spécialités, sauf quand il n’y en a pas', () => {
+  // Chaque dosage mène au passage trouvé de sa spécialité, requête transmise.
+  it('la molécule déplie ses dosages ; seule, elle mène à son passage', () => {
     const html = rendre('documents', {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /href="\/search\?q=OLANZAPINE&amp;filter=active"/);
-    assert.match(html, /href="\/product\/66297967#rcp-12"/);
+    assert.match(html, /<details class="trouvaille-details">/);
+    assert.match(html, /class="ligne-dosages"/);
+    assert.match(html, /class="dosage-lien" href="\/product\/66297966\?q=QT#rcp-21"/);
+    assert.match(html, /class="trouvaille-molecule" href="\/product\/66297967\?q=QT#rcp-12"/);
   });
 
   // Sans filtre, la phrase se lit au survol du point.
@@ -242,7 +253,6 @@ describe('rendu des gabarits', () => {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
     assert.doesNotMatch(html, /trouvaille-extrait/);
-    assert.doesNotMatch(html, /<details/);
     assert.match(html, /66 spé\./);
   });
 

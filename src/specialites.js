@@ -83,7 +83,7 @@ export function regrouperSpecialites(lignes) {
     }
     const groupeNom = groupeForme.noms.get(cle);
     groupeNom.princeps ||= Boolean(ligne.princeps);
-    groupeNom.brut.push({ id: ligne.id, dosage, denomination: ligne.denomination });
+    groupeNom.brut.push({ id: ligne.id, dosage, denomination: ligne.denomination, ancre: ligne.ancre });
   }
 
   return [...formes.values()]
@@ -121,6 +121,8 @@ export function regrouperSpecialites(lignes) {
               ? entree.lu.chiffre
               : (entree.dosage ? abregerUnite(entree.dosage) : 'Fiche'),
             denomination: entree.denomination,
+            // Rubrique où mener, depuis une recherche dans les documents.
+            ancre: entree.ancre ?? null,
           })),
         };
       }),

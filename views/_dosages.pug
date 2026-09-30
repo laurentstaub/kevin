@@ -1,10 +1,12 @@
 //- Liens de dosage d'un nom : un lien souligné par spécialité, l'unité commune
 //- une seule fois à la fin. Partagé par la page d'une molécule et la recherche.
-mixin dosages(groupeNom)
+//- Avec une requête, le lien la transmet (surlignage) et vise la rubrique trouvée.
+mixin dosages(groupeNom, requete)
   span.specialite-dosages
     each dosage, i in groupeNom.dosages
       if i > 0
         span.sep-point  · 
-      a.dosage-lien(href=`/product/${dosage.id}` title=dosage.denomination)= dosage.etiquette
+      - const suite = (requete ? `?q=${encodeURIComponent(requete)}` : '') + (dosage.ancre ? `#${dosage.ancre}` : '')
+      a.dosage-lien(href=`/product/${dosage.id}${suite}` title=dosage.denomination)= dosage.etiquette
     if groupeNom.uniteCourte
       |  #{groupeNom.uniteCourte}

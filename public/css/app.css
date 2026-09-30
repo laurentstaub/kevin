@@ -1052,6 +1052,56 @@
   text-underline-offset: 2px;
 }
 
+/* Nom tronqué, compte toujours visible : flex plutôt qu'une largeur calculée. */
+.trouvaille-tete {
+  display: flex;
+  align-items: baseline;
+}
+
+/* Accordéon : la molécule déplie ses dosages sur la ligne suivante. */
+.trouvaille-details > summary {
+  display: flex;
+  align-items: baseline;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trouvaille-details > summary::-webkit-details-marker { display: none; }
+
+.trouvaille-details > summary::before {
+  content: '▸';
+  flex: none;
+  width: 1em;
+  color: var(--faint);
+}
+
+.trouvaille-details[open] > summary::before { content: '▾'; }
+
+.cellule-molecule .trouvaille-molecule {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.cellule-molecule .trouvaille-reprise { flex: none; }
+
+/* Repliée, la ligne des dosages est masquée. Sans :has(), elle reste visible. */
+.trouvaille:has(.trouvaille-details:not([open])) .ligne-dosages { display: none; }
+.trouvaille:has(.trouvaille-details[open]) > tr:first-child > * { border-bottom: 0; }
+
+.trouvailles .ligne-dosages td {
+  padding: 0 0 var(--sp-2) 1em;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.dosages-forme {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.dosages-nom { color: var(--ink); }
+
 .cellule-rubrique { text-align: center; }
 
 /* Autres rubriques, nommées plutôt que fondues dans un « +3 ». */

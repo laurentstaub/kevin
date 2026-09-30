@@ -6,6 +6,8 @@
  * font partie). Résultats bornés à PLAFOND, et annoncés comme tels.
  */
 
+import { importSql } from './groupes.js';
+import { formesDuProduit } from './specialites.js';
 import { elargir } from './thesaurus.js';
 
 /** La configuration de recherche est posée par sql/recherche.sql. */
@@ -315,6 +317,12 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               signature, code_cis, document_type, position, numero, libelle, texte, score
        FROM enrichi ORDER BY signature, exact DESC, rang, score DESC, code_cis
      ),
+     -- Meilleur passage de chaque spécialité : l'accordéon des dosages y mène.
+     par_specialite AS MATERIALIZED (
+       SELECT DISTINCT ON (code_cis) signature, code_cis,
+              document_type || '-' || position AS ancre
+       FROM enrichi ORDER BY code_cis, exact DESC, rang, score DESC
+     ),
      -- Le classement : l'expression exacte d'abord, puis la rubrique qui
      -- répond le mieux à la question du comptoir, puis le score.
      resume AS (
@@ -336,7 +344,19 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
             -- calculer ici coûterait pour une phrase que personne ne verrait.
             CASE WHEN $1::text IS NULL THEN NULL
                  ELSE ${phraseSql('b.texte', 'q.tq', '$4::text')} END AS extrait,
-            (SELECT count(*)::int FROM trouve) AS occurrences
+            (SELECT count(*)::int FROM trouve) AS occurrences,
+            -- Après le LIMIT : pour la page affichée seulement.
+            (SELECT json_agg(json_build_object(
+                      'id', p.code_cis, 'denomination', s.denomination_medicament,
+                      'forme_pharmaceutique', s.forme_pharmaceutique, 'titulaires', s.titulaires,
+                      'commercialise', s.etat_commercialisation = 'Commercialisée',
+                      'importation', ${importSql('s')},
+                      'princeps', EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
+                                          WHERE g.code_cis = p.code_cis AND g.type_generique = '0'),
+                      'ancre', p.ancre)
+                    ORDER BY s.denomination_medicament, p.code_cis)
+             FROM par_specialite p JOIN dbpm.cis_bdpm s ON s.code_cis = p.code_cis
+             WHERE p.signature = r.signature) AS liste
      FROM resume r
      JOIN meilleur b USING (signature)
      LEFT JOIN chapeau c USING (signature)
@@ -358,8 +378,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     exacte: Boolean(exacte),
     // Élargissements affichés, pour que le lecteur puisse les refuser.
     elargissements,
-    resultats: page.map(({ occurrences: _, molecule, denomination, ...reste }) => ({
+    resultats: page.map(({ occurrences: _, molecule, denomination, liste, ...reste }) => ({
       ...reste,
+      formes: formesDuProduit(liste),
       denomination,
       // Sans composition enregistrée : la dénomination sert de titre.
       molecule: molecule || denomination,
