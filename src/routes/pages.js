@@ -68,7 +68,7 @@ export function pageRoutes(pool) {
       res.render('search_page', {
         etat: lireEtat({}, 'nom'),
         title: titre(lireEtat({}, 'nom')),
-        query: '', filter: 'all', results: null, classes, railActif: 'accueil',
+        query: '', filter: 'all', results: null, classes, sansRail: true,
         colonnes: COLONNES,
       });
     }),
@@ -134,6 +134,7 @@ export function pageRoutes(pool) {
       if (query.tooShort) {
         return res.render('search_page', {
           etat,
+          sansRail: true,
           title: titre(etat),
           query: query.raw,
           filter,
@@ -162,6 +163,7 @@ export function pageRoutes(pool) {
         etat,
         title: titre(etat),
         query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
+        sansRail: true,
       });
     }),
   );
@@ -193,6 +195,7 @@ export function pageRoutes(pool) {
 
       res.render('documents', {
         etat,
+        sansRail: true,
         title: titre(etat),
         query: query.raw,
         rubrique,

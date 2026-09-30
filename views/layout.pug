@@ -9,8 +9,9 @@ html(lang="fr")
     link(rel="stylesheet", href=`/css/app.css?v=${v}`)
     block styles
   body
-    //- Pas de rail à l'accueil : la page liste déjà les classes.
-    if railActif !== 'accueil'
+    //- Pas de rail sur l'accueil (il liste déjà les classes) ni sur les résultats :
+    //- la recherche prend toute la largeur.
+    if !sansRail
       +rail(rail, railActif, sections, documents)
     block content
     block scripts
