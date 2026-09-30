@@ -315,9 +315,8 @@ td.forme {
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.35rem 0;
-  /* Sous-rubrique (4.1…) : sans gras ; le gras marque les titres serif au-dessus. */
   font-size: var(--fs-sm);
-  font-weight: 400;
+  font-weight: 600;
   cursor: pointer;
   list-style: none;
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
