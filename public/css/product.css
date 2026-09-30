@@ -239,34 +239,44 @@ td.forme {
 /* ---------- Onglets RCP / Notice ---------- */
 
 /* Pas de filet sous la barre : l'état actif est un aplat. */
+/* Onglets = titre de la section : le document lu (« RCP ») en titre serif gras,
+   les autres au même corps, en gris. Filet commun, trait sous l'actif. */
 .onglets {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-1);
+  gap: 0 var(--sp-4);
   margin-bottom: var(--sp-1);
-  max-width: var(--lecture);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-/* Bouton arrondi : état actif en aplat, un soulignement se courberait. */
 .onglet {
   appearance: none;
   background: none;
   border: none;
-  padding: var(--sp-1) var(--sp-2);
-  font: inherit;
-  font-size: var(--fs-sm);
-  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: calc(-1 * var(--rule-width));
+  padding: 0 0 var(--sp-1);
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--faint);
   cursor: pointer;
 }
 
 .onglet:hover {
   color: var(--ink);
-  background: var(--bg-alt);
 }
 
 .onglet[aria-selected='true'] {
   color: var(--ink);
-  background: var(--accent-pale);
+  border-bottom-color: var(--ink);
+}
+
+/* Document unique : titre, pas commande. */
+span.onglet {
+  cursor: auto;
 }
 
 /* ---------- Rubriques repliables ---------- */

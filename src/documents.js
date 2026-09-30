@@ -15,6 +15,14 @@ export const DOCUMENT_LABELS = {
   main: 'Fiche info',
 };
 
+/** Libellés courts : titre de la section Documents (onglets). */
+export const DOCUMENT_COURTS = {
+  rcp: 'RCP',
+  rcp_notice: 'RCP et notice',
+  notice: 'Notice',
+  main: 'Fiche info',
+};
+
 /**
  * Lien vers le document officiel. Un file_path « /documents/<CIS>/rcp_notice.pdf »
  * rend 404 sur la BDPM : il est remplacé par la fiche document du site.
@@ -48,6 +56,7 @@ export async function getDocuments(pool, cis) {
         type: row.document_type,
         anchor: `doc-${row.document_type}`,
         label: DOCUMENT_LABELS[row.document_type] ?? row.document_type,
+        court: DOCUMENT_COURTS[row.document_type] ?? row.document_type,
         html,
         sections,
         url: lienOfficiel(row.code_cis, row.file_path),
@@ -89,6 +98,7 @@ export function withSections(documents, parType) {
       type,
       anchor: `doc-${type}`,
       label: DOCUMENT_LABELS[type] ?? type,
+      court: DOCUMENT_COURTS[type] ?? type,
       html: '',
       sections: [],
       url: porteur?.url ?? null,

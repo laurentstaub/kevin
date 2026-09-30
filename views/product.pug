@@ -156,13 +156,11 @@ block content
         else
           p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
 
-      //- Blocs repliables : la fiche s'ouvre sur son plan.
+      //- Contenu principal, jamais replié : le document lu sert de titre
+      //- (« RCP »), les autres documents en onglets au même niveau.
       if hasDocuments
-        details.bloc#documents(open)
-          summary.bloc-tete
-            h2.section-titre Documents
-
-          //- Onglets RCP (professionnel) / notice (patient), sur la même page.
+        section.bloc.bloc-documents#documents
+          h2.sr-only Documents officiels
           if documents.length > 1
             .onglets(role="tablist" aria-label="Documents officiels")
               each doc, i in documents
@@ -173,7 +171,11 @@ block content
                   aria-controls=doc.anchor
                   aria-selected=(i === 0 ? 'true' : 'false')
                   tabindex=(i === 0 ? 0 : -1)
-                )= doc.label
+                  title=doc.label
+                )= doc.court
+          else
+            .onglets
+              span.onglet(aria-selected="true" title=documents[0].label)= documents[0].court
 
           //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
           //- Non supporté (Safari), il vaut `hidden`.
@@ -187,8 +189,6 @@ block content
             )
               //- Ligne de service unique : date, provenance, lien officiel, commande.
               p.document-meta
-                if documents.length === 1
-                  span= doc.label
                 if doc.lastUpdated
                   span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
                 if doc.source === 'bdpm_pdf'

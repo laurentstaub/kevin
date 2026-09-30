@@ -4,7 +4,7 @@
 // Sans JavaScript, les <details> natifs et les sections rendues suffisent.
 
 const documents = document.querySelector('#documents');
-const onglets = documents ? [...documents.querySelectorAll('.onglet')] : [];
+const onglets = documents ? [...documents.querySelectorAll('.onglet[role="tab"]')] : [];
 const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
 
 // « until-found » : caché mais trouvable par la recherche du navigateur.

@@ -160,6 +160,23 @@ describe('rendu des gabarits', () => {
     assert.match(html, /class="barre"/);
   });
 
+  // Le document lu sert de titre : « RCP », pas « Documents ».
+  it('les onglets de documents portent le libellé court', () => {
+    const doc = (type, court, label) => ({ type, anchor: `doc-${type}`, court, label, html: '<p>x</p>' });
+    const deux = rendre('product', produit({
+      hasDocuments: true,
+      documents: [doc('rcp', 'RCP', 'Résumé des caractéristiques du produit'), doc('notice', 'Notice', 'Notice patient')],
+    }));
+    assert.match(deux, /role="tab"[^>]*>RCP<\/button>/);
+    assert.match(deux, /title="Notice patient"[^>]*>Notice<\/button>/);
+    const un = rendre('product', produit({
+      hasDocuments: true,
+      documents: [doc('rcp', 'RCP', 'Résumé des caractéristiques du produit')],
+    }));
+    assert.match(un, /<span class="onglet"[^>]*>RCP<\/span>/);
+    assert.doesNotMatch(un, /role="tab"/);
+  });
+
   // Le dosage affiché est dans le titre : la liste ne porte que les autres.
   it('les autres dosages omettent le dosage affiché', () => {
     const forme = 'poudre et solvant pour solution injectable';
