@@ -775,6 +775,11 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
     --accueil-h: 17.5rem;
   }
 
+  /* Sans rail (accueil) : pas de colonne réservée. */
+  body:not(:has(> .rail)) {
+    --rail-l: 0rem;
+  }
+
   body {
     padding-left: var(--rail-l);
   }

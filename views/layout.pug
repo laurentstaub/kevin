@@ -9,6 +9,8 @@ html(lang="fr")
     link(rel="stylesheet", href=`/css/app.css?v=${v}`)
     block styles
   body
-    +rail(rail, railActif, sections, documents)
+    //- Pas de rail à l'accueil : la page liste déjà les classes.
+    if railActif !== 'accueil'
+      +rail(rail, railActif, sections, documents)
     block content
     block scripts

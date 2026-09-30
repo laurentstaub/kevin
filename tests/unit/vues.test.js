@@ -263,6 +263,19 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
+  // L'accueil liste déjà les classes : le rail ferait doublon.
+  it('pas de rail à l’accueil, rail ailleurs', () => {
+    const accueil = rendre('search_page', {
+      query: '', filter: 'all', results: null, classes: [], railActif: 'accueil',
+    });
+    assert.doesNotMatch(accueil, /class="rail"/);
+    const recherche = rendre('search_page', {
+      query: 'aspirine', filter: 'all', classes: [],
+      results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
+    });
+    assert.match(recherche, /class="rail"/);
+  });
+
   it('l’exemple disparaît une fois la recherche faite', () => {
     const html = rendre('search_page', {
       query: 'aspirine',
