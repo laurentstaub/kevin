@@ -315,8 +315,9 @@ td.forme {
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.35rem 0;
+  /* Sous-rubrique (4.1…) : sans gras ; le gras marque les titres serif au-dessus. */
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
   list-style: none;
   scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
@@ -347,6 +348,17 @@ td.forme {
 .rubrique.rub-n1 > .rubrique-tete {
   font-size: var(--fs-base);
   font-family: var(--font-head);
+  font-weight: 700;
+}
+
+/* Titres serif de la fiche en gras : blocs et chapitres dominent les sous-rubriques. */
+.bloc-tete .section-titre {
+  font-weight: 700;
+}
+
+/* Numéros : repères, jamais en gras. */
+.rubrique-tete .num,
+.charniere .num {
   font-weight: 400;
 }
 
@@ -377,7 +389,7 @@ td.forme {
   align-items: baseline;
   font-family: var(--font-head);
   font-size: var(--fs-base);
-  font-weight: 400;
+  font-weight: 700;
   margin: var(--sp-1) 0 0;
   padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);
