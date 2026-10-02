@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
-  insecables, amorces, lisibilite,
+  insecables, amorces, doses, lisibilite,
 } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
@@ -255,5 +255,27 @@ describe('lisibilité, couche A', () => {
 
   it('rejoue les intitulés sur une base ancienne', () => {
     assert.match(lisibilite('<p>Posologie</p>', { type: 'rcp_notice', numero: '4.2' }), /<h5 class="sous-titre">/);
+  });
+});
+
+describe('lisibilité, couche B (doses, rubrique 4.2)', () => {
+  const NBSP = '\u00a0';
+  const gras = (html) => [...html.matchAll(/<strong class="dose-cle">([^<]+)<\/strong>/g)].map((m) => m[1]);
+
+  it('met chaque dose en gras, unité et dénominateur compris', () => {
+    const html = lisibilite('<p>de 10 mg/jour, 60 mg/kg/jour, 10 à 30 mg, 4 000 UI, 2 comprimés.</p>', { type: 'rcp', numero: '4.2' });
+    assert.deepEqual(gras(html), [
+      `10${NBSP}mg/jour`, `60${NBSP}mg/kg/jour`, `10 à 30${NBSP}mg`, `4${NBSP}000${NBSP}UI`, `2${NBSP}comprimés`,
+    ]);
+  });
+
+  it('laisse âges, durées et renvois', () => {
+    const html = lisibilite('<p>Adolescents de 15 ans, pendant 2 jours (voir rubrique 5.1).</p>', { type: 'rcp', numero: '4.2' });
+    assert.deepEqual(gras(html), []);
+  });
+
+  it('ne touche que la rubrique 4.2', () => {
+    assert.doesNotMatch(lisibilite('<p>10 mg</p>', { type: 'rcp', numero: '4.4' }), /dose-cle/);
+    assert.match(doses(`<p>10${NBSP}mg</p>`), /dose-cle/);
   });
 });

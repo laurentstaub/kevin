@@ -560,6 +560,11 @@ span.onglet {
   font-weight: 700;
 }
 
+/* Couche B, rubrique 4.2 : doses en gras. Neutraliser : font-weight: inherit. */
+.rubrique-corps .dose-cle {
+  font-weight: 700;
+}
+
 /* Renvoi de bas de rubrique (astérisque QRD) : italique, corps réduit.
    L'appel reste en tête. */
 .rubrique-corps .note,

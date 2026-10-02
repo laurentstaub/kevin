@@ -340,12 +340,34 @@ export function structurerLecture(html) {
 }
 
 /**
+ * Couche B, rubrique 4.2 : chaque dose en gras (« 10 mg/jour », « 10 à 30 mg »).
+ * Après les insécables : le nombre et l'unité y sont liés par une insécable.
+ */
+// « 4 000 » : milliers liés par une insécable (posée par `insecables`).
+const NOMBRE = '(?:\\d{1,3}(?:\\u00a0\\d{3})+|\\d+)(?:[.,]\\d+)?';
+const UNITES_DOSE = [
+  'mg', 'µg', 'μg', 'mcg', 'ng', 'g', 'mL', 'ml', 'UI', 'U', 'MUI', 'mmol', 'mEq',
+  'GBq', 'MBq', 'gouttes?', 'comprimés?', 'gélules?', 'sachets?', 'ampoules?',
+  'bouffées?', 'pulvérisations?', 'doses?',
+].join('|');
+const PAR = '(?:\\/(?:kg|m²|m2|jour|j|24\\u00a0?h|h|prise|mL|ml|semaine|dose|min))*';
+const DOSE = new RegExp(
+  `(?<![\\d.,])(?:${NOMBRE}[ \\u00a0]?(?:à|-|–)[ \\u00a0]?)?${NOMBRE}\\u00a0(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
+  'gu',
+);
+
+export function doses(html) {
+  return dansLeTexte(html, (texte) => texte.replace(DOSE, '<strong class="dose-cle">$&</strong>'));
+}
+
+/**
  * Passes de lecture d'une rubrique, selon son document et son numéro.
  * @param {string} html
  * @param {{ type?: string, numero?: string }} rubrique
  */
-export function lisibilite(html, { type } = {}) {
+export function lisibilite(html, { type, numero } = {}) {
   if (!html) return html;
   if (!/^rcp/.test(type ?? '')) return html;
-  return structurerLecture(html);
+  const structure = structurerLecture(html);
+  return numero === '4.2' ? doses(structure) : structure;
 }
