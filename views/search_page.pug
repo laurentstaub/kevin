@@ -72,6 +72,21 @@ block content
                 span.classe-label= classe.label
                 span.classe-compte= classe.specialites.toLocaleString('fr-FR')
 
+    //- Les vingt molécules les plus fournies, toutes classes confondues ; les
+    //- autres se trouvent par les classes.
+    if !results && molecules && molecules.length > 0
+      nav.classes.classes-molecules(aria-label="Molécules les plus fournies")
+        h2.classes-titre
+          | Molécules les plus fournies
+          span.classes-unite Spécialités commercialisées
+        ul.classes-liste
+          each molecule in molecules
+            li
+              a.classe-lien(href=`/classe/${molecule.code}`)
+                span.classe-code= molecule.code
+                span.classe-label= molecule.label
+                span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
+
     #results
       if results
         //- Filtres au-dessus de la liste qu'ils pilotent.

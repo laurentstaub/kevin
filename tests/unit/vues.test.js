@@ -301,6 +301,17 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
+  // Accueil : les molécules les plus fournies, sous les classes.
+  it('l’accueil liste les molécules les plus fournies', () => {
+    const html = rendre('search_page', {
+      query: '', filter: 'all', results: null, sansRail: true,
+      classes: [{ code: 'N', label: 'Système nerveux', specialites: 1988 }],
+      molecules: [{ code: 'N02BF02', label: 'PREGABALINE', specialites: 92 }],
+    });
+    assert.match(html, /Molécules les plus fournies/);
+    assert.match(html, /href="\/classe\/N02BF02"/);
+  });
+
   // Accueil et résultats : sans rail, la recherche prend toute la largeur.
   it('le rail n’apparaît que si la page le demande', () => {
     const recherche = rendre('search_page', {

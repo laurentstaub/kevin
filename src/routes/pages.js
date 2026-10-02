@@ -31,6 +31,7 @@ import {
   getClasse,
   getSpecialitesDeClasse,
   getMoleculesDeClasse,
+  getMoleculesPrincipales,
   getPortraitClasse,
   lirePortrait,
   FEUILLE,
@@ -60,15 +61,19 @@ export function pageRoutes(pool) {
     '/',
     wrap(async (req, res) => {
       // Un défaut de classification ne doit pas bloquer la page de recherche.
-      const classes = await getClassesPrincipales(pool).catch((err) => {
-        console.error('[atc] classes principales indisponibles :', err.message);
+      const repli = (quoi) => (err) => {
+        console.error(`[atc] ${quoi} indisponibles :`, err.message);
         return [];
-      });
+      };
+      const [classes, molecules] = await Promise.all([
+        getClassesPrincipales(pool).catch(repli('classes principales')),
+        getMoleculesPrincipales(pool).catch(repli('molécules principales')),
+      ]);
 
       res.render('search_page', {
         etat: lireEtat({}, 'nom'),
         title: titre(lireEtat({}, 'nom')),
-        query: '', filter: 'all', results: null, classes, sansRail: true,
+        query: '', filter: 'all', results: null, classes, molecules, sansRail: true,
         colonnes: COLONNES,
       });
     }),

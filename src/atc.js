@@ -83,9 +83,39 @@ export async function getClassesPrincipales(pool) {
   return valeur;
 }
 
+let cacheMolecules = null;
+
+/**
+ * Molécules (niveau 5) les plus fournies en spécialités commercialisées, toutes
+ * classes confondues : entrée de l'accueil. Même cache que les classes.
+ */
+export async function getMoleculesPrincipales(pool, limite = 20) {
+  if (cacheMolecules && cacheMolecules.limite === limite
+      && Date.now() - cacheMolecules.a < DUREE_CACHE_MS) {
+    return cacheMolecules.valeur;
+  }
+
+  const { rows } = await pool.query(
+    `SELECT c.atc_code AS code, c.atc_label AS label,
+            ${SPECIALITES}::int AS specialites
+     FROM ref.atc_classification c
+     JOIN ref.cis_atc_mapping a ON a.atc_code = c.atc_code
+     JOIN dbpm.cis_bdpm m ON m.code_cis = a.code_cis
+     WHERE c.atc_level = $1
+     GROUP BY 1, 2
+     ORDER BY 3 DESC, c.atc_label, c.atc_code
+     LIMIT $2`,
+    [FEUILLE, limite],
+  );
+
+  cacheMolecules = { a: Date.now(), limite, valeur: rows };
+  return rows;
+}
+
 /** Vide le cache — les tests changent de jeu de données sous le même processus. */
 export function oublierClasses() {
   cacheClasses = null;
+  cacheMolecules = null;
 }
 
 /** Le dernier niveau de l'arbre : une molécule, ou une association. */
