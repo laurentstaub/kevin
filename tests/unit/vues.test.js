@@ -308,7 +308,7 @@ describe('rendu des gabarits', () => {
       classes: [{ code: 'N', label: 'Système nerveux', specialites: 1988 }],
       molecules: [{ code: 'N02BF02', label: 'PREGABALINE', specialites: 92 }],
     });
-    assert.match(html, /Molécules les plus fournies/);
+    assert.match(html, /Top 20 des molécules avec le plus de spécialités/);
     assert.match(html, /href="\/classe\/N02BF02"/);
   });
 

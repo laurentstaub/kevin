@@ -75,9 +75,9 @@ block content
     //- Les vingt molécules les plus fournies, toutes classes confondues ; les
     //- autres se trouvent par les classes.
     if !results && molecules && molecules.length > 0
-      nav.classes.classes-molecules(aria-label="Molécules les plus fournies")
+      nav.classes.classes-molecules(aria-label="Top 20 des molécules avec le plus de spécialités")
         h2.classes-titre
-          | Molécules les plus fournies
+          | Top 20 des molécules avec le plus de spécialités
           span.classes-unite Spécialités commercialisées
         ul.classes-liste
           each molecule in molecules
