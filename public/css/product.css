@@ -439,7 +439,8 @@ span.onglet {
   font-family: var(--font-lecture);
   font-size: 1.0625rem;
   line-height: 1.75;
-  max-width: var(--lecture);
+  /* Environ 70 signes par ligne (WCAG 1.4.8 : 80 au plus). */
+  max-width: calc(66ch + var(--gouttiere));
   padding: var(--sp-1) 0 0 var(--gouttiere);
   hyphens: none;
   text-wrap: pretty;
@@ -551,6 +552,12 @@ span.onglet {
 .rubrique-corps .sous-titre + .interaction,
 .document-corps .sous-titre + .interaction {
   margin-top: 0.4em;
+}
+
+/* Lisibilité, couche A : amorce d'un paragraphe (« Schizophrénie : … »).
+   Neutraliser : font-weight: inherit. */
+.rubrique-corps .amorce {
+  font-weight: 700;
 }
 
 /* Renvoi de bas de rubrique (astérisque QRD) : italique, corps réduit.

@@ -267,3 +267,85 @@ export function renvois(html, cibles) {
 export function structurer(html) {
   return espaces(notes(interactions(sousTitres(listes(html)))));
 }
+
+// ------------------------------------------------------------ la lisibilité
+
+/**
+ * Passes de lecture, appliquées à l'affichage (pas au découpage) : on les
+ * règle sans rejouer la base. Aucun mot n'est modifié ; seules des balises et
+ * des espaces insécables s'ajoutent. Trois couches, chacune avec sa classe CSS
+ * pour être neutralisée d'une ligne : A structure, B doses, C mises en garde.
+ */
+const INSECABLE = ' ';
+
+/** Unités et décomptes qui ne doivent jamais quitter leur nombre. */
+const UNITES = [
+  'mg', 'µg', 'μg', 'mcg', 'ng', 'g', 'kg', 'mL', 'ml', 'L', 'dL', 'dl',
+  'UI', 'U', 'MUI', 'mmol', 'µmol', 'mEq', 'GBq', 'MBq', 'mmHg', '°C',
+  'h', 'heures?', 'min', 'minutes?', 'j', 'jours?', 'semaines?', 'mois', 'ans?',
+  'fois', 'gouttes?', 'comprimés?', 'gélules?', 'sachets?', 'ampoules?',
+  'flacons?', 'doses?', 'prises?', 'bouffées?', 'pulvérisations?', 'injections?',
+].join('|');
+
+const NOMBRE_UNITE = new RegExp(`(\\d)[ \\t]+(?=(?:${UNITES})(?![\\p{L}\\d]))`, 'gu');
+const MILLIERS = /(\d)[ \t](?=\d{3}(?!\d))/g;
+
+/** Applique `remplacer` au texte hors balise seulement. */
+function dansLeTexte(html, remplacer) {
+  const source = String(html ?? '');
+  let sortie = '';
+  let depuis = 0;
+  for (const [debut, fin] of horsBalise(source)) {
+    sortie += source.slice(depuis, debut) + remplacer(source.slice(debut, fin));
+    depuis = fin;
+  }
+  return sortie + source.slice(depuis);
+}
+
+/** « 10 mg », « 4 000 UI » : nombre et unité ne se séparent plus en fin de ligne. */
+export function insecables(html) {
+  return dansLeTexte(html, (texte) => texte
+    .replace(MILLIERS, `$1${INSECABLE}`)
+    .replace(NOMBRE_UNITE, `$1${INSECABLE}`));
+}
+
+/**
+ * Amorce d'un paragraphe (« Schizophrénie : la posologie… ») : ce qui précède
+ * le premier deux-points passe en gras. Garde-fous : majuscule initiale,
+ * quatorze mots, ni virgule ni ponctuation forte, et pas une phrase qui
+ * annonce une liste (« comme suit : »).
+ */
+const AMORCE = /^(\s*)([^<>:.;!?,&]{2,90}?)((?:\s|&nbsp;|\u00a0)*:(?:\s|&nbsp;|\u00a0))/u;
+const ANNONCE = /\b(?:suit|suivants?|suivantes?|notamment|que|ci-dessous|ci-après)\s*$/i;
+/** Une amorce est un groupe nominal : un verbe ou un pronom sujet trahit une phrase. */
+const PHRASE = /(?:^|[\s'’])(?:est|sont|a|ont|été|doit|doivent|peut|peuvent|sera|seront|faut|convient|il|elle|ils|elles|on|vous|nous)(?=[\s,]|$)/i;
+
+export function amorces(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    const trouve = interieur.match(AMORCE);
+    if (!trouve) return bloc;
+    const [entier, blanc, amorce, deuxPoints] = trouve;
+    const propre = amorce.trim();
+    if (!/^\p{Lu}/u.test(propre)) return bloc;
+    if (propre.split(/\s+/).length > 14 || ANNONCE.test(propre) || PHRASE.test(propre)) return bloc;
+    const suite = interieur.slice(entier.length);
+    return `<p${attrs}>${blanc}<strong class="amorce">${propre}</strong>${deuxPoints}${suite}</p>`;
+  });
+}
+
+/** Couche A : intitulés (rejoués, la base peut dater), amorces, insécables. */
+export function structurerLecture(html) {
+  return insecables(amorces(sousTitres(html)));
+}
+
+/**
+ * Passes de lecture d'une rubrique, selon son document et son numéro.
+ * @param {string} html
+ * @param {{ type?: string, numero?: string }} rubrique
+ */
+export function lisibilite(html, { type } = {}) {
+  if (!html) return html;
+  if (!/^rcp/.test(type ?? '')) return html;
+  return structurerLecture(html);
+}

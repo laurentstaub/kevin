@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce } from '../../src/typographie.js';
+import {
+  listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
+  insecables, amorces, lisibilite,
+} from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
   it('reconnaît le point médian et le tiret au premier rang', () => {
@@ -208,5 +211,49 @@ describe('renvois entre rubriques', () => {
     const html = '<p>voir rubrique 4.6</p>';
     assert.equal(renvois(html, new Map()), html);
     assert.equal(renvois(html, null), html);
+  });
+});
+
+describe('lisibilité, couche A', () => {
+  const NBSP = '\u00a0';
+
+  it('ne sépare plus un nombre de son unité', () => {
+    assert.equal(insecables('<p>de 10 mg/jour à 4 000 UI</p>'), `<p>de 10${NBSP}mg/jour à 4${NBSP}000${NBSP}UI</p>`);
+  });
+
+  it('ne touche ni aux attributs ni aux mots qui commencent comme une unité', () => {
+    assert.equal(insecables('<a href="/x?a=1 mg">2 grammes</a>'), '<a href="/x?a=1 mg">2 grammes</a>');
+  });
+
+  it('met en gras l’amorce d’un paragraphe', () => {
+    assert.equal(
+      amorces('<p>Schizophrénie : la posologie initiale est de 10 mg.</p>'),
+      '<p><strong class="amorce">Schizophrénie</strong> : la posologie initiale est de 10 mg.</p>',
+    );
+  });
+
+  it('accepte une amorce longue avec un chiffre', () => {
+    assert.match(amorces('<p>Enfants de 6 à 12 ans : 5 mg</p>'), /<strong class="amorce">Enfants de 6 à 12 ans<\/strong>/);
+  });
+
+  // Une phrase qui annonce la suite n'est pas une amorce.
+  it('laisse les phrases', () => {
+    for (const html of [
+      '<p>Les effets suivants ont été rapportés : x</p>',
+      '<p>Il est recommandé : x</p>',
+      '<p>la dose : x</p>',
+      '<p>Elles sont limitées à : x</p>',
+      '<p class="note">Note : y</p>',
+    ]) assert.equal(amorces(html), html);
+  });
+
+  it('ne s’applique qu’aux RCP', () => {
+    const html = '<p>Schizophrénie : x</p>';
+    assert.equal(lisibilite(html, { type: 'notice', numero: '3' }), html);
+    assert.match(lisibilite(html, { type: 'rcp', numero: '4.2' }), /amorce/);
+  });
+
+  it('rejoue les intitulés sur une base ancienne', () => {
+    assert.match(lisibilite('<p>Posologie</p>', { type: 'rcp_notice', numero: '4.2' }), /<h5 class="sous-titre">/);
   });
 });

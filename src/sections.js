@@ -1,4 +1,5 @@
 import { socle } from './rcp-plan.js';
+import { lisibilite } from './typographie.js';
 
 /**
  * Lecture des rubriques déjà découpées (schéma `docs`).
@@ -50,7 +51,8 @@ export function organiser(rubriques, etats) {
       libelle: rubrique.libelle,
       profondeur: rubrique.profondeur,
       canonical: rubrique.canonical,
-      html: rubrique.html,
+      // Passes de lecture à l'affichage : réglables sans rejouer le découpage.
+      html: lisibilite(rubrique.html, { type: rubrique.document_type, numero: rubrique.numero }),
       // Rubrique sans contenu propre (« 4. Données cliniques ») : ne se déplie pas.
       charniere: texte.trim() === '',
       // Sert au contraste du libellé, pas à l'ouverture.
