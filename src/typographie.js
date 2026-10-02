@@ -361,6 +361,27 @@ export function doses(html) {
 }
 
 /**
+ * Couche C, rubriques 4.2 et 4.4 : mises en garde (« ne doit pas dépasser »,
+ * « dose quotidienne maximale », « contre-indiqué »). Seule l'expression est
+ * marquée, jamais la phrase entière.
+ */
+const PARTICIPE = '(?:dépassée?s?|utilisée?s?|administrée?s?|associée?s?|interrompue?s?)';
+const ALERTES = [
+  new RegExp(`\\bne\\s+(?:doit|doivent|devra|devront|faut)\\s+(?:pas|jamais)\\s+(?:dépasser|être\\s+${PARTICIPE})`, 'giu'),
+  /\bne\s+(?:pas|jamais)\s+(?:dépasser|utiliser|administrer|associer|interrompre)/giu,
+  /\bdoses?\s+(?:(?:quotidiennes?|journalières?|unitaires?|totales?)\s+)?maximales?(?:\s+(?:quotidiennes?|journalières?|recommandées?))?/giu,
+  /\bcontre-indiquée?s?/giu,
+];
+const RUBRIQUES_ALERTE = new Set(['4.2', '4.4']);
+
+export function alertes(html) {
+  return dansLeTexte(html, (texte) => ALERTES.reduce(
+    (courant, motif) => courant.replace(motif, '<strong class="alerte">$&</strong>'),
+    texte,
+  ));
+}
+
+/**
  * Passes de lecture d'une rubrique, selon son document et son numéro.
  * @param {string} html
  * @param {{ type?: string, numero?: string }} rubrique
@@ -369,5 +390,6 @@ export function lisibilite(html, { type, numero } = {}) {
   if (!html) return html;
   if (!/^rcp/.test(type ?? '')) return html;
   const structure = structurerLecture(html);
-  return numero === '4.2' ? doses(structure) : structure;
+  const dosee = numero === '4.2' ? doses(structure) : structure;
+  return RUBRIQUES_ALERTE.has(numero) ? alertes(dosee) : dosee;
 }

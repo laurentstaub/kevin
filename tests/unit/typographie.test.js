@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
-  insecables, amorces, doses, lisibilite,
+  insecables, amorces, doses, alertes, lisibilite,
 } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
@@ -277,5 +277,25 @@ describe('lisibilité, couche B (doses, rubrique 4.2)', () => {
   it('ne touche que la rubrique 4.2', () => {
     assert.doesNotMatch(lisibilite('<p>10 mg</p>', { type: 'rcp', numero: '4.4' }), /dose-cle/);
     assert.match(doses(`<p>10${NBSP}mg</p>`), /dose-cle/);
+  });
+});
+
+describe('lisibilité, couche C (mises en garde, 4.2 et 4.4)', () => {
+  const marques = (html) => [...html.matchAll(/<strong class="alerte">([^<]+)<\/strong>/g)].map((m) => m[1]);
+
+  it('marque l’expression, pas la phrase', () => {
+    const html = alertes('<p>La dose quotidienne maximale ne doit pas dépasser 30 mg. Contre-indiqué chez l’enfant ; ne pas associer.</p>');
+    assert.deepEqual(marques(html), ['dose quotidienne maximale', 'ne doit pas dépasser', 'Contre-indiqué', 'ne pas associer']);
+  });
+
+  it('ne s’applique qu’aux rubriques 4.2 et 4.4', () => {
+    const html = '<p>La dose maximale.</p>';
+    assert.match(lisibilite(html, { type: 'rcp', numero: '4.4' }), /alerte/);
+    assert.doesNotMatch(lisibilite(html, { type: 'rcp', numero: '4.3' }), /alerte/);
+  });
+
+  it('cohabite avec les doses en gras', () => {
+    const html = lisibilite('<p>Ne doit pas dépasser 30 mg.</p>', { type: 'rcp', numero: '4.2' });
+    assert.match(html, /<strong class="alerte">Ne doit pas dépasser<\/strong> <strong class="dose-cle">30\u00a0mg<\/strong>/);
   });
 });
