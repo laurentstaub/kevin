@@ -499,9 +499,10 @@
   padding: 0;
 }
 
+/* Pas de filet entre les lignes : le soulignement du lien structure déjà
+   chaque ligne ; seul l'en-tête garde le sien. */
 .classes-liste li {
   max-width: none;
-  border-bottom: var(--rule-width) solid var(--rule);
 }
 
 .classe-lien {
@@ -511,7 +512,7 @@
   grid-template-columns: 4.2rem minmax(0, 1fr) max-content;
   gap: 0 var(--sp-2);
   align-items: baseline;
-  padding: var(--sp-1) var(--sp-1) var(--sp-1) 0;
+  padding: 0.3rem var(--sp-1) 0.3rem 0;
   text-decoration: none;
   color: var(--ink);
 }
