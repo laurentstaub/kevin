@@ -47,7 +47,10 @@ export const config = {
 
   // Interprétation des questions par IA (option A). Sans clé ni modèle : inactive.
   ia: {
-    cle: process.env.ANTHROPIC_API_KEY,
+    // mistral (défaut, hébergement européen) ou anthropic.
+    fournisseur: process.env.IA_FOURNISSEUR === 'anthropic' ? 'anthropic' : 'mistral',
+    cleMistral: process.env.MISTRAL_API_KEY,
+    cleAnthropic: process.env.ANTHROPIC_API_KEY,
     modele: process.env.IA_MODELE,
     delaiMs: int(process.env.IA_DELAI_MS, 8000),
   },

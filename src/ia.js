@@ -26,7 +26,10 @@ export const RUBRIQUES_IA = {
   '6.4': 'Précautions particulières de conservation',
 };
 
-export const iaActive = () => Boolean(config.ia.cle && config.ia.modele);
+/** Clé du fournisseur choisi (Mistral par défaut : hébergement européen). */
+const cleDe = (fournisseur) => (fournisseur === 'anthropic' ? config.ia.cleAnthropic : config.ia.cleMistral);
+
+export const iaActive = () => Boolean(config.ia.modele && cleDe(config.ia.fournisseur));
 
 /** Une question plutôt qu'une recherche : point d'interrogation, ou cinq mots et plus. */
 export function estQuestion(texte) {
@@ -74,17 +77,63 @@ export function validerInterpretation(entree) {
   return { molecule, rubrique, mots };
 }
 
-/** Appel à l'API Anthropic : outil imposé, sortie structurée, délai borné. */
-async function appelerAnthropic(question) {
+/**
+ * Mistral, sortie en schéma JSON strict : chaînes vides plutôt que null (le
+ * mode strict accepte mal les types multiples) ; la validation les ramène à null.
+ */
+const SCHEMA_MISTRAL = {
+  type: 'object',
+  properties: {
+    molecule: { type: 'string' },
+    rubrique: { type: 'string', enum: [...Object.keys(RUBRIQUES_IA), ''] },
+    mots: { type: 'string' },
+  },
+  required: ['molecule', 'rubrique', 'mots'],
+  additionalProperties: false,
+};
+
+/** Réponse de l'API Mistral → objet, ou null si le contenu n'est pas du JSON. */
+export function lireMistral(corps) {
+  const contenu = corps?.choices?.[0]?.message?.content;
+  if (typeof contenu !== 'string') return null;
+  try {
+    return JSON.parse(contenu);
+  } catch {
+    return null;
+  }
+}
+
+async function appelerMistral(question, { modele, cle }) {
+  const reponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${cle}` },
+    body: JSON.stringify({
+      model: modele,
+      temperature: 0,
+      max_tokens: 200,
+      messages: [{ role: 'system', content: SYSTEME }, { role: 'user', content: question }],
+      response_format: {
+        type: 'json_schema',
+        json_schema: { name: OUTIL.name, schema: SCHEMA_MISTRAL, strict: true },
+      },
+    }),
+    signal: AbortSignal.timeout(config.ia.delaiMs),
+  });
+  if (!reponse.ok) throw new Error(`Mistral ${reponse.status}`);
+  return lireMistral(await reponse.json());
+}
+
+/** Anthropic : outil imposé, sortie structurée, délai borné. */
+async function appelerAnthropic(question, { modele, cle }) {
   const reponse = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': config.ia.cle,
+      'x-api-key': cle,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: config.ia.modele,
+      model: modele,
       // Outil imposé : réponse directe, sans réflexion préalable ; marge pour l'appel d'outil.
       max_tokens: 400,
       system: SYSTEME,
@@ -94,9 +143,20 @@ async function appelerAnthropic(question) {
     }),
     signal: AbortSignal.timeout(config.ia.delaiMs),
   });
-  if (!reponse.ok) throw new Error(`API ${reponse.status}`);
+  if (!reponse.ok) throw new Error(`Anthropic ${reponse.status}`);
   const corps = await reponse.json();
   return corps.content?.find((bloc) => bloc.type === 'tool_use')?.input ?? null;
+}
+
+/**
+ * Un appel brut au modèle, sans cache ni validation (sert aussi au comparatif).
+ * @param {string} question
+ * @param {{ fournisseur?: 'mistral'|'anthropic', modele?: string, cle?: string }} [choix]
+ */
+export function appelerModele(question, choix = {}) {
+  const fournisseur = choix.fournisseur ?? config.ia.fournisseur;
+  const options = { modele: choix.modele ?? config.ia.modele, cle: choix.cle ?? cleDe(fournisseur) };
+  return fournisseur === 'anthropic' ? appelerAnthropic(question, options) : appelerMistral(question, options);
 }
 
 // Une même question ne coûte qu'un appel (cache borné, perdu au redémarrage).
@@ -108,7 +168,7 @@ const CACHE_MAX = 500;
  * @param {{ appeler?: (question: string) => Promise<object|null> }} [options] - injectable (tests)
  * @returns {Promise<{ molecule: string|null, rubrique: string|null, mots: string }|null>}
  */
-export async function interpreterQuestion(question, { appeler = appelerAnthropic } = {}) {
+export async function interpreterQuestion(question, { appeler = appelerModele } = {}) {
   const cle = String(question ?? '').trim().toLowerCase();
   if (!cle) return null;
   if (cache.has(cle)) return cache.get(cle);

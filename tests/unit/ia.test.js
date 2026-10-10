@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 import { config } from '../../src/config.js';
 import {
-  estQuestion, validerInterpretation, interpreterQuestion, oublierInterpretations,
+  estQuestion, validerInterpretation, interpreterQuestion, oublierInterpretations, lireMistral,
 } from '../../src/ia.js';
 import { createApp } from '../../src/app.js';
 
@@ -41,6 +41,26 @@ describe('validation de la sortie du modèle', () => {
   });
 });
 
+describe('réponse Mistral', () => {
+  it('lit le JSON du message', () => {
+    const corps = { choices: [{ message: { content: '{"molecule":"tramadol","rubrique":"4.6","mots":"allaitement"}' } }] };
+    assert.deepEqual(lireMistral(corps), { molecule: 'tramadol', rubrique: '4.6', mots: 'allaitement' });
+  });
+
+  it('rend null sur un contenu illisible', () => {
+    assert.equal(lireMistral({ choices: [{ message: { content: 'pas du json' } }] }), null);
+    assert.equal(lireMistral({}), null);
+  });
+
+  // Mode strict : chaînes vides plutôt que null.
+  it('ramène les chaînes vides à null', () => {
+    assert.deepEqual(
+      validerInterpretation({ molecule: '', rubrique: '', mots: 'allaitement' }),
+      { molecule: null, rubrique: null, mots: 'allaitement' },
+    );
+  });
+});
+
 describe('interprétation', () => {
   beforeEach(oublierInterpretations);
 
@@ -65,7 +85,7 @@ describe('routes, IA active', () => {
   const QUESTION = 'puis-je donner du tramadol à une femme qui allaite ?';
 
   beforeEach(async () => {
-    Object.assign(config.ia, { cle: 'test', modele: 'test' });
+    Object.assign(config.ia, { fournisseur: 'mistral', cleMistral: 'test', modele: 'test' });
     oublierInterpretations();
     // Pré-remplit le cache : aucun appel réseau.
     await interpreterQuestion(QUESTION, {
@@ -102,7 +122,7 @@ describe('routes, IA active', () => {
   });
 
   it('IA inactive : rien ne change', async () => {
-    Object.assign(config.ia, { cle: undefined });
+    Object.assign(config.ia, { cleMistral: undefined });
     await request(app).get(`/search?q=${encodeURIComponent(QUESTION)}`).expect(200);
   });
 });
