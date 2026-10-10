@@ -1178,6 +1178,15 @@ a.point:focus-visible {
 
 .etat-requete { color: var(--ink); }
 
+/* Interprétation par IA : annoncée, discrète, refusable. */
+.ia-interpretation {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.ia-interpretation a { margin-left: 0.4em; }
+
 .etat-compte {
   color: var(--faint);
   font-variant-numeric: tabular-nums;

@@ -45,6 +45,13 @@ export const config = {
     relatedLimit: int(process.env.RELATED_LIMIT, 40),
   },
 
+  // Interprétation des questions par IA (option A). Sans clé ni modèle : inactive.
+  ia: {
+    cle: process.env.ANTHROPIC_API_KEY,
+    modele: process.env.IA_MODELE,
+    delaiMs: int(process.env.IA_DELAI_MS, 8000),
+  },
+
   // Origines autorisées pour le CORS. Vide = même origine uniquement.
   corsOrigins: list(process.env.CORS_ORIGINS),
 

@@ -8,7 +8,8 @@ include _dosages.pug
 
 block content
   //- La requête est dans le champ de la barre ; le titre dit où l'on est.
-  +barreSituation('Dans les documents', query, '/documents')
+  //- Question interprétée : le champ garde la question telle que tapée.
+  +barreSituation('Dans les documents', etat.question || query, '/documents')
 
   main.corps
     header.doc-entete
@@ -17,10 +18,22 @@ block content
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
 
-      //- État de la recherche en un seul endroit : requête, rubrique, décompte.
+      //- Interprétation par IA, annoncée (AI Act, art. 50) et refusable.
+      if etat.question
+        p.ia-interpretation
+          | Question « #{etat.question} » interprétée par IA. Résultats : texte officiel des RCP.
+          |
+          a(href=lien({ mode: 'documents', requete: etat.question, brut: '1' })) Chercher tel quel
+
+      //- État de la recherche en un seul endroit : requête, molécule, rubrique, décompte.
       if !panne && !notice
         p.etat
           span.etat-requete= `« ${query} »`
+          if etat.molecule
+            a.jeton(href=lien(etat, { molecule: null })
+              title="Chercher pour toutes les molécules")
+              | #{etat.molecule}
+              span.jeton-croix ×
           if rubrique
             //- Le jeton retire le filtre d'un clic.
             a.jeton(href=lien(etat, { rubrique: null })

@@ -13,14 +13,21 @@ import { normaliserRubrique } from './recherche-texte.js';
  */
 export const MODES = {
   nom: { chemin: '/search', porte: ['filtre'] },
-  documents: { chemin: '/documents', porte: ['rubrique', 'page'] },
+  documents: { chemin: '/documents', porte: ['rubrique', 'page', 'molecule', 'question', 'brut'] },
 };
 
 /** Valeurs par défaut, omises de l'URL. */
 const DEFAUTS = { filtre: 'all', page: 1 };
 
 /** Noms des paramètres d'URL, inchangés pour ne pas casser les liens partagés. */
-const CLE_URL = { filtre: 'filter', rubrique: 'rubrique', page: 'page' };
+const CLE_URL = {
+  filtre: 'filter', rubrique: 'rubrique', page: 'page',
+  // Interprétation par IA : critère molécule, question d'origine, refus (« tel quel »).
+  molecule: 'molecule', question: 'question', brut: 'brut',
+};
+
+/** Texte libre d'URL, borné ; vide → null (omis). */
+const borne = (valeur, max) => String(valeur ?? '').trim().slice(0, max) || null;
 
 /**
  * Lit l'état d'une requête HTTP.
@@ -38,6 +45,9 @@ export function lireEtat(query = {}, mode = 'nom') {
     filtre: parseFilter(query.filter),
     rubrique: normaliserRubrique(query.rubrique),
     page: Number.isFinite(page) && page > 1 ? page : 1,
+    molecule: borne(query.molecule, 80),
+    question: borne(query.question, 300),
+    brut: query.brut === '1' ? '1' : null,
   };
 }
 
@@ -67,6 +77,7 @@ export function lien(etat, changements = {}) {
 
 /** Titre de la page (historique, onglets, favoris), déduit de l'état. */
 export function titre(etat) {
+  if (etat.question) return `« ${etat.question} » · Demander à Kevin`;
   if (!etat.requete) return 'Demander à Kevin';
   const restriction = etat.mode === 'documents' && etat.rubrique
     ? ` — rubrique ${etat.rubrique}`

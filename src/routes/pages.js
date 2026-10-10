@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
-import { lireEtat, titre } from '../etat-recherche.js';
+import { lireEtat, titre, lien } from '../etat-recherche.js';
+import { iaActive, estQuestion, interpreterQuestion } from '../ia.js';
 import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
@@ -136,6 +137,11 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
+      // Une question va chercher dans les documents, où l'IA l'interprète.
+      if (iaActive() && !etat.brut && estQuestion(query.raw)) {
+        return res.redirect(lien({ ...etat, mode: 'documents' }));
+      }
+
       if (query.tooShort) {
         return res.render('search_page', {
           etat,
@@ -183,11 +189,29 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
+      // Question en langage courant : l'IA la traduit en critères, puis on
+      // redirige vers la recherche explicite (URL partageable, filtres retirables).
+      // `question` présent : déjà interprétée, jamais deux fois.
+      if (iaActive() && !etat.question && !etat.brut && !query.tooShort && estQuestion(query.raw)) {
+        const criteres = await interpreterQuestion(query.raw).catch((err) => {
+          console.error('[ia] interprétation indisponible :', err.message);
+          return null;
+        });
+        if (criteres) {
+          return res.redirect(lien(etat, {
+            requete: criteres.mots,
+            rubrique: criteres.rubrique ?? rubrique,
+            molecule: criteres.molecule,
+            question: query.raw,
+          }));
+        }
+      }
+
       let panne = null;
       const documents = query.tooShort
         ? { resultats: [], total: 0, borne: false, decalage: 0, suite: false }
         : await chercherDansDocuments(pool, query.raw, {
-          rubrique, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
+          rubrique, molecule: etat.molecule, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
         })
           .catch((err) => {
             console.error('[recherche] plein texte indisponible :', err.message);

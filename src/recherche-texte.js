@@ -193,8 +193,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
   const { atomes, elargissements } = elargir(saisie);
-  // Les quatre paramètres fixes d'abord, les atomes ensuite : leur nombre varie.
-  const tq = composerTsquery(atomes, 5);
+  // Cinq paramètres fixes (rubrique, limite, décalage, expression, molécule), puis les atomes.
+  const tq = composerTsquery(atomes, 6);
+  const molecule = String(options.molecule ?? '').trim().slice(0, 80) || null;
   const exacte = expressionExacte(saisie);
 
   const { rows } = await pool.query(
@@ -208,6 +209,16 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
+         -- Molécule (substance active) ou nom de spécialité, sans accents.
+         AND ($5::text IS NULL OR s.code_cis IN (
+           SELECT c.code_cis FROM dbpm.cis_compo_bdpm c
+           WHERE c.nature_composant = 'SA'
+             AND public.f_unaccent(upper(c.denomination_substance))
+                 LIKE '%' || public.f_unaccent(upper($5::text)) || '%'
+           UNION
+           SELECT m.code_cis FROM dbpm.cis_bdpm m
+           WHERE public.f_unaccent(upper(m.denomination_medicament))
+                 LIKE public.f_unaccent(upper($5::text)) || '%'))
        LIMIT ${PLAFOND}
      ),
      -- Les substances en jeu, pour ne nommer que celles-là.
@@ -364,7 +375,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      ORDER BY r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $2 OFFSET $3`,
     // Une ligne de plus pour savoir s'il existe une page suivante.
-    [rubrique, limite + 1, decalage, exacte, ...tq.params],
+    [rubrique, limite + 1, decalage, exacte, molecule, ...tq.params],
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;

@@ -1,0 +1,125 @@
+/**
+ * Interprétation d'une question en langage courant (option A) : l'IA traduit
+ * la question en critères de recherche, la base répond avec le texte officiel.
+ * L'IA ne rédige jamais de réponse ; sa sortie est validée avant tout usage.
+ * Sans clé ni modèle configurés, le module est inerte.
+ */
+
+import { config } from './config.js';
+import { normaliserRubrique } from './recherche-texte.js';
+
+/** Rubriques du RCP proposées au modèle, et seules acceptées en retour. */
+export const RUBRIQUES_IA = {
+  '4.1': 'Indications thérapeutiques',
+  '4.2': 'Posologie et mode d\'administration',
+  '4.3': 'Contre-indications',
+  '4.4': 'Mises en garde spéciales et précautions d\'emploi',
+  '4.5': 'Interactions avec d\'autres médicaments',
+  '4.6': 'Fertilité, grossesse et allaitement',
+  '4.7': 'Effets sur l\'aptitude à conduire',
+  '4.8': 'Effets indésirables',
+  '4.9': 'Surdosage',
+  '5.1': 'Propriétés pharmacodynamiques',
+  '5.2': 'Propriétés pharmacocinétiques',
+  '6.1': 'Liste des excipients',
+  '6.3': 'Durée de conservation',
+  '6.4': 'Précautions particulières de conservation',
+};
+
+export const iaActive = () => Boolean(config.ia.cle && config.ia.modele);
+
+/** Une question plutôt qu'une recherche : point d'interrogation, ou cinq mots et plus. */
+export function estQuestion(texte) {
+  const propre = String(texte ?? '').trim();
+  if (!propre || /^".*"$/.test(propre)) return false;
+  return /\?\s*$/.test(propre) || propre.split(/\s+/).length >= 5;
+}
+
+const SYSTEME = `Tu traduis la question d'un pharmacien d'officine en critères de recherche
+dans les résumés des caractéristiques du produit (RCP) français. Tu ne réponds jamais
+à la question elle-même.
+- molecule : la DCI ou le nom de spécialité cité, sans dosage ni forme ; null si aucun.
+- rubrique : le numéro de la rubrique du RCP la plus pertinente, parmi :
+${Object.entries(RUBRIQUES_IA).map(([numero, libelle]) => `  ${numero} ${libelle}`).join('\n')}
+  null si aucune ne s'impose.
+- mots : 1 à 4 mots-clés tels qu'ils figurent dans un RCP (vocabulaire médical français),
+  sans la molécule. Exemples : « allaitement », « insuffisance rénale », « allongement QT ».`;
+
+const OUTIL = {
+  name: 'criteres_recherche',
+  description: 'Critères de recherche dans les RCP.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      molecule: { type: ['string', 'null'] },
+      rubrique: { type: ['string', 'null'], enum: [...Object.keys(RUBRIQUES_IA), null] },
+      mots: { type: 'string' },
+    },
+    required: ['molecule', 'rubrique', 'mots'],
+  },
+};
+
+/** Sortie du modèle → critères sûrs, ou null : on retombe alors sur la recherche normale. */
+export function validerInterpretation(entree) {
+  if (!entree || typeof entree !== 'object') return null;
+  const mots = String(entree.mots ?? '').replace(/[?"]/g, '').trim();
+  if (!mots || mots.length > 120) return null;
+
+  const brute = String(entree.molecule ?? '').trim();
+  const molecule = /^[\p{L}\d][\p{L}\d\s'’-]{1,79}$/u.test(brute) ? brute : null;
+
+  const numero = normaliserRubrique(entree.rubrique);
+  const rubrique = numero && RUBRIQUES_IA[numero] ? numero : null;
+
+  return { molecule, rubrique, mots };
+}
+
+/** Appel à l'API Anthropic : outil imposé, sortie structurée, délai borné. */
+async function appelerAnthropic(question) {
+  const reponse = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': config.ia.cle,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: config.ia.modele,
+      // Outil imposé : réponse directe, sans réflexion préalable ; marge pour l'appel d'outil.
+      max_tokens: 400,
+      system: SYSTEME,
+      tools: [OUTIL],
+      tool_choice: { type: 'tool', name: OUTIL.name },
+      messages: [{ role: 'user', content: question }],
+    }),
+    signal: AbortSignal.timeout(config.ia.delaiMs),
+  });
+  if (!reponse.ok) throw new Error(`API ${reponse.status}`);
+  const corps = await reponse.json();
+  return corps.content?.find((bloc) => bloc.type === 'tool_use')?.input ?? null;
+}
+
+// Une même question ne coûte qu'un appel (cache borné, perdu au redémarrage).
+const cache = new Map();
+const CACHE_MAX = 500;
+
+/**
+ * @param {string} question
+ * @param {{ appeler?: (question: string) => Promise<object|null> }} [options] - injectable (tests)
+ * @returns {Promise<{ molecule: string|null, rubrique: string|null, mots: string }|null>}
+ */
+export async function interpreterQuestion(question, { appeler = appelerAnthropic } = {}) {
+  const cle = String(question ?? '').trim().toLowerCase();
+  if (!cle) return null;
+  if (cache.has(cle)) return cache.get(cle);
+
+  const interpretation = validerInterpretation(await appeler(cle));
+  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+  cache.set(cle, interpretation);
+  return interpretation;
+}
+
+/** Vide le cache (tests). */
+export function oublierInterpretations() {
+  cache.clear();
+}

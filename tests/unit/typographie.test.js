@@ -260,7 +260,7 @@ describe('lisibilité, couche A', () => {
 
 describe('lisibilité, couche B (doses, rubrique 4.2)', () => {
   const NBSP = '\u00a0';
-  const gras = (html) => [...html.matchAll(/<strong class="dose-cle">([^<]+)<\/strong>/g)].map((m) => m[1]);
+  const gras = (html) => [...html.matchAll(/<strong class="dose-cle">([^<]+)<\/strong>/g)].map((trouve) => trouve[1]);
 
   it('met chaque dose en gras, unité et dénominateur compris', () => {
     const html = lisibilite('<p>de 10 mg/jour, 60 mg/kg/jour, 10 à 30 mg, 4 000 UI, 2 comprimés.</p>', { type: 'rcp', numero: '4.2' });
@@ -281,7 +281,7 @@ describe('lisibilité, couche B (doses, rubrique 4.2)', () => {
 });
 
 describe('lisibilité, couche C (mises en garde, 4.2 et 4.4)', () => {
-  const marques = (html) => [...html.matchAll(/<strong class="alerte">([^<]+)<\/strong>/g)].map((m) => m[1]);
+  const marques = (html) => [...html.matchAll(/<strong class="alerte">([^<]+)<\/strong>/g)].map((trouve) => trouve[1]);
 
   it('marque l’expression, pas la phrase', () => {
     const html = alertes('<p>La dose quotidienne maximale ne doit pas dépasser 30 mg. Contre-indiqué chez l’enfant ; ne pas associer.</p>');
