@@ -273,7 +273,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        WHERE EXISTS (SELECT 1 FROM libelles l
                      WHERE l.code_substance = f.code_substance AND f.mots <@ l.mots)
      ),
-     noms AS (
+     -- MATERIALIZED : calculée une fois. Inlinée, elle était retriée à chaque
+     -- spécialité, et « allaitement » (3 000 occurrences) dépassait le délai.
+     noms AS MATERIALIZED (
        SELECT DISTINCT ON (code_substance) code_substance, nom
        FROM candidats
        WHERE coalesce(nom, '') <> ''
@@ -286,15 +288,16 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      -- Les spécialités sans composition — deux sur treize mille six cents —
      -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe
      -- vide commun, qui les réunirait sans qu'elles aient rien en partage.
-     molecule AS (
+     -- Jointure agrégée plutôt qu'un sous-select corrélé : un seul passage
+     -- sur les compositions, quel que soit le nombre d'occurrences.
+     molecule AS MATERIALIZED (
        SELECT t.code_cis,
-              coalesce(
-                (SELECT string_agg(DISTINCT n.nom, ' + ' ORDER BY n.nom)
-                 FROM dbpm.cis_compo_bdpm c
-                 JOIN noms n ON n.code_substance = c.code_substance
-                 WHERE c.code_cis = t.code_cis AND c.nature_composant = 'SA'),
-                'cis:' || t.code_cis) AS signature
+              coalesce(string_agg(DISTINCT n.nom, ' + ' ORDER BY n.nom),
+                       'cis:' || t.code_cis) AS signature
        FROM (SELECT DISTINCT code_cis FROM trouve) t
+       LEFT JOIN dbpm.cis_compo_bdpm c ON c.code_cis = t.code_cis AND c.nature_composant = 'SA'
+       LEFT JOIN noms n ON n.code_substance = c.code_substance
+       GROUP BY t.code_cis
      ),
      -- Princeps (référent de groupe générique) : la spécialité la plus connue
      -- représente sa molécule et fournit ses phrases.
