@@ -193,9 +193,11 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
 
   const { atomes, elargissements } = elargir(saisie);
-  // Cinq paramètres fixes (rubrique, limite, décalage, expression, molécule), puis les atomes.
-  const tq = composerTsquery(atomes, 6);
+  // Six paramètres fixes (rubrique, limite, décalage, expression, molécule, phrases), puis les atomes.
+  const tq = composerTsquery(atomes, 7);
   const molecule = String(options.molecule ?? '').trim().slice(0, 80) || null;
+  // Recherche ciblée : la phrase de chaque rubrique trouvée, affichée d'office.
+  const phrases = Boolean(options.phrases);
   const exacte = expressionExacte(saisie);
 
   const { rows } = await pool.query(
@@ -298,7 +300,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      -- (les effets indésirables) n'est pas le chapitre 4 d'un RCP.
      par_rubrique AS (
        SELECT DISTINCT ON (signature, document_type, numero)
-              signature, numero, libelle, code_cis, document_type, position, score, exact
+              signature, numero, libelle, code_cis, document_type, position, score, exact, texte
        FROM enrichi
        WHERE coalesce(numero, '') <> ''
        ORDER BY signature, document_type, numero, exact DESC, score DESC, code_cis
@@ -343,6 +345,22 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               coalesce(min(rang) FILTER (WHERE exact), min(rang)) AS rang
        FROM enrichi GROUP BY signature
      )
+     SELECT page.*,
+            -- Phrases par rubrique, pour la page affichée seulement (après le LIMIT) :
+            -- une extraction par rubrique de chaque molécule, trop coûteuse sur 3 000.
+            CASE WHEN $6::boolean THEN (
+              SELECT jsonb_agg(jsonb_build_object(
+                       'numero', p.numero, 'libelle', p.libelle, 'cis', p.code_cis,
+                       'type', p.document_type, 'exact', p.exact,
+                       'ancre', p.document_type || '-' || p.position,
+                       'extrait', ${phraseSql('p.texte', 'q.tq', '$4::text')})
+                     ORDER BY p.document_type <> 'rcp',
+                              substring(p.numero from '^[0-9]+')::int NULLS LAST,
+                              substring(p.numero from '[.]([0-9]+)')::int NULLS FIRST,
+                              p.numero)
+              FROM par_rubrique p WHERE p.signature = page.signature AND coalesce(p.numero, '') <> '')
+            END AS detaillees
+     FROM (
      SELECT r.signature, r.specialites, r.exact, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
             b.code_cis, b.numero, b.libelle,
             b.document_type || '-' || b.position AS ancre,
@@ -374,9 +392,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      LEFT JOIN chapeau c USING (signature)
      JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
      ORDER BY r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
-     LIMIT $2 OFFSET $3`,
+     LIMIT $2 OFFSET $3
+     ) AS page, q`,
     // Une ligne de plus pour savoir s'il existe une page suivante.
-    [rubrique, limite + 1, decalage, exacte, molecule, ...tq.params],
+    [rubrique, limite + 1, decalage, exacte, molecule, phrases, ...tq.params],
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;
@@ -390,8 +409,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     exacte: Boolean(exacte),
     // Élargissements affichés, pour que le lecteur puisse les refuser.
     elargissements,
-    resultats: page.map(({ occurrences: _, molecule, denomination, liste, ...reste }) => ({
+    resultats: page.map(({ occurrences: _, molecule, denomination, liste, detaillees, ...reste }) => ({
       ...reste,
+      // Ciblée : les rubriques portent leur phrase.
+      rubriques: detaillees ?? reste.rubriques,
       formes: formesDuProduit(liste),
       denomination,
       // Sans composition enregistrée : la dénomination sert de titre.

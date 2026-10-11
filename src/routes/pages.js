@@ -150,6 +150,9 @@ export function pageRoutes(pool) {
     return iaActive() && estQuestion(saisie) ? { ia: true } : null;
   };
 
+  /** Jusqu'à ce nombre de molécules, les phrases trouvées s'affichent d'office. */
+  const PEU = 5;
+
   router.get(
     '/search',
     wrap(async (req, res) => {
@@ -239,18 +242,27 @@ export function pageRoutes(pool) {
       }
 
       let panne = null;
+      const vide = { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
+      const chercher = (phrases) => chercherDansDocuments(pool, query.raw, {
+        rubrique, molecule: etat.molecule, phrases, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
+      });
+      // Recherche ciblée (médicament, question, rubrique) : les phrases d'office.
+      // Sinon, si les résultats tiennent en peu de molécules, on les demande après coup.
+      const ciblee = Boolean(etat.molecule || etat.question || rubrique);
       const documents = query.tooShort
-        ? { resultats: [], total: 0, borne: false, decalage: 0, suite: false }
-        : await chercherDansDocuments(pool, query.raw, {
-          rubrique, molecule: etat.molecule, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
-        })
+        ? vide
+        : await chercher(ciblee)
+          .then((trouve) => (
+            !ciblee && trouve.resultats.length > 0 && trouve.resultats.length <= PEU
+              ? chercher(true) : trouve
+          ))
           .catch((err) => {
             console.error('[recherche] plein texte indisponible :', err.message);
             panne = rechercheAbsente(err)
               ? 'La recherche dans les documents n’est pas encore installée sur cette base '
                 + '— exécuter « npm run db:recherche ».'
               : 'La recherche dans les documents est momentanément indisponible.';
-            return { resultats: [], total: 0, borne: false, decalage: 0, suite: false };
+            return vide;
           });
 
       res.render('documents', {

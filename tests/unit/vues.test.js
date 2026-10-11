@@ -427,9 +427,25 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /cellule-autres/);
     assert.match(html, /class="jeton"[^>]*>rubrique 4\.5/);
     assert.match(html, /class="jeton" href="\/documents\?q=QT"/);
-    assert.match(html, /class="ligne-phrase"/);
+  });
+
+  // Recherche ciblée : la phrase de chaque rubrique se lit sur place, la rubrique mène au RCP.
+  it('affiche la phrase de chaque rubrique quand elle est fournie', () => {
+    const ciblee = {
+      ...RECHERCHE_PLEINE,
+      resultats: [{
+        ...TROUVAILLE,
+        rubriques: [
+          { numero: '4.4', libelle: 'Mises en garde', cis: '66297965', ancre: 'rcp-12', extrait: 'allongement de l’<mark>intervalle QT</mark>' },
+          { numero: '4.8', libelle: 'Effets indésirables', cis: '66297966', ancre: 'rcp-21', extrait: '<mark>QT</mark> prolongé' },
+        ],
+      }],
+    };
+    const html = rendre('documents', { query: 'QT', rubrique: null, documents: ciblee, page: 1 });
+    assert.match(html, /class="ligne-phrases"/);
+    assert.match(html, /class="phrase-rubrique" href="\/product\/66297965\?q=QT#rcp-12"[^>]*>4\.4</);
     assert.match(html, /intervalle QT<\/mark>/);
-    assert.match(html, /OLANZAPINE ALPHA 5 mg, comprimé/);
+    assert.match(html, /<mark>QT<\/mark> prolongé/);
   });
 
   // L'aperçu au survol est demandé au serveur par clé primaire.

@@ -1160,10 +1160,20 @@ a.point:focus-visible {
 
 .autre.point-epars { color: var(--faint); }
 
-/* Filtrée, la phrase suit la molécule. */
-.trouvailles .ligne-phrase td {
+/* Recherche ciblée : les phrases suivent la molécule, une par rubrique. */
+.trouvailles .ligne-phrases td {
   padding: 0 0 var(--sp-2) var(--sp-3);
   border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.trouvailles .trouvaille:has(.ligne-phrases) > tr:first-child > * { border-bottom: 0; }
+
+/* Numéro de rubrique en tête de phrase : le lien vers le RCP. */
+.phrase-rubrique {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.3em;
 }
 
 /* État de la recherche : requête, filtres, décompte. */

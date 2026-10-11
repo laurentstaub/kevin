@@ -118,14 +118,18 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                       span.marque Importation
                     +dosages(groupeNom, requete)
 
-        //- Filtré sur une rubrique, la phrase s'affiche d'office.
-        if rubrique && trouvaille.extrait
-          tr.ligne-phrase
-            td
-              //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
-              p.trouvaille-extrait!= trouvaille.extrait
-              p.preuve-source
-                a(href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`)= trouvaille.denomination
+        //- Recherche ciblée : la phrase trouvée dans chaque rubrique, sous la ligne.
+        //- La rubrique est le lien vers le RCP ; la phrase se lit sur place.
+        - const detaillees = rubriques.filter((rub) => rub.extrait)
+        if detaillees.length > 0
+          tr.ligne-phrases
+            td(colspan=1 + colonnesVues.length + (rubrique ? 0 : 1))
+              each rub in detaillees
+                p.trouvaille-extrait
+                  a.phrase-rubrique(href=`/product/${rub.cis}${q}#${rub.ancre}` title=long(rub))= court(rub)
+                  |  
+                  //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
+                  span!= rub.extrait
 
   if resume && recherche.total > recherche.resultats.length
     p.trouvailles-suite
