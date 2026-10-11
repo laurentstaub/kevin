@@ -13,7 +13,7 @@ import { normaliserRubrique } from './recherche-texte.js';
  */
 export const MODES = {
   nom: { chemin: '/search', porte: ['filtre'] },
-  documents: { chemin: '/documents', porte: ['rubrique', 'page', 'molecule', 'question', 'brut'] },
+  documents: { chemin: '/documents', porte: ['rubrique', 'page', 'molecule', 'question', 'ia', 'brut'] },
 };
 
 /** Valeurs par défaut, omises de l'URL. */
@@ -22,8 +22,8 @@ const DEFAUTS = { filtre: 'all', page: 1 };
 /** Noms des paramètres d'URL, inchangés pour ne pas casser les liens partagés. */
 const CLE_URL = {
   filtre: 'filter', rubrique: 'rubrique', page: 'page',
-  // Interprétation par IA : critère molécule, question d'origine, refus (« tel quel »).
-  molecule: 'molecule', question: 'question', brut: 'brut',
+  // Saisie réorientée : médicament reconnu, saisie d'origine, par l'IA ou non, refus (« tel quel »).
+  molecule: 'molecule', question: 'question', ia: 'ia', brut: 'brut',
 };
 
 /** Texte libre d'URL, borné ; vide → null (omis). */
@@ -47,6 +47,7 @@ export function lireEtat(query = {}, mode = 'nom') {
     page: Number.isFinite(page) && page > 1 ? page : 1,
     molecule: borne(query.molecule, 80),
     question: borne(query.question, 300),
+    ia: query.ia === '1' ? '1' : null,
     brut: query.brut === '1' ? '1' : null,
   };
 }

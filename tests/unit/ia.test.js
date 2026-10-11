@@ -106,11 +106,12 @@ describe('routes, IA active', () => {
     assert.equal(url.searchParams.get('rubrique'), '4.6');
     assert.equal(url.searchParams.get('molecule'), 'tramadol');
     assert.equal(url.searchParams.get('question'), QUESTION);
+    assert.equal(url.searchParams.get('ia'), '1');
   });
 
   it('annonce l’interprétation et propose de chercher tel quel', async () => {
     const res = await request(app)
-      .get(`/documents?q=allaitement&rubrique=4.6&molecule=tramadol&question=${encodeURIComponent(QUESTION)}`)
+      .get(`/documents?q=allaitement&rubrique=4.6&molecule=tramadol&ia=1&question=${encodeURIComponent(QUESTION)}`)
       .expect(200);
     assert.match(res.text, /interprétée par IA/);
     assert.match(res.text, /brut=1/);

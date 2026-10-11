@@ -4,6 +4,7 @@ import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre, lien } from '../etat-recherche.js';
 import { iaActive, estQuestion, interpreterQuestion } from '../ia.js';
+import { reconnaitreMedicament } from '../reconnaissance.js';
 import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
@@ -127,6 +128,18 @@ export function pageRoutes(pool) {
     }),
   );
 
+  /** URL de la recherche réorientée sur un médicament reconnu, ou null. */
+  const reorienter = async (etat, saisie) => {
+    const reconnu = await reconnaitreMedicament(pool, saisie).catch((err) => {
+      console.error('[recherche] reconnaissance indisponible :', err.message);
+      return null;
+    });
+    if (!reconnu) return null;
+    return lien({ ...etat, mode: 'documents' }, {
+      requete: reconnu.reste, molecule: reconnu.molecule, question: saisie,
+    });
+  };
+
   router.get(
     '/search',
     wrap(async (req, res) => {
@@ -140,6 +153,13 @@ export function pageRoutes(pool) {
       // Une question va chercher dans les documents, où l'IA l'interprète.
       if (iaActive() && !etat.brut && estQuestion(query.raw)) {
         return res.redirect(lien({ ...etat, mode: 'documents' }));
+      }
+
+      // « paracetamol allaitement » : médicament reconnu par la base, le reste
+      // se cherche dans ses seuls documents.
+      if (!etat.brut && !query.tooShort) {
+        const reoriente = await reorienter(etat, query.raw);
+        if (reoriente) return res.redirect(reoriente);
       }
 
       if (query.tooShort) {
@@ -203,8 +223,14 @@ export function pageRoutes(pool) {
             rubrique: criteres.rubrique ?? rubrique,
             molecule: criteres.molecule,
             question: query.raw,
+            ia: '1',
           }));
         }
+      }
+
+      if (!etat.molecule && !etat.question && !etat.brut && !query.tooShort) {
+        const reoriente = await reorienter(etat, query.raw);
+        if (reoriente) return res.redirect(reoriente);
       }
 
       let panne = null;

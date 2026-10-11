@@ -18,10 +18,13 @@ block content
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
 
-      //- Interprétation par IA, annoncée (AI Act, art. 50) et refusable.
+      //- Saisie réorientée : par l'IA (annoncée, AI Act art. 50) ou par la base ; refusable.
       if etat.question
         p.ia-interpretation
-          | Question « #{etat.question} » interprétée par IA. Résultats : texte officiel des RCP.
+          if etat.ia
+            | Question « #{etat.question} » interprétée par IA. Résultats : texte officiel des RCP.
+          else
+            | « #{etat.molecule} » reconnu comme médicament : résultats limités à ses spécialités.
           |
           a(href=lien({ mode: 'documents', requete: etat.question, brut: '1' })) Chercher tel quel
 

@@ -209,16 +209,17 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
-         -- Molécule (substance active) ou nom de spécialité, sans accents.
+         -- Médicament : chaque mot du filtre figure dans une substance active ou
+         -- dans la dénomination (« acide folique », « paracetamol codeine »).
          AND ($5::text IS NULL OR s.code_cis IN (
-           SELECT c.code_cis FROM dbpm.cis_compo_bdpm c
-           WHERE c.nature_composant = 'SA'
-             AND public.f_unaccent(upper(c.denomination_substance))
-                 LIKE '%' || public.f_unaccent(upper($5::text)) || '%'
-           UNION
            SELECT m.code_cis FROM dbpm.cis_bdpm m
-           WHERE public.f_unaccent(upper(m.denomination_medicament))
-                 LIKE public.f_unaccent(upper($5::text)) || '%'))
+           WHERE (SELECT bool_and(
+                    public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
+                    OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
+                               WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
+                                 AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%'))
+                  FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
+                  WHERE mot <> '')))
        LIMIT ${PLAFOND}
      ),
      -- Les substances en jeu, pour ne nommer que celles-là.
