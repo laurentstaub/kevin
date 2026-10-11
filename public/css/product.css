@@ -565,11 +565,11 @@ span.onglet {
   font-weight: 700;
 }
 
-/* Couche C, 4.2 et 4.4 : mises en garde, rouge sombre (7:1 sur blanc).
-   Neutraliser : font-weight: inherit; color: inherit. */
+/* Couche C, 4.2 et 4.4 : mises en garde, rouge sombre (7:1 sur blanc,
+   7,1 en sombre). Neutraliser : font-weight: inherit; color: inherit. */
 .rubrique-corps .alerte {
   font-weight: 700;
-  color: #9b2c1f;
+  color: light-dark(#9b2c1f, #e8877a);
 }
 
 /* Renvoi de bas de rubrique (astérisque QRD) : italique, corps réduit.

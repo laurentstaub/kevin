@@ -71,6 +71,40 @@
   /* Dérivées : la mesure ne peut pas diverger du cadre. */
   --measure: calc(var(--colonne) - var(--gouttiere));
   --lecture: var(--colonne);
+
+  /* Les deux schémas sont servis : champs, défilement et surlignage natifs
+     suivent celui du système, les jetons ci-dessous suivent en dessous. */
+  color-scheme: light dark;
+  /* L'encre posée sur l'aplat vif ne change pas de schéma : 9,09 sur le vert. */
+  --ink-sur-vif: #14201a;
+}
+
+/* Mode sombre : le réglage du système, rien d'autre. Fond vert-noir plutôt
+   que noir, encre blanc cassé pour les 40 000 signes d'un RCP. Contrastes
+   sur le fond : encre 14,9, gris 8,2 et 6,4, lien 9,0, alerte 7,1. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e4eae5;
+    --muted: #a7b1aa;
+    --faint: #929c95;
+    --rule: #27322b;
+    --rule-medium: #3f4d44;
+    --rule-strong: #e4eae5;
+
+    --bg: #101713;
+    --bg-alt: #151e19;
+    --bg-tint: #182219;
+
+    --accent: #6cc584;
+    --lien: #6fc98a;
+    --accent-soft: #46624f;
+    --accent-pale: #203328;
+  }
+}
+
+/* À l'impression, toujours clair. */
+@media print {
+  :root { color-scheme: light; }
 }
 
 *,
