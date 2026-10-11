@@ -49,8 +49,10 @@ dans les résumés des caractéristiques du produit (RCP) français. Tu ne répo
 - rubrique : le numéro de la rubrique du RCP la plus pertinente, parmi :
 ${Object.entries(RUBRIQUES_IA).map(([numero, libelle]) => `  ${numero} ${libelle}`).join('\n')}
   null si aucune ne s'impose.
-- mots : 1 à 4 mots-clés tels qu'ils figurent dans un RCP (vocabulaire médical français),
-  sans la molécule. Exemples : « allaitement », « insuffisance rénale », « allongement QT ».`;
+- mots : une seule expression de 1 à 4 mots, celle qui figure textuellement dans un RCP
+  (vocabulaire médical français), sans la molécule. Jamais de liste ni de virgule :
+  tous les mots doivent être présents dans la même rubrique pour qu'elle soit trouvée.
+  Exemples : « allaitement », « insuffisance rénale », « allongement QT ».`;
 
 const OUTIL = {
   name: 'criteres_recherche',
@@ -66,14 +68,21 @@ const OUTIL = {
   },
 };
 
+/** Ce que le modèle écrit quand il n'a rien à mettre, en toutes lettres. */
+const RIEN = new Set(['', 'null', 'none', 'aucun', 'aucune', 'n/a']);
+
 /** Sortie du modèle → critères sûrs, ou null : on retombe alors sur la recherche normale. */
 export function validerInterpretation(entree) {
   if (!entree || typeof entree !== 'object') return null;
-  const mots = String(entree.mots ?? '').replace(/[?"]/g, '').trim();
+  // Une liste malgré la consigne (« a, b, c ») : la première expression seule,
+  // car la recherche exige tous les mots dans la même rubrique.
+  const mots = String(entree.mots ?? '').replace(/[?"]/g, '').split(/[,;]/)[0]
+    .trim().split(/\s+/).slice(0, 5).join(' ');
   if (!mots || mots.length > 120) return null;
 
   const brute = String(entree.molecule ?? '').trim();
-  const molecule = /^[\p{L}\d][\p{L}\d\s'’-]{1,79}$/u.test(brute) ? brute : null;
+  const molecule = !RIEN.has(brute.toLowerCase())
+    && /^[\p{L}\d][\p{L}\d\s'’-]{1,79}$/u.test(brute) ? brute : null;
 
   const numero = normaliserRubrique(entree.rubrique);
   const rubrique = numero && RUBRIQUES_IA[numero] ? numero : null;

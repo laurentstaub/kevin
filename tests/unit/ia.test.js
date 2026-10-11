@@ -36,6 +36,17 @@ describe('validation de la sortie du modèle', () => {
     );
   });
 
+  // Vu en production : molecule « null » en toutes lettres, mots en liste à virgules.
+  it('ramène « null » à rien et ne garde que la première expression d’une liste', () => {
+    assert.deepEqual(
+      validerInterpretation({
+        molecule: 'null', rubrique: '4.4',
+        mots: 'insuffisance hépatique sévère, ajustement posologique, contre-indication',
+      }),
+      { molecule: null, rubrique: '4.4', mots: 'insuffisance hépatique sévère' },
+    );
+  });
+
   it('refuse une sortie sans mots-clés', () => {
     assert.equal(validerInterpretation({ molecule: 'tramadol', rubrique: '4.6', mots: '' }), null);
     assert.equal(validerInterpretation(null), null);

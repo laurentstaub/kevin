@@ -69,7 +69,11 @@ block content
     else if notice
       p.vide= notice
     else if documents.resultats.length === 0
-      p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
+      p.vide
+        | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
+        if rubrique
+          |  
+          a(href=lien(etat, { rubrique: null })) Chercher dans toutes les rubriques
     else
       +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien, ciblee)
 
