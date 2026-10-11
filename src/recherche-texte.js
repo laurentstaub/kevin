@@ -293,7 +293,14 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                 'cis:' || t.code_cis) AS signature
        FROM (SELECT DISTINCT code_cis FROM trouve) t
      ),
-     enrichi AS (SELECT t.*, m.signature FROM trouve t JOIN molecule m USING (code_cis)),
+     -- Princeps (référent de groupe générique) : la spécialité la plus connue
+     -- représente sa molécule et fournit ses phrases.
+     enrichi AS (
+       SELECT t.*, m.signature,
+              EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
+                      WHERE g.code_cis = t.code_cis AND g.type_generique = '0') AS princeps
+       FROM trouve t JOIN molecule m USING (code_cis)
+     ),
      -- Une entrée par rubrique et par molécule, portée par sa meilleure
      -- occurrence : le numéro affiché doit mener quelque part de précis. Le
      -- type de document fait partie de la clé : la rubrique 4 d'une notice
@@ -303,7 +310,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               signature, numero, libelle, code_cis, document_type, position, score, exact, texte
        FROM enrichi
        WHERE coalesce(numero, '') <> ''
-       ORDER BY signature, document_type, numero, exact DESC, score DESC, code_cis
+       ORDER BY signature, document_type, numero, exact DESC, princeps DESC, score DESC, code_cis
      ),
      chapeau AS (
        SELECT signature,
@@ -329,7 +336,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      meilleur AS (
        SELECT DISTINCT ON (signature)
               signature, code_cis, document_type, position, numero, libelle, texte, score
-       FROM enrichi ORDER BY signature, exact DESC, rang, score DESC, code_cis
+       FROM enrichi ORDER BY signature, exact DESC, rang, princeps DESC, score DESC, code_cis
      ),
      -- Meilleur passage de chaque spécialité : l'accordéon des dosages y mène.
      par_specialite AS MATERIALIZED (
@@ -342,7 +349,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      resume AS (
        SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score,
               bool_or(exact) AS exact,
-              coalesce(min(rang) FILTER (WHERE exact), min(rang)) AS rang
+              coalesce(min(rang) FILTER (WHERE exact), min(rang)) AS rang,
+              -- Nombre de substances : filtré sur un médicament, la molécule seule passe avant ses associations.
+              array_length(string_to_array(signature, ' + '), 1) AS composants
        FROM enrichi GROUP BY signature
      )
      SELECT page.*,
@@ -391,7 +400,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      JOIN meilleur b USING (signature)
      LEFT JOIN chapeau c USING (signature)
      JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
-     ORDER BY r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
+     ORDER BY CASE WHEN $5::text IS NULL THEN 0 ELSE r.composants END,
+              r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $2 OFFSET $3
      ) AS page, q`,
     // Une ligne de plus pour savoir s'il existe une page suivante.
