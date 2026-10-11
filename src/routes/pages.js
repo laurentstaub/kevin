@@ -128,16 +128,26 @@ export function pageRoutes(pool) {
     }),
   );
 
-  /** URL de la recherche réorientée sur un médicament reconnu, ou null. */
-  const reorienter = async (etat, saisie) => {
+  /**
+   * Où envoyer une saisie : la base d'abord, l'IA ensuite.
+   * - médicament + reste (« paracetamol allaitement ») → documents du médicament ;
+   * - nom seul (« doliprane 1000 mg ») → recherche par nom, jamais l'IA ;
+   * - aucun médicament et allure de question → l'IA interprète (`ia`) ;
+   * - sinon la recherche habituelle (null).
+   * @returns {Promise<{ url: string }|{ ia: true }|null>}
+   */
+  const orienter = async (etat, saisie) => {
     const reconnu = await reconnaitreMedicament(pool, saisie).catch((err) => {
       console.error('[recherche] reconnaissance indisponible :', err.message);
       return null;
     });
-    if (!reconnu) return null;
-    return lien({ ...etat, mode: 'documents' }, {
-      requete: reconnu.reste, molecule: reconnu.molecule, question: saisie,
-    });
+    if (reconnu?.reste) {
+      return { url: lien({ ...etat, mode: 'documents' }, {
+        requete: reconnu.reste, molecule: reconnu.molecule, question: saisie,
+      }) };
+    }
+    if (reconnu) return null;
+    return iaActive() && estQuestion(saisie) ? { ia: true } : null;
   };
 
   router.get(
@@ -150,16 +160,11 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
-      // Une question va chercher dans les documents, où l'IA l'interprète.
-      if (iaActive() && !etat.brut && estQuestion(query.raw)) {
-        return res.redirect(lien({ ...etat, mode: 'documents' }));
-      }
-
-      // « paracetamol allaitement » : médicament reconnu par la base, le reste
-      // se cherche dans ses seuls documents.
+      // Médicament reconnu → ses documents ; question → l'IA l'interprète sur /documents.
       if (!etat.brut && !query.tooShort) {
-        const reoriente = await reorienter(etat, query.raw);
-        if (reoriente) return res.redirect(reoriente);
+        const sens = await orienter(etat, query.raw);
+        if (sens?.url) return res.redirect(sens.url);
+        if (sens?.ia) return res.redirect(lien({ ...etat, mode: 'documents' }));
       }
 
       if (query.tooShort) {
@@ -209,28 +214,28 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
-      // Question en langage courant : l'IA la traduit en critères, puis on
-      // redirige vers la recherche explicite (URL partageable, filtres retirables).
-      // `question` présent : déjà interprétée, jamais deux fois.
-      if (iaActive() && !etat.question && !etat.brut && !query.tooShort && estQuestion(query.raw)) {
-        const criteres = await interpreterQuestion(query.raw).catch((err) => {
-          console.error('[ia] interprétation indisponible :', err.message);
-          return null;
-        });
-        if (criteres) {
-          return res.redirect(lien(etat, {
-            requete: criteres.mots,
-            rubrique: criteres.rubrique ?? rubrique,
-            molecule: criteres.molecule,
-            question: query.raw,
-            ia: '1',
-          }));
-        }
-      }
-
+      // Saisie brute (ni déjà réorientée, ni « tel quel ») : la base reconnaît
+      // un médicament, ou l'IA traduit la question en critères. Dans les deux
+      // cas, redirection vers la recherche explicite (URL partageable, filtres
+      // retirables) ; `question` présent : déjà fait, jamais deux fois.
       if (!etat.molecule && !etat.question && !etat.brut && !query.tooShort) {
-        const reoriente = await reorienter(etat, query.raw);
-        if (reoriente) return res.redirect(reoriente);
+        const sens = await orienter(etat, query.raw);
+        if (sens?.url) return res.redirect(sens.url);
+        if (sens?.ia) {
+          const criteres = await interpreterQuestion(query.raw).catch((err) => {
+            console.error('[ia] interprétation indisponible :', err.message);
+            return null;
+          });
+          if (criteres) {
+            return res.redirect(lien(etat, {
+              requete: criteres.mots,
+              rubrique: criteres.rubrique ?? rubrique,
+              molecule: criteres.molecule,
+              question: query.raw,
+              ia: '1',
+            }));
+          }
+        }
       }
 
       let panne = null;

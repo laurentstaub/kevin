@@ -1,8 +1,9 @@
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { normaliser, motDeTexte, reconnaitreMedicament } from '../../src/reconnaissance.js';
 import { createApp } from '../../src/app.js';
+import { config } from '../../src/config.js';
 
 /** Base factice : « paracetamol » et « acide folique » sont des substances, « doliprane » une marque. */
 const CONNUS = { substances: { paracetamol: 1, 'acide folique': 1, sodium: 300 }, marques: new Set(['doliprane']) };
@@ -52,10 +53,11 @@ describe('reconnaissance d’un médicament', () => {
     );
   });
 
-  it('ne réoriente ni un nom seul, ni un nom avec dosage ou forme', async () => {
+  // Reste vide : la route garde la recherche par nom et n'appelle pas l'IA.
+  it('un nom avec dosage ou forme est reconnu, sans rien à chercher', async () => {
     assert.equal(await reconnaitreMedicament(poolFactice, 'paracetamol'), null);
-    assert.equal(await reconnaitreMedicament(poolFactice, 'doliprane 1000 mg'), null);
-    assert.equal(await reconnaitreMedicament(poolFactice, 'paracetamol gelule'), null);
+    assert.deepEqual(await reconnaitreMedicament(poolFactice, 'doliprane 1000 mg'), { molecule: 'doliprane', reste: '' });
+    assert.deepEqual(await reconnaitreMedicament(poolFactice, 'paracetamol gelule'), { molecule: 'paracetamol', reste: '' });
   });
 
   it('ignore un composant générique et une saisie sans médicament', async () => {
@@ -94,5 +96,27 @@ describe('routes : médicament reconnu', () => {
   it('un nom seul reste une recherche par nom', async () => {
     await request(app).get('/search?q=doliprane+1000').expect(200);
     await request(app).get('/search?q=paracetamol+allaitement&brut=1').expect(200);
+  });
+});
+
+describe('routes : la base avant l’IA', () => {
+  const avant = { ...config.ia };
+  const app = createApp(poolFactice);
+  beforeEach(() => Object.assign(config.ia, { fournisseur: 'mistral', cleMistral: 'test', modele: 'test' }));
+  after(() => Object.assign(config.ia, avant));
+
+  it('un médicament reconnu passe par la base, pas par l’IA', async () => {
+    const res = await request(app).get('/search?q=paracetamol+femme+enceinte').expect(302);
+    assert.match(res.headers.location, /molecule=paracetamol/);
+    assert.doesNotMatch(res.headers.location, /ia=1/);
+  });
+
+  it('un nom avec dosage et forme ne va pas à l’IA', async () => {
+    await request(app).get('/search?q=doliprane+1000+mg+comprime').expect(200);
+  });
+
+  it('sans médicament, trois mots vont à l’IA', async () => {
+    const res = await request(app).get('/search?q=allongement+intervalle+QT').expect(302);
+    assert.match(res.headers.location, /^\/documents\?q=/);
   });
 });

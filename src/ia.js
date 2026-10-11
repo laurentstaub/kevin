@@ -31,11 +31,15 @@ const cleDe = (fournisseur) => (fournisseur === 'anthropic' ? config.ia.cleAnthr
 
 export const iaActive = () => Boolean(config.ia.modele && cleDe(config.ia.fournisseur));
 
-/** Une question plutôt qu'une recherche : point d'interrogation, ou cinq mots et plus. */
+/**
+ * Une question plutôt qu'une recherche : point d'interrogation, ou trois mots
+ * et plus. À appeler après la reconnaissance par la base, qui écarte les noms
+ * avec dosage (« doliprane 1000 mg »).
+ */
 export function estQuestion(texte) {
   const propre = String(texte ?? '').trim();
   if (!propre || /^".*"$/.test(propre)) return false;
-  return /\?\s*$/.test(propre) || propre.split(/\s+/).length >= 5;
+  return /\?\s*$/.test(propre) || propre.split(/\s+/).length >= 3;
 }
 
 const SYSTEME = `Tu traduis la question d'un pharmacien d'officine en critères de recherche

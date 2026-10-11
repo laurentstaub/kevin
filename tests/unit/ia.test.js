@@ -8,8 +8,9 @@ import {
 import { createApp } from '../../src/app.js';
 
 describe('question ou recherche', () => {
-  it('reconnaît une question', () => {
+  it('reconnaît une question : « ? » ou trois mots', () => {
     assert.equal(estQuestion('tramadol allaitement ?'), true);
+    assert.equal(estQuestion('metformine insuffisance rénale'), true);
     assert.equal(estQuestion('puis-je donner du tramadol à une femme qui allaite'), true);
   });
 

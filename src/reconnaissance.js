@@ -59,7 +59,8 @@ async function mesurer(pool, candidats) {
 /**
  * @param {import('pg').Pool} pool
  * @param {string} saisie
- * @returns {Promise<{ molecule: string, reste: string }|null>} null : rien à réorienter
+ * @returns {Promise<{ molecule: string, reste: string }|null>} null : aucun médicament ;
+ *   reste vide : un nom seul (dosage, forme), à chercher par nom
  */
 export async function reconnaitreMedicament(pool, saisie) {
   const originaux = String(saisie ?? '').trim().split(/\s+/).filter(Boolean);
@@ -91,7 +92,7 @@ export async function reconnaitreMedicament(pool, saisie) {
 
   const reste = originaux.filter((_, i) => !pris[i]).map((mot) => mot.replace(/[?!]+$/, '')).filter(Boolean);
   // Que des nombres, unités ou formes : c'est un nom de spécialité, pas une question sur elle.
-  if (!reste.some((mot) => motDeTexte(normaliser(mot)))) return null;
+  const texte = reste.some((mot) => motDeTexte(normaliser(mot)));
 
-  return { molecule: molecule.join(' '), reste: reste.join(' ') };
+  return { molecule: molecule.join(' '), reste: texte ? reste.join(' ') : '' };
 }
