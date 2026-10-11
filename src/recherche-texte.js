@@ -203,8 +203,11 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq),
      trouve AS (
+       -- Sans le texte : jusqu'à 3 000 rubriques transitent par trois tris, et
+       -- le texte intégral les faisait dépasser le délai. Il est rejoint par sa
+       -- clé primaire pour la page affichée seulement.
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
-              s.texte, ts_rank_cd(${VECTEUR}, q.tq) AS score,
+              ts_rank_cd(${VECTEUR}, q.tq) AS score,
               CASE WHEN $4::text IS NULL THEN true
                    ELSE ${VECTEUR} @@ phraseto_tsquery('${LANGUE}', $4::text) END AS exact,
               ${RANG} AS rang
@@ -307,7 +310,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      -- (les effets indésirables) n'est pas le chapitre 4 d'un RCP.
      par_rubrique AS (
        SELECT DISTINCT ON (signature, document_type, numero)
-              signature, numero, libelle, code_cis, document_type, position, score, exact, texte
+              signature, numero, libelle, code_cis, document_type, position, score, exact
        FROM enrichi
        WHERE coalesce(numero, '') <> ''
        ORDER BY signature, document_type, numero, exact DESC, princeps DESC, score DESC, code_cis
@@ -335,7 +338,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      ),
      meilleur AS (
        SELECT DISTINCT ON (signature)
-              signature, code_cis, document_type, position, numero, libelle, texte, score
+              signature, code_cis, document_type, position, numero, libelle, score
        FROM enrichi ORDER BY signature, exact DESC, rang, princeps DESC, score DESC, code_cis
      ),
      -- Meilleur passage de chaque spécialité : l'accordéon des dosages y mène.
@@ -362,12 +365,15 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                        'numero', p.numero, 'libelle', p.libelle, 'cis', p.code_cis,
                        'type', p.document_type, 'exact', p.exact,
                        'ancre', p.document_type || '-' || p.position,
-                       'extrait', ${phraseSql('p.texte', 'q.tq', '$4::text')})
+                       'extrait', ${phraseSql('ps.texte', 'q.tq', '$4::text')})
                      ORDER BY p.document_type <> 'rcp',
                               substring(p.numero from '^[0-9]+')::int NULLS LAST,
                               substring(p.numero from '[.]([0-9]+)')::int NULLS FIRST,
                               p.numero)
-              FROM par_rubrique p WHERE p.signature = page.signature AND coalesce(p.numero, '') <> '')
+              FROM par_rubrique p
+              JOIN docs.rcp_sections ps
+                ON ps.code_cis = p.code_cis AND ps.document_type = p.document_type AND ps.position = p.position
+              WHERE p.signature = page.signature AND coalesce(p.numero, '') <> '')
             END AS detaillees
      FROM (
      SELECT r.signature, r.specialites, r.exact, coalesce(c.rubriques, '[]'::jsonb) AS rubriques,
@@ -382,7 +388,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
             -- chaque point de la ligne a le sien, demandé au survol. Le
             -- calculer ici coûterait pour une phrase que personne ne verrait.
             CASE WHEN $1::text IS NULL THEN NULL
-                 ELSE ${phraseSql('b.texte', 'q.tq', '$4::text')} END AS extrait,
+                 ELSE ${phraseSql('bt.texte', 'q.tq', '$4::text')} END AS extrait,
             (SELECT count(*)::int FROM trouve) AS occurrences,
             -- Après le LIMIT : pour la page affichée seulement.
             (SELECT json_agg(json_build_object(
@@ -399,7 +405,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      FROM resume r
      JOIN meilleur b USING (signature)
      LEFT JOIN chapeau c USING (signature)
-     JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis, q
+     JOIN dbpm.cis_bdpm m ON m.code_cis = b.code_cis
+     JOIN docs.rcp_sections bt
+       ON bt.code_cis = b.code_cis AND bt.document_type = b.document_type AND bt.position = b.position, q
      ORDER BY CASE WHEN $5::text IS NULL THEN 0 ELSE r.composants END,
               r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $2 OFFSET $3
