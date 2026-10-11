@@ -341,7 +341,7 @@ describe('rendu des gabarits', () => {
       results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
       documents: RECHERCHE_VIDE,
     });
-    assert.match(html, /<a class="titre-lien" href="\/">Demander à Kevin<\/a>/);
+    assert.match(html, /<a class="titre-lien" href="\/">Dr Kevin<\/a>/);
   });
 
   it('mais la page de garde ne se lie pas à elle-même', () => {
