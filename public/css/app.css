@@ -54,9 +54,11 @@
 
 /* ---------- Bandeau d'accueil ---------- */
 
-/* Aplat sombre réservé à l'accueil, seule page sans texte long. */
+/* Même teinte claire que la barre des autres pages : un seul vert de fond
+   sur tout le site. L'aplat sombre d'origine jurait avec la suite. */
 .accueil {
-  background: var(--bg-fonce);
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
   padding: var(--sp-8) var(--sp-3) var(--sp-6);
 }
 
@@ -66,7 +68,7 @@
 }
 
 .accueil .titre-site {
-  color: #fff;
+  color: var(--ink);
 }
 
 /* Titre du site : pas de soulignement au repos. */
@@ -84,7 +86,7 @@
 
 .accueil-champ {
   font-size: var(--fs-sm);
-  color: var(--accent-soft);
+  color: var(--muted);
   margin: var(--sp-1) 0 var(--sp-4);
   max-width: var(--measure);
 }
@@ -92,30 +94,24 @@
 /* Exemples de requêtes plein texte, volontairement sans nom de médicament. */
 .accueil-exemple {
   font-size: var(--fs-sm);
-  color: var(--accent-soft);
+  color: var(--muted);
   margin: var(--sp-2) 0 0;
 }
 
 .accueil-exemple a {
-  color: #fff;
+  color: var(--lien);
   text-decoration: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  text-decoration-color: var(--accent-soft);
-}
-
-.accueil-exemple a:hover {
-  text-decoration-color: #fff;
 }
 
 .accueil-exemple .sep::before {
   content: "·";
   margin: 0 0.5em;
-  color: var(--accent-soft);
+  color: var(--faint);
 }
 
-/* Sur l'aplat, le fond blanc suffit : pas de contour. */
 .accueil .input-wrapper {
-  border-color: transparent;
   background: var(--bg);
 }
 
@@ -950,16 +946,12 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
     display: none;
   }
 
-  /* Pas d'aplat à l'impression. */
+  /* Pas de fond à l'impression. */
   .accueil {
     background: none;
-    color: #000;
+    border: 0;
     padding: 0 0 var(--sp-3);
     margin: 0;
-  }
-
-  .accueil .titre-site {
-    color: #000;
   }
 
   /* Adresses imprimées seulement dans les références. */
