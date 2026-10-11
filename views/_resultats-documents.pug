@@ -1,45 +1,49 @@
-//- Trouvailles en tableau : une ligne par molécule, une colonne par rubrique.
-//- Colonnes fixes pour rester apprises ; le reste va dans « Autres ». Un nom de
-//- groupe peut dépasser 1 600 caractères. Cliquer un en-tête filtre sur la
-//- rubrique : le tableau se réduit alors à la molécule et l'extrait.
+//- Trouvailles en tableau, sous deux formes.
+//- Large (recherche transversale, « QT ») : une ligne par molécule, une colonne
+//- par rubrique, colonnes fixes pour rester apprises ; le reste va dans « Autres ».
+//- Ciblée (médicament reconnu, question, rubrique choisie) : plus de colonnes,
+//- la molécule puis ses phrases, chacune menant à sa rubrique.
+//- Un nom de groupe peut dépasser 1 600 caractères : vrai tableau en `fixed`.
 //-
 //- @param {object}  recherche sortie de chercherDansDocuments
 //- @param {string}  requete   la requête, pour le lien « tout voir » et les filtres
 //- @param {boolean} resume    vue courte, au sein de la page de résultats
 //- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
 //- @param {string}  rubrique  la rubrique filtrée, ou rien
-mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, lien)
+//- @param {boolean} ciblee    recherche ciblée : les phrases remplacent les colonnes
+mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, lien, ciblee)
   - const cles = colonnes.map((colonne) => colonne[0])
-  - const colonnesVues = rubrique ? [] : colonnes
+  - const large = !rubrique && !ciblee
+  - const colonnesVues = large ? colonnes : []
+  - const colspan = 1 + colonnesVues.length + (large ? 1 : 0)
   //- Transmise à la fiche, qui la surligne.
   - const q = `?q=${encodeURIComponent(requete)}`
 
   //- Légende inutile pour un mot seul ou une locution entre guillemets (tout est plein).
-  if recherche.exacte && !rubrique
+  if recherche.exacte && large
     p.legende
       span.point.point-legende(aria-hidden="true")
       |  « #{requete} » tel quel
       span.point.point-epars.point-legende(aria-hidden="true")
       |  les mots, dispersés
 
-  table.trouvailles(class=rubrique ? 'trouvailles-filtrees' : null)
+  table.trouvailles(class=large ? null : 'trouvailles-ciblees')
     caption.sr-only
       | Molécules dont un document contient l'expression cherchée, et rubriques où elle figure
-    colgroup
-      col.col-molecule
-      each colonne in colonnesVues
-        col.col-rubrique
-      if !rubrique
-        col.col-autres
-    thead
-      tr
-        //- La rubrique active est annoncée dans la ligne d'état, pas ici.
-        th.th-molecule(scope="col") Molécule
+    //- Ciblée : ni colonnes ni en-tête, la molécule et ses phrases suffisent.
+    if large
+      colgroup
+        col.col-molecule
         each colonne in colonnesVues
-          th.th-rubrique(scope="col")
-            a.th-lien(href=lien(etat, { rubrique: colonne[0] })
-              data-titre=`N'afficher que ${colonne[0]} ${colonne[1]}`)= colonne[0]
-        if !rubrique
+          col.col-rubrique
+        col.col-autres
+      thead
+        tr
+          th.th-molecule(scope="col") Molécule
+          each colonne in colonnesVues
+            th.th-rubrique(scope="col")
+              a.th-lien(href=lien(etat, { rubrique: colonne[0] })
+                data-titre=`N'afficher que ${colonne[0]} ${colonne[1]}`)= colonne[0]
           th.th-autres(scope="col") Autres
 
     each trouvaille in recherche.resultats
@@ -90,7 +94,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                   data-position=rub.ancre.split('-')[1]
                 )
 
-          if !rubrique
+          if large
             td.cellule-autres
               each rub in autres
                 a.autre(
@@ -106,7 +110,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
         //- Dépliée par la molécule ; masquée par CSS tant qu'elle est repliée.
         if formes.length && trouvaille.specialites > 1
           tr.ligne-dosages
-            td(colspan=1 + colonnesVues.length + (rubrique ? 0 : 1))
+            td(colspan=colspan)
               each groupeForme in formes
                 p.dosages-forme= groupeForme.forme
                 each groupeNom in groupeForme.noms
@@ -123,7 +127,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
         - const detaillees = rubriques.filter((rub) => rub.extrait)
         if detaillees.length > 0
           tr.ligne-phrases
-            td(colspan=1 + colonnesVues.length + (rubrique ? 0 : 1))
+            td(colspan=colspan)
               each rub in detaillees
                 p.trouvaille-extrait
                   a.phrase-rubrique(href=`/product/${rub.cis}${q}#${rub.ancre}` title=long(rub))= court(rub)

@@ -448,6 +448,20 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<mark>QT<\/mark> prolongé/);
   });
 
+  // Ciblée : les phrases remplacent les colonnes, le tableau se réduit à la molécule.
+  it('la recherche ciblée n’a ni colonnes ni en-tête', () => {
+    const large = rendre('documents', { query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1 });
+    assert.match(large, /col-rubrique/);
+    assert.match(large, /class="th-molecule"/);
+    assert.match(large, /class="cellule-autres"/);
+    const ciblee = rendre('documents', {
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1, ciblee: true,
+    });
+    assert.match(ciblee, /class="trouvailles trouvailles-ciblees"/);
+    assert.doesNotMatch(ciblee, /col-rubrique|th-molecule|cellule-autres|cellule-rubrique|legende/);
+    assert.match(ciblee, /class="ligne-dosages"/);
+  });
+
   // L'aperçu au survol est demandé au serveur par clé primaire.
   it('chaque numéro porte de quoi demander son extrait', () => {
     const html = rendre('documents', {

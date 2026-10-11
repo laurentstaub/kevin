@@ -71,7 +71,7 @@ block content
     else if documents.resultats.length === 0
       p.vide Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
     else
-      +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien)
+      +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien, ciblee)
 
       //- Pagination précédent/suivant, sans numéros (trop de pages pour en choisir une).
       - const premier = documents.decalage + 1

@@ -150,9 +150,6 @@ export function pageRoutes(pool) {
     return iaActive() && estQuestion(saisie) ? { ia: true } : null;
   };
 
-  /** Jusqu'à ce nombre de molécules, les phrases trouvées s'affichent d'office. */
-  const PEU = 5;
-
   router.get(
     '/search',
     wrap(async (req, res) => {
@@ -246,16 +243,12 @@ export function pageRoutes(pool) {
       const chercher = (phrases) => chercherDansDocuments(pool, query.raw, {
         rubrique, molecule: etat.molecule, phrases, limite: PAR_PAGE, decalage: (page - 1) * PAR_PAGE,
       });
-      // Recherche ciblée (médicament, question, rubrique) : les phrases d'office.
-      // Sinon, si les résultats tiennent en peu de molécules, on les demande après coup.
+      // Recherche ciblée (médicament, question, rubrique) : la molécule et ses phrases.
+      // Transversale (« QT ») : une ligne par molécule, les rubriques en colonnes.
       const ciblee = Boolean(etat.molecule || etat.question || rubrique);
       const documents = query.tooShort
         ? vide
         : await chercher(ciblee)
-          .then((trouve) => (
-            !ciblee && trouve.resultats.length > 0 && trouve.resultats.length <= PEU
-              ? chercher(true) : trouve
-          ))
           .catch((err) => {
             console.error('[recherche] plein texte indisponible :', err.message);
             panne = rechercheAbsente(err)
@@ -271,6 +264,7 @@ export function pageRoutes(pool) {
         title: titre(etat),
         query: query.raw,
         rubrique,
+        ciblee,
         documents,
         page,
         colonnes: COLONNES,

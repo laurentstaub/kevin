@@ -973,8 +973,9 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
 
 /* ---------- Trouvailles dans les documents ---------- */
 
-/* Produit, rubrique, extrait ; filets horizontaux seuls. */
-/* Vrai tableau en `fixed` : un nom de groupe peut dépasser 1 600 caractères
+/* Deux formes : large (une molécule par ligne, une colonne par rubrique, ramassé
+   comme un tableau) et ciblée (`.trouvailles-ciblees`, la molécule puis ses phrases).
+   Vrai tableau en `fixed` : un nom de groupe peut dépasser 1 600 caractères
    et une grille CSS perdait l'alignement. */
 .trouvailles {
   width: 100%;
@@ -1021,13 +1022,14 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
    de la dernière ligne de chaque tbody (ici, une molécule par tbody). */
 .trouvailles .trouvaille td,
 .trouvailles .trouvaille th {
-  padding: 0.35rem 0;
+  padding: 0.15rem 0;
   vertical-align: middle;
   border: 0;
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
-.trouvailles-filtrees .trouvaille th { border-bottom: 0; padding-bottom: 0; }
+/* Ciblée : la molécule ouvre un bloc, ses phrases le ferment. */
+.trouvailles-ciblees .trouvaille th { border-bottom: 0; padding: var(--sp-3) 0 0; }
 
 /* Téléphone : colonnes resserrées, compte de spécialités masqué. */
 @media (max-width: 600px) {
@@ -1114,7 +1116,7 @@ a.trouvaille-molecule {
 /* Autres rubriques, nommées plutôt que fondues dans un « +3 ». */
 .cellule-autres {
   text-align: center;
-  line-height: 1.9;
+  line-height: 1.6;
 }
 
 
