@@ -57,11 +57,20 @@
 /* ---------- Bandeau d'accueil ---------- */
 
 /* Même teinte claire que la barre des autres pages : un seul vert de fond
-   sur tout le site. L'aplat sombre d'origine jurait avec la suite. */
+   sur tout le site. Le titre (.accueil) défile ; le champ (.accueil-colle)
+   reste collé en haut, comme la barre des autres pages. */
 .accueil {
   background: var(--bg-tint);
+  padding: var(--sp-8) var(--sp-3) 0;
+}
+
+.accueil-colle {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-tint);
   border-bottom: var(--rule-width) solid var(--rule);
-  padding: var(--sp-8) var(--sp-3) var(--sp-6);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
 }
 
 .accueil-inner {
@@ -89,7 +98,7 @@
 .accueil-champ {
   font-size: var(--fs-sm);
   color: var(--muted);
-  margin: var(--sp-1) 0 var(--sp-4);
+  margin: var(--sp-1) 0 var(--sp-2);
   max-width: var(--measure);
 }
 
@@ -745,7 +754,11 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 
 @media (max-width: 40rem) {
   .accueil {
-    padding: var(--sp-4) var(--sp-2) var(--sp-4);
+    padding: var(--sp-4) var(--sp-2) 0;
+  }
+
+  .accueil-colle {
+    padding: var(--sp-2) var(--sp-2) var(--sp-2);
   }
 
   .recherche {
@@ -798,9 +811,6 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
     /* 288 px : à 240, les libellés du plan passent à la ligne. Reste 912 px
        au contenu à 1200 px, pour 736 requis. */
     --rail-l: 18rem;
-
-    /* Hauteur du bandeau d'accueil, d'où part le rail sur cette page. */
-    --accueil-h: 17.5rem;
   }
 
   /* Sans rail (accueil) : pas de colonne réservée. */
@@ -819,18 +829,10 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
   }
 
   /* Bandeau centré sur la fenêtre entière, pas sur l'espace restant. */
-  .accueil {
+  .accueil,
+  .accueil-colle {
     margin-left: calc(-1 * var(--rail-l));
     padding-left: var(--sp-3);
-  }
-
-  /* Hauteur fixe : elle sert aussi de point de départ au rail. */
-  .accueil {
-    min-height: var(--accueil-h);
-  }
-
-  body:has(> .accueil) .rail {
-    top: var(--accueil-h);
   }
 
   .rail {
@@ -971,8 +973,10 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
     display: none;
   }
 
-  /* Pas de fond à l'impression. */
-  .accueil {
+  /* Pas de fond à l'impression, rien de collé. */
+  .accueil,
+  .accueil-colle {
+    position: static;
     background: none;
     border: 0;
     padding: 0 0 var(--sp-3);

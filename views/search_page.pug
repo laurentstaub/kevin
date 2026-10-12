@@ -31,7 +31,9 @@ mixin produit(result)
             +dosages(groupeNom)
 
 block content
-  //- Bandeau pleine largeur en aplat sombre : seule page sans texte long.
+  //- Bandeau en deux temps : le titre défile, le champ reste collé en haut
+  //- comme la barre des autres pages. Deux blocs frères : collé, le second
+  //- ne serait pas retenu par un parent qui défile.
   header.accueil
     .accueil-inner
       +apparence
@@ -43,6 +45,8 @@ block content
         else
           | Dr Kevin
       p.accueil-champ Base de données publique des médicaments
+  .accueil-colle
+    .accueil-inner
       +champRecherche(query, false)
 
       //- Exemples cliquables pour révéler la recherche plein texte sur la page de garde.
