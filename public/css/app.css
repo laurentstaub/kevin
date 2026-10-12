@@ -306,6 +306,33 @@
   text-decoration: underline;
 }
 
+/* Bouton d'apparence : discret, à droite ; révélé par theme.js. */
+.theme {
+  flex: none;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  background: transparent;
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  padding: 0.15em 0.6em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme:hover { color: var(--ink); border-color: var(--ink); }
+
+.barre-inner .theme { margin-left: auto; }
+.barre-titre ~ .theme { margin-left: 0; }
+
+.accueil { position: relative; }
+
+.accueil .theme {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-3);
+}
+
 /* ---------- Suggestions ---------- */
 
 /* Seule surface flottante du site : arrondie, ombre courte. */

@@ -313,6 +313,16 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/classe\/N02BF02"/);
   });
 
+  // Apparence : choix mémorisé posé avant les styles, bouton caché sans JavaScript.
+  it('chaque page porte le bouton d’apparence et l’applique avant les styles', () => {
+    const accueil = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
+    assert.match(accueil, /localStorage\.getItem\('apparence'\)[\s\S]*<link rel="stylesheet"/);
+    assert.match(accueil, /<button class="theme" type="button" hidden="hidden"/);
+    assert.match(accueil, /src="\/js\/theme\.js\?v=test"/);
+    const docs = rendre('documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE });
+    assert.match(docs, /class="barre-inner">[\s\S]*<button class="theme"/);
+  });
+
   // Accueil et résultats : sans rail, la recherche prend toute la largeur.
   it('le rail n’apparaît que si la page le demande', () => {
     const recherche = rendre('search_page', {
