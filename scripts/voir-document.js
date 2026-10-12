@@ -6,12 +6,12 @@
  *
  * @param cis   code CIS
  * @param type  rcp | notice | rcp_notice | main (défaut : main)
- * @param n     nombre de caractères (défaut : 3000)
+ * @param longueur nombre de caractères (défaut : 3000)
  */
 import { createPool } from '../src/db.js';
 import { getDocuments } from '../src/documents.js';
 
-const [cis, type = 'main', n = '3000'] = process.argv.slice(2);
+const [cis, type = 'main', longueur = '3000'] = process.argv.slice(2);
 if (!cis) {
   console.error('usage : node scripts/voir-document.js <cis> [type] [caractères]');
   process.exit(1);
@@ -19,5 +19,5 @@ if (!cis) {
 
 const pool = createPool();
 const doc = (await getDocuments(pool, cis)).find((candidat) => candidat.type === type);
-console.log(doc ? doc.html.slice(0, Number(n)) : `aucun document « ${type} » pour ${cis}`);
+console.log(doc ? doc.html.slice(0, Number(longueur)) : `aucun document « ${type} » pour ${cis}`);
 await pool.end();
