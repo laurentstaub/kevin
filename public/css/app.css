@@ -61,7 +61,9 @@
    reste collé en haut, comme la barre des autres pages. */
 .accueil {
   background: var(--bg-tint);
-  padding: var(--sp-8) var(--sp-3) 0;
+  /* Marge basse en padding : une marge fuirait hors du bloc et laisserait
+     une bande de fond de page entre le titre et le champ. */
+  padding: var(--sp-8) var(--sp-3) var(--sp-2);
 }
 
 .accueil-colle {
@@ -98,7 +100,7 @@
 .accueil-champ {
   font-size: var(--fs-sm);
   color: var(--muted);
-  margin: var(--sp-1) 0 var(--sp-2);
+  margin: var(--sp-1) 0 0;
   max-width: var(--measure);
 }
 
@@ -754,7 +756,7 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 
 @media (max-width: 40rem) {
   .accueil {
-    padding: var(--sp-4) var(--sp-2) 0;
+    padding: var(--sp-4) var(--sp-2) var(--sp-2);
   }
 
   .accueil-colle {
