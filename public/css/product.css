@@ -288,6 +288,14 @@ td.forme {
 
 /* ---------- Découpe des titres : numéro / libellé ---------- */
 
+/* Titres de rubrique au-dessus du corps de lecture (1,0625 rem) : la
+   sous-rubrique à sa hauteur, le chapitre un cran dessus, les blocs au-dessus. */
+:root {
+  --titre-n2: 1.0625rem;
+  --titre-n1: 1.2rem;
+  --titre-bloc: 1.333rem;
+}
+
 .num {
   font-variant-numeric: tabular-nums;
   color: var(--faint);
@@ -358,7 +366,7 @@ td.forme {
   margin-bottom: calc(-1 * var(--rule-width));
   padding: 0 0 var(--sp-1);
   font-family: var(--font-head);
-  font-size: 1.2rem;
+  font-size: var(--titre-bloc);
   font-weight: 700;
   line-height: 1.15;
   color: var(--faint);
@@ -425,7 +433,7 @@ span.onglet {
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.35rem 0;
-  font-size: var(--fs-sm);
+  font-size: var(--titre-n2);
   font-weight: 600;
   cursor: pointer;
   list-style: none;
@@ -455,15 +463,15 @@ span.onglet {
 
 /* Rubrique de premier niveau : charnière du document. */
 .rubrique.rub-n1 > .rubrique-tete {
-  font-size: var(--fs-base);
+  font-size: var(--titre-n1);
   font-family: var(--font-head);
   font-weight: 700;
 }
 
 /* Titres serif de la fiche en gras : blocs et chapitres dominent les sous-rubriques.
-   Blocs et onglets à 1,2 rem : un cran au-dessus des chapitres (1 rem). */
+   Blocs et onglets un cran au-dessus des chapitres. */
 .bloc-tete .section-titre {
-  font-size: 1.2rem;
+  font-size: var(--titre-bloc);
   font-weight: 700;
 }
 
@@ -882,7 +890,7 @@ span.onglet {
   gap: 0.5rem;
   align-items: baseline;
   font-family: var(--font-body);
-  font-size: var(--fs-sm);
+  font-size: var(--titre-n2);
   font-weight: 600;
   color: var(--ink);
   margin: var(--sp-4) 0 var(--sp-2);
@@ -894,7 +902,9 @@ span.onglet {
 /* Rubrique de premier niveau : charnière du document. */
 .document-corps h1.doc-heading,
 .document-corps h2.doc-heading {
-  font-size: var(--fs-base);
+  font-family: var(--font-head);
+  font-size: var(--titre-n1);
+  font-weight: 700;
   margin-top: var(--sp-6);
   padding-top: var(--sp-2);
   border-top: var(--rule-width) solid var(--rule-medium);
