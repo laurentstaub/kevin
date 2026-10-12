@@ -2,7 +2,8 @@
 //- de la lecture. Quand une rubrique ouverte a défilé hors de vue, son titre
 //- remplace le nom du produit et ramène au plan. Le champ garde la requête en cours.
 //-
-//- @param {string} titre   ce qu'on est en train de lire, à droite
+//- @param {string} titre   ce qu'on est en train de lire, à droite ; vide sur la
+//-                         fiche, où la bande signalétique porte le nom du produit
 //- @param {string} valeur  la requête en cours, s'il y en a une
 //- @param {string} action  où resoumettre — la page courante
 mixin barreSituation(titre, valeur, action)
@@ -12,6 +13,7 @@ mixin barreSituation(titre, valeur, action)
       +champRecherche(valeur || '', true, action)
       if titre
         span.barre-titre= titre
-        //- Rempli et révélé par documents.js ; caché sans JavaScript.
-        button.barre-repere(type="button" hidden)
+      //- Titre de la rubrique en cours sur la fiche, rempli et révélé par
+      //- documents.js ; caché sans JavaScript et sur les autres pages.
+      button.barre-repere(type="button" hidden)
       +apparence

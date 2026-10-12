@@ -20,7 +20,7 @@ import {
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
-import { signaletique } from '../signaletique.js';
+import { signaletique, titreCourt } from '../signaletique.js';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
   APERCU, COLONNES, PAR_PAGE,
@@ -430,6 +430,7 @@ export function pageRoutes(pool) {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation),
+        titreCourt: titreCourt(product.denomination_medicament),
         importation,
         reference,
         substitutions,

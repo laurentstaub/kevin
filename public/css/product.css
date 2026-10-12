@@ -93,12 +93,23 @@
 }
 
 .signal {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 0.4em;
   font-size: var(--fs-sm);
   color: var(--ink);
   white-space: nowrap;
+}
+
+/* Le nom ouvre la ligne et cède la place aux cases : il se tronque, elles non. */
+.signal-nom {
+  flex: 0 1 auto;
+  min-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  margin-right: var(--sp-1);
 }
 
 .signal .picto {
