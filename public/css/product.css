@@ -452,12 +452,9 @@ span.onglet {
   color: var(--accent);
 }
 
-/* Rubrique du socle : mise en avant par le contraste, pas la couleur. */
+/* Tous les titres de rubrique en encre pleine : le gris les effaçait, surtout
+   en sombre. Le socle (.essentielle) ne se distingue plus par la couleur. */
 .rubrique .lab {
-  color: var(--muted);
-}
-
-.rubrique.essentielle .lab {
   color: var(--ink);
 }
 
