@@ -213,6 +213,8 @@
   border: var(--rule-width) solid var(--ink);
   border-radius: var(--radius-control);
   overflow: hidden;
+  /* Fond de page, pas celui du bandeau : le champ se lit comme une saisie. */
+  background: var(--bg);
 }
 
 .search-input {
@@ -237,23 +239,23 @@
   outline-offset: 1px;
 }
 
-/* Seul aplat vif du site. Le vert ne porte jamais de texte (1,66 sur blanc) ;
-   l'encre posée dessus tient 9,09. */
+/* Seul aplat du site : vert sombre, texte blanc (7,8), identique dans les deux
+   schémas. Le vert vif ne porte jamais de texte : il n'apparaît qu'au survol,
+   sous l'encre (9,09). */
 .search-button {
   border: none;
   border-radius: 0;
-  background: var(--accent-vif);
+  background: var(--bouton);
   padding: 0 var(--sp-3);
   font-family: inherit;
   font-size: var(--fs-sm);
-  color: var(--ink-sur-vif);
+  color: #fff;
   cursor: pointer;
 }
 
-/* Au survol, le fond prend la couleur du texte : lisible dans les deux schémas. */
 .search-button:hover {
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--accent-vif);
+  color: var(--ink-sur-vif);
 }
 
 /* Variante d'en-tête : visible sans peser. */
@@ -555,10 +557,11 @@
 .classe-lien:hover .classe-label { text-decoration-thickness: calc(var(--trait) + 1px); }
 
 /* Code en accent : repère visuel autant qu'information. */
+/* Lettre de classe : repère neutre, le vert reste aux liens. */
 .classe-code {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  color: var(--accent);
+  color: var(--muted);
 }
 
 .classe-label {

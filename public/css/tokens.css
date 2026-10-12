@@ -34,6 +34,8 @@
   --accent: #1b5e33;
   --accent: light-dark(#1b5e33, #9aec3a);
   --accent-vif: #7bd44f;
+  /* Aplat du bouton d'action, texte blanc dessus : même vert sombre en sombre. */
+  --bouton: #1b5e33;
   /* Liens : vert vif, 5,02 sur blanc, 3,35 face à l'encre. Toujours soulignés
      dans le contenu ; la navigation ne se souligne qu'au survol. */
   --lien: #15803d;
