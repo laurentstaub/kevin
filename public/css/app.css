@@ -1160,8 +1160,8 @@ a.point:focus-visible {
   color: var(--faint);
 }
 
-/* Exemples de la colonne Autres dans la légende : pas des liens. */
-.legende-exemple { text-decoration: none; cursor: default; }
+/* Exemples de la colonne Autres dans la légende : le soulignement est le message. */
+.legende-exemple { cursor: default; }
 
 /* Hors des huit colonnes, la rubrique est nommée en texte (« 5.2 », « N2 »). */
 .autre {
@@ -1176,7 +1176,9 @@ a.point:focus-visible {
   text-underline-offset: 3px;
 }
 
-.autre.point-epars { color: var(--faint); }
+/* Mots dispersés : même lien, soulignement pointillé — le creux du point.
+   La couleur reste celle des liens : un lien gris se lit comme du texte mort. */
+.autre.point-epars { text-decoration-style: dotted; }
 
 /* Recherche ciblée : les phrases suivent la molécule, une par rubrique. */
 .trouvailles .ligne-phrases td {
