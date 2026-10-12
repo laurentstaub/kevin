@@ -47,13 +47,40 @@ const TITRE = /<(h[1-6])\b[^>]*>[\s\S]*?<\/\1>/gi;
 const PICTOGRAMMES = /<p\b[^>]*>\s*Cliquez sur un pictogramme[\s\S]*?<\/p>\s*(?:<br\s*\/?>)?/i;
 const texte = (html) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;|\s/g, '');
 
+/**
+ * Liens internes de la fiche : les ancres BDPM ont perdu leur cible à
+ * l'assainissement (identifiants retirés). « Cliquez ici pour aller à la
+ * rubrique des groupes génériques » mène à la section du même nom, qui reçoit
+ * un identifiant ; tout autre lien interne sans cible redevient du texte.
+ */
+const GENERIQUES = 'doc-main-generiques';
+const TITRE_GENERIQUES = /<h2>((?:(?!<\/h2>)[\s\S])*?groupe\(?s?\)?\s+g[ée]n[ée]rique[\s\S]*?)<\/h2>/i;
+const LIEN = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+
+function liensInternes(html) {
+  const avecCible = html.replace(TITRE_GENERIQUES, `<h2 id="${GENERIQUES}">$1</h2>`);
+  const cibleGeneriques = avecCible !== html;
+  const ids = new Set([...avecCible.matchAll(/\sid="([^"]+)"/g)].map((trouve) => trouve[1]));
+
+  return avecCible.replace(LIEN, (lien, attrs, contenu) => {
+    const href = attrs.match(/\bhref="([^"]*)"/)?.[1];
+    if (href && !href.startsWith('#')) return lien;
+    if (href && ids.has(href.slice(1))) return lien;
+    if (cibleGeneriques && /groupes?\s+g[ée]n[ée]riques?/i.test(contenu.replace(/<[^>]+>/g, ' '))) {
+      return `<a href="#${GENERIQUES}">${contenu}</a>`;
+    }
+    return contenu;
+  });
+}
+
 export function nettoyerFicheInfo(html) {
-  return String(html ?? '')
+  const sansHabillage = String(html ?? '')
     .replace(TABLEAU, (tableau, interieur) => {
       const titres = interieur.match(TITRE) ?? [];
       return titres.length === 1 && texte(interieur) === texte(titres[0]) ? titres[0] : tableau;
     })
     .replace(PICTOGRAMMES, '');
+  return liensInternes(sansHabillage);
 }
 
 /** Documents officiels d'une spécialité, HTML assaini ici : aucune vue ne reçoit de HTML brut. */

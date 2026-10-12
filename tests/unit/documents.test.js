@@ -40,6 +40,19 @@ describe('fiche info', () => {
     assert.equal(nettoyerFicheInfo(source), '<h1>DUROGESIC 50 µg/h</h1>\n\n<h2>Indications</h2>');
   });
 
+  it('mène « cliquez ici… groupes génériques » à la section du même nom', () => {
+    const source = '<h2>Groupe(s) générique(s)</h2><p>x</p><h2>Service médical rendu (SMR)</h2>'
+      + '<p>Voir <a href="#grpgene" target="_blank">(cliquez ici pour aller à la rubrique des groupes génériques)</a></p>';
+    const html = nettoyerFicheInfo(source);
+    assert.match(html, /^<h2 id="doc-main-generiques">Groupe\(s\) générique\(s\)<\/h2>/);
+    assert.match(html, /<a href="#doc-main-generiques">\(cliquez ici pour aller à la rubrique des groupes génériques\)<\/a>/);
+  });
+
+  it('rend au texte un lien interne sans cible, garde les liens externes', () => {
+    const html = nettoyerFicheInfo('<p><a href="#nulle-part">ici</a> et <a>là</a> ou <a href="https://x.fr">ailleurs</a></p>');
+    assert.equal(html, '<p>ici et là ou <a href="https://x.fr">ailleurs</a></p>');
+  });
+
   it('laisse un vrai tableau', () => {
     const tableau = '<table><tr><th><h3>Dose</h3></th><td>10 mg</td></tr></table>';
     assert.equal(nettoyerFicheInfo(tableau), tableau);
