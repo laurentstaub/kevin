@@ -55,7 +55,6 @@ const produit = (extra = {}) => ({
   hasDocuments: false,
   delivrance: { resume: [], groupes: [], liens: [] },
   signaletique: [],
-  titreCourt: 'EDEX 20 µg',
   // Via productLinks, pour suivre tout nouveau lien de la fiche.
   links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [], scientific: [] },
   sections: [],
@@ -198,7 +197,9 @@ describe('rendu des gabarits', () => {
         { cle: 'atc', picto: 'arbre', libelle: 'ATC', valeur: 'N02AA01', detail: 'morphine', lien: '/classe/N02AA01' },
       ],
     }));
-    assert.match(html, /<section class="signaletique"[^>]*><ul class="signaletique-inner"><li class="signal signal-nom"><strong>Edex 20 µg<\/strong>/);
+    assert.match(html, /<section class="signaletique"/);
+    // La dénomination colle sous la barre : hors de l'en-tête, dans son propre bloc.
+    assert.match(html, /<div class="titre-colle"><div class="identite-inner"><h1 class="produit-titre">Edex 20 microgrammes<\/h1>/);
     assert.doesNotMatch(html, /barre-titre/);
     assert.match(html, /class="barre-repere"/);
     assert.match(html, /class="signal signal-bloque" title="Ordonnance — Stupéfiant" data-cle="ordonnance"><svg class="picto"/);

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { signaletique, pictoForme, abregerForme, titreCourt } from '../../src/signaletique.js';
+import { signaletique, pictoForme, abregerForme } from '../../src/signaletique.js';
 
 const produit = (extra = {}) => ({
   denomination_medicament: 'SKENAN L.P. 10 mg, gélule à libération prolongée',
@@ -120,13 +120,5 @@ describe('forme abrégée', () => {
     assert.equal(abregerForme('poudre pour solution buvable en sachet'), 'solution buvable');
     assert.equal(abregerForme('comprimé orodispersible'), 'comprimé orodispersible');
     assert.equal(abregerForme(''), '');
-  });
-});
-
-describe('titre court', () => {
-  it('garde le nom et le dosage abrégé, sans la forme', () => {
-    assert.equal(titreCourt('SKENAN L.P. 10 mg, gélule à libération prolongée'), 'SKENAN L.P. 10 mg');
-    assert.equal(titreCourt('EDEX 20 microgrammes, poudre et solvant'), 'EDEX 20 µg');
-    assert.equal(titreCourt('DOLIPRANE, sirop'), 'DOLIPRANE');
   });
 });

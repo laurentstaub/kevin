@@ -1,10 +1,21 @@
 /* Fiche produit : bandeau d'identité pleine largeur, sur l'axe unique de la page.
  * Ni carte ni encadré : filets et blanc portent la hiérarchie. */
 
-/* Bandeau d'identité blanc : la teinte est réservée à l'habillage (barre, rail). */
+/* Bandeau d'identité blanc : la teinte est réservée à l'habillage (barre, rail).
+   En deux parts, le fil ATC au-dessus et les métadonnées au-dessous de la
+   dénomination, qui colle entre les deux. */
 .identite {
   border-bottom: var(--rule-width) solid var(--rule);
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
+}
+
+.identite-haut {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.identite-bas {
+  padding-top: 0;
 }
 
 .identite-inner {
@@ -12,12 +23,44 @@
   margin: 0 auto;
 }
 
+/* Hauteur de la dénomination collée : la bande et les ancres s'alignent dessous. */
+:root {
+  --nom-h: 3rem;
+}
+
+/* La dénomination colle sous la barre ; une fois collée (classe posée par
+   documents.js), elle prend le fond de la barre, un filet, et une ligne. */
+.titre-colle {
+  position: sticky;
+  top: var(--barre-h);
+  z-index: 19;
+  min-height: var(--nom-h);
+  padding: 0 var(--sp-4);
+  display: flex;
+  align-items: center;
+}
+
+.titre-colle > .identite-inner {
+  width: 100%;
+}
+
+.titre-colle.colle {
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
 /* Un cran sous le plus grand corps : une dénomination de 60 signes tient sur
-   une ligne. Jamais tronquée. */
+   une ligne. Jamais tronquée en lecture ; collée, elle se coupe en « … ». */
 .produit-titre {
   font-size: var(--fs-lg);
   letter-spacing: -0.01em;
   text-wrap: balance;
+}
+
+.titre-colle.colle .produit-titre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- Dosages et formes ---------- */
@@ -63,18 +106,20 @@
 
 /* ---------- Bande signalétique ---------- */
 
-/* Hauteur de la bande : les ancres s'arrêtent sous la barre + la bande. */
+/* Hauteur de la bande : les ancres s'arrêtent sous barre + dénomination + bande. */
 :root {
   --signal-h: 2.5rem;
 }
 
-/* Une ligne de valeurs, collante sous la barre : même fond et même filet,
-   elle en devient la seconde ligne. Monochrome : l'encre seule, l'aplat
-   pour ce qui bloque. Déborde en défilant plutôt que de se replier. */
+/* Une ligne de valeurs, collante sous la dénomination : même fond et même
+   filet que la barre, dont elle devient la troisième ligne. Monochrome :
+   l'encre seule, l'aplat pour ce qui bloque. Déborde en défilant plutôt que
+   de se replier. */
 .signaletique {
   position: sticky;
-  top: var(--barre-h);
-  z-index: 19;
+  /* 1 px de moins : la dénomination colle 1 px sous la barre (voir documents.js). */
+  top: calc(var(--barre-h) + var(--nom-h) - 1px);
+  z-index: 18;
   background: var(--bg-tint);
   border-bottom: var(--rule-width) solid var(--rule);
 }
@@ -100,16 +145,6 @@
   font-size: var(--fs-sm);
   color: var(--ink);
   white-space: nowrap;
-}
-
-/* Le nom ouvre la ligne et cède la place aux cases : il se tronque, elles non. */
-.signal-nom {
-  flex: 0 1 auto;
-  min-width: 10rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  margin-right: var(--sp-1);
 }
 
 .signal .picto {
@@ -140,7 +175,7 @@ a.signal-valeur {
    s'ouvre sur son plan. */
 .contenu > .bloc {
   padding-top: var(--sp-4);
-  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
 .bloc-tete {
@@ -394,7 +429,7 @@ span.onglet {
   font-weight: 600;
   cursor: pointer;
   list-style: none;
-  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
 .rubrique[open] > .rubrique-tete {
@@ -469,7 +504,7 @@ span.onglet {
   margin: var(--sp-1) 0 0;
   padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);
-  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
 /* Le bouton reprend la grille du titre pour garder les numéros alignés. */
@@ -833,7 +868,7 @@ span.onglet {
   margin: var(--sp-4) 0 var(--sp-2);
   padding-top: var(--sp-1);
   border-top: var(--rule-width) solid var(--rule);
-  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
 /* Rubrique de premier niveau : charnière du document. */
@@ -899,6 +934,17 @@ span.onglet {
   .signaletique-inner {
     padding-left: var(--sp-2);
     padding-right: var(--sp-2);
+  }
+
+  /* Dénomination sur deux lignes possibles : elle défile, la bande colle sous la barre. */
+  .titre-colle {
+    position: static;
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+
+  .signaletique {
+    top: var(--barre-h);
   }
 
   .produit-titre {
@@ -1008,7 +1054,8 @@ span.onglet {
 /* ---------- Impression de la fiche ---------- */
 
 @media print {
-  .signaletique {
+  .signaletique,
+  .titre-colle {
     position: static;
     background: none;
   }

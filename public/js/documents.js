@@ -108,6 +108,7 @@ const repere = document.querySelector('.barre-repere');
 const barreTitre = document.querySelector('.barre-titre');
 const barre = document.querySelector('.barre');
 const bande = document.querySelector('.signaletique');
+const titreColle = document.querySelector('.titre-colle');
 
 if (repere && barre && documents) {
   // Mis en cache : ne change qu'à l'ouverture d'une rubrique ou d'un onglet.
@@ -436,4 +437,15 @@ if (motif && documents) {
   // Premier passage surligné de la rubrique visée, au centre de l'écran.
   const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   cible?.querySelector('mark.surligne')?.scrollIntoView({ block: 'center' });
+}
+
+// Dénomination collée : dès qu'elle touche la barre, elle prend fond et filet.
+// Observée 1 px sous la barre : collée, ce pixel passe dessous et le ratio chute.
+if (titreColle && barre && 'IntersectionObserver' in window
+  && getComputedStyle(titreColle).position === 'sticky') {
+  const hauteurBarre = Math.ceil(barre.getBoundingClientRect().height);
+  titreColle.style.top = `${hauteurBarre - 1}px`;
+  new IntersectionObserver(([entree]) => {
+    titreColle.classList.toggle('colle', entree.intersectionRatio < 1);
+  }, { threshold: [1], rootMargin: `-${hauteurBarre}px 0px 0px 0px` }).observe(titreColle);
 }

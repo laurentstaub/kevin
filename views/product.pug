@@ -26,11 +26,13 @@ block content
           span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
         .rubrique-corps!= entree.html
 
-  //- Sans titre : le nom du produit ouvre la bande signalétique, collante elle aussi.
+  //- Sans titre : la dénomination elle-même colle sous la barre au défilement.
   +barreSituation()
 
-  //- Identité : dénomination et métadonnées sur une ligne, non répétées plus bas.
-  header.identite
+  //- Identité : fil ATC, dénomination, métadonnées. La dénomination est hors
+  //- de l'en-tête pour pouvoir coller sous la barre jusqu'au bas de la page ;
+  //- documents.js la marque `colle` une fois collée (fond, filet, une ligne).
+  header.identite.identite-haut
     .identite-inner
       //- Fil ATC du produit ; retour et recherche sont dans la barre collante.
       .identite-tete
@@ -44,7 +46,11 @@ block content
             //- La feuille s'affiche par son code : son libellé répéterait la DCI.
             a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${dci(resumeAtc.feuille.label)}`)= resumeAtc.feuille.code
 
+  .titre-colle
+    .identite-inner
       h1.produit-titre= specialite(product.denomination_medicament)
+  .identite.identite-bas
+    .identite-inner
       p.page-meta
         if product.active_ingredients
           span.dci= dci(product.active_ingredients)
@@ -86,13 +92,10 @@ block content
 
   //- Bande signalétique : les caractéristiques sur une ligne, en cases fixes
   //- toujours dans le même ordre, valeurs seules ; libellé et détail en infobulle.
-  //- Collante sous la barre, elle en devient la seconde ligne au défilement.
+  //- Collante sous la dénomination, troisième ligne fixe au défilement.
   if signaletique && signaletique.length > 0
     section.signaletique(aria-label="Caractéristiques")
       ul.signaletique-inner
-        //- Le nom d'abord : il reste lisible une fois le titre défilé.
-        li.signal.signal-nom
-          strong= specialite(titreCourt || product.denomination_medicament)
         each cas in signaletique
           li.signal(class=cas.portee === 'bloque' ? 'signal-bloque' : null title=[cas.libelle, cas.detail].filter(Boolean).join(' — ') data-cle=cas.cle)
             +picto(cas.picto)

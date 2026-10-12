@@ -6,14 +6,6 @@
  * valeur (état condensé). `portee` 'bloque' marque ce qui empêche la
  * délivrance en officine.
  */
-import { decomposer, abregerUnite } from './specialites.js';
-
-/** « SKENAN L.P. 10 mg, gélule à libération prolongée » → « SKENAN L.P. 10 mg » : la forme est dans la bande. */
-export function titreCourt(denomination) {
-  const { nom, dosage } = decomposer(denomination);
-  return [nom, dosage ? abregerUnite(dosage) : null].filter(Boolean).join(' ');
-}
-
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
 /** Picto de la forme pharmaceutique, d'après son libellé BDPM. */
