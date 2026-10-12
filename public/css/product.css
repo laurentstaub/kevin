@@ -711,17 +711,37 @@ span.onglet {
 }
 
 /* Intitulé QRD (« Posologie »…) : distingué par la police, pas par la taille. */
+/* Trois niveaux sous le titre de rubrique, sans couleur ajoutée :
+   l'intitulé QRD (h5) dans la famille du titre de rubrique, un cran dessous ;
+   l'intertitre libre (h6) dans la voix du document, en gras. Le gris reste
+   au méta. */
 .rubrique-corps .sous-titre,
 .document-corps .sous-titre {
   font-family: var(--font-body);
-  font-size: 0.82em;
+  font-size: 0.9em;
   font-weight: 600;
-  color: var(--muted);
-  margin: 1.4em 0 0.4em;
+  color: var(--ink);
+  margin: 1.6em 0 0.5em;
+}
+
+.rubrique-corps .intertitre,
+.document-corps .intertitre {
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--gras);
+  margin: 1.2em 0 0.35em;
+}
+
+.rubrique-corps .sous-titre + .intertitre,
+.document-corps .sous-titre + .intertitre {
+  margin-top: 0.4em;
 }
 
 .rubrique-corps > .sous-titre:first-child,
-.document-corps > .sous-titre:first-child {
+.document-corps > .sous-titre:first-child,
+.rubrique-corps > .intertitre:first-child,
+.document-corps > .intertitre:first-child {
   margin-top: 0;
 }
 

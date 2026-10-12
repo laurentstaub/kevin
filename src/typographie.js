@@ -334,9 +334,34 @@ export function amorces(html) {
   });
 }
 
-/** Couche A : intitulés (rejoués, la base peut dater), amorces, insécables. */
+/**
+ * Intertitre libre (« Traitement des ulcères duodénaux ») : le PDF européen a
+ * perdu l'italique qui le signalait. Un paragraphe court, groupe nominal à
+ * majuscule initiale, sans ponctuation, qui annonce ce qui suit (jamais le
+ * dernier bloc). Garde-fous : ni verbe ni pronom sujet, ni article, chiffre ou
+ * puce en tête, ni lien ni saut de ligne, ni renvoi (« voir rubrique »). Une
+ * phrase nominale sans point final passe encore : limite acceptée.
+ */
+const PARAGRAPHE_SUIVI = /<p\b([^>]*)>([\s\S]*?)<\/p>(?=\s*<(?:p|ul|ol)\b)/gi;
+const MOTS_MAX = 10;
+/** Un intitulé QRD est nominal et sans article ; une phrase commence par l'un. */
+const DETERMINANT = /^(?:(?:le|la|les|un|une|des|ce|cette|ces|il|elle|on)\s|l['’])/i;
+
+export function intertitres(html) {
+  return String(html ?? '').replace(PARAGRAPHE_SUIVI, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs) || /<(?:a|br)\b/i.test(interieur)) return bloc;
+    const texte = detaguer(interieur);
+    const mots = texte.split(' ');
+    if (mots.length < 2 || mots.length > MOTS_MAX || texte.length > 70) return bloc;
+    if (!/^\p{Lu}/u.test(texte) || /[.;:!?,]/.test(texte)) return bloc;
+    if (PHRASE.test(texte) || DETERMINANT.test(texte) || /\bvoir rubrique/i.test(texte)) return bloc;
+    return `<h6 class="intertitre">${interieur.trim()}</h6>`;
+  });
+}
+
+/** Couche A : intitulés (rejoués, la base peut dater), intertitres, amorces, insécables. */
 export function structurerLecture(html) {
-  return insecables(amorces(sousTitres(html)));
+  return insecables(amorces(intertitres(sousTitres(html))));
 }
 
 /**

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  listes, sousTitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
+  listes, sousTitres, intertitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
   insecables, amorces, doses, alertes, lisibilite,
 } from '../../src/typographie.js';
 
@@ -63,6 +63,34 @@ describe('sous-titres', () => {
   it('refuse une phrase qui commence par un intitulé', () => {
     const html = '<p>Posologie recommandée : environ 60 mg/kg/jour à répartir en plusieurs prises.</p>';
     assert.equal(sousTitres(html), html);
+  });
+});
+
+describe('intertitres libres', () => {
+  it('promeut un groupe nominal court suivi d’un paragraphe', () => {
+    const html = '<p>Traitement des ulcères duodénaux</p><p>La dose recommandée est <strong>20 mg</strong>.</p>';
+    assert.equal(intertitres(html), '<h6 class="intertitre">Traitement des ulcères duodénaux</h6><p>La dose recommandée est <strong>20 mg</strong>.</p>');
+  });
+
+  it('accepte deux intertitres à la suite et un intertitre devant une liste', () => {
+    const html = '<p>Prévention des récidives</p><p>Ulcère gastrique</p><ul><li>a</li></ul>';
+    assert.equal(intertitres(html), '<h6 class="intertitre">Prévention des récidives</h6><h6 class="intertitre">Ulcère gastrique</h6><ul><li>a</li></ul>');
+  });
+
+  it('refuse le dernier bloc, une phrase, un renvoi, un chiffre en tête, un seul mot', () => {
+    for (const html of [
+      '<p>Traitement des ulcères duodénaux</p>',
+      '<p>La cicatrisation survient dans les 2 semaines</p><p>x</p>',
+      '<p>Le traitement est symptomatique</p><p>x</p>',
+      '<p>Voir rubrique 4.4</p><p>x</p>',
+      '<p>20 mg une fois par jour</p><p>x</p>',
+      '<p>Posologie</p><p>x</p>',
+      '<p>Adultes, enfants et nourrissons</p><p>x</p>',
+      '<p class="note">Cas particulier</p><p>x</p>',
+      '<p>L’effet dépend de la dose</p><p>x</p>',
+    ]) assert.equal(intertitres(html), html, html);
+    // Un mot qui commence par un article n'en est pas un.
+    assert.match(intertitres('<p>Lésions cutanées graves</p><p>x</p>'), /^<h6/);
   });
 });
 
