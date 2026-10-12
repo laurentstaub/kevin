@@ -437,16 +437,3 @@ if (motif && documents) {
   const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   cible?.querySelector('mark.surligne')?.scrollIntoView({ block: 'center' });
 }
-
-// Bande signalétique : condensée dès qu'elle colle sous la barre. Le repère,
-// un élément vide juste avant elle, passe sous la barre au même moment.
-const repereBande = document.querySelector('.signaletique-repere');
-
-if (bande && repereBande && barre && 'IntersectionObserver' in window) {
-  const hauteurBarre = Math.ceil(barre.getBoundingClientRect().height);
-  const observateur = new IntersectionObserver(([entree]) => {
-    const sorti = !entree.isIntersecting && entree.boundingClientRect.top < hauteurBarre;
-    bande.classList.toggle('colle', sorti);
-  }, { rootMargin: `-${hauteurBarre}px 0px 0px 0px`, threshold: 0 });
-  observateur.observe(repereBande);
-}

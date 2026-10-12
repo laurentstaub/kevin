@@ -67,19 +67,14 @@
 
 /* ---------- Bande signalétique ---------- */
 
-/* Hauteur de la bande condensée : les ancres s'arrêtent sous la barre + la bande. */
+/* Hauteur de la bande : les ancres s'arrêtent sous la barre + la bande. */
 :root {
   --signal-h: 2.5rem;
 }
 
-/* Repère observé par documents.js : 1 px haut, sans place prise. */
-.signaletique-repere {
-  height: 1px;
-  margin-top: -1px;
-}
-
-/* Collante sous la barre, même fond et même filet : collée, elle en devient
-   la seconde ligne. Monochrome : l'encre seule, le poids pour ce qui bloque. */
+/* Une ligne de valeurs, collante sous la barre : même fond et même filet,
+   elle en devient la seconde ligne. Monochrome : l'encre seule, l'aplat
+   pour ce qui bloque. Déborde en défilant plutôt que de se replier. */
 .signaletique {
   position: sticky;
   top: var(--barre-h);
@@ -91,18 +86,20 @@
 .signaletique-inner {
   max-width: var(--colonne);
   margin: 0 auto;
-  padding: var(--sp-1) var(--sp-4);
+  min-height: var(--signal-h);
+  padding: 0 var(--sp-4);
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-1) var(--sp-3);
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
   list-style: none;
 }
 
 .signal {
   display: flex;
   align-items: center;
-  gap: 0.45em;
+  gap: 0.4em;
   font-size: var(--fs-sm);
   color: var(--ink);
   white-space: nowrap;
@@ -110,18 +107,6 @@
 
 .signal .picto {
   flex: none;
-  color: var(--muted);
-}
-
-.signal-texte {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-}
-
-/* Libellé au-dessus de la valeur, en petit ; disparaît à l'état condensé. */
-.signal-libelle {
-  font-size: var(--fs-xs);
   color: var(--muted);
 }
 
@@ -138,36 +123,8 @@ a.signal-valeur {
   border-radius: var(--radius-control);
 }
 
-.signal-bloque .picto,
-.signal-bloque .signal-libelle {
+.signal-bloque .picto {
   color: inherit;
-}
-
-/* Condensée : une ligne de valeurs, pictos et texte seuls ; déborde en défilant. */
-.signaletique.colle .signaletique-inner {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  min-height: var(--signal-h);
-  padding-top: 0;
-  padding-bottom: 0;
-  gap: var(--sp-2);
-}
-
-.signaletique.colle .signal {
-  font-size: var(--fs-xs);
-}
-
-/* Le CIP, 13 chiffres, ne sert qu'au comptoir : il reste à l'état détaillé. */
-.signaletique.colle .signal-libelle,
-.signal-court,
-.signaletique.colle .signal-abrege .signal-valeur,
-.signaletique.colle .signal[data-cle="cip"] {
-  display: none;
-}
-
-.signaletique.colle .signal-court {
-  display: inline;
 }
 
 /* ---------- Grille asymétrique ---------- */

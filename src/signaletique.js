@@ -2,12 +2,10 @@
  * Bande signalétique de la fiche : les caractéristiques d'une spécialité en
  * cases fixes, toujours dans le même ordre, pour que l'œil apprenne où regarder.
  * L'ordre est celui des questions du comptoir : délivrer, payer, substituer,
- * ranger, scanner. Chaque case : un picto, un libellé (état détaillé) et une
+ * ranger. Chaque case : un picto, un libellé (état détaillé) et une
  * valeur (état condensé). `portee` 'bloque' marque ce qui empêche la
  * délivrance en officine.
  */
-import { decomposer, abregerUnite } from './specialites.js';
-
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
 /** Picto de la forme pharmaceutique, d'après son libellé BDPM. */
@@ -24,6 +22,26 @@ export function pictoForme(forme) {
   if (/dispositif transdermique|patch|emplâtre/.test(texte)) return 'patch';
   if (/buvable|sirop|solution|suspension|sol\./.test(texte)) return 'flacon';
   return 'boite';
+}
+
+/**
+ * Forme abrégée pour la bande : la tête du libellé BDPM, sans ses qualificatifs
+ * galéniques, avec LP / LM / GR en sigle. « gélule à libération prolongée » →
+ * « gélule LP » ; « poudre pour solution buvable en sachet » → « solution buvable ».
+ */
+export function abregerForme(forme) {
+  let texte = String(forme ?? '').toLowerCase().trim();
+  if (!texte) return '';
+  const sigle = /lib[ée]ration prolong[ée]e/.test(texte) ? 'LP'
+    : /lib[ée]ration modifi[ée]e/.test(texte) ? 'LM'
+      : /gastro-r[ée]sistant/.test(texte) ? 'GR' : null;
+  // « poudre pour solution injectable » : ce qui compte est ce qu'on administre.
+  const pour = texte.match(/\bpour\s+(.+)$/);
+  if (pour) texte = pour[1];
+  texte = texte.split(/\s+(?:à|en|de|du|des|avec|sans)\s+|,/)[0];
+  texte = texte.replace(/(^|\s)(pellicul[ée]e?s?|s[ée]cables?|quadris[ée]cables?|enrob[ée]e?s?|drag[ée]ifi[ée]e?s?|gastro-r[ée]sistante?s?)(?=\s|$)/g, '$1')
+    .replace(/\s+/g, ' ').trim();
+  return sigle ? `${texte} ${sigle}` : texte;
 }
 
 /** « 42.11 » → « 42,11 € » ; « 2.1 » → « 2,10 € ». Espace fine insécable avant le symbole. */
@@ -45,8 +63,8 @@ const taux = (valeur) => {
  * @param {object|null} resumeAtc  feuille { code, label }
  * @param {string|null} groupe     libellé du groupe générique
  * @param {boolean} importation
- * @returns {Array<{ cle, picto, libelle, valeur, court?, detail?, portee?, lien? }>}
- *   `court` remplace `valeur` dans la bande condensée quand la valeur est longue.
+ * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
+ *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
 export function signaletique(product, delivrance, resumeAtc, groupe, importation) {
   const cases = [];
@@ -93,15 +111,11 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
   const tauxValeurs = [...new Set(presentations.map((pres) => taux(pres.taux)).filter(Boolean))];
   if (avecPrix.length > 0 || tauxValeurs.length > 0) {
     const prix = avecPrix.map((pres) => euros(pres.prix)).filter(Boolean);
-    const [bas, haut] = [prix[0], prix[prix.length - 1]];
-    const valeur = [
-      tauxValeurs.join(' / '),
-      prix.length === 0 ? null : (bas === haut ? bas : `${bas} à ${haut}`),
-    ].filter(Boolean).join(' · ');
-    const court = [tauxValeurs.join(' / '), bas].filter(Boolean).join(' · ');
+    const bas = prix[0];
+    // Le plus petit prix seul : la fourchette complète est en infobulle.
+    const valeur = [tauxValeurs.join(' / '), bas].filter(Boolean).join(' · ');
     cases.push({
       cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur,
-      court: court === valeur ? undefined : court,
       detail: avecPrix.map((pres) => `${pres.libelle_presentation} : ${euros(pres.prix)}`).join(' ; ') || null,
     });
   } else {
@@ -118,16 +132,9 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     cases.push({ cle: 'importation', picto: 'importation', libelle: 'Origine', valeur: 'Importation parallèle' });
   }
 
-  // Forme et dosage.
-  const { dosage } = decomposer(product.denomination_medicament ?? '');
+  // Forme abrégée ; le dosage est dans le titre, le libellé complet en infobulle.
   const forme = product.forme_pharmaceutique ?? '';
-  const dosageCourt = dosage ? abregerUnite(dosage) : null;
-  cases.push({
-    cle: 'forme', picto: pictoForme(forme), libelle: 'Forme',
-    valeur: [dosageCourt, forme].filter(Boolean).join(' · '),
-    court: dosageCourt && forme ? dosageCourt : undefined,
-    detail: forme || null,
-  });
+  cases.push({ cle: 'forme', picto: pictoForme(forme), libelle: 'Forme', valeur: abregerForme(forme), detail: forme || null });
 
   if (product.commercialise === false) {
     cases.push({ cle: 'etat', picto: 'barre', libelle: 'État', valeur: 'Non commercialisé', portee: 'bloque' });
@@ -137,15 +144,6 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     cases.push({
       cle: 'atc', picto: 'arbre', libelle: 'ATC',
       valeur: resumeAtc.feuille.code, detail: resumeAtc.feuille.label, lien: `/classe/${resumeAtc.feuille.code}`,
-    });
-  }
-
-  const cips = presentations.map((pres) => pres.code_cip13).filter(Boolean);
-  if (cips.length > 0) {
-    cases.push({
-      cle: 'cip', picto: 'codebarre', libelle: 'CIP',
-      valeur: cips.length === 1 ? cips[0] : `${cips[0]} +${cips.length - 1}`,
-      detail: presentations.map((pres) => `${pres.code_cip13} ${pres.libelle_presentation}`).join(' ; '),
     });
   }
 
