@@ -36,6 +36,26 @@ function lienOfficiel(cis, filePath) {
   return /^\/documents\//.test(filePath) ? ficheDocument(cis) : safeDocumentUrl(filePath);
 }
 
+/**
+ * Fiche info BDPM : le titre est posé dans un tableau de mise en page (cellules
+ * vides autour, rangées vides dessus et dessous), qui le décalait et l'encadrait
+ * de filets ; le mode d'emploi des pictogrammes du site BDPM n'a pas d'objet ici.
+ * Un tableau dont le seul contenu est un titre devient ce titre.
+ */
+const TABLEAU = /<table\b[^>]*>([\s\S]*?)<\/table>/gi;
+const TITRE = /<(h[1-6])\b[^>]*>[\s\S]*?<\/\1>/gi;
+const PICTOGRAMMES = /<p\b[^>]*>\s*Cliquez sur un pictogramme[\s\S]*?<\/p>\s*(?:<br\s*\/?>)?/i;
+const texte = (html) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;|\s/g, '');
+
+export function nettoyerFicheInfo(html) {
+  return String(html ?? '')
+    .replace(TABLEAU, (tableau, interieur) => {
+      const titres = interieur.match(TITRE) ?? [];
+      return titres.length === 1 && texte(interieur) === texte(titres[0]) ? titres[0] : tableau;
+    })
+    .replace(PICTOGRAMMES, '');
+}
+
 /** Documents officiels d'une spécialité, HTML assaini ici : aucune vue ne reçoit de HTML brut. */
 export async function getDocuments(pool, cis) {
   const { rows } = await pool.query(
@@ -50,7 +70,9 @@ export async function getDocuments(pool, cis) {
 
   return rows
     .map((row) => {
-      const { html, sections } = outline(sanitizeDocument(row.html_content), row.document_type);
+      const propre = sanitizeDocument(row.html_content);
+      const { html, sections } = outline(
+        row.document_type === 'main' ? nettoyerFicheInfo(propre) : propre, row.document_type);
       return {
         cis: row.code_cis,
         type: row.document_type,
