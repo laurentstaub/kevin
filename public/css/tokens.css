@@ -79,26 +79,27 @@
   --ink-sur-vif: #14201a;
 }
 
-/* Mode sombre : le réglage du système, rien d'autre. Fond vert-noir plutôt
-   que noir, encre blanc cassé pour les 40 000 signes d'un RCP. Contrastes
-   sur le fond : encre 14,9, gris 8,2 et 6,4, lien 9,0, alerte 7,1. */
+/* Mode sombre : le réglage du système, rien d'autre. Fond vert-noir profond,
+   encre blanc cassé pour les 40 000 signes d'un RCP, vert des liens poussé
+   vers le vif pour ne pas pâlir sur le noir. Contrastes sur le fond :
+   encre 15,8, gris 8,7 et 6,8, lien 11,8, alerte 7,5. */
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #e4eae5;
     --muted: #a7b1aa;
     --faint: #929c95;
-    --rule: #27322b;
-    --rule-medium: #3f4d44;
+    --rule: #1f2a22;
+    --rule-medium: #37453b;
     --rule-strong: #e4eae5;
 
-    --bg: #101713;
-    --bg-alt: #151e19;
-    --bg-tint: #182219;
+    --bg: #0a100c;
+    --bg-alt: #0f1611;
+    --bg-tint: #121a14;
 
-    --accent: #6cc584;
-    --lien: #6fc98a;
-    --accent-soft: #46624f;
-    --accent-pale: #203328;
+    --accent: #7ad986;
+    --lien: #7ee08a;
+    --accent-soft: #3f5c48;
+    --accent-pale: #1a2a1e;
   }
 }
 
