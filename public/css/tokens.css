@@ -62,7 +62,7 @@
   --radius-surface: 10px;
   --rule-width: 1px;
   /* Barre de situation : ancres et rail collant s'en écartent d'autant. */
-  --barre-h: 2.75rem;
+  --barre-h: 3.75rem;
   /* Une seule largeur, tout en dérive. Ligne à 87 signes (au-delà de 75),
      compensée par l'interligne ; filet et texte s'arrêtent au même endroit. */
   --gouttiere: 2.9rem;
