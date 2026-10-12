@@ -1160,6 +1160,9 @@ a.point:focus-visible {
   color: var(--faint);
 }
 
+/* Exemples de la colonne Autres dans la légende : pas des liens. */
+.legende-exemple { text-decoration: none; cursor: default; }
+
 /* Hors des huit colonnes, la rubrique est nommée en texte (« 5.2 », « N2 »). */
 .autre {
   display: inline-block;

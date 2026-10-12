@@ -26,6 +26,12 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
       |  « #{requete} » tel quel
       span.point.point-epars.point-legende(aria-hidden="true")
       |  les mots, dispersés
+      //- La colonne Autres suit la même règle, en couleur : vert tel quel, gris dispersés.
+      span.legende-autres  — dans « Autres » : 
+      span.autre.legende-exemple(aria-hidden="true") N2
+      |  tel quel, 
+      span.autre.point-epars.legende-exemple(aria-hidden="true") N2
+      |  dispersés
 
   table.trouvailles(class=large ? null : 'trouvailles-ciblees')
     caption.sr-only
