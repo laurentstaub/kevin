@@ -20,6 +20,7 @@ import {
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
+import { signaletique } from '../signaletique.js';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
   APERCU, COLONNES, PAR_PAGE,
@@ -423,9 +424,12 @@ export function pageRoutes(pool) {
       ].filter(Boolean);
 
       const resumeAtc = resumerClasse(classeAtc);
+      const genericGroup = genericGroupLabel(substitutions);
 
       res.render('product', {
         product,
+        // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
+        signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation),
         importation,
         reference,
         substitutions,
@@ -434,7 +438,7 @@ export function pageRoutes(pool) {
         resumeAtc,
         // Branche ATC du produit, surlignée dans le rail.
         railActif: resumeAtc?.feuille?.code?.[0] ?? null,
-        genericGroup: genericGroupLabel(substitutions),
+        genericGroup,
         documents,
         hasDocuments,
         delivrance,

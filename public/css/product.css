@@ -65,13 +65,118 @@
   color: var(--accent);
 }
 
+/* ---------- Bande signalétique ---------- */
+
+/* Hauteur de la bande condensée : les ancres s'arrêtent sous la barre + la bande. */
+:root {
+  --signal-h: 2.5rem;
+}
+
+/* Repère observé par documents.js : 1 px haut, sans place prise. */
+.signaletique-repere {
+  height: 1px;
+  margin-top: -1px;
+}
+
+/* Collante sous la barre, même fond et même filet : collée, elle en devient
+   la seconde ligne. Monochrome : l'encre seule, le poids pour ce qui bloque. */
+.signaletique {
+  position: sticky;
+  top: var(--barre-h);
+  z-index: 19;
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.signaletique-inner {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding: var(--sp-1) var(--sp-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  list-style: none;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.signal .picto {
+  flex: none;
+  color: var(--muted);
+}
+
+.signal-texte {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+/* Libellé au-dessus de la valeur, en petit ; disparaît à l'état condensé. */
+.signal-libelle {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+a.signal-valeur {
+  color: var(--accent);
+}
+
+/* Ce qui empêche la délivrance : aplat plein, comme les mentions du bloc. */
+.signal-bloque {
+  background: var(--bg-fonce);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.1em 0.5em;
+  border-radius: var(--radius-control);
+}
+
+.signal-bloque .picto,
+.signal-bloque .signal-libelle {
+  color: inherit;
+}
+
+/* Condensée : une ligne de valeurs, pictos et texte seuls ; déborde en défilant. */
+.signaletique.colle .signaletique-inner {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-height: var(--signal-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  gap: var(--sp-2);
+}
+
+.signaletique.colle .signal {
+  font-size: var(--fs-xs);
+}
+
+/* Le CIP, 13 chiffres, ne sert qu'au comptoir : il reste à l'état détaillé. */
+.signaletique.colle .signal-libelle,
+.signal-court,
+.signaletique.colle .signal-abrege .signal-valeur,
+.signaletique.colle .signal[data-cle="cip"] {
+  display: none;
+}
+
+.signaletique.colle .signal-court {
+  display: inline;
+}
+
 /* ---------- Grille asymétrique ---------- */
 
 /* Colonne unique. Sections repliables, fermées au chargement : la fiche
    s'ouvre sur son plan. */
 .contenu > .bloc {
   padding-top: var(--sp-4);
-  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
 }
 
 .bloc-tete {
@@ -325,7 +430,7 @@ span.onglet {
   font-weight: 600;
   cursor: pointer;
   list-style: none;
-  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
 }
 
 .rubrique[open] > .rubrique-tete {
@@ -400,7 +505,7 @@ span.onglet {
   margin: var(--sp-1) 0 0;
   padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);
-  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
 }
 
 /* Le bouton reprend la grille du titre pour garder les numéros alignés. */
@@ -764,7 +869,7 @@ span.onglet {
   margin: var(--sp-4) 0 var(--sp-2);
   padding-top: var(--sp-1);
   border-top: var(--rule-width) solid var(--rule);
-  scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
+  scroll-margin-top: calc(var(--barre-h) + var(--signal-h) + var(--sp-2));
 }
 
 /* Rubrique de premier niveau : charnière du document. */
@@ -823,6 +928,11 @@ span.onglet {
 
 @media (max-width: 52rem) {
   .identite {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+
+  .signaletique-inner {
     padding-left: var(--sp-2);
     padding-right: var(--sp-2);
   }
@@ -934,6 +1044,17 @@ span.onglet {
 /* ---------- Impression de la fiche ---------- */
 
 @media print {
+  .signaletique {
+    position: static;
+    background: none;
+  }
+
+  .signal-bloque {
+    background: none;
+    color: #000;
+    border: var(--rule-width) solid #666;
+  }
+
   /* Tout s'ouvre : une rubrique repliée ne s'imprime pas. */
   details > *:not(summary) {
     display: block !important;

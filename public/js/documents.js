@@ -107,6 +107,7 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 const repere = document.querySelector('.barre-repere');
 const barreTitre = document.querySelector('.barre-titre');
 const barre = document.querySelector('.barre');
+const bande = document.querySelector('.signaletique');
 
 if (repere && barre && documents) {
   // Mis en cache : ne change qu'à l'ouverture d'une rubrique ou d'un onglet.
@@ -145,7 +146,8 @@ if (repere && barre && documents) {
   };
 
   const situer = () => {
-    const seuil = barre.getBoundingClientRect().bottom;
+    // Sous la barre et, quand elle colle, sous la bande signalétique.
+    const seuil = (bande ?? barre).getBoundingClientRect().bottom;
     let trouve = null;
 
     for (const titre of titres()) {
@@ -434,4 +436,17 @@ if (motif && documents) {
   // Premier passage surligné de la rubrique visée, au centre de l'écran.
   const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   cible?.querySelector('mark.surligne')?.scrollIntoView({ block: 'center' });
+}
+
+// Bande signalétique : condensée dès qu'elle colle sous la barre. Le repère,
+// un élément vide juste avant elle, passe sous la barre au même moment.
+const repereBande = document.querySelector('.signaletique-repere');
+
+if (bande && repereBande && barre && 'IntersectionObserver' in window) {
+  const hauteurBarre = Math.ceil(barre.getBoundingClientRect().height);
+  const observateur = new IntersectionObserver(([entree]) => {
+    const sorti = !entree.isIntersecting && entree.boundingClientRect.top < hauteurBarre;
+    bande.classList.toggle('colle', sorti);
+  }, { rootMargin: `-${hauteurBarre}px 0px 0px 0px`, threshold: 0 });
+  observateur.observe(repereBande);
 }

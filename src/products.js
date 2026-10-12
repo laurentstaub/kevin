@@ -50,19 +50,27 @@ export async function getProduct(pool, cis) {
         m.forme_pharmaceutique,
         m.titulaires,
         m.type_procedure_amm,
+        (m.etat_commercialisation = 'Commercialisée') AS commercialise,
+        -- Place dans son groupe générique : 0 princeps, 1 générique, 2 et 4 assimilés ; null hors groupe.
+        (SELECT g.type_generique FROM dbpm.cis_gener_bdpm g WHERE g.code_cis = m.code_cis LIMIT 1) AS type_generique,
         string_agg(DISTINCT c.denomination_substance, ', '
                    ORDER BY c.denomination_substance) AS active_ingredients
       FROM dbpm.cis_bdpm m
       LEFT JOIN dbpm.cis_compo_bdpm c ON c.code_cis = m.code_cis
       WHERE m.code_cis = $1
       GROUP BY m.code_cis, m.denomination_medicament, m.forme_pharmaceutique,
-               m.titulaires, m.type_procedure_amm
+               m.titulaires, m.type_procedure_amm, m.etat_commercialisation
     ),
     presentations AS (
       SELECT json_agg(json_build_object(
                'code_cip7', code_cip7,
                'code_cip13', code_cip13,
-               'libelle_presentation', libelle_presentation
+               'libelle_presentation', libelle_presentation,
+               -- Valeurs CIP : « Déclaration de commercialisation », « … d'arrêt … », « … de suspension … ».
+               'commercialise', etat_commercialisation !~* '(arr[êe]t|suspension)',
+               'taux', nullif(btrim(taux_remboursement::text), ''),
+               'prix', nullif(btrim(prix_medicament_euro::text), ''),
+               'collectivites', agrement_collectivites
              -- Tri par quantité réelle : « Boîte de 30 » avant « Boîte de 100 »,
           -- ce que l'ordre alphabétique fait exactement à l'envers.
           ) ORDER BY NULLIF(substring(libelle_presentation from '\\d+'), '')::int NULLS LAST,

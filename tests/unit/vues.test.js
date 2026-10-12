@@ -54,6 +54,7 @@ const produit = (extra = {}) => ({
   documents: [],
   hasDocuments: false,
   delivrance: { resume: [], groupes: [], liens: [] },
+  signaletique: [],
   // Via productLinks, pour suivre tout nouveau lien de la fiche.
   links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [], scientific: [] },
   sections: [],
@@ -185,6 +186,24 @@ describe('rendu des gabarits', () => {
     }));
     assert.match(un, /<span class="onglet"[^>]*>RCP<\/span>/);
     assert.doesNotMatch(un, /role="tab"/);
+  });
+
+  // Une case par caractéristique : picto, libellé, valeur ; l'aplat marque ce qui bloque.
+  it('la bande signalétique rend ses cases dans l\'ordre, avec picto et aplat', () => {
+    const html = rendre('product', produit({
+      signaletique: [
+        { cle: 'ordonnance', picto: 'cadenas', libelle: 'Ordonnance', valeur: 'Stupéfiant', detail: 'Stupéfiant', portee: 'bloque' },
+        { cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur: '65 % · 2,10 € à 4,00 €', court: '65 % · 2,10 €' },
+        { cle: 'atc', picto: 'arbre', libelle: 'ATC', valeur: 'N02AA01', detail: 'morphine', lien: '/classe/N02AA01' },
+      ],
+    }));
+    assert.match(html, /<section class="signaletique"/);
+    assert.match(html, /class="signal signal-bloque" title="Stupéfiant" data-cle="ordonnance"><svg class="picto"/);
+    assert.match(html, /class="signal signal-abrege"[^>]*data-cle="prix"/);
+    assert.match(html, /<span class="signal-libelle">Prise en charge<\/span><span class="signal-valeur">65 % · 2,10 € à 4,00 €<\/span><span class="signal-court">65 % · 2,10 €<\/span>/);
+    assert.match(html, /<a class="signal-valeur" href="\/classe\/N02AA01">N02AA01<\/a>/);
+    assert.ok(html.indexOf('data-cle="ordonnance"') < html.indexOf('data-cle="prix"'));
+    assert.doesNotMatch(rendre('product', produit()), /signaletique/);
   });
 
   // Le dosage affiché est dans le titre : la liste ne porte que les autres.
