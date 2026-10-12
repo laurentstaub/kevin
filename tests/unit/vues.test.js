@@ -265,14 +265,37 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /dosages et formes/);
   });
 
-  // Chaque rubrique pointe sur sa meilleure occurrence, pas sur la spécialité de l'extrait.
-  it('chaque rubrique porte sa propre ancre', () => {
+  // Un point résume une rubrique pour toute la molécule : il mène à la vue ciblée
+  // molécule + rubrique, où chaque spécialité a sa propre ancre. Sans signature
+  // (produit sans composition), le lien direct vers le RCP reste.
+  it('un point mène à la vue ciblée de la molécule et de la rubrique', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /href="\/product\/66297965\?q=intervalle%20QT#rcp-12"/);
-    assert.match(html, /href="\/product\/66297966\?q=intervalle%20QT#rcp-21"/);
+    assert.match(html, /class="point" href="\/documents\?q=intervalle\+QT&amp;rubrique=4\.4&amp;molecule=OLANZAPINE"/);
+    assert.match(html, /class="point" href="\/documents\?q=intervalle\+QT&amp;rubrique=4\.8&amp;molecule=OLANZAPINE"/);
+    assert.match(html, /class="point" href="\/product\/66297967\?q=intervalle%20QT#rcp-12"/);
     assert.match(html, /66 spécialités/);
+  });
+
+  // Une association « A + B » se filtre par ses mots : le « + » n'en est pas un.
+  it('une association se filtre sans son « + »', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, page: 1,
+      documents: { ...RECHERCHE_PLEINE, resultats: [{ ...TROUVAILLE, molecule: 'TRAMADOL + PARACÉTAMOL' }] },
+    });
+    assert.match(html, /molecule=TRAMADOL\+PARAC%C3%89TAMOL"/);
+  });
+
+  // Ciblée : la phrase dit de quelle spécialité elle vient, quand il y en a plusieurs.
+  it('la phrase nomme la spécialité dont elle vient', () => {
+    const html = rendre('documents', {
+      query: 'QT', rubrique: null, page: 1, ciblee: true,
+      documents: { ...RECHERCHE_PLEINE, resultats: [{ ...TROUVAILLE, rubriques: [
+        { numero: '4.4', libelle: 'Mises en garde', cis: '1', ancre: 'rcp-12', extrait: 'x', denomination: 'ZYPREXA 5 mg, comprimé' },
+      ] }] },
+    });
+    assert.match(html, /class="phrase-source">— Zyprexa 5 mg, comprimé/);
   });
 
   // Chaque dosage mène au passage trouvé de sa spécialité, requête transmise.

@@ -368,12 +368,15 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                        'numero', p.numero, 'libelle', p.libelle, 'cis', p.code_cis,
                        'type', p.document_type, 'exact', p.exact,
                        'ancre', p.document_type || '-' || p.position,
+                       -- La spécialité d'où vient la phrase : une molécule a plusieurs RCP.
+                       'denomination', pm.denomination_medicament,
                        'extrait', ${phraseSql('ps.texte', 'q.tq', '$4::text')})
                      ORDER BY p.document_type <> 'rcp',
                               substring(p.numero from '^[0-9]+')::int NULLS LAST,
                               substring(p.numero from '[.]([0-9]+)')::int NULLS FIRST,
                               p.numero)
               FROM par_rubrique p
+              JOIN dbpm.cis_bdpm pm ON pm.code_cis = p.code_cis
               JOIN docs.rcp_sections ps
                 ON ps.code_cis = p.code_cis AND ps.document_type = p.document_type AND ps.position = p.position
               WHERE p.signature = page.signature AND coalesce(p.numero, '') <> '')

@@ -86,13 +86,22 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
 
           //- Point plein : expression telle quelle ; creux : mots dispersés.
           //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.
+          //- Le point mène à la vue ciblée molécule + rubrique : la phrase, puis chaque
+          //- spécialité menant à sa propre rubrique. Un point ne peut pas désigner
+          //- un seul RCP quand la molécule en a dix-huit. Sans signature (produit
+          //- sans composition), le lien direct reste.
+          -
+            const filtre = trouvaille.sansMolecule ? null : trouvaille.molecule.replace(/\s*\+\s*/g, ' ');
+            const vers = (rub) => (filtre && rub.type !== 'notice'
+              ? lien(etat, { molecule: filtre, rubrique: rub.numero })
+              : `/product/${rub.cis}${q}#${rub.ancre}`);
           each colonne in colonnesVues
             td.cellule-rubrique
               if par[colonne[0]]
                 - const rub = par[colonne[0]]
                 a.point(
                   class=recherche.exacte && !rub.exact ? 'point-epars' : null
-                  href=`/product/${rub.cis}${q}#${rub.ancre}`
+                  href=vers(rub)
                   title=long(rub)
                   aria-label=long(rub)
                   data-cis=rub.cis
@@ -105,7 +114,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
               each rub in autres
                 a.autre(
                   class=recherche.exacte && !rub.exact ? 'point-epars' : null
-                  href=`/product/${rub.cis}${q}#${rub.ancre}`
+                  href=vers(rub)
                   title=long(rub)
                   aria-label=long(rub)
                   data-cis=rub.cis
@@ -140,6 +149,10 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                   |  
                   //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
                   span!= rub.extrait
+                  //- D'où vient la phrase : une molécule a plusieurs RCP.
+                  if rub.denomination && trouvaille.specialites > 1
+                    |  
+                    span.phrase-source — #{specialite(rub.denomination)}
 
   if resume && recherche.total > recherche.resultats.length
     p.trouvailles-suite

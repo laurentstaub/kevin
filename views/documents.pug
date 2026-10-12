@@ -35,7 +35,7 @@ block content
           if etat.molecule
             a.jeton(href=lien(etat, { molecule: null })
               title="Chercher pour toutes les molécules")
-              | #{etat.molecule}
+              | #{dci(etat.molecule)}
               span.jeton-croix ×
           if rubrique
             //- Le jeton retire le filtre d'un clic.
