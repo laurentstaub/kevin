@@ -128,26 +128,45 @@ export function pageRoutes(pool) {
     }),
   );
 
+  /** L'IA traduit une question en critères ; null si elle est absente ou échoue. */
+  const interpreter = async (texte) => {
+    if (!iaActive() || !estQuestion(texte)) return null;
+    return interpreterQuestion(texte).catch((err) => {
+      console.error('[ia] interprétation indisponible :', err.message);
+      return null;
+    });
+  };
+
   /**
    * Où envoyer une saisie : la base d'abord, l'IA ensuite.
-   * - médicament + reste (« paracetamol allaitement ») → documents du médicament ;
+   * - médicament + reste court (« paracetamol allaitement ») → documents du médicament ;
+   * - médicament + reste en forme de question (« une femme qui allaite peut-elle
+   *   prendre de l'aspirine ») → l'IA traduit le reste, la base garde la molécule ;
    * - nom seul (« doliprane 1000 mg ») → recherche par nom, jamais l'IA ;
-   * - aucun médicament et allure de question → l'IA interprète (`ia`) ;
+   * - aucun médicament et allure de question → l'IA interprète tout ;
    * - sinon la recherche habituelle (null).
-   * @returns {Promise<{ url: string }|{ ia: true }|null>}
+   * Toujours une redirection vers la recherche explicite : URL partageable, filtres retirables.
+   * @returns {Promise<{ url: string }|null>}
    */
   const orienter = async (etat, saisie) => {
+    const documents = (changements) => ({ url: lien({ ...etat, mode: 'documents' }, { question: saisie, ...changements }) });
     const reconnu = await reconnaitreMedicament(pool, saisie).catch((err) => {
       console.error('[recherche] reconnaissance indisponible :', err.message);
       return null;
     });
     if (reconnu?.reste) {
-      return { url: lien({ ...etat, mode: 'documents' }, {
-        requete: reconnu.reste, molecule: reconnu.molecule, question: saisie,
-      }) };
+      const criteres = await interpreter(reconnu.reste);
+      return criteres
+        ? documents({ requete: criteres.mots, rubrique: criteres.rubrique, molecule: reconnu.molecule, ia: '1' })
+        : documents({ requete: reconnu.reste, molecule: reconnu.molecule });
     }
     if (reconnu) return null;
-    return iaActive() && estQuestion(saisie) ? { ia: true } : null;
+    const criteres = await interpreter(saisie);
+    if (criteres) {
+      return documents({ requete: criteres.mots, rubrique: criteres.rubrique, molecule: criteres.molecule, ia: '1' });
+    }
+    // Question sans réponse de l'IA : les documents tout de même, texte tel quel.
+    return iaActive() && estQuestion(saisie) ? { url: lien({ ...etat, mode: 'documents' }) } : null;
   };
 
   router.get(
@@ -160,11 +179,10 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
-      // Médicament reconnu → ses documents ; question → l'IA l'interprète sur /documents.
+      // Médicament reconnu ou question interprétée → les documents, par redirection.
       if (!etat.brut && !query.tooShort) {
         const sens = await orienter(etat, query.raw);
-        if (sens?.url) return res.redirect(sens.url);
-        if (sens?.ia) return res.redirect(lien({ ...etat, mode: 'documents' }));
+        if (sens) return res.redirect(sens.url);
       }
 
       if (query.tooShort) {
@@ -220,22 +238,7 @@ export function pageRoutes(pool) {
       // retirables) ; `question` présent : déjà fait, jamais deux fois.
       if (!etat.molecule && !etat.question && !etat.brut && !query.tooShort) {
         const sens = await orienter(etat, query.raw);
-        if (sens?.url) return res.redirect(sens.url);
-        if (sens?.ia) {
-          const criteres = await interpreterQuestion(query.raw).catch((err) => {
-            console.error('[ia] interprétation indisponible :', err.message);
-            return null;
-          });
-          if (criteres) {
-            return res.redirect(lien(etat, {
-              requete: criteres.mots,
-              rubrique: criteres.rubrique ?? rubrique,
-              molecule: criteres.molecule,
-              question: query.raw,
-              ia: '1',
-            }));
-          }
-        }
+        if (sens) return res.redirect(sens.url);
       }
 
       let panne = null;

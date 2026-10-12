@@ -127,6 +127,13 @@ describe('routes : la base avant l’IA', () => {
     await request(app).get('/search?q=doliprane+1000+mg+comprime').expect(200);
   });
 
+  // L'IA (indisponible ici) aurait traduit le reste ; à défaut, il part tel quel, la molécule venant de la base.
+  it('une question autour d’un nom courant garde la molécule de la base', async () => {
+    const res = await request(app).get('/search?q=une+femme+qui+allaite+peut-elle+prendre+de+l%27aspirine').expect(302);
+    assert.match(res.headers.location, /molecule=acide\+acetylsalicylique/);
+    assert.match(res.headers.location, /q=une\+femme\+qui\+allaite\+peut-elle\+prendre\+de&/);
+  });
+
   it('sans médicament, trois mots vont à l’IA', async () => {
     const res = await request(app).get('/search?q=allongement+intervalle+QT').expect(302);
     assert.match(res.headers.location, /^\/documents\?q=/);

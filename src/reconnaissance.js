@@ -65,7 +65,9 @@ async function mesurer(pool, candidats) {
  */
 export async function reconnaitreMedicament(pool, saisie) {
   // « aspirine allaitement » : la base ne connaît que l'acide acétylsalicylique.
-  const originaux = substituer(saisie).split(/\s+/).filter(Boolean);
+  // Élisions (« l'acide », « d'aspirine ») : le mot seul, sans son article.
+  const originaux = substituer(saisie).split(/\s+/).filter(Boolean)
+    .map((mot) => mot.replace(/^(?:[ldjmnstc]|qu)['’](?=\S)/, ''));
   const mots = originaux.map(normaliser);
   if (mots.length < 2) return null;
 
