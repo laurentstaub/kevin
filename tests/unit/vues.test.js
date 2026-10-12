@@ -579,8 +579,8 @@ describe('rendu des gabarits', () => {
       },
     });
     assert.match(html, /« QT » cherché aussi comme/);
-    assert.match(html, /intervalle QT, torsade de pointes/);
-    assert.match(html, /href="\/documents\?q=%22QT%22"[^>]*>mot pour mot/);
+    assert.match(html, /« intervalle QT », « torsade de pointes »<\/span>\./);
+    assert.match(html, /Recherche de l’expression exacte\s*<a class="elargi-exact" href="\/documents\?q=%22QT%22"[^>]*>« QT »<\/a>\./);
   });
 
   it('se tait quand rien n’a été élargi', () => {

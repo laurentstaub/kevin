@@ -58,10 +58,13 @@ block content
                 |  ·
               | « #{elargissement.terme} » cherché aussi comme
               |
-              span.elargi-vers= elargissement.vers.join(', ')
+              span.elargi-vers= elargissement.vers.map((v) => `« ${v} »`).join(', ')
+            | .
+            |  Recherche de l’expression exacte
             |
             a.elargi-exact(href=lien(etat, { requete: `"${query.replace(/"/g, '')}"` })
-              title="Chercher les mots tapés, et rien d'autre") mot pour mot
+              title="Chercher les mots tapés, et rien d'autre") « #{query.replace(/"/g, '')} »
+            | .
 
     //- Le filtre par rubrique est dans l'en-tête du tableau.
     if panne
