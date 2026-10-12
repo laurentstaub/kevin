@@ -7,6 +7,7 @@
  */
 
 import { deaccent } from './text.js';
+import { substituer } from './synonymes.js';
 
 /** Au-delà, le mot est un composant générique (« sodium », « chlorhydrate »), pas une molécule. */
 const SUBSTANCES_MAX = 40;
@@ -63,7 +64,8 @@ async function mesurer(pool, candidats) {
  *   reste vide : un nom seul (dosage, forme), à chercher par nom
  */
 export async function reconnaitreMedicament(pool, saisie) {
-  const originaux = String(saisie ?? '').trim().split(/\s+/).filter(Boolean);
+  // « aspirine allaitement » : la base ne connaît que l'acide acétylsalicylique.
+  const originaux = substituer(saisie).split(/\s+/).filter(Boolean);
   const mots = originaux.map(normaliser);
   if (mots.length < 2) return null;
 

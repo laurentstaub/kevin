@@ -1,6 +1,7 @@
 import { config } from './config.js';
 import { formesDuProduit } from './specialites.js';
 import { deaccent } from './text.js';
+import { canonique } from './synonymes.js';
 import {
   racineSql,
   importSql,
@@ -41,6 +42,13 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   const $limit = `$${params.length + 4}`;
   params.push(exact, prefix, innerLimit, limit);
 
+  // Nom courant (« aspirine ») : la substance se cherche aussi sous son nom
+  // de base (« acide acetylsalicylique »), au même rang qu'une égalité.
+  const alias = canonique(query.normalized);
+  const $alias = `$${params.length + 1}`;
+  const $aliasExact = `$${params.length + 2}`;
+  if (alias) params.push(`%${alias}%`, alias);
+
   const brandExpr = 'f_unaccent(lower(m.denomination_medicament))';
   const substExpr = 'f_unaccent(lower(c.denomination_substance))';
   const and = (expr) => terms.map((_, i) => `${expr} LIKE $${i + 1}`).join(' AND ');
@@ -51,6 +59,10 @@ export async function searchMedications(pool, query, filter = 'all', options = {
     WHEN ${expr} LIKE ${$prefix} THEN 1
     ELSE 2
   END`;
+  const rangSubstance = alias
+    ? `CASE WHEN ${substExpr} = ${$aliasExact} THEN 0 WHEN ${substExpr} LIKE ${$alias} THEN 1 ELSE ${rang(substExpr)} END`
+    : rang(substExpr);
+  const parSubstance = alias ? `(${and(substExpr)} OR ${substExpr} LIKE ${$alias})` : and(substExpr);
 
   const wantBrand = filter !== 'active';
   const wantActive = filter !== 'specialty';
@@ -83,9 +95,9 @@ export async function searchMedications(pool, query, filter = 'all', options = {
 
     ctes.push(`
       subst_hits AS (
-        SELECT c.code_cis, min(${rang(substExpr)}) AS rang
+        SELECT c.code_cis, min(${rangSubstance}) AS rang
         FROM dbpm.cis_compo_bdpm c
-        WHERE ${and(substExpr)}
+        WHERE ${parSubstance}
           ${horsDenomination}
         GROUP BY c.code_cis
         ORDER BY rang, c.code_cis
@@ -103,6 +115,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
         SELECT denomination_substance AS substance
         FROM dbpm.cis_compo_bdpm
         WHERE f_unaccent(lower(denomination_substance)) LIKE ${$prefix}
+          ${alias ? `OR f_unaccent(lower(denomination_substance)) LIKE ${$alias}` : ''}
         ORDER BY length(denomination_substance), denomination_substance
         LIMIT 1
       )`);
@@ -141,7 +154,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
         SELECT string_agg(DISTINCT denomination_substance, ', '
                           ORDER BY denomination_substance) AS substances,
                count(DISTINCT denomination_substance)::int AS nb_substances,
-               min(${rang(substExpr)}) AS rang_substance
+               min(${rangSubstance}) AS rang_substance
         FROM dbpm.cis_compo_bdpm c WHERE c.code_cis = h.code_cis
       ) c ON true
       LEFT JOIN LATERAL (

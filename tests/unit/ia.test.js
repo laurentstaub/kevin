@@ -47,6 +47,13 @@ describe('validation de la sortie du modèle', () => {
     );
   });
 
+  it('ramène un nom courant de molécule à sa substance', () => {
+    assert.equal(
+      validerInterpretation({ molecule: 'aspirine', rubrique: '4.6', mots: 'allaitement' }).molecule,
+      'acide acetylsalicylique',
+    );
+  });
+
   it('refuse une sortie sans mots-clés', () => {
     assert.equal(validerInterpretation({ molecule: 'tramadol', rubrique: '4.6', mots: '' }), null);
     assert.equal(validerInterpretation(null), null);

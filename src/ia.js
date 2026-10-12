@@ -7,6 +7,7 @@
 
 import { config } from './config.js';
 import { normaliserRubrique } from './recherche-texte.js';
+import { canonique } from './synonymes.js';
 
 /** Rubriques du RCP proposées au modèle, et seules acceptées en retour. */
 export const RUBRIQUES_IA = {
@@ -81,8 +82,10 @@ export function validerInterpretation(entree) {
   if (!mots || mots.length > 120) return null;
 
   const brute = String(entree.molecule ?? '').trim();
-  const molecule = !RIEN.has(brute.toLowerCase())
+  const nommee = !RIEN.has(brute.toLowerCase())
     && /^[\p{L}\d][\p{L}\d\s'’-]{1,79}$/u.test(brute) ? brute : null;
+  // Nom courant : la substance telle que la base la nomme.
+  const molecule = nommee ? (canonique(nommee) ?? nommee) : null;
 
   const numero = normaliserRubrique(entree.rubrique);
   const rubrique = numero && RUBRIQUES_IA[numero] ? numero : null;

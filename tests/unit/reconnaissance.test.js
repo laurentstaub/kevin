@@ -6,7 +6,10 @@ import { createApp } from '../../src/app.js';
 import { config } from '../../src/config.js';
 
 /** Base factice : « paracetamol » et « acide folique » sont des substances, « doliprane » une marque. */
-const CONNUS = { substances: { paracetamol: 1, 'acide folique': 1, sodium: 300 }, marques: new Set(['doliprane']) };
+const CONNUS = {
+  substances: { paracetamol: 1, 'acide folique': 1, 'acide acetylsalicylique': 1, sodium: 300 },
+  marques: new Set(['doliprane', 'aspirine']),
+};
 const poolFactice = {
   query: async (sql, params) => {
     if (!sql.includes('FROM unnest($1::text[]) AS mot')) return { rows: [] };
@@ -43,6 +46,15 @@ describe('reconnaissance d’un médicament', () => {
     assert.deepEqual(
       await reconnaitreMedicament(poolFactice, 'allaitement doliprane ?'),
       { molecule: 'doliprane', reste: 'allaitement' },
+    );
+  });
+
+  // « aspirine » est une marque (ASPIRINE UPSA) mais le pharmacien pense substance :
+  // la table des noms courants la ramène à l'acide acétylsalicylique.
+  it('ramène un nom courant à sa substance', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'aspirine allaitement'),
+      { molecule: 'acide acetylsalicylique', reste: 'allaitement' },
     );
   });
 

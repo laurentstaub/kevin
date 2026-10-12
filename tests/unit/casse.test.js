@@ -20,6 +20,10 @@ describe('casse d’affichage', () => {
     assert.equal(phrase('MEDICAMENTS EN CARDIOLOGIE'), 'Médicaments en cardiologie');
   });
 
+  it('traite un accent combinant comme une capitale', () => {
+    assert.equal(dci('ACE\u0301TYLSALICYLIQUE'), 'acétylsalicylique');
+  });
+
   it('laisse ce qui n’est pas crié', () => {
     assert.equal(dci('paracétamol'), 'paracétamol');
     assert.equal(dci(''), '');
