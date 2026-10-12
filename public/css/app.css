@@ -282,11 +282,6 @@
   font-size: var(--fs-sm);
 }
 
-/* Masqué : il décalerait la ligne à chaque frappe. */
-.search-compacte .loading {
-  display: none !important;
-}
-
 /* ---------- Ligne de situation ---------- */
 
 /* Retour, recherche et fil ATC sur une ligne, groupés à gauche, au-dessus du
@@ -389,13 +384,6 @@
 }
 
 /* ---------- États ---------- */
-
-.loading {
-  display: none;
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  padding-top: var(--sp-1);
-}
 
 .notice,
 .vide {

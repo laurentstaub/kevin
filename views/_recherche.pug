@@ -26,4 +26,6 @@ mixin champRecherche(valeur, compact, action)
     #suggestions.suggestions(role="listbox" hidden)
       .suggestions-list
 
-    #loading.loading(role="status" aria-live="polite") Recherche…
+    //- Pour le lecteur d'écran seulement : affiché, il faisait respirer le
+    //- bandeau à chaque lettre tapée.
+    #loading.loading.sr-only(role="status" aria-live="polite") Recherche…
