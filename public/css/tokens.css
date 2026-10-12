@@ -94,6 +94,8 @@
   --ink-sur-vif: #14201a;
   /* Soulignement des liens : trait et couleur, affinés en sombre. */
   --trait: 1px;
+  --gras: currentColor;
+  --lissage: auto;
   --trait-couleur: currentcolor;
   --trait-couleur: light-dark(currentcolor, color-mix(in srgb, currentcolor 55%, transparent));
 }
@@ -111,14 +113,14 @@
    liens, et le corps. En polarité inverse l'acuité baisse et les traits clairs
    paraissent plus maigres : 17 px au lieu de 16, tout en rem suit d'un bloc. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --trait: 0.5px; font-size: 106.25%; }
+  :root:not([data-theme="light"]) { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
 }
 
-:root[data-theme="dark"] { --trait: 0.5px; font-size: 106.25%; }
+:root[data-theme="dark"] { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
 
 /* À l'impression, toujours clair, même forcé en sombre. */
 @media print {
-  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; font-size: 100%; }
+  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; --gras: currentColor; --lissage: auto; font-size: 100%; }
 }
 
 *,
@@ -146,6 +148,18 @@ body {
   line-height: 1.6;
   color: var(--ink);
   background: var(--bg);
+  /* Sombre : sans le lissage sous-pixel, le texte clair cesse de s'épaissir
+     et le gras ressort. Sans effet hors Mac et iOS. */
+  -webkit-font-smoothing: var(--lissage);
+}
+
+/* Le gras, sur fond sombre, gagne en blancheur ce qu'il ne gagne pas en
+   graisse ; en clair, la couleur du texte. Toujours le vrai gras, pas le 600
+   synthétique de certaines polices. */
+strong,
+b {
+  font-weight: 700;
+  color: var(--gras);
 }
 
 h1,
