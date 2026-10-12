@@ -192,6 +192,18 @@ a.signal-valeur {
   display: none;
 }
 
+/* Le titre ne se coupe jamais : sinon le triangle, rétréci par les mentions,
+   passe seul sur une ligne au-dessus du mot. Les mentions prennent le reste. */
+.bloc-tete .section-titre {
+  flex: none;
+  white-space: nowrap;
+}
+
+.bloc-tete .mentions {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .section-titre {
   font-size: var(--fs-md);
   padding-bottom: var(--sp-1);
@@ -251,6 +263,19 @@ td.forme {
 
 .document + .document {
   margin-top: var(--sp-6);
+}
+
+/* En onglets, les panneaux se remplacent : pas de blanc entre eux. Un panneau
+   `hidden="until-found"` garde sa boîte (content-visibility) : ses marges
+   s'empilaient au-dessus de l'onglet affiché. */
+.document[role="tabpanel"] + .document[role="tabpanel"] {
+  margin-top: 0;
+}
+
+.document[hidden] {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .document-tete {
