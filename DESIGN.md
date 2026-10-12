@@ -25,7 +25,6 @@ Une seule famille, deux emplois qui ne se croisent jamais.
 | Encre secondaire | `--muted` | `#5f6b62` | 5,58 |
 | Encre tertiaire | `--faint` | `#6b7770` | 4,67 |
 | Accent — texte | `--accent` | `#1b5e33` | 7,79 |
-| Accent — action | `--accent-vif` | `#7bd44f` | 9,09 avec l'encre **posée dessus** |
 | Aplat sombre | `--bg-fonce` | `#123b22` | 12,5 avec du blanc |
 | État sélectionné | `--accent-pale` | `#e4f0e6` | 14,3 avec l'encre |
 | Teinte de section | `--bg-tint` | `#f2f7f2` | — |
@@ -34,10 +33,9 @@ Le vert vient d'antheosdata.com — même maison, même famille. Il est employé
 autrement : là-bas il couvre des pages qu'on parcourt, ici il **borde** des
 pages qu'on lit.
 
-`--accent` porte du texte : liens, codes ATC, onglet actif, DCI. `--accent-vif`
-n'en porte **jamais** — à 1,66 de contraste sur blanc il serait illisible. Il
-est un fond, une fois par écran, pour l'action principale : le bouton de
-recherche, et rien d'autre pour l'instant.
+`--accent` porte du texte : liens, codes ATC, onglet actif. Aucun aplat vert
+vif : l'action de recherche est une flèche de retour chariot dans le champ,
+en gris, qui prend l'accent au survol. Le site n'a pas de bouton plein.
 
 `--faint` a été relevé de `#9a9a9a`, qui plafonnait à 2,85 et ne passait aucun
 seuil WCAG alors qu'il portait des libellés de colonnes et des codes ATC. Sur
@@ -183,7 +181,7 @@ métadonnées uniques — s'applique sans réserve.
 - [ ] Aucune grille de trois cartes, aucun hero centré, aucune icône en rond
 - [ ] Rayon uniquement sur ce qui se manipule ou flotte
 - [ ] Tableaux à filets horizontaux seuls
-- [ ] Un seul aplat `--accent-vif` par écran, jamais sous du texte
+- [ ] Aucun aplat vert vif ; le vert ne porte que du texte
 - [ ] Aucun couple rouge/vert porteur d'information
 - [ ] Chaque contraste texte/fond ≥ 4,5
 - [ ] Filtres au-dessus de ce qu'ils pilotent

@@ -240,23 +240,23 @@
   outline-offset: 1px;
 }
 
-/* Seul aplat du site : vert sombre, texte blanc (7,8), identique dans les deux
-   schémas. Le vert vif ne porte jamais de texte : il n'apparaît qu'au survol,
-   sous l'encre (9,09). */
+/* Dans le champ, sans aplat : la flèche de retour chariot, en gris, qui prend
+   l'accent au survol et au focus. Pas de couleur de plus sur la page. */
 .search-button {
+  display: flex;
+  align-items: center;
   border: none;
   border-radius: 0;
-  background: var(--bouton);
-  padding: 0 var(--sp-3);
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  color: #fff;
+  background: none;
+  padding: 0 var(--sp-2);
+  color: var(--muted);
   cursor: pointer;
 }
 
-.search-button:hover {
-  background: var(--accent-vif);
-  color: var(--ink-sur-vif);
+.search-button:hover,
+.search-button:focus-visible {
+  color: var(--accent);
+  outline: none;
 }
 
 /* Variante d'en-tête : visible sans peser. */

@@ -33,13 +33,10 @@
   /* Réservé à l'en-tête d'accueil, seule page sans texte long. */
   --bg-fonce: #123b22;
 
-  /* --accent porte du texte (7,79 sur blanc).
-     --accent-vif jamais (1,66 sur blanc) : aplat de l'action, une par écran. */
+  /* --accent porte du texte (7,79 sur blanc). Aucun aplat vert vif : le site
+     n'a plus de bouton plein, l'action de recherche est une flèche dans le champ. */
   --accent: #1b5e33;
   --accent: light-dark(#1b5e33, #9aec3a);
-  --accent-vif: #7bd44f;
-  /* Aplat du bouton d'action, texte blanc dessus : même vert sombre en sombre. */
-  --bouton: #1b5e33;
   /* Liens : vert vif, 5,02 sur blanc, 3,35 face à l'encre. Toujours soulignés
      dans le contenu ; la navigation ne se souligne qu'au survol. */
   --lien: #15803d;
@@ -96,8 +93,6 @@
      en light-dark(). La valeur claire seule, juste avant, est le repli des
      navigateurs d'avant 2024, qui restent en clair. */
   color-scheme: light dark;
-  /* L'encre posée sur l'aplat vif ne change pas de schéma : 9,09 sur le vert. */
-  --ink-sur-vif: #14201a;
   /* Soulignement des liens : trait et couleur, affinés en sombre. */
   --trait: 1px;
   --gras: currentColor;
