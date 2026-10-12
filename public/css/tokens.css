@@ -6,7 +6,7 @@
 :root {
   /* Noir légèrement vert, accordé à l'accent. */
   --ink: #14201a;
-  --ink: light-dark(#14201a, #e4eae5);
+  --ink: light-dark(#14201a, #d8ded9);
   --muted: #5f6b62;
   --muted: light-dark(#5f6b62, #a7b1aa);
   /* Assez foncé pour passer le seuil WCAG : il porte des libellés et des codes ATC. */
@@ -99,23 +99,26 @@
 }
 
 /* Sombre : fond vert-noir profond, encre blanc cassé pour les 40 000 signes
-   d'un RCP, liens et accent en vert-jaune fluo. Contrastes sur le fond :
-   encre 15,8, gris 8,7 et 6,8, lien 13,2, alerte 7,5.
+   d'un RCP — pas blanche, la halation sur le noir amincit les traits —,
+   liens et accent en vert-jaune fluo. Contrastes sur le fond :
+   encre 13,9, gris 8,7 et 6,8, lien 13,2, alerte 7,5.
    Apparence forcée par le bouton (theme.js) ; sans choix, celle du système.
    Les couleurs sont en light-dark() : forcer, c'est forcer color-scheme. */
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
 
-/* Le trait n'est pas une couleur : light-dark() ne s'y applique pas. */
+/* Ce qui n'est pas une couleur, light-dark() ne le couvre pas : le trait des
+   liens, et le corps. En polarité inverse l'acuité baisse et les traits clairs
+   paraissent plus maigres : 17 px au lieu de 16, tout en rem suit d'un bloc. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --trait: 0.5px; }
+  :root:not([data-theme="light"]) { --trait: 0.5px; font-size: 106.25%; }
 }
 
-:root[data-theme="dark"] { --trait: 0.5px; }
+:root[data-theme="dark"] { --trait: 0.5px; font-size: 106.25%; }
 
 /* À l'impression, toujours clair, même forcé en sombre. */
 @media print {
-  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; }
+  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; font-size: 100%; }
 }
 
 *,
