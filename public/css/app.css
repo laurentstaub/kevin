@@ -1187,8 +1187,6 @@ a.point:focus-visible {
   color: var(--faint);
 }
 
-/* Exemples de la colonne Autres dans la légende : le soulignement est le message. */
-.legende-exemple { cursor: default; }
 
 /* Hors des huit colonnes, la rubrique est nommée en texte (« 5.2 », « N2 »). */
 .autre {

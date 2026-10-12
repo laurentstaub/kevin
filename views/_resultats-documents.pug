@@ -23,15 +23,12 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
   if recherche.exacte && large
     p.legende
       span.point.point-legende(aria-hidden="true")
-      |  « #{requete} » tel quel
+      |  expression « #{requete} » exacte
       span.point.point-epars.point-legende(aria-hidden="true")
-      |  les mots, dispersés
-      //- La colonne Autres suit la même règle, par le soulignement : plein tel quel, pointillé dispersés.
-      span.legende-autres  — dans « Autres » : 
-      span.autre.legende-exemple(aria-hidden="true") N2
-      |  tel quel, 
-      span.autre.point-epars.legende-exemple(aria-hidden="true") N2
-      |  dispersés
+      |  expression partielle
+      //- Dans « Autres », même règle par le soulignement (plein, pointillé) ;
+      //- la lettre N distingue la notice du RCP.
+      span.legende-autres  · N : présent dans la notice
 
   table.trouvailles(class=large ? null : 'trouvailles-ciblees')
     caption.sr-only
