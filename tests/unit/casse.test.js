@@ -31,7 +31,7 @@ describe('casse d’affichage', () => {
     assert.equal(specialite('PARACETAMOL TEVA 500 mg, gélule'), 'Paracétamol Teva 500 mg, gélule');
     assert.equal(specialite('CHLORHYDRATE DE TRAMADOL MYLAN 50 mg'), 'Chlorhydrate de Tramadol Mylan 50 mg');
     assert.equal(specialite('ACIDE FOLIQUE CCD 5 mg'), 'Acide Folique CCD 5 mg');
-    assert.equal(specialite('DAFALGAN-CODEINE'), 'Dafalgan-Codeine');
+    assert.equal(specialite('DAFALGAN-CODEINE'), 'Dafalgan-Codéine');
     assert.equal(specialite('INSULINE NPH LILLY'), 'Insuline NPH Lilly');
   });
 
