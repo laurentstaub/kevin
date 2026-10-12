@@ -21,6 +21,7 @@ import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
 import { signaletique } from '../signaletique.js';
+import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
   APERCU, COLONNES, PAR_PAGE,
@@ -345,7 +346,7 @@ export function pageRoutes(pool) {
       if (!product) return next();
 
       const [
-        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc,
+        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation,
       ] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
@@ -374,6 +375,11 @@ export function pageRoutes(pool) {
         // Absence normale : 36,5 % des spécialités n'ont pas de classe ATC.
         getClasseAtc(pool, cis).catch((err) => {
           console.error('[atc] classe indisponible pour', cis, err.message);
+          return [];
+        }),
+        // Absence normale : beaucoup de spécialités n'ont pas d'avis de la Commission.
+        getEvaluation(pool, cis).catch((err) => {
+          console.error('[has] évaluation indisponible pour', cis, err.message);
           return [];
         }),
       ]);
@@ -413,6 +419,7 @@ export function pageRoutes(pool) {
       // Plan de la page, dans l'ordre d'affichage : le rail doit suivre la lecture.
       const sections = [
         { id: 'delivrance', label: 'Délivrance' },
+        evaluation.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
@@ -429,7 +436,9 @@ export function pageRoutes(pool) {
       res.render('product', {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
-        signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation),
+        signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
+          resumerEvaluation(evaluation)),
+        evaluation,
         importation,
         reference,
         substitutions,

@@ -55,6 +55,7 @@ const produit = (extra = {}) => ({
   hasDocuments: false,
   delivrance: { resume: [], groupes: [], liens: [] },
   signaletique: [],
+  evaluation: [],
   // Via productLinks, pour suivre tout nouveau lien de la fiche.
   links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [], scientific: [] },
   sections: [],
@@ -208,6 +209,27 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /signal-libelle/);
     assert.ok(html.indexOf('data-cle="ordonnance"') < html.indexOf('data-cle="prix"'));
     assert.doesNotMatch(rendre('product', produit()), /signaletique/);
+  });
+
+  // Avis HAS : le plus récent visible, les autres repliés ; libellé mot pour mot.
+  it('le bloc Évaluation HAS montre le dernier avis et replie les autres', () => {
+    const avis = (date, motif, smr, asmr) => ({
+      dossier: 'CT-1', date: new Date(date), motif, lien: 'https://www.has-sante.fr/jcms/p_1',
+      smr: [{ valeur: smr, libelle: 'Le service médical rendu est important.' }],
+      asmr: asmr ? [{ valeur: asmr, libelle: 'Pas d’amélioration.' }] : [],
+    });
+    const html = rendre('product', produit({
+      evaluation: [avis('2026-03-04', 'Renouvellement d’inscription (CT)', 'Important', 'V'),
+        avis('2019-01-10', 'Inscription (CT)', 'Modéré', 'Commentaires sans chiffrage de l’ASMR')],
+    }));
+    assert.match(html, /<details class="bloc" id="evaluation">/);
+    assert.match(html, /<span class="bloc-compte">2 avis<\/span>/);
+    assert.match(html, /<strong class="avis-valeur">SMR important<\/strong> — Le service médical rendu est important\./);
+    assert.match(html, /<strong class="avis-valeur">ASMR V<\/strong>/);
+    assert.match(html, /<strong class="avis-valeur">Commentaires sans chiffrage de l’ASMR<\/strong>/);
+    assert.match(html, /1 avis antérieur<\/summary>/);
+    assert.match(html, /href="https:\/\/www\.has-sante\.fr\/jcms\/p_1"/);
+    assert.doesNotMatch(rendre('product', produit()), /id="evaluation"/);
   });
 
   // Le dosage affiché est dans le titre : la liste ne porte que les autres.

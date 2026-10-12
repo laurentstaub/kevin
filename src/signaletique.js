@@ -70,10 +70,11 @@ const taux = (valeur) => {
  * @param {object|null} resumeAtc  feuille { code, label }
  * @param {string|null} groupe     libellé du groupe générique
  * @param {boolean} importation
+ * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation) {
+export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -135,6 +136,14 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     });
   } else {
     cases.push({ cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur: 'Non remboursé' });
+  }
+
+  // Évaluation HAS, toujours affichée : une case qui apparaît et disparaît ne se lit pas.
+  if (evaluation) {
+    cases.push({
+      cle: 'has', picto: 'balance', libelle: 'Évaluation HAS', valeur: evaluation.valeur,
+      detail: evaluation.detail, lien: evaluation.avis > 0 ? '#evaluation' : null,
+    });
   }
 
   // Place dans le groupe générique.

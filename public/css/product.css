@@ -232,6 +232,37 @@ a.signal-valeur {
   max-width: none;
 }
 
+/* ---------- Évaluation HAS ---------- */
+
+.avis-has {
+  margin: var(--sp-2) 0;
+}
+
+.avis-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: 0 0 var(--sp-1);
+  max-width: none;
+}
+
+/* Libellé HAS mot pour mot, dans la voix des documents. */
+.avis-ligne {
+  font-family: var(--font-lecture);
+  margin: 0 0 0.5em;
+}
+
+.avis-valeur {
+  white-space: nowrap;
+}
+
+.avis-anterieurs {
+  margin-top: var(--sp-2);
+}
+
 /* ---------- Substitution ---------- */
 
 .ligne-dci {

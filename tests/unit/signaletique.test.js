@@ -99,6 +99,15 @@ describe('bande signalétique', () => {
     assert.deepEqual(cases.find((cas) => cas.cle === 'etat'), { cle: 'etat', picto: 'barre', libelle: 'État', valeur: 'Non commercialisé', portee: 'bloque' });
   });
 
+  it('place l’évaluation HAS après le prix, avec un lien vers le bloc s’il y a des avis', () => {
+    const cases = signaletique(produit(), { resume: [] }, null, null, false,
+      { valeur: 'SMR important · ASMR V', detail: 'Dernier avis CT du 04/03/2026', avis: 2 });
+    assert.deepEqual(cles(cases).slice(1, 3), ['prix', 'has']);
+    assert.equal(cases.find((cas) => cas.cle === 'has').lien, '#evaluation');
+    const sans = signaletique(produit(), { resume: [] }, null, null, false, { valeur: 'Pas d’avis HAS', detail: null, avis: 0 });
+    assert.equal(sans.find((cas) => cas.cle === 'has').lien, null);
+  });
+
   it('relie la feuille ATC à sa classe', () => {
     const cases = signaletique(produit(), { resume: [] }, { feuille: { code: 'N02AA01', label: 'MORPHINE' } }, null, false);
     assert.equal(cases.find((cas) => cas.cle === 'atc').lien, '/classe/N02AA01');

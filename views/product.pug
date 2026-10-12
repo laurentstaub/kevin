@@ -175,6 +175,43 @@ block content
         else
           p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
 
+      //- Évaluation HAS : avis de la Commission de la transparence, du plus récent
+      //- au plus ancien. SMR et ASMR sont donnés par indication, libellé HAS mot
+      //- pour mot ; l'avis complet est seulement lié.
+      if evaluation && evaluation.length > 0
+        - const ROMAIN = /^(?:I{1,3}|IV|V)$/
+        mixin avisHas(avis)
+          .avis-has
+            p.avis-tete
+              span= avis.date ? avis.date.toLocaleDateString('fr-FR') : 'Date inconnue'
+              if avis.motif
+                span.sep
+                span= avis.motif
+              if avis.lien
+                span.sep
+                a(href=avis.lien target="_blank" rel="noopener noreferrer") Avis de la Commission
+            each ligne in avis.smr
+              p.avis-ligne
+                strong.avis-valeur SMR #{ligne.valeur.toLowerCase()}
+                if ligne.libelle
+                  |  — #{ligne.libelle}
+            each ligne in avis.asmr
+              p.avis-ligne
+                strong.avis-valeur= ROMAIN.test(ligne.valeur) ? `ASMR ${ligne.valeur}` : ligne.valeur
+                if ligne.libelle
+                  |  — #{ligne.libelle}
+
+        details.bloc#evaluation
+          summary.bloc-tete
+            h2.section-titre Évaluation HAS
+            span.bloc-compte #{evaluation.length} avis
+          +avisHas(evaluation[0])
+          if evaluation.length > 1
+            details.avis-anterieurs
+              summary.formes-plus #{evaluation.length - 1} avis antérieur#{evaluation.length > 2 ? 's' : ''}
+              each avis in evaluation.slice(1)
+                +avisHas(avis)
+
       //- Contenu principal, jamais replié : le document lu sert de titre
       //- (« RCP »), les autres documents en onglets au même niveau.
       if hasDocuments
