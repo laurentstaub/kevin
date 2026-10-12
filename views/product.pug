@@ -25,7 +25,7 @@ block content
           span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
         .rubrique-corps!= entree.html
 
-  +barreSituation(product.denomination_medicament)
+  +barreSituation(specialite(product.denomination_medicament))
 
   //- Identité : dénomination et métadonnées sur une ligne, non répétées plus bas.
   header.identite
@@ -37,15 +37,15 @@ block content
             span.atc-etiquette Classe
             each niveau in resumeAtc.contexte
               span.atc-sep ›
-              a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${niveau.label}`)= niveau.label
+              a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${phrase(niveau.label)}`)= phrase(niveau.label)
             span.atc-sep ›
             //- La feuille s'affiche par son code : son libellé répéterait la DCI.
-            a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${resumeAtc.feuille.label}`)= resumeAtc.feuille.code
+            a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${dci(resumeAtc.feuille.label)}`)= resumeAtc.feuille.code
 
-      h1.produit-titre= product.denomination_medicament
+      h1.produit-titre= specialite(product.denomination_medicament)
       p.page-meta
         if product.active_ingredients
-          span.dci= product.active_ingredients
+          span.dci= dci(product.active_ingredients)
           span.sep
         if product.forme_pharmaceutique
           span= product.forme_pharmaceutique
@@ -204,7 +204,7 @@ block content
                 p.emprunt
                   strong Texte emprunté.
                   |  Cette spécialité est une importation parallèle : la base publique ne lui attribue ni RCP ni notice. Le document ci-dessous est celui de&nbsp;
-                  a(href=`/product/${doc.emprunte.id}`)= doc.emprunte.denomination_medicament
+                  a(href=`/product/${doc.emprunte.id}`)= specialite(doc.emprunte.denomination_medicament)
                   if doc.emprunte.titulaires
                     |  (#{doc.emprunte.titulaires.trim()})
                   | , dont ce produit est la copie distribuée en France.
@@ -255,9 +255,9 @@ block content
               each item in substitutions
                 tr
                   td
-                    a(href=`/product/${item.id}`)= item.denomination_medicament
+                    a(href=`/product/${item.id}`)= specialite(item.denomination_medicament)
                     if item.active_ingredients && item.active_ingredients !== product.active_ingredients
-                      .ligne-dci= item.active_ingredients
+                      .ligne-dci= dci(item.active_ingredients)
                   td.forme= item.forme_pharmaceutique || '—'
                   td
                     span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role

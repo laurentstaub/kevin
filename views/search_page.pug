@@ -13,7 +13,7 @@ mixin produit(result)
     .resultat.resultat-produit
       .specialite-ligne
         span.specialite-nom
-          = result.libelle
+          = specialite(result.libelle)
           if result.princeps
             span.marque Princeps
           if result.importation
@@ -23,7 +23,7 @@ mixin produit(result)
         if result.titulaires
           span.specialite-labo= result.titulaires
       if result.active_ingredients
-        span.resultat-dci= result.active_ingredients
+        span.resultat-dci= dci(result.active_ingredients)
       each groupeForme in result.formes || []
         each groupeNom in groupeForme.noms
           .resultat-forme
@@ -69,7 +69,7 @@ block content
             li
               a.classe-lien(href=`/classe/${classe.code}`)
                 span.classe-code= classe.code
-                span.classe-label= classe.label
+                span.classe-label= phrase(classe.label)
                 span.classe-compte= classe.specialites.toLocaleString('fr-FR')
 
     //- Les vingt molécules les plus fournies, toutes classes confondues ; les
@@ -84,7 +84,7 @@ block content
             li
               a.classe-lien(href=`/classe/${molecule.code}`)
                 span.classe-code= molecule.code
-                span.classe-label= molecule.label
+                span.classe-label= dci(molecule.label)
                 span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
 
     #results

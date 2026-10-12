@@ -678,8 +678,6 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
   display: block;
   font-size: var(--fs-xs);
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   margin-top: 0.15em;
 }
 
@@ -887,14 +885,6 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
 }
 
 /* Libellés CNAM reçus en capitales sans accents : remis en bas de casse. */
-.rail-label-crie {
-  text-transform: lowercase;
-}
-
-.rail-label-crie::first-letter {
-  text-transform: uppercase;
-}
-
 /* ---------- Plan de la fiche ---------- */
 
 /* Imbrication marquée par le retrait ; sous-rubriques un cran plus petites. */

@@ -46,9 +46,9 @@ block content
               each ligne in calcul.lignes
                 tr
                   th(scope="row")
-                    span.substance= ligne.substance
+                    span.substance= dci(ligne.substance)
                     if ligne.specialite
-                      a.specialite(href=`/product/${ligne.specialite.cis}`)= ligne.specialite.denomination
+                      a.specialite(href=`/product/${ligne.specialite.cis}`)= specialite(ligne.specialite.denomination)
                     if ligne.origine === 'ajout'
                       //- Hors amorce ANSM : choix éditorial, signalé comme tel.
                       span.origine(title=ligne.motif || null) Ajout du #{ligne.valide_le}

@@ -7,6 +7,6 @@ mixin dosages(groupeNom, requete)
       if i > 0
         span.sep-point  · 
       - const suite = (requete ? `?q=${encodeURIComponent(requete)}` : '') + (dosage.ancre ? `#${dosage.ancre}` : '')
-      a.dosage-lien(href=`/product/${dosage.id}${suite}` title=dosage.denomination)= dosage.etiquette
+      a.dosage-lien(href=`/product/${dosage.id}${suite}` title=specialite(dosage.denomination))= dosage.etiquette
     if groupeNom.uniteCourte
       |  #{groupeNom.uniteCourte}

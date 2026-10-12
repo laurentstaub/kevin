@@ -62,8 +62,6 @@
 }
 
 .identite .dci {
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--accent);
 }
 
@@ -123,8 +121,6 @@
 .ligne-dci {
   font-size: var(--fs-xs);
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 td.forme {

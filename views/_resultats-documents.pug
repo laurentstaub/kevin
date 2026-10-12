@@ -67,14 +67,14 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
             if formes.length && trouvaille.specialites > 1
               details.trouvaille-details
                 summary
-                  span.trouvaille-molecule(title=trouvaille.molecule)= trouvaille.molecule
+                  span.trouvaille-molecule(title=dci(trouvaille.molecule))= dci(trouvaille.molecule)
                   span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
             else
               span.trouvaille-tete
                 a.trouvaille-molecule(
                   href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`
-                  title=trouvaille.molecule
-                )= trouvaille.molecule
+                  title=dci(trouvaille.molecule)
+                )= dci(trouvaille.molecule)
                 if trouvaille.specialites > 1
                   span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
 
@@ -115,7 +115,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                 p.dosages-forme= groupeForme.forme
                 each groupeNom in groupeForme.noms
                   .resultat-forme
-                    span.dosages-nom= groupeNom.nom
+                    span.dosages-nom= specialite(groupeNom.nom)
                     if groupeNom.princeps
                       span.marque Princeps
                     if groupeNom.importation

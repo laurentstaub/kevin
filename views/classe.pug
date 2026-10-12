@@ -26,7 +26,7 @@ mixin formes(groupes)
           .specialite-ligne
             //- Le nom n'est jamais un lien : on clique sur le dosage, toujours.
             span.specialite-nom
-              = groupeNom.nom
+              = specialite(groupeNom.nom)
               //- La mention suit le nom, avant les dosages, pour s'aligner d'une ligne à l'autre.
               if groupeNom.princeps
                 span.marque Princeps
@@ -41,7 +41,8 @@ mixin formes(groupes)
               span.specialite-labo= groupeNom.titulaires
 
 block content
-  +barreSituation(classe.label)
+  - const libelle = feuille ? dci(classe.label) : phrase(classe.label)
+  +barreSituation(libelle)
 
   .recherche
     header.recherche-tete
@@ -53,7 +54,7 @@ block content
             span= niveau.code
           else
             a(href=`/classe/${niveau.code}`)= niveau.code
-      h1.titre-site= classe.label
+      h1.titre-site= libelle
       //- Unité unique de la page, portrait compris : la spécialité commercialisée (un code CIS).
       p.page-meta
         +specialites(classe.specialites)
@@ -95,7 +96,7 @@ block content
             li
               a.classe-lien(href=`/classe/${enfant.code}`)
                 span.classe-code= enfant.code
-                span.classe-label= enfant.label
+                span.classe-label= phrase(enfant.label)
                 span.classe-compte= enfant.specialites.toLocaleString('fr-FR')
 
     //- Toutes les molécules de la classe (arbre aplati), les plus répandues
@@ -113,7 +114,7 @@ block content
             li
               a.classe-lien(href=`/classe/${molecule.code}`)
                 span.classe-code= molecule.code
-                span.classe-label= molecule.label
+                span.classe-label= dci(molecule.label)
                 span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
         if reste.length > 0
           details.molecules-reste
@@ -123,7 +124,7 @@ block content
                 li
                   a.classe-lien(href=`/classe/${molecule.code}`)
                     span.classe-code= molecule.code
-                    span.classe-label= molecule.label
+                    span.classe-label= dci(molecule.label)
                     span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
 
     //- Biosimilaires substituables : règle commune et lien vers l'arrêté ; les

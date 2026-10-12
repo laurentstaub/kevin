@@ -33,10 +33,10 @@ mixin rail(classes, actif, sections, documents)
       p.rail-titre Classes thérapeutiques
       nav.rail-groupe
         each classe in classes
-          //- Libellé CNAM en capitales, affiché en bas de casse (.rail-label-crie).
+          //- Libellé CNAM en capitales, affiché en phrase (casse.js).
           a.rail-lien(href=`/classe/${classe.code}`
             class=(actif === classe.code ? 'rail-actif' : null)
             aria-current=(actif === classe.code ? 'page' : null)
-            title=`${classe.code} — ${classe.label}`)
+            title=`${classe.code} — ${phrase(classe.label)}`)
             span.rail-code= classe.code
-            span.rail-label.rail-label-crie= classe.label
+            span.rail-label= phrase(classe.label)

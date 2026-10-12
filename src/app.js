@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
 import { ROOT, config } from './config.js';
 import { lien } from './etat-recherche.js';
+import { dci, specialite, phrase } from './casse.js';
 import { securityHeaders, cors, notFound, errorHandler } from './middleware.js';
 import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
@@ -46,6 +47,8 @@ export function createApp(pool) {
 
   // Aide de gabarit posée globalement pour qu'aucune route ne puisse l'omettre.
   app.locals.lien = lien;
+  // Casse d'affichage des noms BDPM : DCI en bas de casse, spécialité en nom propre.
+  Object.assign(app.locals, { dci, specialite, phrase });
 
   if (production) {
     app.locals.v = empreinteAssets(publics);

@@ -6,6 +6,7 @@ import { ROOT } from '../../src/config.js';
 import { COLONNES } from '../../src/recherche-texte.js';
 import { productLinks } from '../../src/links.js';
 import { lireEtat, lien } from '../../src/etat-recherche.js';
+import { dci, specialite, phrase } from '../../src/casse.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
 
 /**
@@ -26,7 +27,7 @@ const rendre = (vue, locals = {}) => {
   }, mode);
 
   return pug.renderFile(path.join(ROOT, 'views', `${vue}.pug`), {
-    v: 'test', lien, colonnes: COLONNES, etat, ...locals,
+    v: 'test', lien, dci, specialite, phrase, colonnes: COLONNES, etat, ...locals,
   });
 };
 
@@ -581,7 +582,8 @@ describe('page de classe', () => {
     assert.match(html, /href="\/product\/1"[^>]*>12<\/a>.*href="\/product\/2"[^>]*>100<\/a> µg\/h/s);
     assert.match(html, /<span class="marque">Princeps/);
     // Une seule spécialité : un lien aussi ; le nom n'est jamais un lien.
-    assert.match(html, /<span class="specialite-nom">ABSTRAL/);
+    // Nom propre : capitale initiale, le reste en bas de casse (casse.js).
+    assert.match(html, /<span class="specialite-nom">Abstral/);
     assert.match(html, /href="\/product\/3"[^>]*>100<\/a> µg/);
     assert.match(html, /1 spécialité non commercialisée/);
   });

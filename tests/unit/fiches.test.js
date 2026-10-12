@@ -11,6 +11,7 @@ import {
 import { phrases, phrasesPertinentes, motifs } from '../../src/citations.js';
 import { choisirCitations, dejaInscrite, motifSubstance } from '../../src/fiches-calcul.js';
 import { chargerThesaurus } from '../../src/thesaurus.js';
+import { dci, specialite } from '../../src/casse.js';
 
 /** Fiches publiées : texte échappé, citations entières, rien de non relu. */
 
@@ -132,7 +133,7 @@ describe('calcul d’une fiche', () => {
 describe('fiche — rendu', () => {
   const fiche = { slug: 't', meta: { titre: 'T', auteur: 'A' }, blocs: decouper('Texte\n\n::: substances t') };
   const rendre = (calcul) => pug.renderFile(path.join(ROOT, 'views', 'fiche.pug'),
-    { v: 'test', fiche, calcul, brouillon: true, title: 'T' });
+    { v: 'test', fiche, calcul, brouillon: true, title: 'T', dci, specialite });
 
   it('sans calcul, avec une liste vide, avec des lignes', () => {
     assert.match(rendre(null), /pas encore été calculée/);

@@ -5,6 +5,7 @@ import { searchMedications, suggest } from '../search.js';
 import { getProduct, getRelatedProducts } from '../products.js';
 import { getDocuments, groupByType, DOCUMENT_TYPES } from '../documents.js';
 import { productLinks } from '../links.js';
+import { dci, specialite } from '../casse.js';
 
 export function apiRoutes(pool) {
   const router = Router();
@@ -26,10 +27,11 @@ export function apiRoutes(pool) {
 
       const { produits } = await suggest(pool, query);
       // `libelle` : racine de marque, précisée du titulaire si elle est partagée.
+      // Même casse qu'à l'écran : spécialité en nom propre, DCI en bas de casse.
       const suggestions = produits.map((row) => ({
         id: row.id,
-        name: row.libelle,
-        substances: row.active_ingredients,
+        name: specialite(row.libelle),
+        substances: dci(row.active_ingredients),
         type: row.match_type,
         holder: row.titulaires?.trim() || null,
         parallel: row.importation === true,
