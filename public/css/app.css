@@ -306,13 +306,18 @@
   text-decoration: underline;
 }
 
-/* Bouton d'apparence : discret, à droite ; révélé par theme.js. */
+/* Bouton de thème : toujours au même endroit, en haut à droite de la fenêtre,
+   au-dessus de la barre collante ; révélé par theme.js. Fond de la barre,
+   pour rester lisible quand il passe sur du texte au défilement. */
 .theme {
-  flex: none;
+  position: fixed;
+  top: 1.05rem;
+  right: var(--sp-3);
+  z-index: 30;
   font: inherit;
   font-size: var(--fs-xs);
   color: var(--muted);
-  background: transparent;
+  background: var(--bg-tint);
   border: var(--rule-width) solid var(--rule-medium);
   border-radius: var(--radius-control);
   padding: 0.15em 0.6em;
@@ -322,15 +327,9 @@
 
 .theme:hover { color: var(--ink); border-color: var(--ink); }
 
-.barre-inner .theme { margin-left: auto; }
-.barre-titre ~ .theme { margin-left: 0; }
-
-.accueil { position: relative; }
-
-.accueil .theme {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-3);
+/* Écran étroit : la ligne de la barre s'arrête avant le bouton. */
+@media (max-width: 60rem) {
+  .barre-inner { padding-right: 7rem; }
 }
 
 /* ---------- Suggestions ---------- */
