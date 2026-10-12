@@ -78,8 +78,17 @@ const TROUVAILLE = {
   formes: [{ forme: 'comprimé', total: 2, noms: [{
     nom: 'OLANZAPINE ALPHA', princeps: false, importation: false, uniteCourte: 'mg',
     dosages: [
-      { id: '66297965', etiquette: '5', denomination: 'OLANZAPINE ALPHA 5 mg', ancre: 'rcp-12' },
-      { id: '66297966', etiquette: '10', denomination: 'OLANZAPINE ALPHA 10 mg', ancre: 'rcp-21' },
+      {
+        id: '66297965', etiquette: '5', denomination: 'OLANZAPINE ALPHA 5 mg', ancre: 'rcp-12',
+        rubriques: [{ numero: '4.4', libelle: 'Mises en garde', type: 'rcp', exact: true, ancre: 'rcp-12' }],
+      },
+      {
+        id: '66297966', etiquette: '10', denomination: 'OLANZAPINE ALPHA 10 mg', ancre: 'rcp-21',
+        rubriques: [
+          { numero: '4.8', libelle: 'Effets indésirables', type: 'rcp', exact: true, ancre: 'rcp-21' },
+          { numero: '2', libelle: 'Avant de prendre', type: 'notice', exact: true, ancre: 'notice-3' },
+        ],
+      },
     ],
   }] }],
 };
@@ -265,26 +274,31 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /dosages et formes/);
   });
 
-  // Un point résume une rubrique pour toute la molécule : il mène à la vue ciblée
-  // molécule + rubrique, où chaque spécialité a sa propre ancre. Sans signature
-  // (produit sans composition), le lien direct vers le RCP reste.
-  it('un point mène à la vue ciblée de la molécule et de la rubrique', () => {
+  // Le point de la molécule mène au RCP d'une spécialité, nommée dans l'infobulle.
+  it('chaque rubrique porte sa propre ancre, et nomme sa spécialité', () => {
     const html = rendre('documents', {
-      query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
+      query: 'intervalle QT', rubrique: null, page: 1,
+      documents: { ...RECHERCHE_PLEINE, resultats: [{ ...TROUVAILLE, rubriques: [
+        { numero: '4.4', libelle: 'Mises en garde', cis: '66297965', ancre: 'rcp-12', denomination: 'ZYPREXA 5 mg' },
+        { numero: '4.8', libelle: 'Effets indésirables', cis: '66297966', ancre: 'rcp-21' },
+      ] }] },
     });
-    assert.match(html, /class="point" href="\/documents\?q=intervalle\+QT&amp;rubrique=4\.4&amp;molecule=OLANZAPINE"/);
-    assert.match(html, /class="point" href="\/documents\?q=intervalle\+QT&amp;rubrique=4\.8&amp;molecule=OLANZAPINE"/);
-    assert.match(html, /class="point" href="\/product\/66297967\?q=intervalle%20QT#rcp-12"/);
+    assert.match(html, /class="point" href="\/product\/66297965\?q=intervalle%20QT#rcp-12" title="4\.4 Mises en garde — Zyprexa 5 mg"/);
+    assert.match(html, /class="point" href="\/product\/66297966\?q=intervalle%20QT#rcp-21"/);
     assert.match(html, /66 spécialités/);
   });
 
-  // Une association « A + B » se filtre par ses mots : le « + » n'en est pas un.
-  it('une association se filtre sans son « + »', () => {
+  // Déplié, l'accordéon de la vue large donne une ligne de points par dosage,
+  // chacun vers son propre RCP ; la forme fait l'intertitre.
+  it('déplié, chaque dosage a ses points', () => {
     const html = rendre('documents', {
-      query: 'QT', rubrique: null, page: 1,
-      documents: { ...RECHERCHE_PLEINE, resultats: [{ ...TROUVAILLE, molecule: 'TRAMADOL + PARACÉTAMOL' }] },
+      query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /molecule=TRAMADOL\+PARAC%C3%89TAMOL"/);
+    assert.match(html, /class="ligne-dosages ligne-forme"><td colspan="10">comprimé</);
+    assert.match(html, /class="point point-dosage" href="\/product\/66297965\?q=QT#rcp-12"/);
+    assert.match(html, /class="point point-dosage" href="\/product\/66297966\?q=QT#rcp-21"/);
+    assert.match(html, /class="autre" href="\/product\/66297966\?q=QT#notice-3"[^>]*>N2</);
+    assert.match(html, /Olanzapine Alpha 5 mg/);
   });
 
   // Ciblée : la phrase dit de quelle spécialité elle vient, quand il y en a plusieurs.
@@ -304,7 +318,7 @@ describe('rendu des gabarits', () => {
       query: 'QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
     assert.match(html, /<details class="trouvaille-details">/);
-    assert.match(html, /class="ligne-dosages"/);
+    assert.match(html, /class="ligne-dosages ligne-specialite"/);
     assert.match(html, /class="dosage-lien" href="\/product\/66297966\?q=QT#rcp-21"/);
     assert.match(html, /class="trouvaille-molecule" href="\/product\/66297967\?q=QT#rcp-12"/);
   });

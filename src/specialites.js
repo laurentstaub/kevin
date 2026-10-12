@@ -83,7 +83,9 @@ export function regrouperSpecialites(lignes) {
     }
     const groupeNom = groupeForme.noms.get(cle);
     groupeNom.princeps ||= Boolean(ligne.princeps);
-    groupeNom.brut.push({ id: ligne.id, dosage, denomination: ligne.denomination, ancre: ligne.ancre });
+    groupeNom.brut.push({
+      id: ligne.id, dosage, denomination: ligne.denomination, ancre: ligne.ancre, rubriques: ligne.rubriques,
+    });
   }
 
   return [...formes.values()]
@@ -123,6 +125,8 @@ export function regrouperSpecialites(lignes) {
             denomination: entree.denomination,
             // Rubrique où mener, depuis une recherche dans les documents.
             ancre: entree.ancre ?? null,
+            // Ses rubriques trouvées, pour les points de l'accordéon déplié.
+            rubriques: entree.rubriques ?? null,
           })),
         };
       }),

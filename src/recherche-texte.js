@@ -323,7 +323,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               jsonb_agg(jsonb_build_object(
                 'numero', numero, 'libelle', libelle, 'cis', code_cis,
                 'type', document_type, 'exact', exact,
-                'ancre', document_type || '-' || position)
+                'ancre', document_type || '-' || position,
+                -- Le point mène à une spécialité : l'infobulle la nomme.
+                'denomination', (SELECT denomination_medicament FROM dbpm.cis_bdpm WHERE code_cis = p.code_cis))
                 -- 10 vient après 4.8, ce que l'ordre alphabétique ignore.
                 -- substring rend NULL sur ce qui n'est pas un chiffre au lieu
                 -- de lever : un numéro mal formé se range en fin de son rang
@@ -337,7 +339,16 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                          substring(numero from '^[0-9]+')::int NULLS LAST,
                          substring(numero from '[.]([0-9]+)')::int NULLS FIRST,
                          numero) AS rubriques
-       FROM par_rubrique GROUP BY signature
+       FROM par_rubrique p GROUP BY signature
+     ),
+     -- Une entrée par rubrique et par spécialité : l'accordéon déplié montre
+     -- les points de chaque dosage, chacun menant à son propre RCP.
+     par_specialite_rubrique AS (
+       SELECT DISTINCT ON (code_cis, document_type, numero)
+              code_cis, document_type, numero, libelle, position, exact
+       FROM enrichi
+       WHERE coalesce(numero, '') <> ''
+       ORDER BY code_cis, document_type, numero, exact DESC, score DESC
      ),
      meilleur AS (
        SELECT DISTINCT ON (signature)
@@ -404,7 +415,12 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                       'importation', ${importSql('s')},
                       'princeps', EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
                                           WHERE g.code_cis = p.code_cis AND g.type_generique = '0'),
-                      'ancre', p.ancre)
+                      'ancre', p.ancre,
+                      'rubriques', (SELECT json_agg(json_build_object(
+                                             'numero', r.numero, 'libelle', r.libelle, 'type', r.document_type,
+                                             'exact', r.exact, 'ancre', r.document_type || '-' || r.position)
+                                           ORDER BY r.document_type <> 'rcp', r.numero)
+                                    FROM par_specialite_rubrique r WHERE r.code_cis = p.code_cis))
                     ORDER BY s.denomination_medicament, p.code_cis)
              FROM par_specialite p JOIN dbpm.cis_bdpm s ON s.code_cis = p.code_cis
              WHERE p.signature = r.signature) AS liste

@@ -62,7 +62,8 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
         // Préfixe « N » : la rubrique 2 d'une notice n'est pas celle d'un RCP.
         const court = (rub) => (rub.type === 'notice' ? 'N' : '') + rub.numero;
         const long = (rub) => (rub.type === 'notice' ? 'Notice · ' : '') + rub.numero + ' ' + rub.libelle
-          + (recherche.exacte && !rub.exact ? ' — mots séparés' : '');
+          + (recherche.exacte && !rub.exact ? ' — mots séparés' : '')
+          + (rub.denomination ? ' — ' + specialite(rub.denomination) : '');
 
       tbody.trouvaille
         - const formes = trouvaille.formes || []
@@ -86,15 +87,10 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
 
           //- Point plein : expression telle quelle ; creux : mots dispersés.
           //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.
-          //- Le point mène à la vue ciblée molécule + rubrique : la phrase, puis chaque
-          //- spécialité menant à sa propre rubrique. Un point ne peut pas désigner
-          //- un seul RCP quand la molécule en a dix-huit. Sans signature (produit
-          //- sans composition), le lien direct reste.
-          -
-            const filtre = trouvaille.sansMolecule ? null : trouvaille.molecule.replace(/\s*\+\s*/g, ' ');
-            const vers = (rub) => (filtre && rub.type !== 'notice'
-              ? lien(etat, { molecule: filtre, rubrique: rub.numero })
-              : `/product/${rub.cis}${q}#${rub.ancre}`);
+          //- Le point mène au RCP de la spécialité représentante (princeps de
+          //- préférence), nommée dans l'infobulle ; l'accordéon déplié donne les
+          //- points de chaque dosage.
+          - const vers = (rub) => `/product/${rub.cis}${q}#${rub.ancre}`
           each colonne in colonnesVues
             td.cellule-rubrique
               if par[colonne[0]]
@@ -123,7 +119,49 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                 )= court(rub)
 
         //- Dépliée par la molécule ; masquée par CSS tant qu'elle est repliée.
-        if formes.length && trouvaille.specialites > 1
+        //- Vue large : une ligne par dosage avec ses propres points, chacun menant
+        //- à son RCP. Vue ciblée (sans colonnes) : la liste des dosages.
+        if formes.length && trouvaille.specialites > 1 && large
+          each groupeForme in formes
+            tr.ligne-dosages.ligne-forme
+              td(colspan=colspan)= groupeForme.forme
+            each groupeNom in groupeForme.noms
+              each dosage in groupeNom.dosages
+                -
+                  const siennes = dosage.rubriques || [];
+                  const parSienne = Object.fromEntries(siennes.filter((rub) => rub.type !== 'notice').map((rub) => [rub.numero, rub]));
+                  const autresSiennes = siennes.filter((rub) => rub.type === 'notice' || !cles.includes(rub.numero));
+                  const cible = (rub) => `/product/${dosage.id}${q}#${rub.ancre}`;
+                tr.ligne-dosages.ligne-specialite
+                  th.cellule-specialite(scope="row")
+                    a.dosage-lien(href=`/product/${dosage.id}${q}${dosage.ancre ? `#${dosage.ancre}` : ''}` title=specialite(dosage.denomination))
+                      | #{specialite(groupeNom.nom)} #{dosage.etiquette}#{groupeNom.uniteCourte ? ` ${groupeNom.uniteCourte}` : ''}
+                    if groupeNom.princeps
+                      span.marque Princeps
+                  each colonne in colonnesVues
+                    td.cellule-rubrique
+                      if parSienne[colonne[0]]
+                        - const rub = parSienne[colonne[0]]
+                        a.point.point-dosage(
+                          class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                          href=cible(rub)
+                          title=long(rub)
+                          aria-label=long(rub)
+                          data-cis=dosage.id
+                          data-type=rub.ancre.split('-')[0]
+                          data-position=rub.ancre.split('-')[1]
+                        )
+                  td.cellule-autres
+                    each rub in autresSiennes
+                      a.autre(
+                        class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                        href=cible(rub)
+                        title=long(rub)
+                        data-cis=dosage.id
+                        data-type=rub.ancre.split('-')[0]
+                        data-position=rub.ancre.split('-')[1]
+                      )= court(rub)
+        else if formes.length && trouvaille.specialites > 1
           tr.ligne-dosages
             td(colspan=colspan)
               each groupeForme in formes

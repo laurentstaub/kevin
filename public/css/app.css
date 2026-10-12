@@ -1115,6 +1115,33 @@ a.trouvaille-molecule {
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
+/* Accordéon de la vue large : une ligne de points par dosage, en retrait,
+   points plus petits que ceux de la molécule. La forme fait l'intertitre. */
+.trouvailles .ligne-forme td {
+  padding: var(--sp-1) 0 0 1em;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  border-bottom: 0;
+}
+
+.trouvailles .ligne-specialite th,
+.trouvailles .ligne-specialite td {
+  padding: 0.1rem 0;
+  border-bottom: 0;
+}
+
+.trouvailles .ligne-specialite th {
+  text-align: left;
+  font-weight: 400;
+  font-size: var(--fs-sm);
+  padding-left: 1em;
+}
+
+.trouvailles .ligne-specialite .cellule-autres { font-size: var(--fs-xs); }
+.trouvailles .trouvaille > .ligne-specialite:last-child > * { padding-bottom: var(--sp-2); }
+
+.point-dosage { width: 0.5rem; height: 0.5rem; }
+
 .dosages-forme {
   margin: var(--sp-1) 0 0;
   font-size: var(--fs-xs);
