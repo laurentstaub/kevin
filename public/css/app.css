@@ -8,15 +8,17 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  min-height: var(--barre-h);
   background: var(--bg-tint);
   border-bottom: var(--rule-width) solid var(--rule);
 }
 
+/* La hauteur est sur la ligne elle-même, pas sur la barre : le contenu
+   s'y centre au lieu de rester collé en haut d'une barre plus haute que lui. */
 .barre-inner {
   max-width: var(--colonne);
   margin: 0 auto;
-  padding: var(--sp-2) var(--sp-4);
+  min-height: var(--barre-h);
+  padding: var(--sp-1) var(--sp-4);
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -244,8 +246,8 @@
 
 /* Variante d'en-tête : visible sans peser. */
 .search-compacte {
-  flex: 1 1 16rem;
-  max-width: 26rem;
+  flex: 1 1 20rem;
+  max-width: 34rem;
 }
 
 /* Fond blanc : transparent, le champ ne se lit plus comme une saisie. */
@@ -259,13 +261,13 @@
 }
 
 .search-compacte .search-input {
-  padding: 0.15em 0.5em;
-  font-size: var(--fs-xs);
+  padding: 0.3em 0.6em;
+  font-size: var(--fs-sm);
 }
 
 .search-compacte .search-button {
-  padding: 0 var(--sp-1);
-  font-size: var(--fs-xs);
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-sm);
 }
 
 /* Masqué : il décalerait la ligne à chaque frappe. */
