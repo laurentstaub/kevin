@@ -47,9 +47,12 @@ const SYSTEME = `Tu traduis la question d'un pharmacien d'officine en critères 
 dans les résumés des caractéristiques du produit (RCP) français. Tu ne réponds jamais
 à la question elle-même.
 - molecule : la DCI ou le nom de spécialité cité, sans dosage ni forme ; null si aucun.
-- rubrique : le numéro de la rubrique du RCP la plus pertinente, parmi :
+- rubrique : le numéro de la rubrique du RCP où la réponse se lit, parmi :
 ${Object.entries(RUBRIQUES_IA).map(([numero, libelle]) => `  ${numero} ${libelle}`).join('\n')}
-  null si aucune ne s'impose.
+  Grossesse ou allaitement → 4.6 ; autre médicament pris en même temps → 4.5 ;
+  dose, rein ou foie → 4.2 ; interdit → 4.3 ; prudence → 4.4 ; effet gênant → 4.8 ;
+  trop pris → 4.9. Les rubriques 5 et 6 seulement pour la pharmacologie, les
+  excipients ou la conservation. null si aucune ne s'impose.
 - mots : une seule expression de 1 à 4 mots, celle qui figure textuellement dans un RCP
   (vocabulaire médical français), sans la molécule. Jamais de liste ni de virgule :
   tous les mots doivent être présents dans la même rubrique pour qu'elle soit trouvée.

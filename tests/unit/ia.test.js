@@ -130,11 +130,22 @@ describe('routes, IA active', () => {
 
   it('annonce l’interprétation et propose de chercher tel quel', async () => {
     const res = await request(app)
-      .get(`/documents?q=allaitement&rubrique=4.6&molecule=tramadol&ia=1&question=${encodeURIComponent(QUESTION)}`)
+      .get(`/documents?q=allaitement&molecule=tramadol&ia=1&question=${encodeURIComponent(QUESTION)}`)
       .expect(200);
     assert.match(res.text, /interprétée par IA/);
     assert.match(res.text, /brut=1/);
     assert.match(res.text, /class="jeton"[^>]*>tramadol/);
+  });
+
+  // Vu en production : 6.1 (excipients) pour une question d'allaitement. La base factice
+  // ne rend rien : la rubrique de l'IA tombe, le reste de l'interprétation est gardé.
+  it('une rubrique choisie par l’IA et vide est abandonnée', async () => {
+    const res = await request(app)
+      .get(`/documents?q=allaitement&rubrique=6.1&molecule=tramadol&ia=1&question=${encodeURIComponent(QUESTION)}`)
+      .expect(302);
+    assert.doesNotMatch(res.headers.location, /rubrique=/);
+    assert.match(res.headers.location, /molecule=tramadol/);
+    assert.match(res.headers.location, /ia=1/);
   });
 
   it('« tel quel » ne réinterprète pas', async () => {

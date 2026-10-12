@@ -261,6 +261,12 @@ export function pageRoutes(pool) {
             return vide;
           });
 
+      // Rubrique choisie par l'IA et vide : elle s'est trompée de rubrique, pas de
+      // question. Même recherche sur tout le document, URL honnête.
+      if (etat.ia && rubrique && !panne && documents.total === 0 && documents.resultats.length === 0) {
+        return res.redirect(lien(etat, { rubrique: null }));
+      }
+
       res.render('documents', {
         etat,
         sansRail: true,
