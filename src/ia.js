@@ -32,15 +32,20 @@ const cleDe = (fournisseur) => (fournisseur === 'anthropic' ? config.ia.cleAnthr
 
 export const iaActive = () => Boolean(config.ia.modele && cleDe(config.ia.fournisseur));
 
+/** Mots qui font d'une saisie une question, quel que soit son nombre de mots. */
+const INTERROGATIFS = /(^|\s)(comment|pourquoi|quels?|quelles?|combien|est-ce|faut-il|peut-(on|il|elle)|puis-je|doit-(on|il|elle))(\s|$)/i;
+
 /**
- * Une question plutôt qu'une recherche : point d'interrogation, ou trois mots
- * et plus. À appeler après la reconnaissance par la base, qui écarte les noms
- * avec dosage (« doliprane 1000 mg »).
+ * Une question plutôt qu'une recherche : point d'interrogation, mot
+ * interrogatif, ou quatre mots et plus. Trois mots restent une expression
+ * (« insuffisance hépatique sévère »), que la recherche transversale sert
+ * mieux que l'IA. À appeler après la reconnaissance par la base, qui écarte
+ * les noms avec dosage (« doliprane 1000 mg »).
  */
 export function estQuestion(texte) {
   const propre = String(texte ?? '').trim();
   if (!propre || /^".*"$/.test(propre)) return false;
-  return /\?\s*$/.test(propre) || propre.split(/\s+/).length >= 3;
+  return /\?\s*$/.test(propre) || INTERROGATIFS.test(propre) || propre.split(/\s+/).length >= 4;
 }
 
 const SYSTEME = `Tu traduis la question d'un pharmacien d'officine en critères de recherche

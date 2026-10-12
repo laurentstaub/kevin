@@ -8,15 +8,17 @@ import {
 import { createApp } from '../../src/app.js';
 
 describe('question ou recherche', () => {
-  it('reconnaît une question : « ? » ou trois mots', () => {
+  it('reconnaît une question : « ? », mot interrogatif ou quatre mots', () => {
     assert.equal(estQuestion('tramadol allaitement ?'), true);
-    assert.equal(estQuestion('metformine insuffisance rénale'), true);
+    assert.equal(estQuestion('metformine et insuffisance rénale'), true);
+    assert.equal(estQuestion('comment arrêter paroxétine'), true);
     assert.equal(estQuestion('puis-je donner du tramadol à une femme qui allaite'), true);
   });
 
-  it('laisse les recherches courtes et les expressions exactes', () => {
+  it('laisse les recherches courtes, les expressions de trois mots et les expressions exactes', () => {
     assert.equal(estQuestion('tramadol'), false);
     assert.equal(estQuestion('allongement QT'), false);
+    assert.equal(estQuestion('insuffisance hépatique sévère'), false);
     assert.equal(estQuestion('"insuffisance hépatique sévère chez le sujet âgé"'), false);
   });
 });

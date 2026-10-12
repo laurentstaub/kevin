@@ -134,8 +134,9 @@ describe('routes : la base avant l’IA', () => {
     assert.match(res.headers.location, /q=une\+femme\+qui\+allaite\+peut-elle\+prendre\+de&/);
   });
 
-  it('sans médicament, trois mots vont à l’IA', async () => {
-    const res = await request(app).get('/search?q=allongement+intervalle+QT').expect(302);
+  it('sans médicament, trois mots restent une expression ; quatre vont à l’IA', async () => {
+    await request(app).get('/search?q=allongement+intervalle+QT').expect(200);
+    const res = await request(app).get('/search?q=risque+allongement+intervalle+QT').expect(302);
     assert.match(res.headers.location, /^\/documents\?q=/);
   });
 });
