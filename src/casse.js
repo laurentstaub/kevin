@@ -4,13 +4,21 @@
  * Convention OMS : la DCI est un nom commun, en bas de casse (paracétamol) ;
  * la spécialité est un nom propre, avec capitale (Doliprane). Les sigles
  * (B12, NPH, IgG) gardent leur forme ; la liste est dans data/sigles.json.
+ * Les accents que la BDPM omet (EZETIMIBE) sont rendus d'après data/accents.json,
+ * déduit des RCP par scripts/accents.js.
  * Les données ne changent pas, la recherche non plus : tout se joue à l'affichage.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './config.js';
 
-const SIGLES = JSON.parse(readFileSync(path.join(ROOT, 'data', 'sigles.json'), 'utf8'));
+const lireJson = (nom) => {
+  const fichier = path.join(ROOT, 'data', nom);
+  return existsSync(fichier) ? JSON.parse(readFileSync(fichier, 'utf8')) : {};
+};
+
+const SIGLES = lireJson('sigles.json');
+const ACCENTS = lireJson('accents.json');
 
 /** Mots-outils d'un nom propre composé : « Chlorhydrate de Tramadol Mylan ». */
 const OUTILS = new Set(['DE', 'DU', 'DES', 'D\'', 'L\'', 'LA', 'LE', 'LES', 'ET', 'EN', 'AU', 'AUX',
@@ -29,11 +37,16 @@ const sigle = (mot) => {
 
 const capitale = (mot) => mot.charAt(0).toUpperCase() + mot.slice(1).toLowerCase();
 
+/** Rend ses accents à un mot crié, segment par segment : CO-TRIMOXAZOLE. */
+const accentuer = (mot) => mot.split('-')
+  .map((segment) => (ACCENTS[segment] ? ACCENTS[segment].toUpperCase() : segment))
+  .join('-');
+
 /** Traite chaque mot crié ; laisse le reste (dosage, forme, déjà en bas de casse). */
 function parMot(texte, regle) {
   return String(texte ?? '').split(/(\s+|\+|\/|\(|\))/).map((mot) => {
     if (!CRIE.test(mot)) return mot;
-    return sigle(mot) ?? regle(mot);
+    return sigle(mot) ?? regle(accentuer(mot));
   }).join('');
 }
 
