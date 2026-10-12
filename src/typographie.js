@@ -337,8 +337,8 @@ export function amorces(html) {
 /**
  * Intertitre libre (« Traitement des ulcères duodénaux ») : le PDF européen a
  * perdu l'italique qui le signalait. Un paragraphe court, groupe nominal à
- * majuscule initiale, sans ponctuation, qui annonce ce qui suit (jamais le
- * dernier bloc). Garde-fous : ni verbe ni pronom sujet, ni article, chiffre ou
+ * majuscule initiale, sans ponctuation (hors deux-points final), qui annonce
+ * ce qui suit (jamais le dernier bloc). Garde-fous : ni verbe ni pronom sujet, ni article, chiffre ou
  * puce en tête, ni lien ni saut de ligne, ni renvoi (« voir rubrique »). Une
  * phrase nominale sans point final passe encore : limite acceptée.
  */
@@ -350,7 +350,8 @@ const DETERMINANT = /^(?:(?:le|la|les|un|une|des|ce|cette|ces|il|elle|on)\s|l['�
 export function intertitres(html) {
   return String(html ?? '').replace(PARAGRAPHE_SUIVI, (bloc, attrs, interieur) => {
     if (/\bclass\s*=/.test(attrs) || /<(?:a|br)\b/i.test(interieur)) return bloc;
-    const texte = detaguer(interieur);
+    // « Réactions cutanées : » annonce ce qui suit ; le deux-points final est gardé.
+    const texte = detaguer(interieur).replace(/\s*:$/, '');
     const mots = texte.split(' ');
     if (mots.length < 2 || mots.length > MOTS_MAX || texte.length > 70) return bloc;
     if (!/^\p{Lu}/u.test(texte) || /[.;:!?,]/.test(texte)) return bloc;

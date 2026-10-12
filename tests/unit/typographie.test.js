@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   listes, sousTitres, intertitres, espaces, notes, interactions, renvois, structurer, rangDePuce,
-  insecables, amorces, doses, alertes, lisibilite,
+  insecables, amorces, doses, alertes, lisibilite, structurerLecture,
 } from '../../src/typographie.js';
 
 describe('rangs de puce', () => {
@@ -70,6 +70,15 @@ describe('intertitres libres', () => {
   it('promeut un groupe nominal court suivi d’un paragraphe', () => {
     const html = '<p>Traitement des ulcères duodénaux</p><p>La dose recommandée est <strong>20 mg</strong>.</p>';
     assert.equal(intertitres(html), '<h6 class="intertitre">Traitement des ulcères duodénaux</h6><p>La dose recommandée est <strong>20 mg</strong>.</p>');
+  });
+
+  it('accepte le deux-points final, et le garde', () => {
+    assert.equal(intertitres('<p>Réactions cutanées :</p><p>x</p>'), '<h6 class="intertitre">Réactions cutanées :</h6><p>x</p>');
+    assert.equal(intertitres('<p>Mises en garde&nbsp;: </p><p>x</p>'), '<h6 class="intertitre">Mises en garde&nbsp;:</h6><p>x</p>');
+  });
+
+  it('passe avant l’amorce : un intitulé seul devant son paragraphe n’est pas une amorce', () => {
+    assert.match(structurerLecture('<p>Mises en garde : </p><p>Texte.</p>'), /^<h6 class="intertitre">Mises en garde :<\/h6>/);
   });
 
   it('accepte deux intertitres à la suite et un intertitre devant une liste', () => {
