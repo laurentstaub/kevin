@@ -81,8 +81,8 @@
 
 /* Mode sombre : le réglage du système, rien d'autre. Fond vert-noir profond,
    encre blanc cassé pour les 40 000 signes d'un RCP, liens et accent dans
-   le vert vif du bouton : les verts plus doux pâlissaient sur le noir.
-   Contrastes sur le fond : encre 15,8, gris 8,7 et 6,8, lien 10,4, alerte 7,5. */
+   un vert-jaune fluo : les verts plus doux pâlissaient sur le noir.
+   Contrastes sur le fond : encre 15,8, gris 8,7 et 6,8, lien 13,2, alerte 7,5. */
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #e4eae5;
@@ -96,8 +96,8 @@
     --bg-alt: #0f1611;
     --bg-tint: #121a14;
 
-    --accent: #7bd44f;
-    --lien: #7bd44f;
+    --accent: #9aec3a;
+    --lien: #9aec3a;
     --accent-soft: #3f5c48;
     --accent-pale: #1a2a1e;
   }
