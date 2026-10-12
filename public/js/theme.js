@@ -8,6 +8,8 @@
 (function () {
   const ETATS = ['auto', 'light', 'dark'];
   const LIBELLES = { auto: 'Auto', light: 'Clair', dark: 'Sombre' };
+  // Soleil, lune, demi-disque ; \uFE0E force le glyphe texte, pas l'émoji.
+  const PICTOS = { auto: '\u25D0', light: '\u2600\uFE0E', dark: '\u263E\uFE0E' };
   const CLE = 'apparence';
   const racine = document.documentElement;
   const boutons = document.querySelectorAll('.theme');
@@ -35,8 +37,8 @@
     if (etat === 'auto') delete racine.dataset.theme;
     else racine.dataset.theme = etat;
     boutons.forEach((bouton) => {
-      bouton.textContent = LIBELLES[etat];
-      bouton.setAttribute('aria-label', `Apparence : ${LIBELLES[etat].toLowerCase()}`);
+      bouton.textContent = `${PICTOS[etat]} ${LIBELLES[etat]}`;
+      bouton.setAttribute('aria-label', `Thème : ${LIBELLES[etat].toLowerCase()}`);
     });
   };
 
