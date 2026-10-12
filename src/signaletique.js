@@ -45,9 +45,16 @@ export function abregerForme(forme) {
 }
 
 /** « 42.11 » → « 42,11 € » ; « 2.1 » → « 2,10 € ». Espace fine insécable avant le symbole. */
+/** « 1 234,56 », « 19.5 » → nombre ; null si illisible. */
+const montant = (valeur) => {
+  if (valeur === null || valeur === undefined || valeur === '') return null;
+  const nombre = Number(String(valeur).replace(/[\s\u00a0\u202f]/g, '').replace(',', '.'));
+  return Number.isFinite(nombre) && nombre > 0 ? nombre : null;
+};
+
 const euros = (valeur) => {
-  const nombre = Number(String(valeur).replace(',', '.'));
-  if (!Number.isFinite(nombre)) return null;
+  const nombre = montant(valeur);
+  if (nombre === null) return null;
   return `${nombre.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u202f€`;
 };
 
@@ -106,17 +113,25 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
   }
 
   // Prise en charge : taux et prix de la plus petite présentation commercialisée.
+  // Deux prix BDPM : le plus bas est hors honoraire de dispensation, le plus
+  // haut honoraire compris — ordre déduit des valeurs, pas des colonnes.
   const presentations = (product.cip_products ?? []).filter((pres) => pres.commercialise !== false);
-  const avecPrix = presentations.filter((pres) => pres.prix);
+  const prixDe = (pres) => {
+    const valeurs = [montant(pres.prix), montant(pres.prix_2)].filter((valeur) => valeur !== null);
+    if (valeurs.length === 0) return null;
+    return { hors: Math.min(...valeurs), compris: Math.max(...valeurs) };
+  };
+  const ecrire = ({ hors, compris }) => (hors === compris
+    ? euros(compris) : `${euros(compris)} · ${euros(hors)} hors hon.`);
+  const avecPrix = presentations.filter((pres) => prixDe(pres));
   const tauxValeurs = [...new Set(presentations.map((pres) => taux(pres.taux)).filter(Boolean))];
   if (avecPrix.length > 0 || tauxValeurs.length > 0) {
-    const prix = avecPrix.map((pres) => euros(pres.prix)).filter(Boolean);
-    const bas = prix[0];
-    // Le plus petit prix seul : la fourchette complète est en infobulle.
-    const valeur = [tauxValeurs.join(' / '), bas].filter(Boolean).join(' · ');
+    // La première présentation seule : les autres sont en infobulle.
+    const premier = avecPrix.length > 0 ? ecrire(prixDe(avecPrix[0])) : null;
+    const valeur = [tauxValeurs.join(' / '), premier].filter(Boolean).join(' · ');
     cases.push({
       cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur,
-      detail: avecPrix.map((pres) => `${pres.libelle_presentation} : ${euros(pres.prix)}`).join(' ; ') || null,
+      detail: avecPrix.map((pres) => `${pres.libelle_presentation} : ${ecrire(prixDe(pres))}`).join(' ; ') || null,
     });
   } else {
     cases.push({ cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur: 'Non remboursé' });

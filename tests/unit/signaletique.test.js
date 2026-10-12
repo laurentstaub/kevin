@@ -63,6 +63,15 @@ describe('bande signalétique', () => {
     assert.match(cases.find((cas) => cas.cle === 'prix').detail, /a : 2,00\u202f€ ; b : 4,50\u202f€/);
   });
 
+  it('donne les deux prix, honoraire compris d’abord, quel que soit l’ordre des colonnes', () => {
+    for (const [prix, prix2] of [['19.5', '20.52'], ['20,52', '19,50']]) {
+      const cases = signaletique(produit({
+        cip_products: [{ code_cip13: '1', libelle_presentation: 'a', taux: '65%', prix, prix_2: prix2 }],
+      }), { resume: [] }, null, null, false);
+      assert.equal(valeur(cases, 'prix'), '65\u202f% · 20,52\u202f€ · 19,50\u202f€ hors hon.');
+    }
+  });
+
   it('dit « Non remboursé » sans taux ni prix', () => {
     const cases = signaletique(produit({ cip_products: [{ code_cip13: '1', libelle_presentation: 'a' }] }), { resume: [] }, null, null, false);
     assert.equal(valeur(cases, 'prix'), 'Non remboursé');

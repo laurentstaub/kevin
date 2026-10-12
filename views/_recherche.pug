@@ -1,6 +1,6 @@
 //- Champ de recherche partagé : un seul balisage, car `public/js/search.js`
 //- s'accroche à ces classes et identifiants.
-//- Le libellé compact dit « un médicament » pour ne pas évoquer une recherche dans la page.
+//- Même invite partout : on cherche un nom, une molécule ou une expression des documents.
 //-
 //- @param {string} valeur   ce que porte le champ au chargement
 //- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
@@ -12,7 +12,7 @@ mixin champRecherche(valeur, compact, action)
         input.search-input(
           type="search"
           name="q"
-          placeholder=compact ? 'Chercher un médicament…' : 'Dénomination, principe actif ou expression'
+          placeholder='Dénomination, principe actif ou expression'
           value=valeur
           autocomplete="off"
           autocapitalize="off"

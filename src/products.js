@@ -69,7 +69,9 @@ export async function getProduct(pool, cis) {
                -- Valeurs CIP : « Déclaration de commercialisation », « … d'arrêt … », « … de suspension … ».
                'commercialise', etat_commercialisation !~* '(arr[êe]t|suspension)',
                'taux', nullif(btrim(taux_remboursement::text), ''),
+               -- Les deux prix BDPM : hors honoraire de dispensation, et honoraire compris.
                'prix', nullif(btrim(prix_medicament_euro::text), ''),
+               'prix_2', nullif(btrim(prix_medicament_euro_2::text), ''),
                'collectivites', agrement_collectivites
              -- Tri par quantité réelle : « Boîte de 30 » avant « Boîte de 100 »,
           -- ce que l'ordre alphabétique fait exactement à l'envers.
