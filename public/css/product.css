@@ -61,10 +61,6 @@
   max-width: none;
 }
 
-.identite .dci {
-  color: var(--accent);
-}
-
 /* ---------- Bande signalétique ---------- */
 
 /* Hauteur de la bande : les ancres s'arrêtent sous la barre + la bande. */
