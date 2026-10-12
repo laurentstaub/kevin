@@ -77,6 +77,9 @@
   color-scheme: light dark;
   /* L'encre posée sur l'aplat vif ne change pas de schéma : 9,09 sur le vert. */
   --ink-sur-vif: #14201a;
+  /* Soulignement des liens : trait et couleur, affinés en sombre. */
+  --trait: 1px;
+  --trait-couleur: currentcolor;
 }
 
 /* Mode sombre : le réglage du système, rien d'autre. Fond vert-noir profond,
@@ -100,6 +103,11 @@
     --lien: #9aec3a;
     --accent-soft: #3f5c48;
     --accent-pale: #1a2a1e;
+
+    /* Un trait vif sur fond noir paraît deux fois plus épais : demi-pixel
+       (un pixel physique sur écran dense), à mi-teinte. */
+    --trait: 0.5px;
+    --trait-couleur: color-mix(in srgb, currentcolor 55%, transparent);
   }
 }
 
@@ -146,12 +154,13 @@ h3 {
 
 a {
   color: var(--lien);
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
 a:hover,
-a:focus-visible { text-decoration-thickness: 2px; }
+a:focus-visible { text-decoration-thickness: calc(var(--trait) + 1px); }
 
 /* Tableaux : filets horizontaux seuls, pas de fond alterné. */
 table {

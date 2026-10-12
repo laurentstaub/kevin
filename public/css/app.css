@@ -103,7 +103,8 @@
 .accueil-exemple a {
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
@@ -438,12 +439,13 @@
   padding: 0.2em 0.1em;
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
   white-space: nowrap;
 }
 .dosage-lien:hover,
-.dosage-lien:focus-visible { text-decoration-thickness: 2px; }
+.dosage-lien:focus-visible { text-decoration-thickness: calc(var(--trait) + 1px); }
 .sep-point { color: var(--faint); }
 
 .specialite-labo {
@@ -520,11 +522,12 @@
 .classe-lien .classe-label {
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
-.classe-lien:hover .classe-label { text-decoration-thickness: 2px; }
+.classe-lien:hover .classe-label { text-decoration-thickness: calc(var(--trait) + 1px); }
 
 /* Code en accent : repère visuel autant qu'information. */
 .classe-code {
@@ -595,7 +598,8 @@
   letter-spacing: 0;
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
@@ -615,7 +619,8 @@
 .atc-maillon {
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
@@ -664,11 +669,12 @@
 a.resultat .resultat-nom {
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
-a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
+a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 1px); }
 
 .resultat-nom {
   display: block;
@@ -1048,7 +1054,8 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: 2px; }
 a.trouvaille-molecule {
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
@@ -1141,7 +1148,8 @@ a.point:focus-visible {
   font-variant-numeric: tabular-nums;
   color: var(--lien);
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
 }
 
