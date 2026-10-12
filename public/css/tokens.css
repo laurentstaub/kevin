@@ -29,7 +29,7 @@
   /* Champ de saisie : blanc en clair ; en sombre, un cran plus clair que le
      bandeau, sans noir dur. */
   --champ: #ffffff;
-  --champ: light-dark(#ffffff, #1b251e);
+  --champ: light-dark(#ffffff, #1f2321);
   /* Réservé à l'en-tête d'accueil, seule page sans texte long. */
   --bg-fonce: #123b22;
 

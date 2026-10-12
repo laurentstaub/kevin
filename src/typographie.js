@@ -287,7 +287,8 @@ const UNITES = [
   'flacons?', 'doses?', 'prises?', 'bouffées?', 'pulvérisations?', 'injections?',
 ].join('|');
 
-const NOMBRE_UNITE = new RegExp(`(\\d)[ \\t]+(?=(?:${UNITES})(?![\\p{L}\\d]))`, 'gu');
+// L'espace de la source : ordinaire, entité, insécable déjà posée ou fine (U+202F).
+const NOMBRE_UNITE = new RegExp(`(\\d)(?:[ \\t]|&nbsp;|\\u00a0|\\u202f)+(?=(?:${UNITES})(?![\\p{L}\\d]))`, 'gu');
 const MILLIERS = /(\d)[ \t](?=\d{3}(?!\d))/g;
 
 /** Applique `remplacer` au texte hors balise seulement. */
@@ -378,7 +379,7 @@ const UNITES_DOSE = [
 ].join('|');
 const PAR = '(?:\\/(?:kg|m²|m2|jour|j|24\\u00a0?h|h|prise|mL|ml|semaine|dose|min))*';
 const DOSE = new RegExp(
-  `(?<![\\d.,])(?:${NOMBRE}[ \\u00a0]?(?:à|-|–)[ \\u00a0]?)?${NOMBRE}\\u00a0(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
+  `(?<![\\d.,])(?:${NOMBRE}[ \\u00a0]?(?:à|-|–)[ \\u00a0]?)?${NOMBRE}\\u00a0?(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
   'gu',
 );
 

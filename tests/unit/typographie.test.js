@@ -103,6 +103,18 @@ describe('intertitres libres', () => {
   });
 });
 
+describe('doses, quelle que soit l’espace de la source', () => {
+  it('reconnaît l’entité, la fine, l’insécable déjà posée et l’espace absente', () => {
+    for (const [source, attendu] of [
+      ['<p>150 mg ou 200&nbsp;mg</p>', '<p><strong class="dose-cle">150\u00a0mg</strong> ou <strong class="dose-cle">200\u00a0mg</strong></p>'],
+      ['<p>200\u202fmg</p>', '<p><strong class="dose-cle">200\u00a0mg</strong></p>'],
+      ['<p>200\u00a0mg</p>', '<p><strong class="dose-cle">200\u00a0mg</strong></p>'],
+      ['<p>200mg</p>', '<p><strong class="dose-cle">200mg</strong></p>'],
+      ['<p>figure 200mg2</p>', '<p>figure 200mg2</p>'],
+    ]) assert.equal(doses(insecables(source)), attendu, source);
+  });
+});
+
 describe('espaces insécables', () => {
   it('durcit une espace déjà présente', () => {
     assert.equal(espaces('<p>au :</p>'), '<p>au :</p>');
