@@ -210,11 +210,12 @@
 .input-wrapper {
   display: flex;
   align-items: stretch;
-  border: var(--rule-width) solid var(--ink);
-  border-radius: var(--radius-control);
+  border: var(--rule-width) solid var(--rule-medium);
+  /* Plus rond que les autres commandes : c'est la pièce maîtresse de la page. */
+  border-radius: 14px;
   overflow: hidden;
-  /* Fond de page, pas celui du bandeau : le champ se lit comme une saisie. */
-  background: var(--bg);
+  /* Ni le fond du bandeau, ni le noir de la page : une surface de saisie. */
+  background: var(--champ);
 }
 
 .search-input {
@@ -264,10 +265,9 @@
   max-width: 34rem;
 }
 
-/* Fond blanc : transparent, le champ ne se lit plus comme une saisie. */
+/* Variante d'en-tête : même surface, rayon des commandes. */
 .search-compacte .input-wrapper {
-  border-color: var(--rule-medium);
-  background: var(--bg);
+  border-radius: var(--radius-control);
 }
 
 .search-compacte .input-wrapper:focus-within {

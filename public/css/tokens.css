@@ -26,6 +26,10 @@
   /* Teinte de section, adoucie pour les textes longs. */
   --bg-tint: #f2f7f2;
   --bg-tint: light-dark(#f2f7f2, #121a14);
+  /* Champ de saisie : blanc en clair ; en sombre, un cran plus clair que le
+     bandeau, sans noir dur. */
+  --champ: #ffffff;
+  --champ: light-dark(#ffffff, #1b251e);
   /* Réservé à l'en-tête d'accueil, seule page sans texte long. */
   --bg-fonce: #123b22;
 
