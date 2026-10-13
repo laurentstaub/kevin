@@ -628,9 +628,9 @@ span.onglet {
   border-top-color: var(--rule-medium);
 }
 
-/* Rubrique ouverte : plus d'air pour la lecture. */
+/* Rubrique ouverte : de l'air sous le texte seulement. Une marge au-dessus
+   tombait sous la rubrique précédente, repliée, comme un trou dans la liste. */
 .rubrique[open] {
-  margin-top: var(--sp-3);
   padding-bottom: var(--sp-2);
 }
 
@@ -671,11 +671,6 @@ span.onglet {
   color: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-/* Pas d'air entre une charnière et sa première rubrique : elles forment un bloc. */
-.charniere + .rubrique[open] {
-  margin-top: 0;
 }
 
 /* Surface de lecture d'un RCP : corps 17 px, interligne 1,75 (WCAG 1.4.8 :
