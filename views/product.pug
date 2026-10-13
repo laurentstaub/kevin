@@ -220,7 +220,8 @@ block content
       //- Contenu principal, jamais replié : le document lu sert de titre
       //- (« RCP »), les autres documents en onglets au même niveau.
       if hasDocuments
-        section.bloc.bloc-documents#documents
+        //- Mots trouvés par la recherche (?q=…), surlignés par documents.js.
+        section.bloc.bloc-documents#documents(data-mots=(motsTrouves && motsTrouves.length > 0 ? JSON.stringify(motsTrouves) : null))
           h2.sr-only Documents officiels
           if documents.length > 1
             .onglets(role="tablist" aria-label="Documents officiels")

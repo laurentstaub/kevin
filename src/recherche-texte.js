@@ -166,6 +166,39 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
 }
 
 /**
+ * Formes exactes des mots que Postgres a retenus dans les rubriques d'une
+ * spécialité (racines, synonymes, élargissements compris), pour que la fiche
+ * surligne ce qui a été trouvé et non seulement les mots tapés : une
+ * expression partielle ou élargie ne contient pas forcément la saisie.
+ *
+ * @returns {Promise<string[]>} mots en minuscules, sans doublon, 80 au plus
+ */
+const OUVRE = '\u27e6';
+const FERME = '\u27e7';
+export async function motsTrouves(pool, cis, requete) {
+  const saisie = String(requete ?? '').trim();
+  if (!saisie || !/^\d{6,10}$/.test(String(cis ?? ''))) return [];
+  const tq = composerTsquery(elargir(saisie).atomes, 2);
+  const { rows } = await pool.query(
+    `WITH q AS (SELECT ${tq.sql} AS tq)
+     SELECT ts_headline('${LANGUE}', s.texte, q.tq,
+              'StartSel=${OUVRE}, StopSel=${FERME}, HighlightAll=true') AS marque
+     FROM docs.rcp_sections s, q
+     WHERE s.code_cis = $1 AND ${VECTEUR} @@ q.tq`,
+    [String(cis), ...tq.params],
+  );
+  const mots = new Set();
+  const motif = new RegExp(`${OUVRE}([^${FERME}]{1,60})${FERME}`, 'g');
+  for (const { marque } of rows) {
+    for (const [, mot] of String(marque ?? '').matchAll(motif)) {
+      mots.add(mot.trim().toLowerCase());
+      if (mots.size >= 80) return [...mots];
+    }
+  }
+  return [...mots].filter(Boolean);
+}
+
+/**
  * Rubriques dont le texte répond à la requête, regroupées par molécule.
  *
  * @param {import('pg').Pool} pool

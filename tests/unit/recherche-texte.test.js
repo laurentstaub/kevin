@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
-  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU,
+  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU, motsTrouves,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -197,5 +197,22 @@ describe('expression exacte', () => {
     assert.equal(vus[0][3], 'insuffisance hépatique');
     await chercherDansDocuments(pool, 'QT');
     assert.equal(vus[1][3], null);
+  });
+});
+
+describe('mots trouvés, pour le surlignage de la fiche', () => {
+  it('rend les formes marquées par ts_headline, sans doublon, en minuscules', async () => {
+    const pool = { query: async () => ({ rows: [
+      { marque: 'Des cas d’⟦insuffisance⟧ ⟦hépatique⟧ sévère' },
+      { marque: 'des ⟦Insuffisances⟧ ⟦hépatiques⟧ et ⟦insuffisance⟧' },
+    ] }) };
+    assert.deepEqual(await motsTrouves(pool, '60234100', 'insuffisance hépatique'),
+      ['insuffisance', 'hépatique', 'insuffisances', 'hépatiques']);
+  });
+
+  it('ne lance rien sans saisie ni CIS valide', async () => {
+    const pool = { query: async () => { throw new Error('appelé'); } };
+    assert.deepEqual(await motsTrouves(pool, '60234100', '  '), []);
+    assert.deepEqual(await motsTrouves(pool, 'x', 'foie'), []);
   });
 });

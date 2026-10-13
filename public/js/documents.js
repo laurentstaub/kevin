@@ -350,8 +350,25 @@ function surligner(racine, motif) {
   }
 }
 
+/**
+ * Ajoute au motif les formes exactes retenues par Postgres (data-mots) :
+ * racines, synonymes et élargissements que la saisie ne contient pas.
+ */
+function motifComplet(requete, mots) {
+  const base = requete && motifRequete(requete);
+  const echapper = (mot) => mot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const formes = (mots ?? []).filter((mot) => mot.length >= 2).map(echapper);
+  if (formes.length === 0) return base;
+  const exactes = `(?<![\\p{L}\\p{N}])(?:${formes.join('|')})(?![\\p{L}\\p{N}])`;
+  return new RegExp(base ? `${base.source}|${exactes}` : exactes, 'giu');
+}
+
+const motsTrouves = (() => {
+  try { return JSON.parse(documents?.dataset.mots ?? '[]'); } catch { return []; }
+})();
+
 const requete = new URLSearchParams(location.search).get('q');
-const motif = requete && motifRequete(requete);
+const motif = (requete || motsTrouves.length > 0) && motifComplet(requete, motsTrouves);
 
 if (motif && documents) {
   for (const article of documents.querySelectorAll('.document')) surligner(article, motif);

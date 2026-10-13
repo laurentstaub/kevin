@@ -23,7 +23,7 @@ import { getDelivrance, getRemboursement } from '../delivrance.js';
 import { signaletique } from '../signaletique.js';
 import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
-  chercherDansDocuments, extraitDeRubrique, rechercheAbsente,
+  chercherDansDocuments, extraitDeRubrique, rechercheAbsente, motsTrouves,
   APERCU, COLONNES, PAR_PAGE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
@@ -346,7 +346,7 @@ export function pageRoutes(pool) {
       if (!product) return next();
 
       const [
-        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation,
+        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
       ] = await Promise.all([
         getRelatedProducts(pool, cis, product.active_ingredients),
         getVariantes(pool, cis).catch((err) => {
@@ -382,6 +382,13 @@ export function pageRoutes(pool) {
           console.error('[has] évaluation indisponible pour', cis, err.message);
           return [];
         }),
+        // Venu de « Dans les documents » : les mots que la recherche a réellement trouvés.
+        typeof req.query.q === 'string' && req.query.q.trim()
+          ? motsTrouves(pool, cis, req.query.q.slice(0, 200)).catch((err) => {
+            console.error('[surlignage] mots indisponibles pour', cis, err.message);
+            return [];
+          })
+          : [],
       ]);
 
       const documents = withSections(bruts, decoupe);
@@ -439,6 +446,7 @@ export function pageRoutes(pool) {
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
           resumerEvaluation(evaluation)),
         evaluation,
+        motsTrouves: trouves,
         importation,
         reference,
         substitutions,
