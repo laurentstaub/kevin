@@ -254,3 +254,13 @@ describe('splitDocument — sommaire de notice', () => {
     assert.deepEqual(sections.map((section) => section.texte), titres.map((_, i) => `Texte ${i + 1}.`));
   });
 });
+
+describe('splitDocument — sommaire identique au plan', () => {
+  it('chaque rubrique garde son texte, le sommaire n’en vole aucun', () => {
+    const titres = ['1. Un', '2. Deux', '3. Trois'];
+    const html = titres.map((titre) => `<p>${titre}</p>`).join('')
+      + titres.map((titre, i) => `<p>${titre}</p><p>Texte ${i + 1}.</p>`).join('');
+    const { sections } = splitDocument(html, 'notice');
+    assert.deepEqual(sections.map((section) => section.texte), ['Texte 1.', 'Texte 2.', 'Texte 3.']);
+  });
+});

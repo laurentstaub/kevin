@@ -191,26 +191,38 @@ export function outline(html, type = 'doc') {
   const aRetirer = candidats.slice(0, premier);
   const aPoser = candidats.slice(premier);
 
-  let out = html;
+  // Le HTML se réécrit par positions, relevées sur l'original, et non par texte :
+  // `replace(candidat.match, …)` visait la première occurrence identique (un
+  // sommaire semblable au plan, un bloc répété) et interprétait les `$` d'un
+  // libellé (`$'` recopiait la suite du document).
   const sections = [];
-
-  for (const candidat of [...habillage, ...aRetirer]) {
-    out = out.replace(candidat.match, '');
-  }
-
-  aPoser.forEach((candidat, i) => {
+  const poses = aPoser.map((candidat, i) => {
     const id = `${type}-${i + 1}`;
     const { number, label, canonical, depth, numbered } = candidat;
-    const balise = candidat.match.match(/^<(\w+)([^>]*)>/);
-    const [, tag, attrs] = balise;
-
-    out = out.replace(
-      candidat.match,
-      `<${tag}${attrs} id="${id}" class="doc-heading">${renderHeading(number, label, canonical)}</${tag}>`,
-    );
-
+    const [, tag, attrs] = candidat.match.match(/^<(\w+)([^>]*)>/);
     sections.push({ id, number, label, canonical, depth, numbered });
+    return {
+      debut: candidat.index,
+      fin: candidat.index + candidat.match.length,
+      texte: `<${tag}${attrs} id="${id}" class="doc-heading">${renderHeading(number, label, canonical)}</${tag}>`,
+    };
   });
+
+  // Un retrait inclus dans un titre posé (un <h2> d'habillage dans le <div>
+  // numéroté) est sans objet : retiré d'abord, il empêchait de poser le titre.
+  const chevauche = (a, b) => a.debut < b.fin && b.debut < a.fin;
+  const retraits = [...habillage, ...aRetirer]
+    .map((candidat) => ({ debut: candidat.index, fin: candidat.index + candidat.match.length, texte: '' }))
+    .filter((retrait) => !poses.some((pose) => chevauche(pose, retrait)));
+
+  let out = '';
+  let curseur = 0;
+  for (const modification of [...poses, ...retraits].sort((a, b) => a.debut - b.debut)) {
+    if (modification.debut < curseur) continue;
+    out += html.slice(curseur, modification.debut) + modification.texte;
+    curseur = modification.fin;
+  }
+  out += html.slice(curseur);
 
   return { html: out, sections };
 }

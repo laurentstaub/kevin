@@ -309,3 +309,33 @@ describe('outline — sommaire de notice', () => {
     assert.deepEqual(sections.map((section) => section.number), ['1', '2', '3']);
   });
 });
+
+describe('outline — titres posés à leur place, pas à la première occurrence', () => {
+  const poses = (html) => (html.match(/class="doc-heading"/g) ?? []).length;
+
+  // Sommaire identique au plan : écarté par sansSommaire, mais `replace` posait les
+  // titres sur ses entrées, premières occurrences du même texte.
+  it('pose le titre sur la rubrique, pas sur l’entrée identique du sommaire', () => {
+    const titres = ['1. Un', '2. Deux', '3. Trois'];
+    const html = titres.map((titre) => `<p>${titre}</p>`).join('')
+      + titres.map((titre, i) => `<p>${titre}</p><p>Texte ${i + 1}.</p>`).join('');
+    const { html: sortie } = outline(html, 'notice');
+    // Le sommaire reste du texte, intact, avant la première rubrique.
+    assert.ok(sortie.startsWith('<p>1. Un</p><p>2. Deux</p><p>3. Trois</p><p id="notice-1"'), sortie.slice(0, 120));
+  });
+
+  it('recopie un libellé tel quel, `$` compris', () => {
+    const html = '<p>1. Prix en $\' et $&amp; $1</p><p>Texte a.</p><p>2. Deux</p><p>Texte b.</p><p>3. Trois</p><p>Texte c.</p>';
+    const { html: sortie } = outline(html, 'notice');
+    assert.match(sortie, /<span class="lab">Prix en \$' et \$&amp; \$1<\/span>/);
+    // `$'` recopiait la suite du document après le titre.
+    assert.equal(sortie.split('Texte a.').length - 1, 1);
+  });
+
+  it('pose un titre dont le bloc contient un intertitre d’habillage', () => {
+    const html = ['Un', 'Deux', 'Trois'].map((titre, i) => `<div>${i + 1}. <h2>${titre}</h2></div><p>Texte ${i + 1}.</p>`).join('');
+    const { html: sortie, sections } = outline(html, 'notice');
+    assert.equal(sections.length, 3);
+    assert.equal(poses(sortie), 3, 'chaque rubrique a son ancre dans le HTML');
+  });
+});
