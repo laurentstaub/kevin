@@ -182,7 +182,7 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                 p.trouvaille-extrait
                   a.phrase-rubrique(href=`/product/${rub.cis}${q}#${rub.ancre}` title=long(rub))= court(rub)
                   |  
-                  //- Non échappé : ts_headline n'ajoute que <mark> au texte échappé.
+                  //- Non échappé : `marquer` a tout échappé, sauf les <mark>.
                   span!= rub.extrait
                   //- D'où vient la phrase : une molécule a plusieurs RCP.
                   if rub.denomination && trouvaille.specialites > 1

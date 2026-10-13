@@ -67,8 +67,28 @@ export function expressionExacte(requete) {
  * final). Même règle que `citations.js`.
  */
 const COUPE = String.raw`(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý«(])|\s*[•▪]\s*`;
-const MARQUES = 'StartSel=<mark>, StopSel=</mark>';
+/**
+ * Marqueurs neutres plutôt que <mark> : `texte` est du texte décodé (« ALAT <LSN »),
+ * que ts_headline n'échappe pas. `marquer` échappe, puis pose les <mark>.
+ */
+const OUVRE = '\u27e6';
+const FERME = '\u27e7';
+const MARQUES = `StartSel=${OUVRE}, StopSel=${FERME}`;
 const FENETRE = `MaxWords=44, MinWords=22, MaxFragments=1, ${MARQUES}`;
+/**
+ * Extrait de ts_headline → HTML sûr : tout est échappé, seuls les marqueurs
+ * deviennent des <mark>.
+ *
+ * @returns {string|null}
+ */
+export function marquer(extrait) {
+  if (extrait === null || extrait === undefined) return null;
+  return String(extrait)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+    .replaceAll(OUVRE, '<mark>').replaceAll(FERME, '</mark>');
+}
+
 /** Au-delà, la « phrase » est une énumération mal ponctuée : on la fenêtre. */
 const PHRASE_MAX = 600;
 
@@ -189,7 +209,7 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
      WHERE s.code_cis = $1 AND s.document_type = $2 AND s.position = $3`,
     [String(cis), String(type), rang, expressionExacte(saisie), ...tq.params],
   );
-  return rows[0] ?? null;
+  return rows[0] ? { ...rows[0], extrait: marquer(rows[0].extrait) } : null;
 }
 
 /**
@@ -200,8 +220,6 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
  *
  * @returns {Promise<string[]>} mots en minuscules, sans doublon, 80 au plus
  */
-const OUVRE = '\u27e6';
-const FERME = '\u27e7';
 export async function motsTrouves(pool, cis, requete) {
   const saisie = String(requete ?? '').trim();
   if (!saisie || !/^\d{6,10}$/.test(String(cis ?? ''))) return [];
@@ -522,8 +540,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     elargissements,
     resultats: page.map(({ occurrences: _, molecule, denomination, liste, detaillees, ...reste }) => ({
       ...reste,
+      extrait: marquer(reste.extrait),
       // Ciblée : les rubriques portent leur phrase.
-      rubriques: detaillees ?? reste.rubriques,
+      rubriques: detaillees?.map((rub) => ({ ...rub, extrait: marquer(rub.extrait) })) ?? reste.rubriques,
       formes: formesDuProduit(liste),
       denomination,
       // Sans composition enregistrée : la dénomination sert de titre.

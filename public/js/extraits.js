@@ -54,7 +54,7 @@
     tete.textContent = (donnee.type === 'notice' ? 'Notice · ' : '') + donnee.numero + ' ' + donnee.libelle;
     const corps = document.createElement('p');
     corps.className = 'apercu-texte';
-    // HTML de ts_headline : seulement <mark> et du texte échappé par Postgres.
+    // Échappé côté serveur (`marquer`) : seuls les <mark> sont du HTML.
     corps.innerHTML = donnee.extrait;
     const source = document.createElement('p');
     source.className = 'apercu-source';

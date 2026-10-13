@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
-  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU, motsTrouves, composerProximite,
+  normaliserRubrique, marquer, PLAFOND, PAR_PAGE, APERCU, motsTrouves, composerProximite,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -226,5 +226,25 @@ describe('proximité des concepts', () => {
 
   it('ne contraint rien pour un seul concept', () => {
     assert.equal(composerProximite(['A']), null);
+  });
+});
+
+describe('marquer', () => {
+  // `texte` est décodé : « <LSN » s'ouvrirait en balise si l'extrait partait tel quel.
+  it('échappe le texte et ne garde que les <mark>', () => {
+    assert.equal(marquer('ALAT <LSN \u27e6foie\u27e7'), 'ALAT &lt;LSN <mark>foie</mark>');
+    assert.equal(marquer('<img src=x onerror="a()">'), '&lt;img src=x onerror=&quot;a()&quot;&gt;');
+    assert.equal(marquer('a & b'), 'a &amp; b');
+  });
+
+  it('laisse l’absence d’extrait telle quelle', () => {
+    assert.equal(marquer(null), null);
+    assert.equal(marquer(undefined), null);
+  });
+
+  it('échappe aussi l’extrait servi au survol', async () => {
+    const pool = { query: async () => ({ rows: [{ numero: '4.4', extrait: 'x <b> \u27e6QT\u27e7' }] }) };
+    const extrait = await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '1', requete: 'QT' });
+    assert.equal(extrait.extrait, 'x &lt;b&gt; <mark>QT</mark>');
   });
 });

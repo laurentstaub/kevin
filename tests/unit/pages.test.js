@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
+import { config } from '../../src/config.js';
 
 /**
  * Rendu par l'application entière : détecte une locale qu'une route oublie de passer.
@@ -48,5 +49,22 @@ describe('rendu des pages, de bout en bout', () => {
   it('renvoie à l’accueil sans requête', async () => {
     await request(app).get('/search').expect(302);
     await request(app).get('/documents').expect(302);
+  });
+});
+
+describe('question que l’IA ne sait pas interpréter', () => {
+  // Sans `question` dans l'URL de repli, /documents se réorientait vers lui-même.
+  it('mène aux documents en une redirection, sans boucle', async (contexte) => {
+    const ia = { ...config.ia };
+    Object.assign(config.ia, { fournisseur: 'mistral', cleMistral: 'test', modele: 'test' });
+    contexte.mock.method(globalThis, 'fetch', async () => { throw new Error('IA injoignable'); });
+    contexte.after(() => Object.assign(config.ia, ia));
+
+    const app = createApp(poolVide);
+    const premiere = await request(app).get('/documents?q=comment+ça+marche+avec+ça').expect(302);
+    assert.match(premiere.headers.location, /question=/);
+
+    const seconde = await request(app).get(premiere.headers.location);
+    assert.equal(seconde.status, 200, `la redirection a mené à ${seconde.headers.location}`);
   });
 });

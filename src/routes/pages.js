@@ -164,7 +164,8 @@ export function pageRoutes(pool) {
       return documents({ requete: criteres.mots, rubrique: criteres.rubrique, molecule: criteres.molecule, ia: '1' });
     }
     // Question sans réponse de l'IA : les documents tout de même, texte tel quel.
-    return iaActive() && estQuestion(saisie) ? { url: lien({ ...etat, mode: 'documents' }) } : null;
+    // `question` posé : sans lui, /documents réorienterait vers lui-même, sans fin.
+    return iaActive() && estQuestion(saisie) ? documents({}) : null;
   };
 
   router.get(
