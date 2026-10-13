@@ -211,6 +211,7 @@ export function regrouperAlternatives(ref, candidats) {
         .sort((a, b) => a.tri - b.tri || princepsDabord(a) - princepsDabord(b)
           || memeForme(a) - memeForme(b) || parNom(a, b));
       if (lignes.length === 0) return null;
+      if (cle === 'SUBSTITUABLE') return { cle, action, detail, ...factoriser(lignes) };
       if (cle !== 'ALTERNATIVE_CLASSE') return { cle, action, detail, lignes };
 
       // Une molécule par ligne, ses spécialités à la suite.
@@ -233,4 +234,43 @@ export function compterOptions(categories) {
   return (categories ?? [])
     .filter((categorie) => categorie.cle !== 'BLOQUE')
     .reduce((total, categorie) => total + (categorie.total ?? categorie.lignes?.length ?? 0), 0);
+}
+
+/** Dosage dans un nom de spécialité : « 3 g », « 500 mg/5 ml », « 2,4 pour cent ». */
+const DOSAGE_NOM = /\d+(?:[.,]\d+)?\s?(?:mg|g|µg|mcg|ml|ui|%|pour cent|microgrammes?|milligrammes?)(?:\s?\/\s?\d*(?:[.,]\d+)?\s?(?:mg|g|ml|dose|h))?/i;
+
+/**
+ * Ce que toutes les lignes partagent (dosage, forme) dit une fois : un groupe
+ * générique a, par définition, même dosage et même forme. « FOSFOMYCINE ARROW
+ * 3 g, granulés pour solution buvable en sachet » devient « FOSFOMYCINE ARROW »
+ * sous « 3 g, granulés pour solution buvable en sachet ». Nom complet gardé.
+ *
+ * @returns {{ commun: string|null, lignes: object[] }} lignes avec `court`
+ */
+export function factoriser(lignes) {
+  if (lignes.length < 2) return { commun: null, lignes };
+  const parts = lignes.map((ligne) => {
+    const denomination = String(ligne.denomination ?? '');
+    const virgule = denomination.indexOf(', ');
+    const nom = virgule === -1 ? denomination : denomination.slice(0, virgule);
+    return {
+      nom,
+      forme: virgule === -1 ? '' : denomination.slice(virgule + 2).trim(),
+      dose: nom.match(DOSAGE_NOM)?.[0] ?? '',
+    };
+  });
+  const partage = (cle) => parts[0][cle] !== ''
+    && parts.every((part) => part[cle].toLowerCase() === parts[0][cle].toLowerCase());
+  const forme = partage('forme') ? parts[0].forme : null;
+  const dose = partage('dose') ? parts[0].dose : null;
+  if (!forme && !dose) return { commun: null, lignes };
+
+  return {
+    commun: [dose, forme].filter(Boolean).join(', '),
+    lignes: lignes.map((ligne, i) => {
+      let court = forme ? parts[i].nom : String(ligne.denomination);
+      if (dose) court = court.replace(parts[i].dose, '').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').trim();
+      return { ...ligne, court };
+    }),
+  };
 }

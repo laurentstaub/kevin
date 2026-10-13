@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classer, estLP, voie, dosage, estSecable, MARGE_ETROITE, regrouperAlternatives } from '../../src/substitution.js';
+import { classer, estLP, voie, dosage, estSecable, MARGE_ETROITE, regrouperAlternatives,
+  factoriser } from '../../src/substitution.js';
 
 const ref = {
   atc5: 'C08CA01', substances: ['Amlodipine (bésilate d\')'],
@@ -165,5 +166,36 @@ describe('regroupement pour la fiche', () => {
     // Hydrocortisone (D07AB, activité modérée) hors sous-classe : rien.
     assert.equal(classe.molecules[0].nom, 'DIFLUCORTOLONE (VALÉRATE DE)');
     assert.deepEqual(classe.molecules[0].specialites.map((sp) => sp.id), ['4', '3']);
+  });
+});
+
+describe('dosage et forme communs du groupe', () => {
+  const ligne = (denomination) => ({ denomination });
+
+  it('dit une fois le dosage et la forme partagés', () => {
+    const { commun, lignes } = factoriser([
+      ligne('MONURIL 3 g, granulés pour solution buvable en sachet'),
+      ligne('FOSFOMYCINE CRISTERS 3 g ADULTES, granulés pour solution buvable en sachet'),
+      ligne('FOSFOMYCINE EG ADULTES 3 g, granulés pour solution buvable en sachet'),
+    ]);
+    assert.equal(commun, '3 g, granulés pour solution buvable en sachet');
+    assert.deepEqual(lignes.map((item) => item.court), ['MONURIL', 'FOSFOMYCINE CRISTERS ADULTES', 'FOSFOMYCINE EG ADULTES']);
+    assert.equal(lignes[0].denomination, 'MONURIL 3 g, granulés pour solution buvable en sachet');
+  });
+
+  it('ne factorise que ce qui est partagé', () => {
+    const { commun, lignes } = factoriser([
+      ligne('DOLIPRANE 500 mg, comprimé'),
+      ligne('PARACETAMOL ARROW 500 mg, gélule'),
+    ]);
+    assert.equal(commun, '500 mg');
+    assert.deepEqual(lignes.map((item) => item.court), ['DOLIPRANE, comprimé', 'PARACETAMOL ARROW, gélule']);
+  });
+
+  it('laisse une ligne seule ou sans rien de commun intacte', () => {
+    assert.equal(factoriser([ligne('MONURIL 3 g, granulés')]).commun, null);
+    const rien = factoriser([ligne('A 1 g, crème'), ligne('B 2 g, pommade')]);
+    assert.equal(rien.commun, null);
+    assert.equal(rien.lignes[0].court, undefined);
   });
 });

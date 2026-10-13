@@ -287,6 +287,14 @@ a.signal-valeur {
   margin: 0;
 }
 
+/* Dosage et forme communs au groupe : en tête de liste, une fois. */
+.subst-commun {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  margin: 0 0 var(--sp-1);
+  max-width: none;
+}
+
 .subst-detail {
   font-size: var(--fs-xs);
   color: var(--muted);
@@ -343,7 +351,8 @@ td.forme {
 .t-substitution thead th:nth-child(2) { width: 11rem; }
 .t-substitution thead th:nth-child(3) { width: 8rem; }
 
-/* Rôle codé par l'encre, pas par rouge/vert ; seul le princeps ressort. */
+/* Rôle codé par l'encre, pas par rouge/vert ; seul le princeps ressort, en
+   gras et non en vert : le vert est réservé aux liens. */
 .role {
   font-size: var(--fs-xs);
   text-transform: uppercase;
@@ -353,7 +362,8 @@ td.forme {
 }
 
 .role-princeps {
-  color: var(--accent);
+  color: var(--gras, var(--ink));
+  font-weight: 600;
 }
 
 /* ---------- Documents ---------- */

@@ -249,6 +249,9 @@ block content
               section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
                 h3.subst-action= cat.action
                 p.subst-detail= cat.detail
+                if cat.commun
+                  //- Dosage et forme du groupe, dits une fois ; nom complet au survol.
+                  p.subst-commun= cat.commun
                 if cat.molecules
                   //- Une molécule par ligne : on cherche une alternative disponible.
                   ul.subst-molecules
@@ -269,7 +272,7 @@ block content
                       each item in cat.lignes
                         tr
                           td
-                            a(href=`/product/${item.id}`)= specialite(item.denomination)
+                            a(href=`/product/${item.id}` title=(item.court ? specialite(item.denomination) : null))= specialite(item.court || item.denomination)
                           if cat.cle === 'SUBSTITUABLE'
                             td
                               span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
