@@ -17,7 +17,7 @@
 export const CATEGORIES = {
   SUBSTITUABLE: {
     rang: 1,
-    action: 'Délivrer un générique du groupe',
+    action: 'Génériques du groupe',
     detail: 'Substitution de droit, sauf mention « non substituable »',
   },
   AUTRE_PRESENTATION: {
@@ -27,12 +27,12 @@ export const CATEGORIES = {
   },
   ALTERNATIVE_CLASSE: {
     rang: 3,
-    action: 'À proposer au prescripteur',
-    detail: 'Autre molécule de la même sous-classe ATC : alternative si disponible',
+    action: 'Même sous-classe ATC',
+    detail: 'Autre molécule, avec l’accord du prescripteur : alternative si disponible',
   },
   BLOQUE: {
     rang: 4,
-    action: 'Ne pas substituer',
+    action: 'Non substituables',
     detail: 'Raison indiquée pour chaque ligne',
   },
 };

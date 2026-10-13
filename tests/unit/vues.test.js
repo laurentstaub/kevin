@@ -569,21 +569,21 @@ describe('rendu des gabarits', () => {
     const html = rendre('product', produit({
       genericGroup: 'CICLOPIROX 1 % - MYCOSTER 1 %, crème',
       alternatives: { groupe: 'CICLOPIROX', categories: [
-        { cle: 'SUBSTITUABLE', action: 'Délivrer un générique du groupe', detail: 'De droit', lignes: [
+        { cle: 'SUBSTITUABLE', action: 'Génériques du groupe', detail: 'De droit', lignes: [
           { id: '1', denomination: 'MYCOSTER 1 %, crème', role: 'Princeps' },
           { id: '2', denomination: 'CICLOPIROX TEVA 1 %, crème', role: 'Générique' },
         ] },
-        { cle: 'ALTERNATIVE_CLASSE', action: 'À proposer au prescripteur', detail: 'Même sous-classe', total: 2, molecules: [
+        { cle: 'ALTERNATIVE_CLASSE', action: 'Même sous-classe ATC', detail: 'Même sous-classe', total: 2, molecules: [
           { nom: 'ÉCONAZOLE', atc5: 'D01AC03', specialites: [
             { id: '3', denomination: 'PEVARYL 1 %, crème' }, { id: '4', denomination: 'ECONAZOLE BIOGARAN 1 %, crème' }] },
         ] },
-        { cle: 'BLOQUE', action: 'Ne pas substituer', detail: '', lignes: [
+        { cle: 'BLOQUE', action: 'Non substituables', detail: '', lignes: [
           { id: '5', denomination: 'MYCOSTER 8 %, vernis', motif: 'Voie différente (cutanee contre autre)' }] },
       ] },
     }));
     assert.match(html, /<span class="bloc-compte">4 options<\/span>/);
-    assert.match(html, /<h3 class="subst-action">Délivrer un générique du groupe<\/h3>/);
-    assert.match(html, /<h3 class="subst-action">À proposer au prescripteur<\/h3>/);
+    assert.match(html, /<h3 class="subst-action">Génériques du groupe<\/h3>/);
+    assert.match(html, /<h3 class="subst-action">Même sous-classe ATC<\/h3>/);
     assert.match(html, /<span class="subst-molecule">éconazole<\/span><span class="subst-atc">D01AC03<\/span>/);
     assert.match(html, /<details class="subst-ecartes"><summary class="formes-plus">1 écarté, avec la raison<\/summary>/);
     assert.match(html, /Voie différente/);

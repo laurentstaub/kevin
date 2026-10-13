@@ -4,8 +4,7 @@
 
 //- Plan de la fiche, sous-rubriques comprises (4.3, 4.5, 4.8 sont celles qu'on cherche).
 mixin railPlan(sections, documents)
-  p.rail-titre Cette fiche
-  nav.rail-groupe.rail-plan
+  nav.rail-groupe.rail-plan(aria-label="Plan de la fiche")
     each section in sections
       a.rail-lien.rail-seul(href=`#${section.id}`)= section.label
 

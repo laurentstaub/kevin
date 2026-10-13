@@ -38,7 +38,7 @@ describe('classification', () => {
   it('le groupe générique prime sur toute règle calculée', () => {
     const res = classer(ref, cand({ meme_groupe_generique: true, forme: 'solution injectable' }));
     assert.equal(res.categorie, 'SUBSTITUABLE');
-    assert.equal(res.action, 'Délivrer un générique du groupe');
+    assert.equal(res.action, 'Génériques du groupe');
   });
 
   it('autre dosage : aucune équivalence calculée, le pharmacien décide', () => {
@@ -98,7 +98,7 @@ describe('classification', () => {
     const res = classer(diprosone, cand({ atc5: 'D07AC06', substances: ['Diflucortolone valérate'],
       forme: 'crème', voies: 'cutanée', dosage: '0,1 %', denomination: 'NERISONE 0,1 %, crème' }));
     assert.equal(res.categorie, 'ALTERNATIVE_CLASSE');
-    assert.equal(res.action, 'À proposer au prescripteur');
+    assert.equal(res.action, 'Même sous-classe ATC');
   });
 
   it('tous les antiépileptiques sont couverts par la marge étroite, pas seulement les historiques', () => {
@@ -112,7 +112,7 @@ describe('classification', () => {
   it('autre molécule de la même sous-classe : renvoi au prescripteur', () => {
     const res = classer(ref, cand({ atc5: 'C08CA02', substances: ['Félodipine'], dosage: '10 mg' }));
     assert.equal(res.categorie, 'ALTERNATIVE_CLASSE');
-    assert.equal(res.action, 'À proposer au prescripteur');
+    assert.equal(res.action, 'Même sous-classe ATC');
   });
 
   it('classe ATC sans rapport : aucune proposition', () => {
