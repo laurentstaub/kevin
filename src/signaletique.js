@@ -94,10 +94,12 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     });
   } else if (classement.length > 0) {
     const stup = classement.some((mention) => /stup/i.test(mention.court));
+    // Complément relu, pas la BDPM : l'infobulle le dit.
+    const origine = delivrance?.complement ? ` — complété, absent de la BDPM : ${delivrance.complement.motif}` : '';
     cases.push({
       cle: 'ordonnance', picto: stup ? 'cadenas' : 'ordonnance', libelle: 'Ordonnance',
       valeur: classement.map((mention) => mention.court).join(' · '),
-      detail: classement.map((mention) => mention.long).join(' ; '),
+      detail: classement.map((mention) => mention.long).join(' ; ') + origine,
       portee: stup ? 'bloque' : null,
     });
   } else if (mentions.length === 0 && conditions.length === 0) {

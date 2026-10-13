@@ -110,3 +110,20 @@ describe('fiche produit, base en panne sur la HAS et le remboursement', () => {
     assert.match(res.text, /Prise en charge à vérifier/);
   });
 });
+
+describe('fiche produit, lacune de la BDPM complétée', () => {
+  // GABAPENTINE TEVA SANTE : aucune condition dans cis_cpd_bdpm.
+  const pool = {
+    ...poolVide,
+    query: async (sql) => (sql.includes('cip_products')
+      ? { rows: [{ id: '64446079', denomination_medicament: 'GABAPENTINE TEVA SANTE 400 mg, gélule', commercialise: true, cip_products: [] }] }
+      : { rows: [] }),
+  };
+
+  it('la gabapentine n’est jamais « Sans ordonnance »', async () => {
+    const res = await request(createApp(pool)).get('/product/64446079').expect(200);
+    assert.doesNotMatch(res.text, /Sans ordonnance/);
+    assert.match(res.text, /<span class="signal-valeur">Liste I<\/span>/);
+    assert.match(res.text, /Condition absente de la BDPM, complétée/);
+  });
+});

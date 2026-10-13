@@ -210,3 +210,12 @@ describe('bande signalétique — évaluation HAS illisible', () => {
     assert.equal(valeur(cases, 'has'), 'Évaluation indisponible');
   });
 });
+
+describe('bande signalétique — condition complétée', () => {
+  it('affiche la liste, et dit en infobulle qu’elle ne vient pas de la BDPM', () => {
+    const delivrance = { ...classer(['liste I']), complement: { motif: 'Ses équivalentes sont en liste I.', confirme_le: '2026-10-13' } };
+    const cas = signaletique(produit(), delivrance, null, null, false).find((entree) => entree.cle === 'ordonnance');
+    assert.equal(cas.valeur, 'Liste I');
+    assert.match(cas.detail, /complété, absent de la BDPM : Ses équivalentes sont en liste I\./);
+  });
+});

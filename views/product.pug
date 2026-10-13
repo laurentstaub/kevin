@@ -136,7 +136,8 @@ block content
                 span.mention(
                   class=(mention.portee === 'bloque' ? 'mention-bloque'
                     : mention.cle === 'classement' ? 'mention-classement' : null)
-                  title=(mention.long !== mention.court ? mention.long : null)
+                  title=([mention.long !== mention.court ? mention.long : null,
+                    delivrance.complement ? 'Complété : absent de la BDPM' : null].filter(Boolean).join(' — ') || null)
                 )= mention.court
           else if nbConditions > 0
             span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
@@ -193,6 +194,11 @@ block content
               p.section-meta
                 a(href="https://www.meddispar.fr/Medicaments-d-exception/Criteres"
                   target="_blank" rel="noopener noreferrer") Médicaments d'exception — critères, sur Meddispar
+
+          //- Complément relu (data/conditions-complementaires.json) : la source le dit.
+          if delivrance.complement
+            p.section-meta
+              | Condition absente de la BDPM, complétée le #{delivrance.complement.confirme_le.split('-').reverse().join('/')} : #{delivrance.complement.motif}
 
           if delivrance.liens.length > 0
             p.section-meta Conduite à tenir détaillée sur Meddispar, édité par l'Ordre national des pharmaciens :

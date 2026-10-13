@@ -764,3 +764,18 @@ describe('fiche produit — pannes visibles bloc fermé', () => {
     assert.doesNotMatch(html, /class="remboursement-texte"/);
   });
 });
+
+describe('fiche produit — condition complétée', () => {
+  it('dit dans le bloc que la condition ne vient pas de la BDPM', () => {
+    const delivrance = {
+      resume: [{ cle: 'classement', portee: 'info', ordre: 0, court: 'Liste I', long: 'Liste I' }],
+      bloque: false,
+      groupes: [{ cle: 'classement', titre: 'Classement', conditions: [{ population: null, segments: [{ texte: 'Liste I', fort: false }], brut: 'liste I' }] }],
+      liens: [],
+      complement: { motif: 'Ses équivalentes sont en liste I.', confirme_le: '2026-10-13' },
+    };
+    const html = rendre('product', produit({ delivrance }));
+    assert.match(html, /Condition absente de la BDPM, complétée le 13\/10\/2026 : Ses équivalentes sont en liste I\./);
+    assert.match(html, /title="Complété : absent de la BDPM"/);
+  });
+});

@@ -1,7 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { ROOT } from '../../src/config.js';
 import {
-  classer, presenter, pourcentage, getRemboursement, delivranceIndisponible, remboursementIndisponible,
+  classer, presenter, pourcentage, getRemboursement, getDelivrance, chargerComplements,
+  delivranceIndisponible, remboursementIndisponible,
 } from '../../src/delivrance.js';
 
 /** Les libellés sont ceux de dbpm.cis_cpd_bdpm, recopiés tels quels. */
@@ -293,5 +298,55 @@ describe('pannes', () => {
     const panne = remboursementIndisponible();
     assert.equal(panne.indisponible, true);
     assert.ok(panne, 'jamais null : null veut dire « sans restriction »');
+  });
+});
+
+describe('compléments aux lacunes de la BDPM', () => {
+  const GABAPENTINE = '64446079';
+  const pool = (conditions) => ({ query: async () => ({ rows: conditions.map((condition) => ({ condition })) }) });
+
+  // GABAPENTINE TEVA SANTE : aucune condition en base, « Sans ordonnance » à l'écran.
+  it('complète une spécialité que la BDPM laisse sans condition', async () => {
+    const delivrance = await getDelivrance(pool([]), GABAPENTINE);
+    assert.deepEqual(delivrance.resume.map((mention) => mention.court), ['Liste I']);
+    assert.match(delivrance.complement.motif, /gabapentine/i);
+  });
+
+  it('la BDPM l’emporte dès qu’elle enregistre une condition', async () => {
+    const delivrance = await getDelivrance(pool(['liste II']), GABAPENTINE);
+    assert.deepEqual(delivrance.resume.map((mention) => mention.court), ['Liste II']);
+    assert.equal(delivrance.complement, undefined);
+  });
+
+  it('ne touche pas une spécialité sans complément', async () => {
+    const delivrance = await getDelivrance(pool([]), '60234100');
+    assert.deepEqual(delivrance.resume, []);
+    assert.equal(delivrance.complement, undefined);
+  });
+
+  it('ignore une entrée non confirmée', () => {
+    const dossier = mkdtempSync(path.join(tmpdir(), 'complements-'));
+    const fichier = path.join(dossier, 'complements.json');
+    writeFileSync(fichier, JSON.stringify({ specialites: [
+      { cis: '11111111', conditions: ['liste I'], motif: 'brouillon' },
+      { cis: '22222222', conditions: ['liste I'], motif: 'relu', confirme_le: '2026-10-13' },
+    ] }));
+    try {
+      const charges = chargerComplements(fichier);
+      assert.deepEqual([...charges.keys()], ['22222222']);
+    } finally {
+      chargerComplements();
+      rmSync(dossier, { recursive: true, force: true });
+    }
+  });
+
+  it('chaque entrée du fichier versionné est confirmée, motivée et classable', () => {
+    const { specialites } = JSON.parse(readFileSync(path.join(ROOT, 'data', 'conditions-complementaires.json'), 'utf8'));
+    for (const entree of specialites) {
+      assert.match(entree.cis, /^\d{8}$/, entree.denomination);
+      assert.ok(entree.motif && entree.confirme_le, entree.cis);
+      // Une condition que `classer` ne reconnaîtrait pas ne changerait rien à l'écran.
+      assert.ok(classer(entree.conditions).resume.length > 0, entree.cis);
+    }
   });
 });

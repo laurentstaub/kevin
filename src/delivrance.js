@@ -4,6 +4,9 @@
  * pas de copie. Un libellé qu'aucune règle ne reconnaît sort tel quel.
  */
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { ROOT } from './config.js';
 import { sanitizeDocument } from './sanitize.js';
 
 const MEDDISPAR = 'https://www.meddispar.fr';
@@ -346,7 +349,30 @@ export function remboursementIndisponible() {
   return { texte: null, taux: null, indisponible: true };
 }
 
-/** Conditions d'une spécialité, classées. */
+/**
+ * Compléments confirmés (data/conditions-complementaires.json) : conditions
+ * qu'une lacune de la BDPM laisse absentes (GABAPENTINE TEVA SANTE, sans
+ * condition, se lisait « Sans ordonnance »). Une entrée sans `confirme_le`
+ * est ignorée.
+ *
+ * @returns {Map<string, object>} CIS -> entrée
+ */
+let complements = null;
+export function chargerComplements(chemin = path.join(ROOT, 'data', 'conditions-complementaires.json')) {
+  const { specialites = [] } = JSON.parse(readFileSync(chemin, 'utf8'));
+  complements = new Map(specialites
+    .filter((entree) => entree.confirme_le && Array.isArray(entree.conditions) && entree.conditions.length > 0)
+    .map((entree) => [String(entree.cis), entree]));
+  return complements;
+}
+
+export const complementDe = (cis) => (complements ?? chargerComplements()).get(String(cis)) ?? null;
+
+/**
+ * Conditions d'une spécialité, classées. La BDPM d'abord : un complément ne
+ * s'applique que si elle n'enregistre aucune condition, et il se signale
+ * (`complement`) pour que l'affichage ne l'attribue pas à la base.
+ */
 export async function getDelivrance(pool, cis) {
   const { rows } = await pool.query(
     `SELECT condition_prescription_delivrance AS condition
@@ -356,5 +382,12 @@ export async function getDelivrance(pool, cis) {
     [cis],
   );
 
-  return classer(rows.map((row) => row.condition));
+  const libelles = rows.map((row) => row.condition);
+  const complement = libelles.length === 0 ? complementDe(cis) : null;
+  if (!complement) return classer(libelles);
+
+  return {
+    ...classer(complement.conditions),
+    complement: { motif: complement.motif, confirme_le: complement.confirme_le },
+  };
 }

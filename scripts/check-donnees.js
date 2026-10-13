@@ -133,6 +133,30 @@ try {
     }
   }
 
+  // Compléments aux lacunes de la BDPM (data/conditions-complementaires.json) :
+  // sans effet dès qu'elle enregistre une condition pour le CIS — l'entrée est alors à retirer.
+  {
+    const { specialites = [] } = JSON.parse(
+      readFileSync(path.join(ROOT, 'data', 'conditions-complementaires.json'), 'utf8'),
+    );
+    const confirmes = specialites.filter((entree) => entree.confirme_le).map((entree) => String(entree.cis));
+    const { rows } = await pool.query(
+      `SELECT cis,
+              EXISTS (SELECT 1 FROM dbpm.cis_bdpm m WHERE m.code_cis = cis) AS existe,
+              (SELECT count(*)::int FROM dbpm.cis_cpd_bdpm p WHERE p.code_cis = cis) AS conditions
+       FROM unnest($1::text[]) AS cis`,
+      [confirmes],
+    );
+    const couverts = rows.filter((ligne) => ligne.existe && ligne.conditions > 0).map((ligne) => ligne.cis);
+    const disparus = rows.filter((ligne) => !ligne.existe).map((ligne) => ligne.cis);
+    dire(couverts.length + disparus.length > 0 ? 'alerte' : 'ok',
+      `Compléments aux conditions de la BDPM — ${confirmes.length} confirmé${confirmes.length > 1 ? 's' : ''}`,
+      [
+        couverts.length > 0 ? `la BDPM enregistre désormais des conditions pour ${couverts.join(', ')} : retirer l'entrée` : null,
+        disparus.length > 0 ? `CIS absents de la BDPM : ${disparus.join(', ')}` : null,
+      ].filter(Boolean).join(' ; ') || null);
+  }
+
   // Indicatif, sans verdict : mesure le rythme des octrois, pas la chaîne.
   console.log(`         AMM la plus récente octroyée — ${
     dates.amm ? `${age(dates.amm, MAINTENANT)} jours` : 'date absente'
