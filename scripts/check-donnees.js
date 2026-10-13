@@ -10,6 +10,7 @@ import path from 'node:path';
 import { ROOT } from '../src/config.js';
 import { createPool } from '../src/db.js';
 import { falaise, plancher, age } from '../src/controles.js';
+import { compterOrphelins } from '../src/orphelins.js';
 
 const TOLERANT = process.argv.includes('--tolerant');
 const MAINTENANT = new Date();
@@ -90,11 +91,21 @@ try {
             count(*) FILTER (WHERE EXISTS (SELECT 1 FROM docs.rcp_sections r
                                            WHERE r.code_cis = d.code_cis))::int AS ok
      FROM (SELECT DISTINCT code_cis FROM dbpm.cis_documents
-           WHERE coalesce(html_content, '') <> '' OR coalesce(file_path, '') <> '') d`,
+           WHERE (coalesce(html_content, '') <> '' OR coalesce(file_path, '') <> '')
+             -- Spécialité retirée de la BDPM : document gardé, plus découpé (build-sections).
+             AND EXISTS (SELECT 1 FROM dbpm.cis_bdpm m WHERE m.code_cis = cis_documents.code_cis)) d`,
   );
   const verdictDecoupe = plancher(decoupe, { minimum: 0.95, libelle: 'Découpage des documents collectés' });
   dire(verdictDecoupe.etat, `${verdictDecoupe.libelle} — ${pct(verdictDecoupe.part)}`,
     verdictDecoupe.etat === 'rupture' ? `attendu au moins ${pct(verdictDecoupe.minimum)} — relancer build-sections` : null);
+
+  // Rubriques de spécialités retirées de la BDPM : build-sections les purge.
+  {
+    const { orphelins, rubriques } = await compterOrphelins(pool);
+    dire(orphelins === 0 ? 'ok' : 'alerte',
+      `Rubriques orphelines — ${orphelins.toLocaleString('fr-FR')} spécialité${orphelins > 1 ? 's' : ''} retirée${orphelins > 1 ? 's' : ''} de la BDPM`,
+      orphelins > 0 ? `${rubriques.toLocaleString('fr-FR')} rubriques encore cherchables : relancer build-sections` : null);
+  }
 
   // ---- 4. Depuis quand rien n'a été écrit ? ------------------------------
   // Seule la date de dernière écriture n'est pas masquée par une moyenne.

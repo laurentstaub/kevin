@@ -5,6 +5,7 @@ import { ROOT } from '../src/config.js';
 import { createPool } from '../src/db.js';
 import { sanitizeDocument } from '../src/sanitize.js';
 import { splitDocument, PARSER_VERSION } from '../src/split.js';
+import { purgerOrphelins } from '../src/orphelins.js';
 
 /**
  * Découpe dbpm.cis_documents (lu seulement) en rubriques dans docs.rcp_sections.
@@ -16,6 +17,9 @@ import { splitDocument, PARSER_VERSION } from '../src/split.js';
  *   npm run build-sections -- --type rcp   # un seul type
  *   npm run build-sections -- --limit 200  # échantillon
  *   npm run build-sections -- --dry-run    # mesurer sans écrire
+ *
+ * Les spécialités retirées de la BDPM ne sont plus découpées (cis_documents
+ * garde leurs documents) et leurs rubriques sont purgées en fin de passage.
  */
 
 const args = process.argv.slice(2);
@@ -53,6 +57,8 @@ const TYPES_DECOUPABLES = ['rcp', 'rcp_notice', 'notice'];
 const conditions = ["coalesce(html_content, '') <> ''"];
 const params = [TYPE ? [TYPE] : TYPES_DECOUPABLES];
 conditions.push('document_type = ANY($1)');
+// Spécialité retirée de la BDPM : son document reste collecté, il n'est plus découpé.
+conditions.push('EXISTS (SELECT 1 FROM dbpm.cis_bdpm m WHERE m.code_cis = cis_documents.code_cis)');
 
 const { rows: total } = await pool.query(
   `SELECT count(*)::int AS n FROM dbpm.cis_documents WHERE ${conditions.join(' AND ')}`,
@@ -152,6 +158,12 @@ while (restant > 0) {
   process.stdout.write(`\r  ${offset.toLocaleString('fr-FR')} parcourus…`);
 }
 
+// ------------------------------------------------------------- orphelins
+
+// Rubriques des spécialités retirées : purgées, sauf si la BDPM paraît vide
+// ou en cours de chargement (garde-fou de purgerOrphelins).
+const orphelins = await purgerOrphelins(pool, { aBlanc: SEC });
+
 // ------------------------------------------------------------------ bilan
 
 const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
@@ -165,6 +177,14 @@ console.log(`  rubriques socle en moins ${bilan.partiel.toLocaleString('fr-FR')}
 console.log(`  aucun découpage         ${bilan.echec.toLocaleString('fr-FR')}  (${pct(bilan.echec)})`);
 console.log('');
 console.log(`  rubriques écrites       ${bilan.rubriques.toLocaleString('fr-FR')}`);
+if (orphelins.purge) {
+  console.log(`  orphelines purgées      ${orphelins.purge.rubriques.toLocaleString('fr-FR')} rubriques`
+    + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées de la BDPM)`);
+} else if (orphelins.orphelins > 0) {
+  console.log(`  orphelines              ${orphelins.rubriques.toLocaleString('fr-FR')} rubriques`
+    + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées)`
+    + (orphelins.raison ? ` — ${orphelins.raison}` : SEC ? ' — à purger' : ''));
+}
 if (bilan.traites) {
   console.log(`  moyenne par document    ${(bilan.rubriques / bilan.traites).toFixed(1)}`);
 }

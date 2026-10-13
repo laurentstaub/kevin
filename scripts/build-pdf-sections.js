@@ -81,10 +81,12 @@ if (!TOUT) {
 }
 
 // La dénomination choisit la forme dans un PDF qui les décrit toutes (posologies différentes).
+// Jointure stricte : une spécialité retirée de la BDPM n'est plus ni téléchargée
+// ni découpée (cis_documents garde son document) ; build-sections purge ses rubriques.
 const { rows: cibles } = await pool.query(
   `SELECT d.code_cis, s.denomination_medicament AS denomination
    FROM dbpm.cis_documents d
-   LEFT JOIN dbpm.cis_bdpm s USING (code_cis)
+   JOIN dbpm.cis_bdpm s USING (code_cis)
    WHERE d.document_type = 'rcp_notice'
      AND coalesce(d.html_content, '') = ''
      AND ($1::text[] IS NULL OR d.code_cis = ANY($1))
