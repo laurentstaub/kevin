@@ -264,6 +264,13 @@ describe('API', { skip }, () => {
         }
       }
     });
+
+    it('réduit le rail au plan de la fiche, sans les classes thérapeutiques', async () => {
+      const res = await request(app).get('/product/61111111').expect(200);
+      assert.match(res.text, /class="rail"/);
+      assert.doesNotMatch(res.text, /Classes thérapeutiques/);
+      assert.doesNotMatch(res.text, /class="rail-lien[^"]*" href="\/classe\//);
+    });
   });
 
   describe('GET /api/suggest — ordre', () => {
