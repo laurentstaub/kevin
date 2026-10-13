@@ -373,8 +373,16 @@ const motif = (requete || motsTrouves.length > 0) && motifComplet(requete, motsT
 if (motif && documents) {
   for (const article of documents.querySelectorAll('.document')) surligner(article, motif);
   // Premier passage surligné de la rubrique visée, au centre de l'écran.
+  // Après le chargement : le navigateur saute lui-même à l'ancre une fois la
+  // page chargée, ce qui annulait un défilement fait plus tôt (on restait en
+  // tête de rubrique, loin du terme trouvé).
   const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-  cible?.querySelector('mark.surligne')?.scrollIntoView({ block: 'center' });
+  const premier = cible?.querySelector('mark.surligne');
+  if (premier) {
+    const centrer = () => requestAnimationFrame(() => premier.scrollIntoView({ block: 'center' }));
+    if (document.readyState === 'complete') centrer();
+    else addEventListener('load', centrer, { once: true });
+  }
 }
 
 // Dénomination collée : dès qu'elle touche la barre, elle prend fond et filet.
