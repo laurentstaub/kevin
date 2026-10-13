@@ -317,7 +317,7 @@ block content
                 h3.subst-action= cat.action
                 p.subst-detail= cat.detail
                 if cat.molecules
-                  //- Une molécule par ligne : on cherche ce qu'on a en rayon.
+                  //- Une molécule par ligne : on cherche une alternative disponible.
                   ul.subst-molecules
                     each mol in cat.molecules
                       li

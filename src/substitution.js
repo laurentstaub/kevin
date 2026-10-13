@@ -223,7 +223,7 @@ function memeSubstances(a = [], b = []) {
 /**
  * Candidats classés et regroupés pour la fiche, une entrée par catégorie dans
  * l'ordre du comptoir. Les alternatives de classe sont regroupées par molécule
- * (le pharmacien cherche ce qu'il a en rayon), la même forme d'abord.
+ * (le pharmacien cherche une alternative disponible), la même forme d'abord.
  *
  * @param {object} ref - le produit consulté (même forme que `classer`)
  * @param {object[]} candidats - id, denomination, forme, voies, atc5, substances,
