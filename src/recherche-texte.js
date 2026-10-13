@@ -263,6 +263,18 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
 
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq${proche ? `, ${proche} AS proche` : ''}),
+     ${molecule ? `-- Médicament : chaque mot du filtre figure dans une substance active ou
+     -- dans la dénomination (« acide folique », « paracetamol codeine »).
+     cis_molecule AS MATERIALIZED (
+       SELECT m.code_cis FROM dbpm.cis_bdpm m
+       WHERE (SELECT bool_and(
+                public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
+                OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
+                           WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
+                             AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%'))
+              FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
+              WHERE mot <> '')
+     ),` : ''}
      trouve AS (
        -- Sans le texte : jusqu'à 3 000 rubriques transitent par trois tris, et
        -- le texte intégral les faisait dépasser le délai. Il est rejoint par sa
@@ -277,17 +289,13 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
          -- Plusieurs concepts : rapprochés, pas dispersés dans la rubrique.
          ${proche ? `AND ${VECTEUR} @@ q.proche` : ''}
          AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
-         -- Médicament : chaque mot du filtre figure dans une substance active ou
-         -- dans la dénomination (« acide folique », « paracetamol codeine »).
-         AND ($5::text IS NULL OR s.code_cis IN (
-           SELECT m.code_cis FROM dbpm.cis_bdpm m
-           WHERE (SELECT bool_and(
-                    public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
-                    OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
-                               WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
-                                 AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%'))
-                  FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
-                  WHERE mot <> '')))
+         ${molecule
+    // Liste des CIS d'abord, en tableau : l'index code_cis se croise avec
+    // l'index plein texte, et seules les rubriques retenues sont lues. Filtrées
+    // après coup, les 35 000 rubriques « allaitement » étaient toutes lues
+    // sur disque pour en garder 474 (3,3 s).
+    ? 'AND s.code_cis = ANY (ARRAY(SELECT code_cis FROM cis_molecule))'
+    : 'AND $5::text IS NULL'}
        LIMIT ${PLAFOND}
      ),
      -- Les substances en jeu, pour ne nommer que celles-là.
