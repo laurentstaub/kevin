@@ -1,6 +1,6 @@
 import { config } from './config.js';
 import { formesDuProduit } from './specialites.js';
-import { deaccent } from './text.js';
+import { deaccent, echapperLike } from './text.js';
 import { canonique } from './synonymes.js';
 import {
   racineSql,
@@ -32,9 +32,9 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   // Marge : la borne porte sur des produits, la sélection interne sur des CIS.
   const innerLimit = Math.max(limit * 12, 400);
 
-  const params = terms.map((term) => `%${deaccent(term)}%`);
+  const params = terms.map((term) => `%${echapperLike(deaccent(term))}%`);
   const exact = deaccent(query.normalized);
-  const prefix = `${exact}%`;
+  const prefix = `${echapperLike(exact)}%`;
 
   const $exact = `$${params.length + 1}`;
   const $prefix = `$${params.length + 2}`;
@@ -47,7 +47,7 @@ export async function searchMedications(pool, query, filter = 'all', options = {
   const alias = canonique(query.normalized);
   const $alias = `$${params.length + 1}`;
   const $aliasExact = `$${params.length + 2}`;
-  if (alias) params.push(`%${alias}%`, alias);
+  if (alias) params.push(`%${echapperLike(alias)}%`, alias);
 
   const brandExpr = 'f_unaccent(lower(m.denomination_medicament))';
   const substExpr = 'f_unaccent(lower(c.denomination_substance))';

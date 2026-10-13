@@ -277,3 +277,19 @@ describe('marquer', () => {
     assert.equal(extrait.extrait, 'x &lt;b&gt; <mark>QT</mark>');
   });
 });
+
+describe('saisies venues de l’URL', () => {
+  it('borne la saisie de l’extrait au survol', async () => {
+    const vus = [];
+    const pool = { query: async (_sql, params) => { vus.push(params); return { rows: [] }; } };
+    await extraitDeRubrique(pool, { cis: '66297965', type: 'rcp', position: '1', requete: 'qt '.repeat(2000) });
+    assert.ok(vus[0].length < 120, `${vus[0].length} paramètres`);
+  });
+
+  it('échappe les jokers LIKE du filtre par médicament', async () => {
+    const vus = [];
+    const pool = { query: async (_sql, params) => { vus.push(params); return { rows: [] }; } };
+    await chercherDansDocuments(pool, 'allaitement', { molecule: '%' });
+    assert.equal(vus[0][4], '\\%');
+  });
+});

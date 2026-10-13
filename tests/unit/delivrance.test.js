@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classer, presenter, pourcentage } from '../../src/delivrance.js';
+import { classer, presenter, pourcentage, getRemboursement } from '../../src/delivrance.js';
 
 /** Les libellés sont ceux de dbpm.cis_cpd_bdpm, recopiés tels quels. */
 const MORPHINE = [
@@ -234,5 +234,18 @@ describe('pourcentage', () => {
   // Le schéma n'impose pas les seuls taux entiers de la BDPM.
   it('garde une décimale réelle, à la virgule', () => {
     assert.equal(pourcentage('62.50'), '62,50\u00A0%');
+  });
+});
+
+describe('getRemboursement', () => {
+  // Champ BDPM rendu en HTML : assaini comme les documents.
+  it('assainit le texte des indications', async () => {
+    const pool = { query: async () => ({ rows: [{
+      texte: 'Indication <br>remboursée<script>alert(1)</script> <a href="javascript:x()">lien</a>', taux: '65',
+    }] }) };
+    const { texte, taux } = await getRemboursement(pool, '60234100');
+    assert.match(texte, /<br \/>remboursée/);
+    assert.doesNotMatch(texte, /script|javascript/);
+    assert.equal(taux, '65\u00A0%');
   });
 });

@@ -50,19 +50,20 @@ export function createApp(pool) {
   // Casse d'affichage des noms BDPM : DCI en bas de casse, spécialité en nom propre.
   Object.assign(app.locals, { dci, specialite, phrase });
 
+  // Pas de cache en développement, sinon le navigateur ne redemande pas le fichier.
+  app.use(express.static(publics, { maxAge: production ? '1h' : 0 }));
+
   if (production) {
     app.locals.v = empreinteAssets(publics);
   } else {
     // En développement, recalcul à chaque rendu : `node --watch` ne redémarre
-    // pas sur du CSS. Le parcours est bon marché (une dizaine de fichiers).
+    // pas sur du CSS. Après les fichiers statiques : seules les pages paient le
+    // parcours, pas chaque feuille de style ou script qu'elles demandent.
     app.use((req, res, next) => {
       res.locals.v = empreinteAssets(publics);
       next();
     });
   }
-
-  // Pas de cache en développement, sinon le navigateur ne redemande pas le fichier.
-  app.use(express.static(publics, { maxAge: production ? '1h' : 0 }));
 
   app.use('/api', apiRoutes(pool));
   app.use('/', pageRoutes(pool));

@@ -13,6 +13,14 @@ export function deaccent(value) {
     .normalize('NFC');
 }
 
+/**
+ * Échappe les jokers de LIKE (`%`, `_`, et `\` qui les échappe) : une saisie
+ * « %%% » ne doit pas valoir « tout ».
+ */
+export function echapperLike(value) {
+  return String(value ?? '').replace(/[\\%_]/g, '\\$&');
+}
+
 /** Tronque proprement sur une limite de mot. */
 export function truncate(value, max = 160) {
   const texte = String(value ?? '');

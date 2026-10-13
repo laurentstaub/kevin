@@ -30,7 +30,8 @@ export async function getVariantes(pool, cis) {
     FROM fratrie
     -- Par dose croissante : « 100 mg » avant « 1000 mg », ce que l'ordre
     -- alphabétique fait exactement à l'envers.
-    ORDER BY NULLIF(substring(variante from '[0-9]+'), '')::int NULLS FIRST,
+    -- numeric : un nombre de plus de dix chiffres dépasserait int et ferait échouer la requête.
+    ORDER BY NULLIF(substring(variante from '[0-9]+'), '')::numeric NULLS FIRST,
              forme_pharmaceutique, denomination_medicament
     `,
     [cis],
@@ -75,7 +76,8 @@ export async function getProduct(pool, cis) {
                'collectivites', agrement_collectivites
              -- Tri par quantité réelle : « Boîte de 30 » avant « Boîte de 100 »,
           -- ce que l'ordre alphabétique fait exactement à l'envers.
-          ) ORDER BY NULLIF(substring(libelle_presentation from '\\d+'), '')::int NULLS LAST,
+          -- numeric : un nombre de plus de dix chiffres dépasserait int et ferait échouer la fiche.
+          ) ORDER BY NULLIF(substring(libelle_presentation from '\\d+'), '')::numeric NULLS LAST,
                      libelle_presentation) AS cip_products
       FROM dbpm.cis_cip_bdpm
       WHERE code_cis = $1

@@ -3,6 +3,19 @@
 // l'ouvrir avant que le navigateur n'aille à l'ancre.
 // Sans JavaScript, les <details> natifs et les sections rendues suffisent.
 
+/**
+ * Identifiant visé par une ancre (« #rcp-12 »). Une ancre mal encodée (« #a% »)
+ * ferait lever decodeURIComponent et arrêterait tout le script : elle est lue telle quelle.
+ */
+function idDeAncre(hash) {
+  const brut = String(hash ?? '').replace(/^#/, '');
+  try {
+    return decodeURIComponent(brut);
+  } catch {
+    return brut;
+  }
+}
+
 const documents = document.querySelector('#documents');
 const onglets = documents ? [...documents.querySelectorAll('.onglet[role="tab"]')] : [];
 const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
@@ -77,14 +90,14 @@ function reveler(id) {
 
 document.addEventListener('click', (e) => {
   const lien = e.target.closest('a[href^="#"]');
-  if (lien) reveler(decodeURIComponent(lien.hash.slice(1)));
+  if (lien) reveler(idDeAncre(lien.hash));
 });
 
 window.addEventListener('hashchange', () => {
-  reveler(decodeURIComponent(location.hash.slice(1)));
+  reveler(idDeAncre(location.hash));
 });
 
-if (location.hash) reveler(decodeURIComponent(location.hash.slice(1)));
+if (location.hash) reveler(idDeAncre(location.hash));
 
 // « Tout déplier » / « Tout replier ».
 for (const bouton of document.querySelectorAll('.deplier')) {
@@ -190,7 +203,7 @@ if (rail && documents) {
       cibles = [];
       for (const lien of rail.querySelectorAll('.rail-plan .rail-lien[href^="#"]')) {
         if (lien.closest('[hidden]')) continue;
-        const cible = document.getElementById(decodeURIComponent(lien.hash.slice(1)));
+        const cible = document.getElementById(idDeAncre(lien.hash));
         if (cible) cibles.push({ lien, cible });
       }
       // Ordre du document, pas du balisage : les rubriques sont imbriquées
@@ -249,7 +262,7 @@ if (rail && documents) {
     const lien = e.target.closest('.rail-plan .rail-lien[href^="#"]');
     if (!lien) return;
 
-    const id = decodeURIComponent(lien.hash.slice(1));
+    const id = idDeAncre(lien.hash);
     const cible = reveler(id);
     if (!cible) return;
 
@@ -397,7 +410,7 @@ if (motif && documents) {
   // Après le chargement : le navigateur saute lui-même à l'ancre une fois la
   // page chargée, ce qui annulait un défilement fait plus tôt (on restait en
   // tête de rubrique, loin du terme trouvé).
-  const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  const cible = location.hash && document.getElementById(idDeAncre(location.hash));
   const premier = cible && meilleurPassage(cible);
   if (premier) {
     const centrer = () => requestAnimationFrame(() => premier.scrollIntoView({ block: 'center' }));

@@ -4,6 +4,8 @@
  * pas de copie. Un libellé qu'aucune règle ne reconnaît sort tel quel.
  */
 
+import { sanitizeDocument } from './sanitize.js';
+
 const MEDDISPAR = 'https://www.meddispar.fr';
 
 /** Mentions courtes du résumé ; libellé complet en infobulle. */
@@ -309,7 +311,8 @@ export async function getRemboursement(pool, cis) {
   );
 
   const ligne = rows[0];
-  return ligne ? { texte: ligne.texte, taux: pourcentage(ligne.taux) } : null;
+  // Rendu en HTML (listes, retours à la ligne) : assaini comme les documents.
+  return ligne ? { texte: sanitizeDocument(ligne.texte), taux: pourcentage(ligne.taux) } : null;
 }
 
 /** Conditions d'une spécialité, classées. */

@@ -9,6 +9,8 @@
 import { importSql } from './groupes.js';
 import { formesDuProduit } from './specialites.js';
 import { elargir } from './thesaurus.js';
+import { echapperLike } from './text.js';
+import { isValidCis } from './validate.js';
 
 /** La configuration de recherche est posée par sql/recherche.sql. */
 const LANGUE = 'french_nu';
@@ -206,9 +208,10 @@ export function rechercheAbsente(err) {
  * (250 extraits : 168 ms), inutile de le calculer pour chaque ligne.
  */
 export async function extraitDeRubrique(pool, { cis, type, position, requete }) {
-  const saisie = String(requete ?? '').trim();
+  // Bornée comme la saisie de la recherche : chaque mot devient un paramètre.
+  const saisie = String(requete ?? '').trim().slice(0, 200);
   const rang = Math.trunc(Number(position));
-  if (!saisie || !/^\d{6,10}$/.test(String(cis ?? '')) || !Number.isFinite(rang)) return null;
+  if (!saisie || !isValidCis(cis) || !Number.isFinite(rang)) return null;
   if (!['rcp', 'notice'].includes(String(type))) return null;
 
   // Même élargissement que la recherche, pour surligner aussi les synonymes.
@@ -235,7 +238,7 @@ export async function extraitDeRubrique(pool, { cis, type, position, requete }) 
  */
 export async function motsTrouves(pool, cis, requete) {
   const saisie = String(requete ?? '').trim();
-  if (!saisie || !/^\d{6,10}$/.test(String(cis ?? ''))) return [];
+  if (!saisie || !isValidCis(cis)) return [];
   const tq = composerTsquery(elargir(saisie).atomes, 2);
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq)
@@ -287,7 +290,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   // Six paramètres fixes (rubrique, limite, décalage, expression, molécule, phrases), puis les atomes.
   const tq = composerTsquery(atomes, 7);
   const proche = composerProximite(tq.concepts);
-  const molecule = String(options.molecule ?? '').trim().slice(0, 80) || null;
+  // Chaque mot entre dans un LIKE : ses jokers sont échappés.
+  const molecule = echapperLike(String(options.molecule ?? '').trim().slice(0, 80)) || null;
   // Recherche ciblée : la phrase de chaque rubrique trouvée, affichée d'office.
   const phrases = Boolean(options.phrases);
   const exacte = expressionExacte(saisie);

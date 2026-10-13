@@ -38,6 +38,15 @@ import {
   FEUILLE,
 } from '../atc.js';
 
+/** Panne de la recherche dans les documents, distincte d'une absence de résultats. */
+function messagePanne(err) {
+  console.error('[recherche] plein texte indisponible :', err.message);
+  return rechercheAbsente(err)
+    ? 'La recherche dans les documents n’est pas encore installée sur cette base '
+      + '— exécuter « npm run db:recherche ».'
+    : 'La recherche dans les documents est momentanément indisponible.';
+}
+
 export function pageRoutes(pool) {
   const router = Router();
 
@@ -203,12 +212,7 @@ export function pageRoutes(pool) {
       const [results, documents] = await Promise.all([
         searchMedications(pool, query, filter),
         chercherDansDocuments(pool, query.raw, { limite: APERCU }).catch((err) => {
-          // La panne s'affiche, distincte d'une absence de résultats.
-          console.error('[recherche] plein texte indisponible :', err.message);
-          panne = rechercheAbsente(err)
-            ? 'La recherche dans les documents n’est pas encore installée sur cette base '
-              + '— exécuter « npm run db:recherche ».'
-            : 'La recherche dans les documents est momentanément indisponible.';
+          panne = messagePanne(err);
           return null;
         }),
       ]);
@@ -253,11 +257,7 @@ export function pageRoutes(pool) {
         ? vide
         : await chercher(ciblee)
           .catch((err) => {
-            console.error('[recherche] plein texte indisponible :', err.message);
-            panne = rechercheAbsente(err)
-              ? 'La recherche dans les documents n’est pas encore installée sur cette base '
-                + '— exécuter « npm run db:recherche ».'
-              : 'La recherche dans les documents est momentanément indisponible.';
+            panne = messagePanne(err);
             return vide;
           });
 
