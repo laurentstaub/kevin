@@ -588,7 +588,14 @@ span.onglet {
   color: var(--ink);
 }
 
-/* Rubrique de premier niveau : charnière du document. */
+/* Rubrique de premier niveau : charnière du document. Le titre suit son
+   numéro de près, quand les sous-rubriques s'alignent sur la gouttière :
+   l'écart d'indentation dit le niveau. */
+.rubrique.rub-n1 > .rubrique-tete {
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
+}
+
 .rubrique.rub-n1 > .rubrique-tete {
   font-size: var(--titre-n1);
   font-family: var(--font-head);
@@ -630,8 +637,9 @@ span.onglet {
 /* Charnière (« 4. » avant « 4.1 ») : même filet et même rythme que les rubriques. */
 .charniere {
   display: grid;
-  grid-template-columns: var(--num-col) 1fr;
-  gap: 0.5rem;
+  /* Comme une rubrique de premier niveau : le titre suit le numéro. */
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
   align-items: baseline;
   /* Même corps que les rubriques de premier niveau (1, 2, 3…) : c'en est une. */
   font-family: var(--font-head);
@@ -650,8 +658,9 @@ span.onglet {
 
 .charniere-bascule {
   display: grid;
-  grid-template-columns: var(--num-col) 1fr;
-  gap: 0.5rem;
+  /* Comme une rubrique de premier niveau : le titre suit le numéro. */
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
   align-items: baseline;
   width: 100%;
   appearance: none;
