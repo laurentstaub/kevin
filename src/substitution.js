@@ -28,7 +28,7 @@ export const CATEGORIES = {
   ALTERNATIVE_CLASSE: {
     rang: 3,
     action: 'À proposer au prescripteur',
-    detail: 'Autre molécule de la même sous-classe ATC : ce qu\'on a en rayon, à faire valider',
+    detail: 'Autre molécule de la même sous-classe ATC : alternative si disponible',
   },
   BLOQUE: {
     rang: 4,
