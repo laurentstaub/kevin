@@ -633,8 +633,9 @@ span.onglet {
   grid-template-columns: var(--num-col) 1fr;
   gap: 0.5rem;
   align-items: baseline;
+  /* Même corps que les rubriques de premier niveau (1, 2, 3…) : c'en est une. */
   font-family: var(--font-head);
-  font-size: var(--fs-base);
+  font-size: var(--titre-n1);
   font-weight: 700;
   margin: var(--sp-1) 0 0;
   padding: 0.35rem 0;

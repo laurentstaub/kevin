@@ -18,12 +18,12 @@ block content
     if entree.charniere
       h4.charniere(id=entree.id)
         span.num= entree.numero
-        span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
+        span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
     else
       details.rubrique(id=entree.id open=ouverte class=`rub-n${entree.profondeur}` class=(entree.essentielle ? 'essentielle' : null))
         summary.rubrique-tete
           span.num= entree.numero
-          span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle
+          span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
         .rubrique-corps!= entree.html
 
   //- Sans titre : la dénomination elle-même colle sous la barre au défilement.
