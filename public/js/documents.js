@@ -367,6 +367,27 @@ const motsTrouves = (() => {
   try { return JSON.parse(documents?.dataset.mots ?? '[]'); } catch { return []; }
 })();
 
+/**
+ * Le passage où la recherche a trouvé le plus de termes différents (le premier
+ * à égalité) : « insuffisance hépatique sévère » réunis, plutôt qu'un
+ * « sévère » isolé plus haut. Termes comparés sans accents ni pluriel.
+ */
+function meilleurPassage(racine) {
+  const forme = (texte) => texte.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[sx]$/, '');
+  let meilleur = null;
+  let score = 0;
+  for (const bloc of racine.querySelectorAll('p, li, td, h5, h6')) {
+    const marques = bloc.querySelectorAll('mark.surligne');
+    if (marques.length === 0) continue;
+    const distincts = new Set([...marques].map((marque) => forme(marque.textContent))).size;
+    if (distincts > score) {
+      score = distincts;
+      meilleur = marques[0];
+    }
+  }
+  return meilleur ?? racine.querySelector('mark.surligne');
+}
+
 const requete = new URLSearchParams(location.search).get('q');
 const motif = (requete || motsTrouves.length > 0) && motifComplet(requete, motsTrouves);
 
@@ -377,7 +398,7 @@ if (motif && documents) {
   // page chargée, ce qui annulait un défilement fait plus tôt (on restait en
   // tête de rubrique, loin du terme trouvé).
   const cible = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-  const premier = cible?.querySelector('mark.surligne');
+  const premier = cible && meilleurPassage(cible);
   if (premier) {
     const centrer = () => requestAnimationFrame(() => premier.scrollIntoView({ block: 'center' }));
     if (document.readyState === 'complete') centrer();

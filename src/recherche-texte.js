@@ -124,7 +124,34 @@ export function composerTsquery(atomes, depart) {
   });
   // Sans atome : requête vide plutôt qu'erreur de syntaxe SQL.
   const sql = groupes.length ? groupes.join(' && ') : `websearch_to_tsquery('${LANGUE}', '')`;
-  return { sql, params };
+  return { sql, params, concepts: groupes };
+}
+
+/** Écart maximal, en mots, entre deux concepts voisins de la requête. */
+export const PROXIMITE = 8;
+
+/**
+ * Proximité des concepts : chaque concept à moins de PROXIMITE mots du
+ * suivant, dans un sens ou dans l'autre. Sans elle, « insuffisance hépatique
+ * sévère » trouvait une rubrique où « sévère » qualifie l'apnée du sommeil et
+ * « hépatique » les enzymes, trois paragraphes plus loin. Vérifiée sur les
+ * positions du vecteur stocké : le filtre @@ de l'index reste en amont.
+ *
+ * @param {string[]} concepts - `concepts` de composerTsquery
+ * @returns {string|null} une tsquery SQL, null pour un seul concept
+ */
+export function composerProximite(concepts, ecart = PROXIMITE) {
+  if (concepts.length < 2) return null;
+  const pres = (gauche, droite) => {
+    const termes = [];
+    for (let distance = 1; distance <= ecart; distance += 1) {
+      termes.push(`tsquery_phrase(${gauche}, ${droite}, ${distance})`,
+        `tsquery_phrase(${droite}, ${gauche}, ${distance})`);
+    }
+    return `(${termes.join(' || ')})`;
+  };
+  const paires = concepts.slice(1).map((concept, i) => pres(concepts[i], concept));
+  return paires.join(' && ');
 }
 
 /** Colonne stockée plutôt qu'index d'expression : 21 ms au lieu de 407 ms. */
@@ -228,13 +255,14 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const { atomes, elargissements } = elargir(saisie);
   // Six paramètres fixes (rubrique, limite, décalage, expression, molécule, phrases), puis les atomes.
   const tq = composerTsquery(atomes, 7);
+  const proche = composerProximite(tq.concepts);
   const molecule = String(options.molecule ?? '').trim().slice(0, 80) || null;
   // Recherche ciblée : la phrase de chaque rubrique trouvée, affichée d'office.
   const phrases = Boolean(options.phrases);
   const exacte = expressionExacte(saisie);
 
   const { rows } = await pool.query(
-    `WITH q AS (SELECT ${tq.sql} AS tq),
+    `WITH q AS (SELECT ${tq.sql} AS tq${proche ? `, ${proche} AS proche` : ''}),
      trouve AS (
        -- Sans le texte : jusqu'à 3 000 rubriques transitent par trois tris, et
        -- le texte intégral les faisait dépasser le délai. Il est rejoint par sa
@@ -246,6 +274,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               ${RANG} AS rang
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
+         -- Plusieurs concepts : rapprochés, pas dispersés dans la rubrique.
+         ${proche ? `AND ${VECTEUR} @@ q.proche` : ''}
          AND ($1::text IS NULL OR s.numero = $1 OR s.numero LIKE $1 || '.%')
          -- Médicament : chaque mot du filtre figure dans une substance active ou
          -- dans la dénomination (« acide folique », « paracetamol codeine »).

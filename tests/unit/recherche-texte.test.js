@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
-  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU, motsTrouves,
+  normaliserRubrique, PLAFOND, PAR_PAGE, APERCU, motsTrouves, composerProximite,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -214,5 +214,17 @@ describe('mots trouvés, pour le surlignage de la fiche', () => {
     const pool = { query: async () => { throw new Error('appelé'); } };
     assert.deepEqual(await motsTrouves(pool, '60234100', '  '), []);
     assert.deepEqual(await motsTrouves(pool, 'x', 'foie'), []);
+  });
+});
+
+describe('proximité des concepts', () => {
+  it('rapproche chaque concept du suivant, dans les deux sens, jusqu’à l’écart donné', () => {
+    const sql = composerProximite(['A', 'B', 'C'], 2);
+    assert.equal(sql, '(tsquery_phrase(A, B, 1) || tsquery_phrase(B, A, 1) || tsquery_phrase(A, B, 2) || tsquery_phrase(B, A, 2))'
+      + ' && (tsquery_phrase(B, C, 1) || tsquery_phrase(C, B, 1) || tsquery_phrase(B, C, 2) || tsquery_phrase(C, B, 2))');
+  });
+
+  it('ne contraint rien pour un seul concept', () => {
+    assert.equal(composerProximite(['A']), null);
   });
 });
