@@ -243,3 +243,14 @@ describe('titre sans numéro', () => {
     assert.ok(!manquantes.includes(''), 'le socle ne réclame que des numéros réels');
   });
 });
+
+describe('splitDocument — sommaire de notice', () => {
+  it('range chaque rubrique sous son titre, pas tout en rubrique 6', () => {
+    const titres = ['Qu’est-ce que X', 'Avant de prendre X', 'Comment prendre X',
+      'Effets indésirables', 'Comment conserver X', 'Contenu de l’emballage'];
+    const html = titres.map((titre, i) => `<p>${i + 1}. ${titre}</p>`).join('')
+      + titres.map((titre, i) => `<p>${i + 1}. ${titre.toUpperCase()}</p><p>Texte ${i + 1}.</p>`).join('');
+    const { sections } = splitDocument(html, 'notice');
+    assert.deepEqual(sections.map((section) => section.texte), titres.map((_, i) => `Texte ${i + 1}.`));
+  });
+});

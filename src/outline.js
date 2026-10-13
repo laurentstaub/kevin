@@ -91,6 +91,31 @@ export function coherentes(candidats) {
   return suite;
 }
 
+/**
+ * Écarte un sommaire (« Que contient cette notice ? ») : au moins trois titres
+ * qui se suivent (1, 2, 3…) sans texte entre eux, et dont la numérotation
+ * reprend plus loin. Sans cela, sommaire et vrais titres font deux suites de
+ * même longueur, `coherentes` garde la première, et toute la notice tombe dans
+ * la rubrique 6 (628 notices BDPM à titres en paragraphes). Même règle que
+ * `sansSommaire` de pdf.js, qui lit des lignes au lieu de balises.
+ */
+function sansSommaire(html, candidats) {
+  const colles = (a, b) => b.number === String(Number(a.number) + 1)
+    && stripTags(html.slice(a.index + a.match.length, b.index)) === '';
+
+  const aRetirer = new Set();
+  for (let i = 0; i < candidats.length; i += 1) {
+    let j = i;
+    while (j + 1 < candidats.length && colles(candidats[j], candidats[j + 1])) j += 1;
+    const reprise = candidats.slice(j + 1).some((candidat) => candidat.number === candidats[i].number);
+    if (j - i >= 2 && reprise) for (let retire = i; retire <= j; retire += 1) aRetirer.add(retire);
+    i = j;
+  }
+
+  const restants = candidats.filter((_, i) => !aRetirer.has(i));
+  return restants.filter((candidat) => candidat.numbered).length >= 3 ? restants : candidats;
+}
+
 /** « 4 » -> 1, « 4.2 » -> 2, au-delà on plafonne. */
 const depthOf = (number) => Math.min(number.split('.').length, 3);
 
@@ -154,9 +179,9 @@ export function outline(html, type = 'doc') {
   const habillage = [];
   if (candidats.filter((candidat) => candidat.numbered).length < 3) {
     habillage.push(...candidats.filter((candidat) => !candidat.numbered));
-    candidats = coherentes(
-      reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 }),
-    );
+    candidats = coherentes(sansSommaire(
+      html, reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 }),
+    ));
   }
 
   if (candidats.filter((candidat) => candidat.numbered).length < 3) return { html, sections: [] };

@@ -280,3 +280,32 @@ describe('outline — pièges du balisage BDPM', () => {
     );
   });
 });
+
+describe('outline — sommaire de notice', () => {
+  // Balisage de 628 notices BDPM : sommaire puis vrais titres, tous en <p>.
+  const plan = [
+    'Qu’est-ce que X et dans quels cas est-il utilisé ?',
+    'Quelles sont les informations à connaître avant de prendre X ?',
+    'Comment prendre X ?',
+    'Quels sont les effets indésirables éventuels ?',
+    'Comment conserver X ?',
+    'Contenu de l’emballage et autres informations',
+  ];
+  const sommaire = plan.map((titre, i) => `<p>${i + 1}. ${titre}</p>`).join('');
+  const corps = plan.map((titre, i) => `<p>${i + 1}. ${titre.toUpperCase()}</p><p>Texte de la rubrique ${i + 1}.</p>`).join('');
+  const notice = `<p>Que contient cette notice ?</p>${sommaire}${corps}`;
+
+  it('pose les titres sur les rubriques, pas sur le sommaire', () => {
+    const { html, sections } = outline(notice, 'notice');
+    assert.deepEqual(sections.map((section) => section.number), ['1', '2', '3', '4', '5', '6']);
+    // Entre le titre 1 et le titre suivant : le texte de la rubrique 1, pas le sommaire.
+    const rubrique1 = html.split('id="notice-1"')[1].split('class="doc-heading"')[1];
+    assert.match(rubrique1, /Texte de la rubrique 1\./);
+  });
+
+  it('ne retire pas une liste numérotée dont la numérotation ne reprend pas', () => {
+    const etapes = '<p>1. Ouvrir le flacon</p><p>2. Pencher la tête</p><p>3. Instiller une goutte</p>';
+    const { sections } = outline(etapes, 'notice');
+    assert.deepEqual(sections.map((section) => section.number), ['1', '2', '3']);
+  });
+});

@@ -8,13 +8,14 @@ import { structurer, renvois } from './typographie.js';
  *
  * PARSER_VERSION : à incrémenter dès que la détection change, pour rejouer les documents.
  */
+// 15 : sommaire de notice écarté (titres en paragraphes : tout tombait en rubrique 6).
 // 14 : titres ignorés dans les tableaux (« 7 kg » d'une table de posologie).
 // 13 : infobulle de destination des renvois.  12 : renvois ancrés sur « rubrique ».
 // 11 : renvois « voir rubrique 4.6 » en liens.  10 : thésaurus des interactions (4.5).
 // 9 : notes par astérisque (QRD).  8 : listes imbriquées, sous-titres QRD, espaces insécables.
 // 5 : conduite en vrais points.  4 : conduites de points (rubrique 2).  3 : paragraphes, puces.
 // 2 : plan de notice, reprises de plan EMA, sommaires écartés.
-export const PARSER_VERSION = 14;
+export const PARSER_VERSION = 15;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
