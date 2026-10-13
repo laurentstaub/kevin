@@ -103,6 +103,20 @@ describe('intertitres libres', () => {
   });
 });
 
+describe('doses énumérées sous une même unité', () => {
+  it('met en gras toute la borne ou l’énumération, pas le seul dernier nombre', () => {
+    const html = doses(insecables('<p>400 et 800 µg ; 200 ou 400 µg ; 100, 200 ou 400 mg ; 10 à 30 mg ; 0,5 mg</p>'));
+    assert.equal(html, '<p><strong class="dose-cle">400 et 800\u00a0µg</strong> ; <strong class="dose-cle">200 ou 400\u00a0µg</strong> ; '
+      + '<strong class="dose-cle">100, 200 ou 400\u00a0mg</strong> ; <strong class="dose-cle">10 à 30\u00a0mg</strong> ; '
+      + '<strong class="dose-cle">0,5\u00a0mg</strong></p>');
+  });
+
+  it('ne lie pas un nombre sans unité à ce qui suit', () => {
+    assert.equal(doses(insecables('<p>voir rubrique 4 et 5.</p>')), '<p>voir rubrique 4 et 5.</p>');
+    assert.equal(doses(insecables('<p>rubrique 4.8 et 10 mg</p>')), '<p>rubrique 4.8 et <strong class="dose-cle">10\u00a0mg</strong></p>');
+  });
+});
+
 describe('doses, quelle que soit l’espace de la source', () => {
   it('reconnaît l’entité, la fine, l’insécable déjà posée et l’espace absente', () => {
     for (const [source, attendu] of [

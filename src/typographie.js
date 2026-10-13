@@ -378,8 +378,15 @@ const UNITES_DOSE = [
   'bouffées?', 'pulvérisations?', 'doses?',
 ].join('|');
 const PAR = '(?:\\/(?:kg|m²|m2|jour|j|24\\u00a0?h|h|prise|mL|ml|semaine|dose|min))*';
+// Bornes et énumérations qui partagent l'unité finale : « 10 à 30 mg »,
+// « 400 et 800 µg », « 200 ou 400 µg », « 100, 200 ou 400 mg ». La virgule
+// suivie d'une espace sépare deux nombres ; sans espace, elle est décimale.
+// Nombre en tête de borne : décimale à la française seulement. « 4.8 » est un
+// numéro de rubrique, jamais une dose (« rubrique 4.8 et 10 mg »).
+const BORNE = '(?:\\d{1,3}(?:\\u00a0\\d{3})+|\\d+)(?:,\\d+)?(?!\\.\\d)';
+const LIEN_DOSES = '(?:[ \\u00a0]?(?:à|-|–)[ \\u00a0]?|[ \\u00a0](?:et|ou)[ \\u00a0]|,[ \\u00a0])';
 const DOSE = new RegExp(
-  `(?<![\\d.,])(?:${NOMBRE}[ \\u00a0]?(?:à|-|–)[ \\u00a0]?)?${NOMBRE}\\u00a0?(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
+  `(?<![\\d.,])(?:${BORNE}${LIEN_DOSES})*${NOMBRE}\\u00a0?(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
   'gu',
 );
 
