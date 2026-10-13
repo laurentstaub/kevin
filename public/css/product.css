@@ -275,6 +275,62 @@ a.signal-valeur {
 
 /* ---------- Substitution ---------- */
 
+/* Une catégorie par action au comptoir : l'action en titre, la règle dessous. */
+.subst-categorie {
+  margin: var(--sp-3) 0 0;
+}
+
+.subst-action {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  margin: 0;
+}
+
+.subst-detail {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: 0.2em 0 var(--sp-1);
+  max-width: none;
+}
+
+.subst-motif {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+/* Alternatives de classe : une molécule par ligne, ses spécialités à la suite. */
+.subst-molecules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subst-molecules > li {
+  padding: var(--sp-1) 0;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.subst-molecule {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
+.subst-atc {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.subst-specialites {
+  display: block;
+  font-size: var(--fs-sm);
+}
+
+.subst-ecartes {
+  margin-top: var(--sp-3);
+}
+
 .ligne-dci {
   font-size: var(--fs-xs);
   color: var(--muted);

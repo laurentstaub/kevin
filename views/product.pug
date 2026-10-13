@@ -284,45 +284,64 @@ block content
                 p.doc-externe
                   | Ce document n'est disponible qu'au format PDF sur le site officiel.
 
-      if substitutions.length > 0
+      //- Substituer : les candidats classés par action au comptoir (substitution.js,
+      //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
+      //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
+      //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
+      if alternatives && alternatives.categories.length > 0
+        - const options = alternatives.categories.filter((cat) => cat.cle !== 'BLOQUE').reduce((total, cat) => total + (cat.total ?? cat.lignes.length), 0)
         details.bloc#substituer
           summary.bloc-tete
             h2.section-titre Substituer
-            span.bloc-compte #{substitutions.length} produit#{substitutions.length > 1 ? 's' : ''}
-          //- Deux provenances à distinguer : princeps et génériques du Répertoire
-          //- ANSM, qui fonde la substitution (CSP, art. L.5121-1) ; « Même DCI »,
-          //- simple rapprochement par principe actif, sans substitution de droit.
-          - const officiels = substitutions.filter((substitution) => substitution.role !== 'Même DCI').length
-          - const voisins = substitutions.length - officiels
+            span.bloc-compte #{options} option#{options > 1 ? 's' : ''}
           if genericGroup
-            p.section-meta Groupe générique · #{genericGroup}
-          p.section-meta.provenance
-            if officiels > 0
-              | Princeps et génériques :
+            p.section-meta
+              | Groupe générique · #{genericGroup} —
               |
-              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire des groupes génériques de l'ANSM
-              | .
-            if voisins > 0
-              |
-              strong Même DCI
-              |  n'en fait pas partie : même principe actif, sans substitution de droit — la forme et le dosage peuvent différer.
-          table.t-substitution
-            caption.sr-only Produits substituables ou partageant le principe actif
-            thead
-              tr
-                th(scope="col") Dénomination
-                th(scope="col") Forme
-                th(scope="col") Rôle
-            tbody
-              each item in substitutions
-                tr
-                  td
-                    a(href=`/product/${item.id}`)= specialite(item.denomination_medicament)
-                    if item.active_ingredients && item.active_ingredients !== product.active_ingredients
-                      .ligne-dci= dci(item.active_ingredients)
-                  td.forme= item.forme_pharmaceutique || '—'
-                  td
-                    span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
+              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire de l'ANSM
+          each cat in alternatives.categories
+            if cat.cle === 'BLOQUE'
+              //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
+              details.subst-ecartes
+                summary.formes-plus #{cat.lignes.length} écarté#{cat.lignes.length > 1 ? 's' : ''}, avec la raison
+                table.t-substitution
+                  caption.sr-only Spécialités écartées et raison
+                  tbody
+                    each item in cat.lignes
+                      tr
+                        td
+                          a(href=`/product/${item.id}`)= specialite(item.denomination)
+                        td.subst-motif= item.motif
+            else
+              section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
+                h3.subst-action= cat.action
+                p.subst-detail= cat.detail
+                if cat.molecules
+                  //- Une molécule par ligne : on cherche ce qu'on a en rayon.
+                  ul.subst-molecules
+                    each mol in cat.molecules
+                      li
+                        span.subst-molecule= dci(mol.nom)
+                        if mol.atc5
+                          span.subst-atc= mol.atc5
+                        span.subst-specialites
+                          each sp, i in mol.specialites
+                            if i > 0
+                              span.sep
+                            a(href=`/product/${sp.id}`)= specialite(sp.denomination)
+                else
+                  table.t-substitution
+                    caption.sr-only= cat.action
+                    tbody
+                      each item in cat.lignes
+                        tr
+                          td
+                            a(href=`/product/${item.id}`)= specialite(item.denomination)
+                          if cat.cle === 'SUBSTITUABLE'
+                            td
+                              span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
+                          else
+                            td.subst-motif= item.motif
 
       details.bloc#references
         summary.bloc-tete

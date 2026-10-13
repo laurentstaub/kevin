@@ -11,12 +11,8 @@ import {
 import { regrouperSpecialites } from '../specialites.js';
 import { groupeBiologique, substitutionBiosimilaires } from '../biosimilaires.js';
 import { searchMedications } from '../search.js';
-import {
-  getProduct,
-  getRelatedProducts,
-  getVariantes,
-  genericGroupLabel,
-} from '../products.js';
+import { getProduct, getVariantes } from '../products.js';
+import { getAlternatives } from '../alternatives.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
@@ -346,9 +342,12 @@ export function pageRoutes(pool) {
       if (!product) return next();
 
       const [
-        substitutions, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
+        alternatives, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
       ] = await Promise.all([
-        getRelatedProducts(pool, cis, product.active_ingredients),
+        getAlternatives(pool, cis).catch((err) => {
+          console.error('[substitution] alternatives indisponibles pour', cis, err.message);
+          return { categories: [], groupe: null };
+        }),
         getVariantes(pool, cis).catch((err) => {
           console.error('[variantes] indisponibles pour', cis, err.message);
           return [];
@@ -433,12 +432,12 @@ export function pageRoutes(pool) {
           // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
           children: [],
         },
-        substitutions.length > 0 && { id: 'substituer', label: 'Substituer' },
+        alternatives.categories.length > 0 && { id: 'substituer', label: 'Substituer' },
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
 
       const resumeAtc = resumerClasse(classeAtc);
-      const genericGroup = genericGroupLabel(substitutions);
+      const genericGroup = alternatives.groupe;
 
       res.render('product', {
         product,
@@ -449,7 +448,7 @@ export function pageRoutes(pool) {
         motsTrouves: trouves,
         importation,
         reference,
-        substitutions,
+        alternatives,
         variantes,
         remboursement,
         resumeAtc,

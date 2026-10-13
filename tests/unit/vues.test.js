@@ -45,7 +45,7 @@ const produit = (extra = {}) => ({
   },
   importation: false,
   reference: null,
-  substitutions: [],
+  alternatives: { categories: [], groupe: null },
   variantes: [],
   remboursement: null,
   resumeAtc: null,
@@ -564,27 +564,34 @@ describe('rendu des gabarits', () => {
     assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
   });
 
-  // Le Répertoire ANSM fonde la substitution ; le rapprochement par principe actif, non.
-  it('dit d’où viennent les substituts, et ce qui n’en est pas', () => {
+  // Substituer : une section par action, la classe regroupée par molécule, les écartés repliés.
+  it('range les substituts par action au comptoir', () => {
     const html = rendre('product', produit({
-      substitutions: [
-        { id: '1', denomination_medicament: 'MYCOSTER', role: 'Princeps' },
-        { id: '2', denomination_medicament: 'CICLOPIROX TEVA', role: 'Générique' },
-        { id: '3', denomination_medicament: 'MYCOSTER shampooing', role: 'Même DCI' },
-      ],
+      genericGroup: 'CICLOPIROX 1 % - MYCOSTER 1 %, crème',
+      alternatives: { groupe: 'CICLOPIROX', categories: [
+        { cle: 'SUBSTITUABLE', action: 'Délivrer un générique du groupe', detail: 'De droit', lignes: [
+          { id: '1', denomination: 'MYCOSTER 1 %, crème', role: 'Princeps' },
+          { id: '2', denomination: 'CICLOPIROX TEVA 1 %, crème', role: 'Générique' },
+        ] },
+        { cle: 'ALTERNATIVE_CLASSE', action: 'À proposer au prescripteur', detail: 'Même sous-classe', total: 2, molecules: [
+          { nom: 'ÉCONAZOLE', atc5: 'D01AC03', specialites: [
+            { id: '3', denomination: 'PEVARYL 1 %, crème' }, { id: '4', denomination: 'ECONAZOLE BIOGARAN 1 %, crème' }] },
+        ] },
+        { cle: 'BLOQUE', action: 'Ne pas substituer', detail: '', lignes: [
+          { id: '5', denomination: 'MYCOSTER 8 %, vernis', motif: 'Voie différente (cutanee contre autre)' }] },
+      ] },
     }));
-    assert.match(html, /Répertoire des groupes génériques de l’ANSM|Répertoire des groupes génériques de l'ANSM/);
+    assert.match(html, /<span class="bloc-compte">4 options<\/span>/);
+    assert.match(html, /<h3 class="subst-action">Délivrer un générique du groupe<\/h3>/);
+    assert.match(html, /<h3 class="subst-action">À proposer au prescripteur<\/h3>/);
+    assert.match(html, /<span class="subst-molecule">éconazole<\/span><span class="subst-atc">D01AC03<\/span>/);
+    assert.match(html, /<details class="subst-ecartes"><summary class="formes-plus">1 écarté, avec la raison<\/summary>/);
+    assert.match(html, /Voie différente/);
     assert.match(html, /ansm\.sante\.fr\/documents\/reference\/repertoire-des-medicaments-generiques/);
-    assert.match(html, /sans substitution de droit/);
   });
 
-  // Un avertissement sans objet apprend à ne plus lire les avertissements.
-  it('se tait sur « Même DCI » quand il n’y en a pas', () => {
-    const html = rendre('product', produit({
-      substitutions: [{ id: '1', denomination_medicament: 'MYCOSTER', role: 'Princeps' }],
-    }));
-    assert.match(html, /Répertoire des groupes génériques/);
-    assert.doesNotMatch(html, /sans substitution de droit/);
+  it('sans candidat, pas de bloc Substituer', () => {
+    assert.doesNotMatch(rendre('product', produit()), /id="substituer"/);
   });
 
   // Filtrer fait passer sous le plafond : le décompte doit rester.
