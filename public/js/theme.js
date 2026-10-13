@@ -37,7 +37,13 @@
     if (etat === 'auto') delete racine.dataset.theme;
     else racine.dataset.theme = etat;
     boutons.forEach((bouton) => {
-      bouton.textContent = `${PICTOS[etat]} ${LIBELLES[etat]}`;
+      // Libellé à part : sur téléphone, seul le picto reste (aria-label inchangé).
+      const picto = document.createElement('span');
+      picto.textContent = PICTOS[etat];
+      const libelle = document.createElement('span');
+      libelle.className = 'theme-libelle';
+      libelle.textContent = ` ${LIBELLES[etat]}`;
+      bouton.replaceChildren(picto, libelle);
       bouton.setAttribute('aria-label', `Thème : ${LIBELLES[etat].toLowerCase()}`);
     });
   };

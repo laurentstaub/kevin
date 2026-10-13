@@ -317,7 +317,9 @@
 
 .theme:hover { color: var(--ink); border-color: var(--ink); }
 
-/* Écran étroit : la ligne de la barre s'arrête avant le bouton. */
+/* Écran étroit : la ligne de la barre s'arrête avant le bouton, qui sur
+   téléphone ne garde que son picto. Après la règle 52rem de .barre-inner,
+   qui remettait le rembourrage à zéro et laissait le bouton couvrir le champ. */
 @media (max-width: 60rem) {
   .barre-inner { padding-right: 7rem; }
 }
@@ -1458,4 +1460,18 @@ details[open] > .molecules-plus::before,
   .formes-plus::before,
   .molecules-plus::before,
   .trouvaille-details > summary::before { transition: none; }
+}
+
+/* Rembourrage pour le bouton de thème, en fin de feuille : l'emporte sur la
+   règle 52rem de .barre-inner. */
+@media (max-width: 60rem) {
+  .barre-inner,
+  .accueil-colle { padding-right: 7rem; }
+}
+
+@media (max-width: 40rem) {
+  .barre-inner,
+  .accueil-colle { padding-right: 3.25rem; }
+  .theme { right: var(--sp-2); }
+  .theme-libelle { display: none; }
 }
