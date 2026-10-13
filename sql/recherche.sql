@@ -36,9 +36,27 @@ END $$;
 -- `to_tsvector` recalculé par ligne candidate), pour ~45 Mo par 120 000 rubriques.
 -- ATTENTION : la colonne ne se recalcule pas si `french_nu` change ; la supprimer
 -- et réexécuter ce fichier.
+--
+-- Le titre de la rubrique y entre, poids A : « excipients » trouve 6.1 Liste
+-- des excipients, dont le texte ne fait qu'énumérer. ts_rank_cd compte un mot
+-- du titre dix fois un mot du texte (poids D). Extraits et surlignage restent
+-- calculés sur `texte`.
+-- Colonne d'avant (texte seul) : refaite, son index avec elle.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'docs' AND table_name = 'rcp_sections'
+               AND column_name = 'vecteur' AND generation_expression NOT LIKE '%libelle%') THEN
+    ALTER TABLE docs.rcp_sections DROP COLUMN vecteur;
+    RAISE NOTICE 'vecteur : titre de rubrique ajouté, colonne recalculée';
+  END IF;
+END $$;
+
 ALTER TABLE docs.rcp_sections
   ADD COLUMN IF NOT EXISTS vecteur tsvector
-  GENERATED ALWAYS AS (to_tsvector('french_nu', texte)) STORED;
+  GENERATED ALWAYS AS (
+    setweight(to_tsvector('french_nu', libelle), 'A') || to_tsvector('french_nu', texte)
+  ) STORED;
 
 CREATE INDEX IF NOT EXISTS idx_sections_vecteur
   ON docs.rcp_sections USING gin (vecteur);
