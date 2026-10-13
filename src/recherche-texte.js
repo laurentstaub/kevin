@@ -296,13 +296,17 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     `WITH q AS (SELECT ${tq.sql} AS tq, ${composerTitre(tq.concepts)} AS titre${proche ? `, ${proche} AS proche` : ''}),
      ${molecule ? `-- Médicament : chaque mot du filtre figure dans une substance active ou
      -- dans la dénomination (« acide folique », « paracetamol codeine »).
+     -- Un dosage (« doliprane 300 ») : nombre entier de la dénomination, 100 n'est pas 1000.
      cis_molecule AS MATERIALIZED (
        SELECT m.code_cis FROM dbpm.cis_bdpm m
-       WHERE (SELECT bool_and(
+       WHERE (SELECT bool_and(CASE WHEN mot ~ '^[0-9]+(,[0-9]+)?$'
+                THEN m.denomination_medicament ~ ('(^|[^0-9,])' || mot || '($|[^0-9,])')
+                ELSE
                 public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
                 OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
                            WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
-                             AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%'))
+                             AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%')
+                END)
               FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
               WHERE mot <> '')
      ),` : ''}

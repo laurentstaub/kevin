@@ -23,6 +23,30 @@ const FORMES = new Set([
   'retard', 'gel', 'spray', 'inhalation', 'perfusion', 'flacon', 'boite',
 ]);
 
+/** Unités de dose : le nombre qui les précède est un dosage (« 1000 mg de paracétamol »). */
+const UNITES_DOSE = new Set(['mg', 'g', 'ug', 'mcg', 'ui']);
+
+/**
+ * Formes que porte la dénomination (« suppositoire », « poudre pour solution
+ * buvable ») : elles restreignent le médicament au lieu d'être cherchées dans
+ * le texte. Pas « retard », « flacon », « lp » : absents des noms BDPM.
+ */
+const FORMES_NOM = new Set([
+  'comprime', 'gelule', 'capsule', 'sirop', 'solution', 'suspension', 'injectable', 'buvable',
+  'suppositoire', 'sachet', 'poudre', 'creme', 'pommade', 'collyre', 'goutte', 'ampoule', 'patch',
+  'orodispersible', 'effervescent', 'gel', 'inhalation', 'perfusion',
+]);
+
+/** « suppositoires » → « suppositoire » ; null si ce n'est pas une forme du nom. */
+const formeDuNom = (mot) => {
+  if (FORMES_NOM.has(mot)) return mot;
+  const singulier = mot.replace(/s$/, '');
+  return FORMES_NOM.has(singulier) ? singulier : null;
+};
+
+/** « 300 », « 2,4 », « 1000mg » → le nombre, virgule décimale ; null sinon. */
+const NOMBRE = /^(\d+(?:[.,]\d+)?)(mg|g|µg|ug|mcg|ui|%)?$/i;
+
 /** Mot comparable à la base : minuscules, sans accents ni ponctuation. */
 export const normaliser = (mot) => deaccent(String(mot ?? '')).toLowerCase().replace(/[^a-z0-9]+/g, '');
 
@@ -94,9 +118,34 @@ export async function reconnaitreMedicament(pool, saisie) {
   }
   if (molecule.length === 0) return null;
 
-  const reste = originaux.filter((_, i) => !pris[i]).map((mot) => mot.replace(/[?!]+$/, '')).filter(Boolean);
+  const restant = originaux.map((mot, i) => (pris[i] ? null : mot.replace(/[?!,;.]+$/, '')));
   // Que des nombres, unités ou formes : c'est un nom de spécialité, pas une question sur elle.
-  const texte = reste.some((mot) => motDeTexte(normaliser(mot)));
+  const texte = restant.some((mot) => mot && motDeTexte(normaliser(mot)));
+  if (!texte) return { molecule: molecule.join(' '), reste: '' };
 
-  return { molecule: molecule.join(' '), reste: texte ? reste.join(' ') : '' };
+  // Dosage et forme précisent le médicament : « doliprane 300 excipients » cherche
+  // « excipients » dans les seuls Doliprane 300. Un nombre n'est un dosage que
+  // suivi d'une unité de dose ou juste après le nom : « 14 ans » reste du texte.
+  const precisions = [];
+  restant.forEach((mot, i) => {
+    if (!mot) return;
+    const nombre = mot.match(NOMBRE);
+    if (nombre) {
+      const suivant = restant[i + 1];
+      const dose = Boolean(nombre[2]) || suivant === '%' || UNITES_DOSE.has(normaliser(suivant));
+      if (dose || pris[i - 1]) {
+        precisions.push(nombre[1].replace('.', ','));
+        restant[i] = null;
+        if (!nombre[2] && (suivant === '%' || UNITES.has(normaliser(suivant)))) restant[i + 1] = null;
+      }
+      return;
+    }
+    const forme = formeDuNom(normaliser(mot));
+    if (forme) {
+      precisions.push(forme);
+      restant[i] = null;
+    }
+  });
+
+  return { molecule: [...molecule, ...precisions].join(' '), reste: restant.filter(Boolean).join(' ') };
 }

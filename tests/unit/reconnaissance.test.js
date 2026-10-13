@@ -72,6 +72,43 @@ describe('reconnaissance d’un médicament', () => {
     assert.deepEqual(await reconnaitreMedicament(poolFactice, 'paracetamol gelule'), { molecule: 'paracetamol', reste: '' });
   });
 
+  // Dosage et forme restreignent le médicament au lieu d'être cherchés dans le texte.
+  it('rattache au médicament le nombre qui suit le nom', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'doliprane 300 excipients'),
+      { molecule: 'doliprane 300', reste: 'excipients' },
+    );
+  });
+
+  it('rattache un nombre suivi d’une unité de dose, où qu’il soit', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, '1000 mg de paracetamol à un enfant de 14 ans'),
+      { molecule: 'paracetamol 1000', reste: 'de a un enfant de 14 ans' },
+    );
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'doliprane 1000mg grossesse'),
+      { molecule: 'doliprane 1000', reste: 'grossesse' },
+    );
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'doliprane 2,4 % conservation'),
+      { molecule: 'doliprane 2,4', reste: 'conservation' },
+    );
+  });
+
+  it('laisse au texte un nombre qui n’est pas un dosage', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'paracetamol enfant 14 ans'),
+      { molecule: 'paracetamol', reste: 'enfant 14 ans' },
+    );
+  });
+
+  it('rattache la forme, au singulier', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'doliprane suppositoires excipients'),
+      { molecule: 'doliprane suppositoire', reste: 'excipients' },
+    );
+  });
+
   it('ignore un composant générique et une saisie sans médicament', async () => {
     assert.equal(await reconnaitreMedicament(poolFactice, 'sodium allaitement'), null);
     assert.equal(await reconnaitreMedicament(poolFactice, 'allongement QT'), null);

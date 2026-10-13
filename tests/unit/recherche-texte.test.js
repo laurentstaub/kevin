@@ -248,6 +248,16 @@ describe('titre de rubrique', () => {
   });
 });
 
+describe('filtre médicament', () => {
+  // « doliprane 100 » ne doit pas ramener DOLIPRANE 1000 mg.
+  it('compare un dosage au nombre entier de la dénomination', async () => {
+    const textes = [];
+    const pool = { query: async (texte) => { textes.push(texte); return { rows: [] }; } };
+    await chercherDansDocuments(pool, 'excipients', { molecule: 'doliprane 100', limite: 20 });
+    assert.match(textes[0], /\(\^\|\[\^0-9,\]\)' \|\| mot \|\| '\(\$\|\[\^0-9,\]\)/);
+  });
+});
+
 describe('marquer', () => {
   // `texte` est décodé : « <LSN » s'ouvrirait en balise si l'extrait partait tel quel.
   it('échappe le texte et ne garde que les <mark>', () => {
