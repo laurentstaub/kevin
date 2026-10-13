@@ -772,7 +772,7 @@ span.onglet {
 .document-corps .interaction {
   margin: 1.2em 0 0.35em;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--interaction);
   padding-left: 1.1em;
   text-indent: -1.1em;
 }

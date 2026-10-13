@@ -48,6 +48,10 @@
   --accent-pale: light-dark(#e4f0e6, #1a2a1e);
   /* Surlignage des termes trouvés : un vrai stabilo, lisible sur un écran
      médiocre en plein soleil. Encre sombre dessus dans les deux schémas (≈ 13:1). */
+  /* Substance en interaction (4.5) : ambre en clair (5,8:1 sur blanc), jaune
+     en sombre (≈ 11:1). Seul usage du jaune : il désigne la substance, pas l'alerte. */
+  --interaction: #8a5a00;
+  --interaction: light-dark(#8a5a00, #f2c14e);
   --surligne: #c8f560;
   --surligne: light-dark(#c8f560, #9aec3a);
   --sur-surligne: #0a100c;
@@ -126,7 +130,7 @@
 
 /* À l'impression, toujours clair, même forcé en sombre. */
 @media print {
-  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; --gras: currentColor; --lissage: auto; font-size: 100%; }
+  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; --gras: currentColor; --lissage: auto; --interaction: #000; font-size: 100%; }
 }
 
 *,
