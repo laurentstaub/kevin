@@ -453,8 +453,9 @@ export function pageRoutes(pool) {
         variantes,
         remboursement,
         resumeAtc,
-        // Branche ATC du produit, surlignée dans le rail.
-        railActif: resumeAtc?.feuille?.code?.[0] ?? null,
+        // Rail réduit au plan : le fil ATC en tête de fiche mène aux classes,
+        // et la recherche ailleurs.
+        rail: null,
         genericGroup,
         documents,
         hasDocuments,
