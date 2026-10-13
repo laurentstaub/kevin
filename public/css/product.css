@@ -1373,3 +1373,23 @@ mark.surligne a,
 a mark.surligne {
   color: var(--sur-surligne);
 }
+
+/* Grand écran : triangle de dépliage suspendu dans la marge. La colonne des
+   numéros ne loge plus que « 4.10 » : texte plus près du numéro, numéros
+   alignés au fer. Sous 52rem, pas de marge où le suspendre. */
+@media (min-width: 52rem) {
+  :root {
+    --num-col: 2.1rem;
+  }
+
+  .rubrique-tete .num,
+  .charniere .num {
+    position: relative;
+  }
+
+  .rubrique-tete .num::before,
+  .charniere .num::before {
+    position: absolute;
+    right: 100%;
+  }
+}
