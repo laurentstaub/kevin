@@ -201,11 +201,15 @@ export function regrouperAlternatives(ref, candidats) {
 
   const memeForme = (cand) => (sansAccent(cand.forme) === sansAccent(ref.forme) ? 0 : 1);
   const parNom = (a, b) => String(a.denomination).localeCompare(String(b.denomination), 'fr');
+  // Le princeps ouvre son groupe : c'est la référence, pas un générique de plus
+  // (« Monuril » se rangeait après douze « Fosfomycine »).
+  const princepsDabord = (cand) => (cand.role === 'Princeps' ? 0 : 1);
 
   return Object.entries(CATEGORIES)
     .map(([cle, { action, detail }]) => {
       const lignes = parCategorie.get(cle)
-        .sort((a, b) => a.tri - b.tri || memeForme(a) - memeForme(b) || parNom(a, b));
+        .sort((a, b) => a.tri - b.tri || princepsDabord(a) - princepsDabord(b)
+          || memeForme(a) - memeForme(b) || parNom(a, b));
       if (lignes.length === 0) return null;
       if (cle !== 'ALTERNATIVE_CLASSE') return { cle, action, detail, lignes };
 

@@ -132,6 +132,19 @@ describe('regroupement pour la fiche', () => {
     voies: 'cutanée', dosage: '0,05 %', denomination: 'DIPROSONE 0,05 %, crème' };
   const spe = (id, denomination, extra) => ({ id, code_cis: id, denomination, voies: 'cutanée', ...extra });
 
+  it('ouvre le groupe générique par le princeps, les génériques ensuite par nom', () => {
+    const monuril = { atc5: 'J01XX01', substances: ['FOSFOMYCINE TROMÉTAMOL'], forme: 'granulés pour solution buvable',
+      voies: 'orale', dosage: '3 g', denomination: 'FOSFOMYCINE ARROW 3 g' };
+    const groupe = (id, denomination, role) => ({ id, code_cis: id, denomination, voies: 'orale', atc5: 'J01XX01',
+      substances: monuril.substances, forme: monuril.forme, dosage: '3 g', meme_groupe_generique: true, role });
+    const [substituables] = regrouperAlternatives(monuril, [
+      groupe('1', 'FOSFOMYCINE ZYDUS 3 g', 'Générique'),
+      groupe('2', 'MONURIL 3 g', 'Princeps'),
+      groupe('3', 'FOSFOMYCINE BIOGARAN 3 g', 'Générique'),
+    ]);
+    assert.deepEqual(substituables.lignes.map((ligne) => ligne.id), ['2', '3', '1']);
+  });
+
   it('range par action, la classe regroupée par molécule et la même forme d’abord', () => {
     const categories = regrouperAlternatives(diprosone, [
       spe('1', 'BETAMETHASONE ARROW 0,05 %, crème', { atc5: 'D07AC01', substances: diprosone.substances,
