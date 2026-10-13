@@ -16,7 +16,9 @@ import { getAlternatives } from '../alternatives.js';
 import { compterOptions } from '../substitution.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
-import { getDelivrance, getRemboursement, delivranceIndisponible } from '../delivrance.js';
+import {
+  getDelivrance, getRemboursement, delivranceIndisponible, remboursementIndisponible,
+} from '../delivrance.js';
 import { signaletique } from '../signaletique.js';
 import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
@@ -368,20 +370,22 @@ export function pageRoutes(pool) {
           console.error('[délivrance] indisponible pour', cis, err.message);
           return delivranceIndisponible();
         }),
-        // Absence normale : seules 672 spécialités sont concernées.
+        // Absence normale (`null`) : seules 672 spécialités sont concernées. Une panne
+        // se signale : `null` laisserait croire la prise en charge sans restriction.
         getRemboursement(pool, cis).catch((err) => {
           console.error('[remboursement] indisponible pour', cis, err.message);
-          return null;
+          return remboursementIndisponible();
         }),
         // Absence normale : 36,5 % des spécialités n'ont pas de classe ATC.
         getClasseAtc(pool, cis).catch((err) => {
           console.error('[atc] classe indisponible pour', cis, err.message);
           return [];
         }),
-        // Absence normale : beaucoup de spécialités n'ont pas d'avis de la Commission.
+        // Absence normale (`[]`) : beaucoup de spécialités n'ont pas d'avis de la
+        // Commission. Panne : `null`, sinon la bande dirait « Pas d'avis HAS ».
         getEvaluation(pool, cis).catch((err) => {
           console.error('[has] évaluation indisponible pour', cis, err.message);
-          return [];
+          return null;
         }),
         // Venu de « Dans les documents » : les mots que la recherche a réellement trouvés.
         typeof req.query.q === 'string' && req.query.q.trim()
@@ -427,7 +431,7 @@ export function pageRoutes(pool) {
       // Plan de la page, dans l'ordre d'affichage : le rail doit suivre la lecture.
       const sections = [
         { id: 'delivrance', label: 'Délivrance' },
-        evaluation.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
+        evaluation?.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
         // Question de comptoir : avant les documents, qui sont la référence.
         alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         hasDocuments && {

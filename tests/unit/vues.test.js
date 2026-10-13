@@ -736,3 +736,31 @@ describe('fiche produit — conditions de délivrance illisibles', () => {
     assert.doesNotMatch(html, /n'ont pas pu être lues/);
   });
 });
+
+describe('fiche produit — pannes visibles bloc fermé', () => {
+  const entete = (html) => html.match(/<summary class="bloc-tete"><h2 class="section-titre">Délivrance[\s\S]*?<\/summary>/)[0];
+  const bdpm = { key: 'bdpm', label: 'Fiche officielle BDPM', url: 'https://bdpm.example/66297965' };
+  const liens = { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [bdpm], scientific: [] };
+
+  it('la panne des conditions se lit dans l’en-tête, même avec des indications remboursées', () => {
+    const html = rendre('product', produit({
+      delivrance: { resume: [], bloque: null, groupes: [], liens: [], indisponible: true },
+      remboursement: REMBOURSEMENT,
+      links: liens,
+    }));
+    assert.match(entete(html), /Conditions indisponibles/);
+    assert.match(entete(html), /Indications remboursées/);
+  });
+
+  it('la panne du remboursement se dit « à vérifier », jamais « non remboursé »', () => {
+    const html = rendre('product', produit({
+      remboursement: { texte: null, taux: null, indisponible: true },
+      links: liens,
+    }));
+    assert.match(entete(html), /Prise en charge à vérifier/);
+    assert.doesNotMatch(entete(html), /Indications remboursées/);
+    assert.match(html, /indications ouvrant droit au remboursement n'ont pas pu être lues/);
+    assert.match(html, /href="https:\/\/bdpm\.example\/66297965"/);
+    assert.doesNotMatch(html, /class="remboursement-texte"/);
+  });
+});

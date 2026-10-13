@@ -97,9 +97,19 @@ const dateFr = (date) => (date ? date.toLocaleDateString('fr-FR') : 'date inconn
 
 /**
  * Résumé pour la bande : « SMR important · ASMR V ».
- * @returns {{ valeur: string, detail: string|null, avis: number }}
+ * @param {object[]|null} avis - sortie de getEvaluation ; `null` : avis illisibles
+ *   (panne), à ne pas confondre avec `[]`, aucun avis
+ * @returns {{ valeur: string, detail: string|null, avis: number, indisponible?: boolean }}
  */
 export function resumerEvaluation(avis) {
+  if (avis === null) {
+    return {
+      valeur: 'Évaluation indisponible',
+      detail: 'Avis de la Commission de la transparence momentanément illisibles : voir la fiche officielle BDPM',
+      avis: 0,
+      indisponible: true,
+    };
+  }
   if (!avis || avis.length === 0) return { valeur: 'Pas d’avis HAS', detail: null, avis: 0 };
 
   const smr = dernier(avis, 'smr');

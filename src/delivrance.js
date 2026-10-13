@@ -157,6 +157,16 @@ const REGLES = [
   },
   { cle: 'classement', portee: 'info', motif: /^liste I$/i, resume: () => mention('Liste I') },
   { cle: 'classement', portee: 'info', motif: /^liste II$/i, resume: () => mention('Liste II') },
+  // Seule mention d'une ordonnance obligatoire pour quelques spécialités hors liste
+  // (Vitaros, vaccin en attente de la « Blue Box ») : sans elle, la bande disait
+  // « Sans ordonnance ». Une liste ou un stupéfiant l'implique : `implicite`, omise alors.
+  {
+    cle: 'classement',
+    portee: 'info',
+    motif: /^m[ée]dicament soumis [àa] prescription m[ée]dicale/i,
+    resume: (correspondance) => mention('Sur ordonnance', capitale(correspondance.input)),
+    implicite: true,
+  },
   {
     cle: 'suivi',
     portee: 'info',
@@ -256,6 +266,7 @@ export function classer(libelles) {
         cle,
         portee: regle.portee,
         ordre: REGLES.indexOf(regle),
+        implicite: Boolean(regle.implicite),
         ...regle.resume(condition.match(regle.motif)),
       };
       if (!resume.has(entree.court)) resume.set(entree.court, entree);
@@ -264,8 +275,11 @@ export function classer(libelles) {
     if (regle?.lien) liens.set(regle.lien.url, regle.lien);
   }
 
-  const mentions = [...resume.values()]
+  const triees = [...resume.values()]
     .sort((a, b) => rang(a.portee) - rang(b.portee) || a.ordre - b.ordre);
+  // « Sur ordonnance » à côté d'une liste I ou d'un stupéfiant : redondant.
+  const listee = triees.some((entree) => entree.cle === 'classement' && !entree.implicite);
+  const mentions = listee ? triees.filter((entree) => !entree.implicite) : triees;
 
   return {
     // Ce qui empêche, puis ce qui conditionne, puis ce qui informe.
@@ -320,7 +334,16 @@ export async function getRemboursement(pool, cis) {
  * spécialité sans condition, que la fiche dit « Sans ordonnance ».
  */
 export function delivranceIndisponible() {
-  return { resume: [], bloque: false, groupes: [], liens: [], indisponible: true };
+  // `bloque` inconnu, et non faux : rien n'est affirmé.
+  return { resume: [], bloque: null, groupes: [], liens: [], indisponible: true };
+}
+
+/**
+ * Indications de remboursement illisibles (panne) : à ne pas confondre avec leur
+ * absence (`null`), qui laisse la prise en charge entière.
+ */
+export function remboursementIndisponible() {
+  return { texte: null, taux: null, indisponible: true };
 }
 
 /** Conditions d'une spécialité, classées. */

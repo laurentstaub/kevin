@@ -111,15 +111,25 @@ block content
       //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
       //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
       - const nbConditions = delivrance.groupes.reduce((total, groupe) => total + groupe.conditions.length, 0)
+      //- `remboursement` : indications lues, `null` sans restriction, `indisponible` en panne.
+      - const rembourse = Boolean(remboursement && !remboursement.indisponible)
+      - const priseEnChargeIllisible = Boolean(remboursement && remboursement.indisponible)
+      - const bdpm = links.official.find((lien) => lien.key === 'bdpm')
       details.bloc#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
-          if delivrance.resume.length > 0 || remboursement
+          if delivrance.resume.length > 0 || remboursement || delivrance.indisponible
             //- Mentions courtes ; le libellé exact BDPM est en infobulle et dans le corps.
             span.mentions
+              //- Pannes d'abord, lisibles bloc fermé : ce qui suit peut être incomplet.
+              if delivrance.indisponible
+                span.mention(title="Les conditions de prescription et de délivrance n'ont pas pu être lues") Conditions indisponibles
+              //- « à vérifier » et non « indisponible », qui se lirait « non remboursé ».
+              if priseEnChargeIllisible
+                span.mention(title="Les indications ouvrant droit au remboursement n'ont pas pu être lues") Prise en charge à vérifier
               //- Prise en charge limitée à certaines indications : condition de
               //- délivrance issue d'une autre table, d'où sa pose ici et non dans `classer`.
-              if remboursement
+              if rembourse
                 span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
               each mention in delivrance.resume
                 //- La mention bloquante se distingue par la graisse, pas la couleur (daltonisme).
@@ -130,14 +140,11 @@ block content
                 )= mention.court
           else if nbConditions > 0
             span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
-          else if delivrance.indisponible
-            span.bloc-compte Conditions indisponibles
           else
             span.bloc-compte Aucune condition enregistrée
 
         //- Panne de lecture : le dire, et renvoyer à la source, plutôt que « aucune liste ».
         if delivrance.indisponible
-          - const bdpm = links.official.find((lien) => lien.key === 'bdpm')
           p.vide
             | Les conditions de prescription et de délivrance n'ont pas pu être lues.
             if bdpm
@@ -145,8 +152,16 @@ block content
               |
               a(href=bdpm.url target="_blank" rel="noopener noreferrer") fiche officielle BDPM
               | .
+        if priseEnChargeIllisible
+          p.vide
+            | Les indications ouvrant droit au remboursement n'ont pas pu être lues : la prise en charge peut être limitée à certaines indications.
+            if bdpm
+              |  Vérifiez-la sur la
+              |
+              a(href=bdpm.url target="_blank" rel="noopener noreferrer") fiche officielle BDPM
+              | .
 
-        if nbConditions > 0 || remboursement
+        if nbConditions > 0 || rembourse
           if nbConditions > 0
             dl.axes
               each groupe in delivrance.groupes
@@ -167,7 +182,7 @@ block content
           //- Texte de l'Assurance Maladie, mot pour mot. Pas de titre « médicament
           //- d'exception » : toutes les restrictions n'en relèvent pas ; Meddispar
           //- n'est donné qu'en référence de la catégorie.
-          if remboursement
+          if rembourse
             .remboursement
               h3.remboursement-titre
                 | Prise en charge

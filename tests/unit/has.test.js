@@ -71,3 +71,14 @@ describe('libellé HAS', () => {
     assert.deepEqual(lignesLibelle(null), { intro: '', items: [] });
   });
 });
+
+describe('resumerEvaluation — panne', () => {
+  // null : avis illisibles ; [] : aucun avis. Les confondre disait « Pas d’avis HAS » en panne.
+  it('distingue la panne de l’absence d’avis', () => {
+    const panne = resumerEvaluation(null);
+    assert.equal(panne.valeur, 'Évaluation indisponible');
+    assert.equal(panne.indisponible, true);
+    assert.equal(panne.avis, 0);
+    assert.equal(resumerEvaluation([]).valeur, 'Pas d’avis HAS');
+  });
+});

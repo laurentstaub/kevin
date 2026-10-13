@@ -89,3 +89,24 @@ describe('fiche produit, base en panne sur les conditions de délivrance', () =>
     assert.doesNotMatch(res.text, /Sans ordonnance/);
   });
 });
+
+describe('fiche produit, base en panne sur la HAS et le remboursement', () => {
+  const pool = {
+    ...poolVide,
+    query: async (sql) => {
+      if (sql.includes('cis_has_smr') || sql.includes('indications_remboursement')) throw new Error('délai dépassé');
+      if (sql.includes('cip_products')) {
+        return { rows: [{ id: '60234100', denomination_medicament: 'X 10 mg, comprimé', commercialise: true, cip_products: [] }] };
+      }
+      return { rows: [] };
+    },
+  };
+
+  it('dit les pannes au lieu de « Pas d’avis HAS » et d’une prise en charge entière', async (contexte) => {
+    contexte.mock.method(console, 'error', () => {});
+    const res = await request(createApp(pool)).get('/product/60234100').expect(200);
+    assert.match(res.text, /Évaluation indisponible/);
+    assert.doesNotMatch(res.text, /Pas d’avis HAS/);
+    assert.match(res.text, /Prise en charge à vérifier/);
+  });
+});

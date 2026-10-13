@@ -83,6 +83,8 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
 
   // Délivrance : classement (Liste I, Stupéfiant…), puis ce qui bloque ou se vérifie.
   const classement = par('classement');
+  // Conditions enregistrées, résumées ou non : seule leur absence vaut « Sans ordonnance ».
+  const conditions = (delivrance?.groupes ?? []).flatMap((groupe) => groupe.conditions);
   if (delivrance?.indisponible) {
     // Panne : ni « Sans ordonnance » ni « bloque », qui dirait « pas en officine ».
     cases.push({
@@ -98,8 +100,16 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
       detail: classement.map((mention) => mention.long).join(' ; '),
       portee: stup ? 'bloque' : null,
     });
-  } else if (mentions.length === 0) {
+  } else if (mentions.length === 0 && conditions.length === 0) {
     cases.push({ cle: 'ordonnance', picto: 'ordonnance', libelle: 'Ordonnance', valeur: 'Sans ordonnance' });
+  } else if (mentions.length === 0) {
+    // Des conditions qu'aucune règle ne résume (« à ne prendre que sur instructions
+    // des autorités compétentes ») : les montrer, ne pas conclure.
+    cases.push({
+      cle: 'ordonnance', picto: 'ordonnance', libelle: 'Ordonnance', valeur: 'Conditions particulières',
+      detail: conditions.map((condition) => condition.brut).join(' ; '),
+      lien: '#delivrance',
+    });
   }
   const duree = [...par('duree'), ...par('fractionnement'), ...par('renouvellement')];
   if (duree.length > 0) {

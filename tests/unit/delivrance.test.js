@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classer, presenter, pourcentage, getRemboursement } from '../../src/delivrance.js';
+import {
+  classer, presenter, pourcentage, getRemboursement, delivranceIndisponible, remboursementIndisponible,
+} from '../../src/delivrance.js';
 
 /** Les libellés sont ceux de dbpm.cis_cpd_bdpm, recopiés tels quels. */
 const MORPHINE = [
@@ -247,5 +249,49 @@ describe('getRemboursement', () => {
     assert.match(texte, /<br \/>remboursée/);
     assert.doesNotMatch(texte, /script|javascript/);
     assert.equal(taux, '65\u00A0%');
+  });
+});
+
+describe('ordonnance hors liste', () => {
+  const courts = (libelles) => classer(libelles).resume.map((mention) => mention.court);
+
+  // Seule mention d'une ordonnance pour Vitaros ou le vaccin Valneva : la bande disait « Sans ordonnance ».
+  it('reconnaît « médicament soumis à prescription médicale » et ses variantes', () => {
+    for (const libelle of [
+      'médicament soumis à prescription médicale',
+      'médicament soumis à prescription médicale restreinte',
+      'médicament soumis à prescription médicale, en attente de notification de la Blue Box',
+    ]) {
+      assert.deepEqual(courts([libelle]), ['Sur ordonnance'], libelle);
+    }
+  });
+
+  it('l’omet à côté d’une liste ou d’un stupéfiant, qui l’impliquent', () => {
+    assert.deepEqual(courts(['liste I', 'médicament soumis à prescription médicale']), ['Liste I']);
+    assert.deepEqual(courts(['stupéfiants', 'médicament soumis à prescription médicale']), ['Stupéfiant']);
+    // Le libellé reste dans le détail du bloc.
+    const { groupes } = classer(['liste I', 'médicament soumis à prescription médicale']);
+    assert.equal(groupes.find((groupe) => groupe.cle === 'classement').conditions.length, 2);
+  });
+
+  it('le garde à côté d’une restriction de prescripteur, qui ne le dit pas', () => {
+    assert.deepEqual(
+      courts(['médicament soumis à prescription médicale', 'prescription réservée aux spécialistes et services DERMATOLOGIE']),
+      ['Spécialiste', 'Sur ordonnance'],
+    );
+  });
+});
+
+describe('pannes', () => {
+  it('la panne des conditions n’affirme rien sur leur portée', () => {
+    const panne = delivranceIndisponible();
+    assert.equal(panne.indisponible, true);
+    assert.equal(panne.bloque, null);
+  });
+
+  it('la panne du remboursement se distingue de l’absence de restriction', () => {
+    const panne = remboursementIndisponible();
+    assert.equal(panne.indisponible, true);
+    assert.ok(panne, 'jamais null : null veut dire « sans restriction »');
   });
 });

@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { signaletique, pictoForme, abregerForme } from '../../src/signaletique.js';
+import { classer } from '../../src/delivrance.js';
+import { resumerEvaluation } from '../../src/has.js';
 
 const produit = (extra = {}) => ({
   denomination_medicament: 'SKENAN L.P. 10 mg, gélule à libération prolongée',
@@ -168,5 +170,43 @@ describe('bande signalétique — conditions illisibles', () => {
     assert.notEqual(ordonnance.portee, 'bloque');
     assert.equal(ordonnance.lien, '#delivrance');
     assert.ok(!cases.some((cas) => cas.valeur === 'Sans ordonnance'));
+  });
+});
+
+describe('bande signalétique — ordonnance d’après les conditions', () => {
+  const ordonnance = (libelles) => valeur(signaletique(produit(), classer(libelles), null, null, false), 'ordonnance');
+
+  it('« Sans ordonnance » seulement sans aucune condition', () => {
+    assert.equal(ordonnance([]), 'Sans ordonnance');
+  });
+
+  // Iodure de potassium : une condition, aucune règle pour la résumer.
+  it('des conditions non résumées ne valent pas « Sans ordonnance »', () => {
+    const cases = signaletique(produit(), classer(['à ne prendre que sur instructions des autorités compétentes']), null, null, false);
+    const cas = cases.find((entree) => entree.cle === 'ordonnance');
+    assert.equal(cas.valeur, 'Conditions particulières');
+    assert.match(cas.detail, /autorités compétentes/);
+    assert.equal(cas.lien, '#delivrance');
+  });
+
+  it('« soumis à prescription médicale » se lit « Sur ordonnance »', () => {
+    assert.equal(ordonnance(['médicament soumis à prescription médicale']), 'Sur ordonnance');
+  });
+
+  it('une liste I suffit, sans « Sur ordonnance » en plus', () => {
+    assert.equal(ordonnance(['liste I', 'médicament soumis à prescription médicale']), 'Liste I');
+  });
+
+  it('une restriction sans classement ne crée pas de case Ordonnance', () => {
+    const cases = signaletique(produit(), classer(['prescription hospitalière']), null, null, false);
+    assert.equal(valeur(cases, 'ordonnance'), undefined);
+    assert.equal(valeur(cases, 'cadre'), 'Prescr. hosp.');
+  });
+});
+
+describe('bande signalétique — évaluation HAS illisible', () => {
+  it('dit « Évaluation indisponible », pas « Pas d’avis HAS »', () => {
+    const cases = signaletique(produit(), classer([]), null, null, false, resumerEvaluation(null));
+    assert.equal(valeur(cases, 'has'), 'Évaluation indisponible');
   });
 });
