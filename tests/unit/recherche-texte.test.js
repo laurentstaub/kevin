@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
   normaliserRubrique, marquer, PLAFOND, PAR_PAGE, APERCU, motsTrouves, composerProximite,
+  composerTitre,
 } from '../../src/recherche-texte.js';
 
 describe('normaliserRubrique', () => {
@@ -226,6 +227,24 @@ describe('proximité des concepts', () => {
 
   it('ne contraint rien pour un seul concept', () => {
     assert.equal(composerProximite(['A']), null);
+  });
+});
+
+describe('titre de rubrique', () => {
+  it('retient un concept au moins dans le titre', () => {
+    assert.equal(composerTitre(['A', '(B || C)']), '(A || (B || C))');
+  });
+
+  it('ne retient rien sans concept', () => {
+    assert.equal(composerTitre([]), "websearch_to_tsquery('french_nu', '')");
+  });
+
+  it('fait passer devant la rubrique dont le titre porte un mot cherché', async () => {
+    const textes = [];
+    const pool = { query: async (texte) => { textes.push(texte); return { rows: [] }; } };
+    await chercherDansDocuments(pool, 'excipients', { limite: 20 });
+    assert.match(textes[0], /AS titre/);
+    assert.match(textes[0], /to_tsvector\('french_nu', coalesce\(s\.libelle, ''\)\) @@ q\.titre THEN -100/);
   });
 });
 

@@ -50,6 +50,19 @@ const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((numero) => `'${numer
   + CASE WHEN s.document_type = 'rcp' THEN 0 ELSE ${PRIORITE.length + 1} END`;
 
 /**
+ * Un mot cherché dans le titre de la rubrique la fait passer devant les
+ * autres : « excipients » mène à 6.1 Liste des excipients plutôt qu'à la
+ * rubrique 2, qui mentionne un excipient à effet notoire. Écart supérieur à
+ * RANG entier : le RCP reste devant la notice, la priorité du comptoir départage.
+ */
+const TITRE = `CASE WHEN to_tsvector('${LANGUE}', coalesce(s.libelle, '')) @@ q.titre THEN -100 ELSE 0 END`;
+
+/** Un concept au moins dans le titre (tous, ce serait rarement). */
+export function composerTitre(concepts) {
+  return concepts.length ? `(${concepts.join(' || ')})` : `websearch_to_tsquery('${LANGUE}', '')`;
+}
+
+/**
  * L'expression tapée, si elle a plusieurs mots : les rubriques qui la portent
  * dans l'ordre passent devant. Null pour un mot seul, une saisie entre
  * guillemets (déjà une locution) ou avec opérateur.
@@ -280,7 +293,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   const exacte = expressionExacte(saisie);
 
   const { rows } = await pool.query(
-    `WITH q AS (SELECT ${tq.sql} AS tq${proche ? `, ${proche} AS proche` : ''}),
+    `WITH q AS (SELECT ${tq.sql} AS tq, ${composerTitre(tq.concepts)} AS titre${proche ? `, ${proche} AS proche` : ''}),
      ${molecule ? `-- Médicament : chaque mot du filtre figure dans une substance active ou
      -- dans la dénomination (« acide folique », « paracetamol codeine »).
      cis_molecule AS MATERIALIZED (
@@ -301,7 +314,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               ts_rank_cd(${VECTEUR}, q.tq) AS score,
               CASE WHEN $4::text IS NULL THEN true
                    ELSE ${VECTEUR} @@ phraseto_tsquery('${LANGUE}', $4::text) END AS exact,
-              ${RANG} AS rang
+              ${RANG} + ${TITRE} AS rang
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          -- Plusieurs concepts : rapprochés, pas dispersés dans la rubrique.
