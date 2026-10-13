@@ -90,7 +90,9 @@
   --barre-h: 3.75rem;
   /* Une seule largeur, tout en dérive. Ligne à 87 signes (au-delà de 75),
      compensée par l'interligne ; filet et texte s'arrêtent au même endroit. */
-  --gouttiere: 2.9rem;
+  /* Colonne des numéros de rubrique : triangle de dépliage + « 4.10 ». */
+  --num-col: 3.2rem;
+  --gouttiere: calc(var(--num-col) + 0.5rem);
   --colonne: 46rem;
 
   /* Dérivées : la mesure ne peut pas diverger du cadre. */

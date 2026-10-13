@@ -551,7 +551,7 @@ span.onglet {
 
 .rubrique-tete {
   display: grid;
-  grid-template-columns: 2.4rem 1fr;
+  grid-template-columns: var(--num-col) 1fr;
   gap: 0.5rem;
   align-items: baseline;
   padding: 0.35rem 0;
@@ -630,7 +630,7 @@ span.onglet {
 /* Charnière (« 4. » avant « 4.1 ») : même filet et même rythme que les rubriques. */
 .charniere {
   display: grid;
-  grid-template-columns: 2.4rem 1fr;
+  grid-template-columns: var(--num-col) 1fr;
   gap: 0.5rem;
   align-items: baseline;
   font-family: var(--font-head);
@@ -649,7 +649,7 @@ span.onglet {
 
 .charniere-bascule {
   display: grid;
-  grid-template-columns: 2.4rem 1fr;
+  grid-template-columns: var(--num-col) 1fr;
   gap: 0.5rem;
   align-items: baseline;
   width: 100%;
@@ -993,7 +993,7 @@ span.onglet {
 
 @media (max-width: 40rem) {
   .rubrique-tete {
-    grid-template-columns: 2rem 1fr;
+    grid-template-columns: 2.8rem 1fr;
   }
 
   .rubrique-corps {
@@ -1014,7 +1014,7 @@ span.onglet {
 /* Même gouttière que le plan pour la numérotation. */
 .document-corps .doc-heading {
   display: grid;
-  grid-template-columns: 2.4rem 1fr;
+  grid-template-columns: var(--num-col) 1fr;
   gap: 0.5rem;
   align-items: baseline;
   font-family: var(--font-body);
