@@ -1315,8 +1315,8 @@ a.point:focus-visible {
 }
 
 .apercu-texte mark {
-  background: var(--accent-pale);
-  color: var(--ink);
+  background: var(--surligne);
+  color: var(--sur-surligne);
   padding: 0 0.15em;
 }
 
@@ -1337,8 +1337,8 @@ a.point:focus-visible {
 
 /* Terme trouvé (ts_headline) : aplat pâle plutôt que couleur de texte. */
 .trouvaille-extrait mark {
-  background: var(--accent-pale);
-  color: var(--ink);
+  background: var(--surligne);
+  color: var(--sur-surligne);
   padding: 0 0.15em;
 }
 

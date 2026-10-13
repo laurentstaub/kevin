@@ -46,6 +46,11 @@
   /* État sélectionné : doit se distinguer de --bg-tint. Encre 14,31, accent 6,64. */
   --accent-pale: #e4f0e6;
   --accent-pale: light-dark(#e4f0e6, #1a2a1e);
+  /* Surlignage des termes trouvés : un vrai stabilo, lisible sur un écran
+     médiocre en plein soleil. Encre sombre dessus dans les deux schémas (≈ 13:1). */
+  --surligne: #c8f560;
+  --surligne: light-dark(#c8f560, #9aec3a);
+  --sur-surligne: #0a100c;
 
   /* Typographie */
   --font-head: Georgia, 'Times New Roman', serif;

@@ -1301,7 +1301,14 @@ span.onglet {
 
 /* Requête venue de la recherche dans les documents. */
 mark.surligne {
-  background: var(--accent-pale);
-  color: inherit;
+  background: var(--surligne);
+  color: var(--sur-surligne);
   padding: 0 0.1em;
+  border-radius: 2px;
+}
+
+/* Un lien surligné garde son soulignement mais prend l'encre du stabilo. */
+mark.surligne a,
+a mark.surligne {
+  color: var(--sur-surligne);
 }
