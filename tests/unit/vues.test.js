@@ -568,6 +568,7 @@ describe('rendu des gabarits', () => {
   it('range les substituts par action au comptoir', () => {
     const html = rendre('product', produit({
       genericGroup: 'CICLOPIROX 1 % - MYCOSTER 1 %, crème',
+      optionsAlternatives: 4,
       alternatives: { groupe: 'CICLOPIROX', categories: [
         { cle: 'SUBSTITUABLE', action: 'Génériques du groupe', detail: 'De droit', lignes: [
           { id: '1', denomination: 'MYCOSTER 1 %, crème', role: 'Princeps' },

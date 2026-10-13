@@ -86,6 +86,24 @@ describe('bande signalétique', () => {
     assert.equal(cles(signaletique(produit({ type_generique: null }), { resume: [] }, null, null, false)).includes('generique'), false);
   });
 
+  // La bande reste visible partout : porte d'entrée du bloc Alternatives.
+  it('compte les alternatives et mène au bloc', () => {
+    const cases = signaletique(produit(), { resume: [] }, null, 'Morphine 10 mg', false, null, 14);
+    const generique = cases.find((cas) => cas.cle === 'generique');
+    assert.equal(generique.valeur, 'Princeps · 14\u00a0options');
+    assert.equal(generique.lien, '#alternatives');
+    const une = signaletique(produit({ type_generique: 1 }), { resume: [] }, null, null, false, null, 1);
+    assert.equal(valeur(une, 'generique'), 'Générique · 1\u00a0option');
+  });
+
+  it('hors groupe générique, une case Alternatives s’il y en a', () => {
+    const cases = signaletique(produit({ type_generique: null }), { resume: [] }, null, null, false, null, 6);
+    assert.equal(valeur(cases, 'generique'), 'Alternatives · 6');
+    assert.equal(cases.find((cas) => cas.cle === 'generique').lien, '#alternatives');
+    const sans = signaletique(produit(), { resume: [] }, null, null, false, null, 0);
+    assert.equal(sans.find((cas) => cas.cle === 'generique').lien, null);
+  });
+
   it('abrège la forme, le libellé complet en détail, et choisit son picto', () => {
     const cases = signaletique(produit(), { resume: [] }, null, null, false);
     const forme = cases.find((cas) => cas.cle === 'forme');

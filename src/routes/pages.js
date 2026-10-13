@@ -13,6 +13,7 @@ import { groupeBiologique, substitutionBiosimilaires } from '../biosimilaires.js
 import { searchMedications } from '../search.js';
 import { getProduct, getVariantes } from '../products.js';
 import { getAlternatives } from '../alternatives.js';
+import { compterOptions } from '../substitution.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import { getDelivrance, getRemboursement } from '../delivrance.js';
@@ -427,24 +428,27 @@ export function pageRoutes(pool) {
       const sections = [
         { id: 'delivrance', label: 'Délivrance' },
         evaluation.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
+        // Question de comptoir : avant les documents, qui sont la référence.
+        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
           // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
           children: [],
         },
-        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
 
       const resumeAtc = resumerClasse(classeAtc);
       const genericGroup = alternatives.groupe;
+      const optionsAlternatives = compterOptions(alternatives.categories);
 
       res.render('product', {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
-          resumerEvaluation(evaluation)),
+          resumerEvaluation(evaluation), optionsAlternatives),
+        optionsAlternatives,
         evaluation,
         motsTrouves: trouves,
         importation,

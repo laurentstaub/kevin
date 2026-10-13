@@ -217,6 +217,65 @@ block content
               each avis in evaluation.slice(1)
                 +avisHas(avis)
 
+      //- Alternatives : les candidats classés par action au comptoir (substitution.js,
+      //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
+      //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
+      //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
+      if alternatives && alternatives.categories.length > 0
+        - const options = optionsAlternatives
+        details.bloc#alternatives
+          summary.bloc-tete
+            h2.section-titre Alternatives
+            span.bloc-compte #{options} option#{options > 1 ? 's' : ''}
+          if genericGroup
+            p.section-meta
+              | Groupe générique · #{genericGroup} —
+              |
+              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire de l'ANSM
+          each cat in alternatives.categories
+            if cat.cle === 'BLOQUE'
+              //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
+              details.subst-ecartes
+                summary.formes-plus #{cat.lignes.length} écarté#{cat.lignes.length > 1 ? 's' : ''}, avec la raison
+                table.t-substitution
+                  caption.sr-only Spécialités écartées et raison
+                  tbody
+                    each item in cat.lignes
+                      tr
+                        td
+                          a(href=`/product/${item.id}`)= specialite(item.denomination)
+                        td.subst-motif= item.motif
+            else
+              section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
+                h3.subst-action= cat.action
+                p.subst-detail= cat.detail
+                if cat.molecules
+                  //- Une molécule par ligne : on cherche une alternative disponible.
+                  ul.subst-molecules
+                    each mol in cat.molecules
+                      li
+                        span.subst-molecule= dci(mol.nom)
+                        if mol.atc5
+                          span.subst-atc= mol.atc5
+                        span.subst-specialites
+                          each sp, i in mol.specialites
+                            if i > 0
+                              span.sep
+                            a(href=`/product/${sp.id}`)= specialite(sp.denomination)
+                else
+                  table.t-substitution
+                    caption.sr-only= cat.action
+                    tbody
+                      each item in cat.lignes
+                        tr
+                          td
+                            a(href=`/product/${item.id}`)= specialite(item.denomination)
+                          if cat.cle === 'SUBSTITUABLE'
+                            td
+                              span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
+                          else
+                            td.subst-motif= item.motif
+
       //- Contenu principal, jamais replié : le document lu sert de titre
       //- (« RCP »), les autres documents en onglets au même niveau.
       if hasDocuments
@@ -283,65 +342,6 @@ block content
               else if doc.url
                 p.doc-externe
                   | Ce document n'est disponible qu'au format PDF sur le site officiel.
-
-      //- Alternatives : les candidats classés par action au comptoir (substitution.js,
-      //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
-      //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
-      //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
-      if alternatives && alternatives.categories.length > 0
-        - const options = alternatives.categories.filter((cat) => cat.cle !== 'BLOQUE').reduce((total, cat) => total + (cat.total ?? cat.lignes.length), 0)
-        details.bloc#alternatives
-          summary.bloc-tete
-            h2.section-titre Alternatives
-            span.bloc-compte #{options} option#{options > 1 ? 's' : ''}
-          if genericGroup
-            p.section-meta
-              | Groupe générique · #{genericGroup} —
-              |
-              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire de l'ANSM
-          each cat in alternatives.categories
-            if cat.cle === 'BLOQUE'
-              //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
-              details.subst-ecartes
-                summary.formes-plus #{cat.lignes.length} écarté#{cat.lignes.length > 1 ? 's' : ''}, avec la raison
-                table.t-substitution
-                  caption.sr-only Spécialités écartées et raison
-                  tbody
-                    each item in cat.lignes
-                      tr
-                        td
-                          a(href=`/product/${item.id}`)= specialite(item.denomination)
-                        td.subst-motif= item.motif
-            else
-              section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
-                h3.subst-action= cat.action
-                p.subst-detail= cat.detail
-                if cat.molecules
-                  //- Une molécule par ligne : on cherche une alternative disponible.
-                  ul.subst-molecules
-                    each mol in cat.molecules
-                      li
-                        span.subst-molecule= dci(mol.nom)
-                        if mol.atc5
-                          span.subst-atc= mol.atc5
-                        span.subst-specialites
-                          each sp, i in mol.specialites
-                            if i > 0
-                              span.sep
-                            a(href=`/product/${sp.id}`)= specialite(sp.denomination)
-                else
-                  table.t-substitution
-                    caption.sr-only= cat.action
-                    tbody
-                      each item in cat.lignes
-                        tr
-                          td
-                            a(href=`/product/${item.id}`)= specialite(item.denomination)
-                          if cat.cle === 'SUBSTITUABLE'
-                            td
-                              span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
-                          else
-                            td.subst-motif= item.motif
 
       details.bloc#references
         summary.bloc-tete

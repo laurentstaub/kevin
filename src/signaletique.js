@@ -71,10 +71,11 @@ const taux = (valeur) => {
  * @param {string|null} groupe     libellé du groupe générique
  * @param {boolean} importation
  * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
+ * @param {number} options         alternatives proposables (substitution.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null) {
+export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -146,11 +147,22 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     });
   }
 
-  // Place dans le groupe générique.
+  // Place dans le groupe générique, et porte d'entrée des alternatives : la
+  // bande reste visible partout, le bloc est loin sous le titre.
   const type = product.type_generique === null || product.type_generique === undefined
     ? null : GENERIQUE[Number(product.type_generique)];
+  const compte = options > 0 ? `${options}\u00a0option${options > 1 ? 's' : ''}` : null;
+  const lien = compte ? '#alternatives' : null;
   if (type) {
-    cases.push({ cle: 'generique', picto: 'generique', libelle: 'Groupe', valeur: type, detail: groupe });
+    cases.push({
+      cle: 'generique', picto: 'generique', libelle: 'Groupe',
+      valeur: compte ? `${type} · ${compte}` : type, detail: groupe, lien,
+    });
+  } else if (compte) {
+    cases.push({
+      cle: 'generique', picto: 'generique', libelle: 'Alternatives',
+      valeur: `Alternatives · ${options}`, detail: 'Hors groupe générique', lien,
+    });
   }
   if (importation) {
     cases.push({ cle: 'importation', picto: 'importation', libelle: 'Origine', valeur: 'Importation parallèle' });

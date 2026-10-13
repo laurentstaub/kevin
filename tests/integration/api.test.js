@@ -250,17 +250,18 @@ describe('API', { skip }, () => {
       assert.doesNotMatch(res.text, /class="formes"/);
     });
 
-    it('place Alternatives après Documents, dans la page comme dans le rail', async () => {
+    it('place Alternatives avant Documents, dans la page comme dans le rail', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
 
-      const blocs = [...res.text.matchAll(/<details class="bloc" id="(\w+)"/g)].map((correspondance) => correspondance[1]);
+      const blocs = [...res.text.matchAll(/class="bloc[^"]*" id="(\w+)"|id="(\w+)" class="bloc/g)]
+        .map((correspondance) => correspondance[1] ?? correspondance[2]);
       const rail = [...res.text.matchAll(/<a class="rail-lien" href="#(\w+)">/g)].map((correspondance) => correspondance[1]);
 
       for (const ordre of [blocs, rail]) {
         const documents = ordre.indexOf('documents');
         const alternatives = ordre.indexOf('alternatives');
         if (documents !== -1 && alternatives !== -1) {
-          assert.ok(documents < alternatives, `attendu documents avant alternatives : ${ordre.join(' → ')}`);
+          assert.ok(alternatives < documents, `attendu alternatives avant documents : ${ordre.join(' → ')}`);
         }
       }
     });

@@ -223,3 +223,10 @@ export function regrouperAlternatives(ref, candidats) {
     })
     .filter(Boolean);
 }
+
+/** Spécialités proposables : toutes les catégories sauf les écartées. */
+export function compterOptions(categories) {
+  return (categories ?? [])
+    .filter((categorie) => categorie.cle !== 'BLOQUE')
+    .reduce((total, categorie) => total + (categorie.total ?? categorie.lignes?.length ?? 0), 0);
+}
