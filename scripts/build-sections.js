@@ -123,8 +123,8 @@ while (restant > 0) {
       for (const section of sections) {
         await client.query(
           `INSERT INTO docs.rcp_sections
-             (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+             (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte, source)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bdpm_html')`,
           [
             doc.code_cis, doc.document_type, section.position, section.numero,
             section.libelle, section.profondeur, section.canonical, section.html, section.texte,
@@ -132,16 +132,19 @@ while (restant > 0) {
         );
       }
 
+      // Provenance réécrite à chaque fois : un document repris en HTML après une
+      // reconstruction depuis le PDF ne doit plus s'annoncer « reconstruit du PDF ».
       await client.query(
         `INSERT INTO docs.document_parse
-           (code_cis, document_type, source_hash, parser_version, section_count, statut, manquantes, parsed_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7, now())
+           (code_cis, document_type, source_hash, parser_version, section_count, statut, manquantes, source, parsed_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'bdpm_html', now())
          ON CONFLICT (code_cis, document_type) DO UPDATE SET
            source_hash = excluded.source_hash,
            parser_version = excluded.parser_version,
            section_count = excluded.section_count,
            statut = excluded.statut,
            manquantes = excluded.manquantes,
+           source = excluded.source,
            parsed_at = now()`,
         [doc.code_cis, doc.document_type, hash, PARSER_VERSION, sections.length, statut, manquantes],
       );

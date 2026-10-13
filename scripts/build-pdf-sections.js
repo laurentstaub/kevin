@@ -100,8 +100,16 @@ console.log(`découpeur v${PARSER_VERSION}${SEC ? ' — à blanc' : ''}\n`);
 
 const bilan = {
   sautes: 0, traites: 0, ok: 0, partiel: 0, echec: 0, retires: 0,
-  rubriques: 0, pages: 0, telecharges: 0, mutualises: 0, freine: 0,
+  rubriques: 0, pages: 0, telecharges: 0, mutualises: 0, freine: 0, html: 0,
 };
+
+// Le texte officiel l'emporte : un RCP ou une notice que la BDPM publie en HTML
+// n'est jamais reconstruit du PDF (sinon les deux découpeurs le réécrivent tour à tour).
+const { rows: publiesEnHtml } = await pool.query(
+  `SELECT code_cis || '|' || document_type AS cle FROM dbpm.cis_documents
+   WHERE document_type IN ('rcp', 'notice') AND coalesce(html_content, '') <> ''`,
+);
+const enHtml = new Set(publiesEnHtml.map((ligne) => ligne.cle));
 const soucis = [];
 
 // -------------------------------------------------- résolution du lien réel
@@ -315,6 +323,10 @@ for (const cible of cibles) {
     await client.query('BEGIN');
 
     for (const resultat of resultats) {
+      if (enHtml.has(`${cible.code_cis}|${resultat.type}`)) {
+        bilan.html += 1;
+        continue;
+      }
       await client.query(
         'DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2',
         [cible.code_cis, resultat.type],
@@ -383,6 +395,7 @@ console.log(`  RCP partiel             ${nb(bilan.partiel)}  (${pct(bilan.partie
 console.log(`  échec                   ${nb(bilan.echec)}`);
 console.log('');
 console.log(`  rubriques écrites       ${nb(bilan.rubriques)}`);
+if (bilan.html > 0) console.log(`  laissés au HTML BDPM    ${nb(bilan.html)} document(s), publiés en HTML`);
 
 if (soucis.length > 0) {
   console.log(`\n  ${soucis.length} document(s) à regarder (20 premiers) :`);
