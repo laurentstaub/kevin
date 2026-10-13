@@ -130,8 +130,21 @@ block content
                 )= mention.court
           else if nbConditions > 0
             span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
+          else if delivrance.indisponible
+            span.bloc-compte Conditions indisponibles
           else
             span.bloc-compte Aucune condition enregistrée
+
+        //- Panne de lecture : le dire, et renvoyer à la source, plutôt que « aucune liste ».
+        if delivrance.indisponible
+          - const bdpm = links.official.find((lien) => lien.key === 'bdpm')
+          p.vide
+            | Les conditions de prescription et de délivrance n'ont pas pu être lues.
+            if bdpm
+              |  Vérifiez-les sur la
+              |
+              a(href=bdpm.url target="_blank" rel="noopener noreferrer") fiche officielle BDPM
+              | .
 
         if nbConditions > 0 || remboursement
           if nbConditions > 0
@@ -172,7 +185,7 @@ block content
               each lien in delivrance.liens
                 li
                   a(href=lien.url target="_blank" rel="noopener noreferrer")= lien.label
-        else
+        else if !delivrance.indisponible
           p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
 
       //- Évaluation HAS : avis de la Commission de la transparence, du plus récent

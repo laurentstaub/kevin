@@ -158,3 +158,15 @@ describe('forme abrégée', () => {
     assert.equal(abregerForme(''), '');
   });
 });
+
+describe('bande signalétique — conditions illisibles', () => {
+  // Une panne ne doit jamais se lire « Sans ordonnance ».
+  it('dit « Conditions indisponibles », sans aplat bloquant, et mène au bloc', () => {
+    const cases = signaletique(produit(), { resume: [], groupes: [], liens: [], indisponible: true }, null, null, false);
+    const ordonnance = cases.find((cas) => cas.cle === 'ordonnance');
+    assert.equal(ordonnance.valeur, 'Conditions indisponibles');
+    assert.notEqual(ordonnance.portee, 'bloque');
+    assert.equal(ordonnance.lien, '#delivrance');
+    assert.ok(!cases.some((cas) => cas.valeur === 'Sans ordonnance'));
+  });
+});

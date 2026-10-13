@@ -83,7 +83,14 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
 
   // Délivrance : classement (Liste I, Stupéfiant…), puis ce qui bloque ou se vérifie.
   const classement = par('classement');
-  if (classement.length > 0) {
+  if (delivrance?.indisponible) {
+    // Panne : ni « Sans ordonnance » ni « bloque », qui dirait « pas en officine ».
+    cases.push({
+      cle: 'ordonnance', picto: 'ordonnance', libelle: 'Ordonnance', valeur: 'Conditions indisponibles',
+      detail: 'Conditions de prescription et de délivrance momentanément illisibles : vérifier sur la fiche officielle BDPM',
+      lien: '#delivrance',
+    });
+  } else if (classement.length > 0) {
     const stup = classement.some((mention) => /stup/i.test(mention.court));
     cases.push({
       cle: 'ordonnance', picto: stup ? 'cadenas' : 'ordonnance', libelle: 'Ordonnance',

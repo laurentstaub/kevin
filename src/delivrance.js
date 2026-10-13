@@ -315,6 +315,14 @@ export async function getRemboursement(pool, cis) {
   return ligne ? { texte: sanitizeDocument(ligne.texte), taux: pourcentage(ligne.taux) } : null;
 }
 
+/**
+ * Conditions illisibles (panne de la base) : à ne jamais confondre avec une
+ * spécialité sans condition, que la fiche dit « Sans ordonnance ».
+ */
+export function delivranceIndisponible() {
+  return { resume: [], bloque: false, groupes: [], liens: [], indisponible: true };
+}
+
 /** Conditions d'une spécialité, classées. */
 export async function getDelivrance(pool, cis) {
   const { rows } = await pool.query(

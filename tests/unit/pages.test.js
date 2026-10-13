@@ -68,3 +68,24 @@ describe('question que l’IA ne sait pas interpréter', () => {
     assert.equal(seconde.status, 200, `la redirection a mené à ${seconde.headers.location}`);
   });
 });
+
+describe('fiche produit, base en panne sur les conditions de délivrance', () => {
+  // Une spécialité qui existe ; seule la table des conditions échoue.
+  const pool = {
+    ...poolVide,
+    query: async (sql) => {
+      if (sql.includes('cis_cpd_bdpm')) throw new Error('délai dépassé');
+      if (sql.includes('cip_products')) {
+        return { rows: [{ id: '60234100', denomination_medicament: 'X 10 mg, comprimé', commercialise: true, cip_products: [] }] };
+      }
+      return { rows: [] };
+    },
+  };
+
+  it('ne dit pas « Sans ordonnance »', async (contexte) => {
+    contexte.mock.method(console, 'error', () => {});
+    const res = await request(createApp(pool)).get('/product/60234100').expect(200);
+    assert.match(res.text, /Conditions indisponibles/);
+    assert.doesNotMatch(res.text, /Sans ordonnance/);
+  });
+});

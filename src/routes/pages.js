@@ -16,7 +16,7 @@ import { getAlternatives } from '../alternatives.js';
 import { compterOptions } from '../substitution.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
-import { getDelivrance, getRemboursement } from '../delivrance.js';
+import { getDelivrance, getRemboursement, delivranceIndisponible } from '../delivrance.js';
 import { signaletique } from '../signaletique.js';
 import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
@@ -364,9 +364,9 @@ export function pageRoutes(pool) {
           return new Map();
         }),
         getDelivrance(pool, cis).catch((err) => {
-          // Classement vide plutôt qu'inventé.
+          // Panne signalée comme telle : une liste vide se lirait « Sans ordonnance ».
           console.error('[délivrance] indisponible pour', cis, err.message);
-          return { resume: [], groupes: [], liens: [] };
+          return delivranceIndisponible();
         }),
         // Absence normale : seules 672 spécialités sont concernées.
         getRemboursement(pool, cis).catch((err) => {
@@ -468,7 +468,8 @@ export function pageRoutes(pool) {
         delivrance,
         // Meddispar ne recense que les spécialités à dispensation particulière.
         links: productLinks(product, {
-          dispensationParticuliere: delivrance.groupes.length > 0,
+          // Conditions inconnues : le lien reste proposé, faute de savoir.
+          dispensationParticuliere: delivrance.indisponible || delivrance.groupes.length > 0,
         }),
         sections,
       });

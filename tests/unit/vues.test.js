@@ -713,3 +713,26 @@ describe('page de classe', () => {
     assert.doesNotMatch(page({ chapeau: { ...chapeau, meta: { auteur: 'A', relu: '2026-09-28' } } }), /Brouillon/);
   });
 });
+
+describe('fiche produit — conditions de délivrance illisibles', () => {
+  const indisponible = { resume: [], bloque: false, groupes: [], liens: [], indisponible: true };
+  const bdpm = { key: 'bdpm', label: 'Fiche officielle BDPM', url: 'https://bdpm.example/66297965' };
+
+  it('le dit et renvoie à la BDPM, sans affirmer « aucune liste »', () => {
+    const html = rendre('product', produit({
+      delivrance: indisponible,
+      links: { ...productLinks({ id: '1', denomination_medicament: 'X' }), official: [bdpm], scientific: [] },
+    }));
+    assert.match(html, /Conditions indisponibles/);
+    assert.match(html, /n'ont pas pu être lues/);
+    assert.match(html, /href="https:\/\/bdpm\.example\/66297965"/);
+    assert.doesNotMatch(html, /Aucune condition enregistrée/);
+    assert.doesNotMatch(html, /aucune liste de substances vénéneuses/);
+  });
+
+  it('sans panne, l’absence de condition reste dite comme avant', () => {
+    const html = rendre('product', produit());
+    assert.match(html, /Aucune condition enregistrée/);
+    assert.doesNotMatch(html, /n'ont pas pu être lues/);
+  });
+});
