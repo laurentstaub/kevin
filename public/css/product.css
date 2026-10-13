@@ -259,6 +259,16 @@ a.signal-valeur {
   white-space: nowrap;
 }
 
+.avis-items {
+  font-family: var(--font-lecture);
+  margin: -0.25em 0 0.75em;
+  padding-left: 1.2em;
+}
+
+.avis-items li + li {
+  margin-top: 0.3em;
+}
+
 .avis-anterieurs {
   margin-top: var(--sp-2);
 }

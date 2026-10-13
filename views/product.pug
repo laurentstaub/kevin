@@ -180,6 +180,17 @@ block content
       //- pour mot ; l'avis complet est seulement lié.
       if evaluation && evaluation.length > 0
         - const ROMAIN = /^(?:I{1,3}|IV|V)$/
+        //- Libellé découpé en phrase d'introduction et énumération (has.js).
+        mixin libelleHas(valeur, lignes)
+          p.avis-ligne
+            strong.avis-valeur= valeur
+            if lignes && lignes.intro
+              |  — #{lignes.intro}
+          if lignes && lignes.items.length > 0
+            ul.avis-items
+              each item in lignes.items
+                li= item
+
         mixin avisHas(avis)
           .avis-has
             p.avis-tete
@@ -191,15 +202,9 @@ block content
                 span.sep
                 a(href=avis.lien target="_blank" rel="noopener noreferrer") Avis de la Commission
             each ligne in avis.smr
-              p.avis-ligne
-                strong.avis-valeur SMR #{ligne.valeur.toLowerCase()}
-                if ligne.libelle
-                  |  — #{ligne.libelle}
+              +libelleHas(`SMR ${ligne.valeur.toLowerCase()}`, ligne.lignes)
             each ligne in avis.asmr
-              p.avis-ligne
-                strong.avis-valeur= ROMAIN.test(ligne.valeur) ? `ASMR ${ligne.valeur}` : ligne.valeur
-                if ligne.libelle
-                  |  — #{ligne.libelle}
+              +libelleHas(ROMAIN.test(ligne.valeur) ? `ASMR ${ligne.valeur}` : ligne.valeur, ligne.lignes)
 
         details.bloc#evaluation
           summary.bloc-tete

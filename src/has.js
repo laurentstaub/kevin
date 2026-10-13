@@ -9,6 +9,39 @@
 
 const ROMAIN = /^(?:I{1,3}|IV|V)$/;
 
+/**
+ * Caractères de contrôle C1 laissés par un texte Windows-1252 lu en Latin-1 :
+ * « d\u0092origine » s'affichait « d  origine ». Rendus à leur caractère ;
+ * les autres contrôles sont retirés.
+ */
+const C1 = {
+  0x80: '€', 0x85: '…', 0x8c: 'Œ', 0x91: '‘', 0x92: '’', 0x93: '“', 0x94: '”',
+  0x95: '•', 0x96: '–', 0x97: '—', 0x9c: 'œ',
+};
+
+/**
+ * Libellé HAS → phrase d'introduction et éléments d'énumération. La source
+ * mêle des « <br> » littéraux (affichés tels quels), des puces et un « ; »
+ * final de séparation entre libellés.
+ * @returns {{ intro: string, items: string[] }}
+ */
+export function lignesLibelle(libelle) {
+  const lignes = String(libelle ?? '')
+    .replace(/[\u0080-\u009f]/g, (car) => C1[car.charCodeAt(0)] ?? '')
+    // Caractère de remplacement entre deux lettres : l'apostrophe perdue au chargement.
+    .replace(/(?<=\p{L})\uFFFD(?=\p{L})/gu, '’')
+    .split(/<br\s*\/?>|\r?\n/i)
+    .map((ligne) => ligne
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/^[\s\-–•·]+/, '')
+      .replace(/[\s;,]+$/, '')
+      .trim())
+    .filter(Boolean);
+  return { intro: lignes[0] ?? '', items: lignes.slice(1) };
+}
+
 /** Avis d'une spécialité, du plus récent au plus ancien, SMR et ASMR regroupés par dossier. */
 export async function getEvaluation(pool, cis) {
   const { rows } = await pool.query(
@@ -43,7 +76,11 @@ export function regrouperAvis(lignes) {
         dossier: ligne.code_dossier_has, date, motif: ligne.motif_evaluation, lien: ligne.lien ?? null, smr: [], asmr: [],
       });
     }
-    avis.get(cle)[ligne.nature].push({ valeur: String(ligne.valeur ?? '').trim(), libelle: ligne.libelle ?? '' });
+    avis.get(cle)[ligne.nature].push({
+      valeur: String(ligne.valeur ?? '').trim(),
+      libelle: ligne.libelle ?? '',
+      lignes: lignesLibelle(ligne.libelle),
+    });
   }
   return [...avis.values()];
 }

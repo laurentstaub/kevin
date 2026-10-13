@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { regrouperAvis, resumerEvaluation } from '../../src/has.js';
+import { regrouperAvis, resumerEvaluation, lignesLibelle } from '../../src/has.js';
 
 const ligne = (nature, dossier, date, valeur, motif = 'Inscription (CT)') => ({
   nature, code_dossier_has: dossier, motif_evaluation: motif, date_avis: new Date(date), valeur, libelle: `${nature} ${valeur}`, lien: null,
@@ -50,5 +50,24 @@ describe('avis HAS', () => {
 
   it('sans avis : la case reste, sans lien', () => {
     assert.deepEqual(resumerEvaluation([]), { valeur: 'Pas d’avis HAS', detail: null, avis: 0 });
+  });
+});
+
+describe('libellé HAS', () => {
+  it('découpe sur les <br> littéraux, rend l’apostrophe, retire le « ; » final', () => {
+    const source = 'Le SMR est important dans : <br> la prise en charge des douleurs d\u0092origine cancéreuse,<br>  la lombalgie chronique. ;';
+    assert.deepEqual(lignesLibelle(source), {
+      intro: 'Le SMR est important dans :',
+      items: ['la prise en charge des douleurs d’origine cancéreuse', 'la lombalgie chronique.'],
+    });
+  });
+
+  it('rend aussi l’apostrophe perdue en caractère de remplacement', () => {
+    assert.equal(lignesLibelle('dans l\uFFFDarthrose').intro, 'dans l’arthrose');
+  });
+
+  it('laisse un libellé simple sur une ligne', () => {
+    assert.deepEqual(lignesLibelle('Pas d’amélioration (ASMR V). ;'), { intro: 'Pas d’amélioration (ASMR V).', items: [] });
+    assert.deepEqual(lignesLibelle(null), { intro: '', items: [] });
   });
 });

@@ -215,8 +215,8 @@ describe('rendu des gabarits', () => {
   it('le bloc Évaluation HAS montre le dernier avis et replie les autres', () => {
     const avis = (date, motif, smr, asmr) => ({
       dossier: 'CT-1', date: new Date(date), motif, lien: 'https://www.has-sante.fr/jcms/p_1',
-      smr: [{ valeur: smr, libelle: 'Le service médical rendu est important.' }],
-      asmr: asmr ? [{ valeur: asmr, libelle: 'Pas d’amélioration.' }] : [],
+      smr: [{ valeur: smr, lignes: { intro: 'Le service médical rendu est important.', items: ['dans a', 'dans b'] } }],
+      asmr: asmr ? [{ valeur: asmr, lignes: { intro: 'Pas d’amélioration.', items: [] } }] : [],
     });
     const html = rendre('product', produit({
       evaluation: [avis('2026-03-04', 'Renouvellement d’inscription (CT)', 'Important', 'V'),
@@ -226,6 +226,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<span class="bloc-compte">2 avis<\/span>/);
     assert.match(html, /<strong class="avis-valeur">SMR important<\/strong> — Le service médical rendu est important\./);
     assert.match(html, /<strong class="avis-valeur">ASMR V<\/strong>/);
+    assert.match(html, /<ul class="avis-items"><li>dans a<\/li><li>dans b<\/li><\/ul>/);
     assert.match(html, /<strong class="avis-valeur">Commentaires sans chiffrage de l’ASMR<\/strong>/);
     assert.match(html, /1 avis antérieur<\/summary>/);
     assert.match(html, /href="https:\/\/www\.has-sante\.fr\/jcms\/p_1"/);
