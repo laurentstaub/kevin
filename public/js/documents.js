@@ -416,3 +416,19 @@ if (titreColle && barre && 'IntersectionObserver' in window
     titreColle.classList.toggle('colle', entree.intersectionRatio < 1);
   }, { threshold: [1], rootMargin: `-${hauteurBarre}px 0px 0px 0px` }).observe(titreColle);
 }
+
+// Titre de rubrique collé puis replié : la rubrique se referme au-dessus de
+// l'écran ; sans correction, la page reste dans le texte qui suit. On ramène
+// le titre replié là où on l'a cliqué, sous la bande.
+documents?.addEventListener('click', (evenement) => {
+  const tete = evenement.target.closest('summary.rubrique-tete');
+  const bloc = tete?.parentElement;
+  if (!bloc?.open || getComputedStyle(tete).position !== 'sticky') return;
+  const pose = parseFloat(getComputedStyle(tete).top);
+  const haut = tete.getBoundingClientRect().top;
+  const colle = Math.abs(haut - pose) < 2 && bloc.getBoundingClientRect().top < haut - 1;
+  if (!colle) return;
+  bloc.addEventListener('toggle', () => {
+    if (!bloc.open) scrollBy(0, tete.getBoundingClientRect().top - haut);
+  }, { once: true });
+});
