@@ -22,8 +22,8 @@ export const CATEGORIES = {
   },
   AUTRE_PRESENTATION: {
     rang: 2,
-    action: 'Adapter le nombre d\'unités',
-    detail: 'Accord du prescripteur éventuel',
+    action: 'Même molécule, autre présentation',
+    detail: 'Dosage ou forme différents : à apprécier selon la prescription',
   },
   ALTERNATIVE_CLASSE: {
     rang: 3,
@@ -103,44 +103,6 @@ export function estSecable(texte) {
 }
 
 /**
- * Équivalence entre deux dosages, exprimée en DOSE et non en unités.
- *
- * Le raisonnement pharmaceutique porte sur la dose journalière, pas sur le
- * comprimé : face à un 500 mg en rupture, un 1000 mg n'est pas « une demi-unité »
- * — c'est la même dose quotidienne pour qui en prend deux par jour, sans rien
- * couper. Première version de cette fonction proposait de couper un comprimé
- * d'abiratérone pelliculé : faux cliniquement, et dangereux à manipuler.
- *
- * Une fraction n'est évoquée QUE si la BDPM déclare la forme sécable.
- */
-function equivalence(ref, cand, candSecable) {
-  if (!ref || !cand || ref.unite !== cand.unite) return null;
-  if (ref.concentration !== cand.concentration) return null;
-  if (cand.valeur === 0 || ref.valeur === 0) return null;
-  if (ref.valeur === cand.valeur) return { texte: 'même dosage', propre: true, rapport: 1 };
-
-  const rapport = ref.valeur / cand.valeur;          // combien d'unités candidates pour une référence
-  const inverse = cand.valeur / ref.valeur;    // combien d'unités de référence dans une candidate
-
-  if (Number.isInteger(rapport) && rapport <= 4) {
-    return { texte: `${rapport} unités du ${cand.valeur} ${cand.unite} pour une`, propre: true, rapport };
-  }
-  if (Number.isInteger(inverse) && inverse <= 4) {
-    return {
-      texte: `${cand.valeur} ${cand.unite} = ${inverse} × ${ref.valeur} ${ref.unite} — adapter selon la dose prescrite`,
-      propre: true, rapport,
-    };
-  }
-  if (candSecable && Math.abs(rapport - 0.5) < 1e-9) {
-    return { texte: `demi-comprimé (forme sécable)`, propre: true, rapport };
-  }
-  if (rapport > 0.2 && rapport < 5) {
-    return { texte: `${cand.valeur} ${cand.unite} contre ${ref.valeur} ${ref.unite} — équivalence à vérifier`, propre: false, rapport };
-  }
-  return null;
-}
-
-/**
  * Classe un candidat par rapport au produit en rupture.
  *
  * @param {{atc5:string, substances:string[], forme:string, voies:string, dosage:string}} ref
@@ -179,18 +141,18 @@ export function classer(ref, cand) {
     return bloque(`Voie différente (${vRef} contre ${vCand})`);
   }
 
-  // 3. Même molécule, autre présentation.
+  // 3. Même molécule, autre présentation. Aucun calcul d'équivalence : 850 mg
+  //    n'est pas « à vérifier » contre 500 mg, c'est un autre dosage, et le
+  //    pharmacien en décide. Seul le même dosage est dit.
   if (memeMolecule) {
-    const eq = equivalence(dosage(ref.dosage), dosage(cand.dosage),
-      estSecable(`${cand.forme} ${cand.denomination || ''}`));
-    const memeDosage = eq && eq.rapport === 1;
+    const [dRef, dCand] = [dosage(ref.dosage), dosage(cand.dosage)];
+    const memeDosage = Boolean(dRef && dCand && dRef.unite === dCand.unite
+      && dRef.concentration === dCand.concentration && dRef.valeur === dCand.valeur);
     return {
       categorie: 'AUTRE_PRESENTATION',
       ...CATEGORIES.AUTRE_PRESENTATION,
-      motif: memeDosage ? 'Même dosage, autre spécialité'
-        : eq ? eq.texte.charAt(0).toUpperCase() + eq.texte.slice(1)
-          : 'Dosage non comparable — à vérifier',
-      tri: (memeDosage ? 0 : eq?.propre ? 1 : 2) + (cand.forme === ref.forme ? 0 : 0.5),
+      motif: memeDosage ? 'Même dosage' : '',
+      tri: (memeDosage ? 0 : 1) + (cand.forme === ref.forme ? 0 : 0.5) + (dCand ? dCand.valeur / 1e6 : 0),
     };
   }
 

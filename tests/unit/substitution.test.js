@@ -41,21 +41,13 @@ describe('classification', () => {
     assert.equal(res.action, 'Délivrer un générique du groupe');
   });
 
-  it('dosage plus faible : nombre d\'unités explicite', () => {
-    const res = classer(ref, cand());            // réf 10 mg, candidat 5 mg
-    assert.equal(res.categorie, 'AUTRE_PRESENTATION');
-    assert.equal(res.action, "Adapter le nombre d'unités");
-    assert.match(res.motif, /2 unités du 5 mg pour une/);
-  });
-
-  it('dosage plus fort : équivalence en DOSE, jamais en fraction de comprimé', () => {
-    // Cas réel ABIRATERONE 500 mg face à un 1000 mg pelliculé : couper est faux
-    // cliniquement et dangereux. On raisonne sur la dose journalière.
-    const abi = { atc5: 'L02BX03', substances: ["Acétate d'abiratérone"], forme: 'comprimé pelliculé', voies: 'orale', dosage: '500 mg' };
-    const res = classer(abi, cand({ atc5: 'L02BX03', substances: ["Acétate d'abiratérone"],
-      forme: 'comprimé pelliculé', dosage: '1000 mg', denomination: 'ABIRATERONE SANDOZ 1000 mg, comprimé pelliculé' }));
-    assert.match(res.motif, /1000 mg = 2 × 500 mg/);
-    assert.doesNotMatch(res.motif, /demi/i);
+  it('autre dosage : aucune équivalence calculée, le pharmacien décide', () => {
+    for (const autre of ['5 mg', '20 mg', '7 mg']) {
+      const res = classer(ref, cand({ dosage: autre }));            // réf 10 mg
+      assert.equal(res.categorie, 'AUTRE_PRESENTATION');
+      assert.equal(res.action, 'Même molécule, autre présentation');
+      assert.equal(res.motif, '');
+    }
   });
 
   it('la fraction n\'est évoquée que si la BDPM déclare la forme sécable', () => {
@@ -65,7 +57,7 @@ describe('classification', () => {
 
   it('même molécule, même dosage, autre spécialité hors groupe', () => {
     const res = classer(ref, cand({ dosage: '10 mg' }));
-    assert.equal(res.motif, 'Même dosage, autre spécialité');
+    assert.equal(res.motif, 'Même dosage');
   });
 
   it('LP contre libération immédiate : bloqué, avec le motif', () => {
@@ -127,10 +119,6 @@ describe('classification', () => {
     assert.equal(classer(ref, cand({ atc5: 'J01CA04', substances: ['Amoxicilline'] })), null);
   });
 
-  it('un rapport de dosage bâtard est signalé comme tel', () => {
-    const res = classer(ref, cand({ dosage: '7 mg' }));
-    assert.match(res.motif, /équivalence à vérifier/);
-  });
 });
 
 describe('garde-fous de la liste MTE', () => {
