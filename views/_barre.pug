@@ -1,6 +1,6 @@
 //- Barre de situation, toujours collante : garde la recherche à portée au fil
-//- de la lecture. Quand une rubrique ouverte a défilé hors de vue, son titre
-//- remplace le nom du produit et ramène au plan. Le champ garde la requête en cours.
+//- de la lecture. Le champ garde la requête en cours. Sur la fiche, la rubrique
+//- en cours s'affiche à côté du nom collé (product.pug).
 //-
 //- @param {string} titre   ce qu'on est en train de lire, à droite ; vide sur la
 //-                         fiche, où la bande signalétique porte le nom du produit
@@ -13,7 +13,4 @@ mixin barreSituation(titre, valeur, action)
       +champRecherche(valeur || '', true, action)
       if titre
         span.barre-titre= titre
-      //- Titre de la rubrique en cours sur la fiche, rempli et révélé par
-      //- documents.js ; caché sans JavaScript et sur les autres pages.
-      button.barre-repere(type="button" hidden)
       +apparence

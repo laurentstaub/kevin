@@ -25,8 +25,7 @@
 }
 
 /* Nom du produit, en retrait ; cède la place au champ de recherche. */
-.barre-titre,
-.barre-repere {
+.barre-titre {
   flex: 0 1 auto;
   min-width: 0;
   margin-left: auto;
@@ -35,23 +34,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Rubrique en cours : remplace le nom du produit, jamais les deux ensemble. */
-.barre-repere {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  text-align: right;
-  color: var(--accent);
-  cursor: pointer;
-}
-
-.barre-repere:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 /* ---------- Bandeau d'accueil ---------- */

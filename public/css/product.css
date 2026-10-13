@@ -61,6 +61,50 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 6rem;
+}
+
+/* Collé, le nom et la rubrique en cours forment un fil : « nom › 4.5 Interactions ».
+   Le nom cède d'abord la place, la rubrique se coupe au-delà de la moitié. */
+.titre-colle.colle > .identite-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  min-width: 0;
+}
+
+.repere-rubrique {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 50%;
+}
+
+.repere-rubrique::before {
+  content: '›';
+  margin-right: 0.6em;
+  color: var(--faint);
+}
+
+.repere-rubrique:hover {
+  color: var(--accent);
+}
+
+/* En lecture, le titre est à sa place : pas de fil. */
+.titre-colle:not(.colle) .repere-rubrique {
+  display: none;
 }
 
 /* ---------- Dosages et formes ---------- */
@@ -1186,7 +1230,7 @@ span.onglet {
 
   /* Commandes inutiles sur papier. */
   .rubriques-controle,
-  .barre-repere,
+  .repere-rubrique,
   .formes-plus {
     display: none;
   }

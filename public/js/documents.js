@@ -100,12 +100,11 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 }
 
 // ---------------------------------------------------------------------------
-// Repère de lecture dans la barre collante.
-// Quand le titre de la rubrique en cours est sorti par le haut, il remplace
-// le nom du produit dans la barre. Rien ne s'affiche tant que tout est replié.
+// Repère de lecture : quand le titre de la rubrique en cours est sorti par le
+// haut, il s'affiche à côté du nom collé (« Lyrica 100 mg › 4.5 Interactions »).
+// Rien ne s'affiche tant que tout est replié.
 
-const repere = document.querySelector('.barre-repere');
-const barreTitre = document.querySelector('.barre-titre');
+const repere = document.querySelector('.repere-rubrique');
 const barre = document.querySelector('.barre');
 const bande = document.querySelector('.signaletique');
 const titreColle = document.querySelector('.titre-colle');
@@ -118,7 +117,8 @@ if (repere && barre && documents) {
   const titres = () => {
     if (!candidats) {
       candidats = [...documents.querySelectorAll(
-        '[role="tabpanel"]:not([hidden]) details.rubrique[open] > .rubrique-tete',
+        // Avec ou sans onglets : un document seul n'est pas un tabpanel.
+        '.document:not([hidden]) details.rubrique[open] > .rubrique-tete',
       )];
     }
     return candidats;
@@ -134,7 +134,6 @@ if (repere && barre && documents) {
 
     if (!titre) {
       repere.hidden = true;
-      if (barreTitre) barreTitre.hidden = false;
       return;
     }
 
@@ -143,7 +142,6 @@ if (repere && barre && documents) {
     repere.textContent = [num?.textContent, lab?.textContent]
       .filter(Boolean).join(' ').trim();
     repere.hidden = false;
-    if (barreTitre) barreTitre.hidden = true;
   };
 
   const situer = () => {
