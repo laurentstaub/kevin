@@ -1433,9 +1433,11 @@ a.point:focus-visible {
 .trouvaille-details > summary::before {
   content: '▸';
   display: inline-block;
-  font-size: 0.85em;
-  margin-right: 0.35em;
-  color: var(--faint);
+  /* Assez grand pour se voir et se viser au doigt ; ▸ est petit dans la plupart des polices. */
+  font-size: 1.25em;
+  line-height: 1;
+  margin-right: 0.3em;
+  color: var(--muted);
   font-family: var(--font-body);
   font-weight: 400;
   transition: transform 0.15s;
@@ -1451,7 +1453,7 @@ details[open] > .molecules-plus::before,
 }
 
 /* Titre de bloc en grand corps : triangle ramené à la taille du texte courant. */
-.bloc-tete .section-titre::before { font-size: 0.6em; vertical-align: 0.2em; }
+.bloc-tete .section-titre::before { font-size: 0.8em; vertical-align: 0.1em; }
 
 @media (prefers-reduced-motion: reduce) {
   .bloc-tete .section-titre::before,
