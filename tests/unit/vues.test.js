@@ -564,7 +564,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /data-cis="66297966" data-type="rcp" data-position="21"/);
   });
 
-  // Substituer : une section par action, la classe regroupée par molécule, les écartés repliés.
+  // Alternatives : une section par action, la classe regroupée par molécule, les écartés repliés.
   it('range les substituts par action au comptoir', () => {
     const html = rendre('product', produit({
       genericGroup: 'CICLOPIROX 1 % - MYCOSTER 1 %, crème',
@@ -590,8 +590,8 @@ describe('rendu des gabarits', () => {
     assert.match(html, /ansm\.sante\.fr\/documents\/reference\/repertoire-des-medicaments-generiques/);
   });
 
-  it('sans candidat, pas de bloc Substituer', () => {
-    assert.doesNotMatch(rendre('product', produit()), /id="substituer"/);
+  it('sans candidat, pas de bloc Alternatives', () => {
+    assert.doesNotMatch(rendre('product', produit()), /id="alternatives"/);
   });
 
   // Filtrer fait passer sous le plafond : le décompte doit rester.

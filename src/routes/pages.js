@@ -432,7 +432,7 @@ export function pageRoutes(pool) {
           // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
           children: [],
         },
-        alternatives.categories.length > 0 && { id: 'substituer', label: 'Substituer' },
+        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
 

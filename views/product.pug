@@ -284,15 +284,15 @@ block content
                 p.doc-externe
                   | Ce document n'est disponible qu'au format PDF sur le site officiel.
 
-      //- Substituer : les candidats classés par action au comptoir (substitution.js,
+      //- Alternatives : les candidats classés par action au comptoir (substitution.js,
       //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
       //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
       //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
       if alternatives && alternatives.categories.length > 0
         - const options = alternatives.categories.filter((cat) => cat.cle !== 'BLOQUE').reduce((total, cat) => total + (cat.total ?? cat.lignes.length), 0)
-        details.bloc#substituer
+        details.bloc#alternatives
           summary.bloc-tete
-            h2.section-titre Substituer
+            h2.section-titre Alternatives
             span.bloc-compte #{options} option#{options > 1 ? 's' : ''}
           if genericGroup
             p.section-meta
