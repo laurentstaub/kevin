@@ -248,6 +248,13 @@ block content
             else
               section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
                 h3.subst-action= cat.action
+                if cat.cle === 'ALTERNATIVE_CLASSE' && typeof sousClasseAtc !== 'undefined' && sousClasseAtc
+                  //- La sous-classe nommée ; sa page détaille toutes ses molécules.
+                  p.subst-commun
+                    a(href=`/classe/${sousClasseAtc.code}`)= phrase(sousClasseAtc.label)
+                    |
+                    |
+                    span.subst-atc= sousClasseAtc.code
                 p.subst-detail= cat.detail
                 if cat.commun
                   //- Dosage et forme du groupe, dits une fois ; nom complet au survol.

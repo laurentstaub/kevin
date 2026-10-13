@@ -449,6 +449,8 @@ export function pageRoutes(pool) {
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
           resumerEvaluation(evaluation), optionsAlternatives),
         optionsAlternatives,
+        // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.
+        sousClasseAtc: (classeAtc ?? []).find((niveau) => niveau.code?.length === 5) ?? null,
         evaluation,
         motsTrouves: trouves,
         importation,
