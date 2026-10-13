@@ -66,6 +66,7 @@ export async function getAlternatives(pool, cis) {
             g.type_generique, g.libelle_groupe_generique, (g.code_cis IS NOT NULL) AS meme_groupe
      FROM candidats
      JOIN dbpm.cis_bdpm m ON m.code_cis = candidats.code_cis
+     CROSS JOIN base
      LEFT JOIN LATERAL (
        SELECT g.code_cis, g.type_generique, g.libelle_groupe_generique
        FROM dbpm.cis_gener_bdpm g, base
@@ -74,6 +75,13 @@ export async function getAlternatives(pool, cis) {
      ) g ON true
      WHERE m.code_cis <> $1
        AND (m.etat_commercialisation = 'Commercialisée' OR g.code_cis IS NOT NULL)
+     -- Au plafond, la sous-classe cède la place : le groupe générique, puis la
+     -- même substance, ne doivent jamais être tronqués au hasard.
+     ORDER BY (g.code_cis IS NOT NULL) DESC,
+              EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
+                      WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
+                        AND c.code_substance = ANY (base.substances)) DESC,
+              m.code_cis
      LIMIT ${PLAFOND}`,
     [cis, base.atc ?? ''],
   );

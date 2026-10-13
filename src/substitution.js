@@ -173,13 +173,32 @@ function bloque(motif) {
   return { categorie: 'BLOQUE', ...CATEGORIES.BLOQUE, motif, tri: 0 };
 }
 
-function memeSubstances(a = [], b = []) {
-  if (!a.length || !b.length) return false;
-  const nu = (liste) => liste.map(sansAccent).map((sub) => sub.replace(/\(.*?\)/g, '').trim()).sort();
-  const na = nu(a);
-  const nb = nu(b);
-  if (na.length !== nb.length) return false;
-  return na.every((sub, i) => sub === nb[i] || sub.includes(nb[i]) || nb[i].includes(sub));
+/**
+ * Mot d'une substance ramené à son sel de base : « hémifumarate », « ditartrate »,
+ * « hydrogénofumarate » → « fumarate », « tartrate » ; « hydratée » → « hydrate ».
+ */
+const motDeSel = (mot) => mot.replace(/^(?:hemi|di|hydrogeno)(?=[a-z]+ate$)/, '').replace(/(hydrat)ee?$/, '$1e');
+
+/** Mots d'une substance, sans accent, parenthèse ni article : « AMLODIPINE (BÉSILATE D') » → {amlodipine}. */
+const motsDe = (substance) => new Set(sansAccent(substance).replace(/\(.*?\)/g, ' ')
+  .split(/[^a-z0-9]+/).filter((mot) => mot.length > 2).map(motDeSel));
+
+/**
+ * Même substance au sel près : tous les mots de l'une sont des mots entiers de
+ * l'autre (« metformine » et « chlorhydrate de metformine »). Une sous-chaîne ne
+ * suffit pas : oméprazole et ésoméprazole, aciclovir et valaciclovir, ofloxacine
+ * et ciprofloxacine sont d'autres molécules de la même sous-classe.
+ */
+function memeSubstance(une, autre) {
+  const [petit, grand] = [motsDe(une), motsDe(autre)].sort((gauche, droite) => gauche.size - droite.size);
+  return petit.size > 0 && [...petit].every((mot) => grand.has(mot));
+}
+
+/** Mêmes substances, chacune appariée dans l'autre liste (l'ordre alphabétique varie avec le sel). */
+function memeSubstances(premieres = [], secondes = []) {
+  if (!premieres.length || premieres.length !== secondes.length) return false;
+  return premieres.every((une) => secondes.some((autre) => memeSubstance(une, autre)))
+    && secondes.every((autre) => premieres.some((une) => memeSubstance(une, autre)));
 }
 
 /**

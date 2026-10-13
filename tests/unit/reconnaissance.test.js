@@ -9,9 +9,15 @@ import { config } from '../../src/config.js';
 const CONNUS = {
   substances: { paracetamol: 1, 'acide folique': 1, 'acide acetylsalicylique': 1, sodium: 300 },
   marques: new Set(['doliprane', 'aspirine']),
+  // Nombres entiers des dénominations : DOLIPRANE 300 mg, 1000 mg, 2,4 %.
+  dosages: { doliprane: ['300', '1000', '2,4'], paracetamol: ['500', '1000'] },
 };
 const poolFactice = {
   query: async (sql, params) => {
+    if (sql.includes('AS nombre')) {
+      const connus = CONNUS.dosages[params[0]] ?? [];
+      return { rows: params[1].filter((nombre) => connus.includes(nombre)).map((nombre) => ({ nombre })) };
+    }
     if (!sql.includes('FROM unnest($1::text[]) AS mot')) return { rows: [] };
     return {
       rows: params[0].map((mot) => ({
@@ -92,6 +98,22 @@ describe('reconnaissance d’un médicament', () => {
     assert.deepEqual(
       await reconnaitreMedicament(poolFactice, 'doliprane 2,4 % conservation'),
       { molecule: 'doliprane 2,4', reste: 'conservation' },
+    );
+  });
+
+  // Juste après le nom, sans unité : un dosage seulement s'il existe pour ce médicament.
+  it('laisse au texte un nombre qui n’est pas un dosage connu du médicament', async () => {
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'doliprane 3 ans'),
+      { molecule: 'doliprane', reste: '3 ans' },
+    );
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'paracetamol 4 fois par jour'),
+      { molecule: 'paracetamol', reste: '4 fois par jour' },
+    );
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'paracetamol 500 grossesse'),
+      { molecule: 'paracetamol 500', reste: 'grossesse' },
     );
   });
 

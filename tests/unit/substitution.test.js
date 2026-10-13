@@ -199,3 +199,41 @@ describe('dosage et forme communs du groupe', () => {
     assert.equal(rien.lignes[0].court, undefined);
   });
 });
+
+describe('même molécule, au sel près', () => {
+  const orale = { forme: 'gélule', voies: 'orale', dosage: '20 mg' };
+
+  // Paires relevées dans la BDPM : une sous-chaîne n'est pas une molécule.
+  it('ne confond pas deux molécules dont l’une contient le nom de l’autre', () => {
+    for (const [une, autre] of [
+      ['OMÉPRAZOLE', 'ÉSOMÉPRAZOLE MAGNÉSIQUE TRIHYDRATÉ'],
+      ['ACICLOVIR', 'CHLORHYDRATE DE VALACICLOVIR'],
+      ['OFLOXACINE', 'CHLORHYDRATE DE CIPROFLOXACINE'],
+      ['PREDNISOLONE (MÉTASULFOBENZOATE SODIQUE DE)', 'MÉTHYLPREDNISOLONE'],
+    ]) {
+      const res = classer({ ...orale, atc5: 'X01XX01', substances: [une] },
+        cand({ ...orale, atc5: 'X01XX02', substances: [autre] }));
+      assert.equal(res.categorie, 'ALTERNATIVE_CLASSE', `${une} / ${autre}`);
+    }
+  });
+
+  it('reconnaît la même substance sous un autre sel ou une autre graphie', () => {
+    for (const [une, autre] of [
+      ['METFORMINE', 'CHLORHYDRATE DE METFORMINE'],
+      ['FUMARATE DE BISOPROLOL', 'HÉMIFUMARATE DE BISOPROLOL'],
+      ['TARTRATE DE RASAGILINE', 'HÉMITARTRATE DE RASAGILINE'],
+      ['CARBIDOPA MONOHYDRATE', 'CARBIDOPA MONOHYDRATÉE'],
+    ]) {
+      // ATC différents : seule la comparaison des substances peut les réunir.
+      const res = classer({ ...orale, atc5: 'X01XX01', substances: [une] },
+        cand({ ...orale, atc5: 'X01XX02', substances: [autre] }));
+      assert.equal(res.categorie, 'AUTRE_PRESENTATION', `${une} / ${autre}`);
+    }
+  });
+
+  it('apparie les associations quel que soit l’ordre', () => {
+    const res = classer({ ...orale, atc5: '', substances: ['CHLORHYDRATE DE METFORMINE', 'SITAGLIPTINE'] },
+      cand({ ...orale, atc5: '', substances: ['PHOSPHATE DE SITAGLIPTINE', 'METFORMINE'] }));
+    assert.equal(res.categorie, 'AUTRE_PRESENTATION');
+  });
+});

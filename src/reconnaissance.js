@@ -81,6 +81,64 @@ async function mesurer(pool, candidats) {
   return reconnus;
 }
 
+/** « 1000mg », « 2.4 » → « 1000 », « 2,4 » : le nombre tel que l'écrit la BDPM. */
+const enChiffres = (mot) => mot.match(NOMBRE)[1].replace('.', ',');
+
+/** Texte → ses nombres entiers entre espaces : « 500 mg/4 mg » → « 500 mg 4 mg ». */
+const enNombres = (expr) => `' ' || regexp_replace(regexp_replace(public.f_unaccent(lower(${expr})),
+  '([0-9])([a-z])', '\\1 \\2', 'g'), '[^a-z0-9,]+', ' ', 'g') || ' '`;
+
+/** Tous les mots du médicament figurent dans `expr`. */
+const tousLesMots = (expr) => `(SELECT bool_and(public.f_unaccent(lower(${expr})) LIKE '%' || mot || '%')
+  FROM unnest(mots.liste) AS mot)`;
+
+/**
+ * Parmi `nombres`, les dosages connus du médicament. Une substance
+ * (« paracetamol ») : son propre dosage dans la composition, pas celui d'une
+ * autre substance de l'association (HUMEXLIB 500 mg/4 mg n'est pas un
+ * paracétamol 4). Une marque (« doliprane ») : un nombre entier de sa
+ * dénomination (300, pas 3). Dans les deux cas, la dénomination porte le
+ * nombre, car c'est sur elle que filtre la recherche dans les documents.
+ *
+ * @param {string} molecule - mots reconnus, « doliprane », « acide folique »
+ * @returns {Promise<Set<string>>}
+ */
+async function dosagesConnus(pool, molecule, nombres) {
+  // Le mot le plus long, sélectif, passe par l'index trigramme ; les autres ensuite.
+  const pivot = molecule.split(' ').reduce((long, mot) => (mot.length > long.length ? mot : long), '');
+  const { rows } = await pool.query(
+    `WITH mots AS (SELECT array_remove(string_to_array($1::text, ' '), '') AS liste),
+     substance AS (
+       SELECT EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm s
+                      WHERE s.nature_composant = 'SA'
+                        AND public.f_unaccent(lower(s.denomination_substance)) LIKE '%' || $3 || '%'
+                        AND ${tousLesMots('s.denomination_substance')}) AS oui
+       FROM mots
+     ),
+     candidats AS MATERIALIZED (
+       SELECT m.denomination_medicament AS nom, NULL::text AS dosage
+       FROM dbpm.cis_bdpm m, mots, substance
+       WHERE NOT substance.oui
+         AND public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || $3 || '%'
+         AND ${tousLesMots('m.denomination_medicament')}
+       UNION ALL
+       SELECT m.denomination_medicament, coalesce(c.dosage_substance, '')
+       FROM dbpm.cis_compo_bdpm c
+       JOIN dbpm.cis_bdpm m ON m.code_cis = c.code_cis, mots, substance
+       WHERE substance.oui
+         AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || $3 || '%'
+         AND ${tousLesMots('c.denomination_substance')}
+     )
+     SELECT n AS nombre FROM unnest($2::text[]) AS n
+     WHERE EXISTS (
+       SELECT 1 FROM candidats k
+       WHERE ${enNombres('k.nom')} LIKE '% ' || n || ' %'
+         AND (k.dosage IS NULL OR ${enNombres('k.dosage')} LIKE '% ' || n || ' %'))`,
+    [molecule, nombres, pivot],
+  );
+  return new Set(rows.map((ligne) => ligne.nombre));
+}
+
 /**
  * @param {import('pg').Pool} pool
  * @param {string} saisie
@@ -124,17 +182,28 @@ export async function reconnaitreMedicament(pool, saisie) {
   if (!texte) return { molecule: molecule.join(' '), reste: '' };
 
   // Dosage et forme précisent le médicament : « doliprane 300 excipients » cherche
-  // « excipients » dans les seuls Doliprane 300. Un nombre n'est un dosage que
-  // suivi d'une unité de dose ou juste après le nom : « 14 ans » reste du texte.
+  // « excipients » dans les seuls Doliprane 300. Un nombre suivi d'une unité de
+  // dose est un dosage ; un nombre seul juste après le nom ne l'est que si la base
+  // connaît ce dosage pour ce médicament : « doliprane 3 ans » garde « 3 ans ».
+  const dose = (i) => {
+    const suivant = restant[i + 1];
+    return Boolean(restant[i].match(NOMBRE)[2]) || suivant === '%' || UNITES_DOSE.has(normaliser(suivant));
+  };
+  const nus = restant
+    .map((mot, i) => (mot && NOMBRE.test(mot) && pris[i - 1] && !dose(i) ? i : null))
+    .filter((i) => i !== null);
+  const connus = nus.length > 0
+    ? await dosagesConnus(pool, molecule.join(' '), nus.map((i) => enChiffres(restant[i])))
+    : new Set();
+
   const precisions = [];
   restant.forEach((mot, i) => {
     if (!mot) return;
     const nombre = mot.match(NOMBRE);
     if (nombre) {
-      const suivant = restant[i + 1];
-      const dose = Boolean(nombre[2]) || suivant === '%' || UNITES_DOSE.has(normaliser(suivant));
-      if (dose || pris[i - 1]) {
-        precisions.push(nombre[1].replace('.', ','));
+      if (dose(i) || connus.has(enChiffres(mot))) {
+        const suivant = restant[i + 1];
+        precisions.push(enChiffres(mot));
         restant[i] = null;
         if (!nombre[2] && (suivant === '%' || UNITES.has(normaliser(suivant)))) restant[i + 1] = null;
       }
