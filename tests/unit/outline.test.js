@@ -177,6 +177,34 @@ describe('outline — faux positifs du corps de texte', () => {
   });
 });
 
+describe('outline — tableaux', () => {
+  // Amoxicilline Viatris 500 mg/5 mL : table de posologie par poids en 6.6.
+  const ligne = (kg) => `<tr><td><p>${kg} kg</p></td><td><p>0,50</p></td></tr>`;
+  const rcp =
+    '<p><a name="a">1. DENOMINATION DU MEDICAMENT</a></p><p>AMOXICILLINE</p>' +
+    '<p><a name="b">6. DONNEES PHARMACEUTIQUES</a></p>' +
+    '<p><a name="c">6.6. Précautions particulières d’élimination et de manipulation</a></p>' +
+    `<table>${[7, 8, 9, 10, 11, 12, 13].map(ligne).join('')}</table>` +
+    '<p><a name="d">7. TITULAIRE DE L’AUTORISATION DE MISE SUR LE MARCHE</a></p><p>VIATRIS</p>' +
+    '<p><a name="e">8. NUMERO(S) D’AUTORISATION DE MISE SUR LE MARCHE</a></p><p>CIP</p>';
+
+  it('ne prend pas les cellules « 7 kg », « 8 kg »… pour des rubriques', () => {
+    const { sections } = outline(rcp, 'rcp');
+    assert.deepEqual(sections.map((section) => section.number), ['1', '6', '6.6', '7', '8']);
+  });
+
+  it('laisse le tableau intact', () => {
+    const { html } = outline(rcp, 'rcp');
+    assert.ok(html.includes(`<table>${[7, 8, 9, 10, 11, 12, 13].map(ligne).join('')}</table>`));
+  });
+
+  it('se replie sur les tableaux quand le document y range ses titres', () => {
+    const cellule = (titre) => `<tr><td><p>${titre}</p></td></tr>`;
+    const src = `<table>${['1. Un', '2. Deux', '3. Trois'].map(cellule).join('')}</table>`;
+    assert.deepEqual(outline(src, 'rcp').sections.map((section) => section.number), ['1', '2', '3']);
+  });
+});
+
 describe('coherentes', () => {
   const suite = (...numeros) => coherentes(numeros.map((number) => ({ number })));
   const numeros = (resultat) => resultat.map((candidat) => candidat.number);

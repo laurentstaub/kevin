@@ -13,6 +13,8 @@ const NUMBERED = /^(\d{1,2}(?:\.\d{1,2})*)\.?\s+(\S[\s\S]*)$/;
 const TITRES = /<(h[1-4])([^>]*)>([\s\S]*?)<\/\1>/gi;
 const BLOCS = /<(p|div)([^>]*)>([\s\S]{0,400}?)<\/\1>/gi;
 
+const TABLEAUX = /<table\b[\s\S]*?<\/table>/gi;
+
 const LONGUEUR_MAX = 250; // un titre de notice contient le nom complet du produit
 const RUBRIQUE_MAX = 12; // le plan type s'arrête à 12
 
@@ -98,9 +100,17 @@ function renderHeading(number, label, canonical) {
   return `${num}<span class="${cls}">${escape(label)}</span>`;
 }
 
-/** Passe de repérage : liste les titres candidats, sans rien modifier. */
+/**
+ * Passe de repérage : liste les titres candidats, sans rien modifier.
+ * Une rubrique ne se trouve pas dans une cellule de tableau : « 7 kg », « 8 kg »…
+ * d'une table de posologie passeraient sinon pour les rubriques 7 et suivantes.
+ * Repli sur les tableaux si le document y range ses titres (mise en page ancienne).
+ */
 function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
+  const tableaux = [...html.matchAll(TABLEAUX)].map((tableau) => [tableau.index, tableau.index + tableau[0].length]);
+  const dansTableau = (index) => tableaux.some(([debut, fin]) => index > debut && index < fin);
   const candidats = [];
+  const enTableau = [];
 
   for (const correspondance of html.matchAll(motif)) {
     const raw = decode(stripTags(correspondance[3])).replace(/\s+/g, ' ').trim();
@@ -109,8 +119,9 @@ function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
     const { number, label, canonical } = splitHeading(raw);
     if (exigerNumero && !number) continue;
 
-    candidats.push({
+    (dansTableau(correspondance.index) ? enTableau : candidats).push({
       match: correspondance[0],
+      index: correspondance.index,
       number,
       label,
       canonical,
@@ -119,7 +130,9 @@ function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
     });
   }
 
-  return candidats;
+  const numerotes = (liste) => liste.filter((candidat) => candidat.numbered).length;
+  if (numerotes(candidats) >= 3) return candidats;
+  return [...candidats, ...enTableau].sort((a, b) => a.index - b.index);
 }
 
 /**
