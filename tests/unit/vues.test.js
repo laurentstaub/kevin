@@ -202,7 +202,7 @@ describe('rendu des gabarits', () => {
     // La dénomination colle sous la barre : hors de l'en-tête, dans son propre bloc.
     assert.match(html, /<div class="titre-colle"><div class="identite-inner"><h1 class="produit-titre">Edex 20 microgrammes<\/h1>/);
     assert.doesNotMatch(html, /barre-titre/);
-    assert.match(html, /<h1 class="produit-titre">Edex 20 microgrammes<\/h1><button class="repere-rubrique" type="button" hidden>/);
+    assert.doesNotMatch(html, /repere/);
     assert.match(html, /class="signal signal-bloque" title="Ordonnance — Stupéfiant" data-cle="ordonnance"><svg class="picto"/);
     assert.match(html, /title="Prise en charge" data-cle="prix">.*?<span class="signal-valeur">65 % · 2,10 €<\/span>/);
     assert.match(html, /<a class="signal-valeur" href="\/classe\/N02AA01">N02AA01<\/a>/);

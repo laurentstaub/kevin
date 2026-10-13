@@ -61,50 +61,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 0 1 auto;
-  min-width: 6rem;
-}
-
-/* Collé, le nom et la rubrique en cours forment un fil : « nom › 4.5 Interactions ».
-   Le nom cède d'abord la place, la rubrique se coupe au-delà de la moitié. */
-.titre-colle.colle > .identite-inner {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6em;
-  min-width: 0;
-}
-
-.repere-rubrique {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-sm);
-  color: var(--muted);
-  text-align: left;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 50%;
-}
-
-.repere-rubrique::before {
-  content: '›';
-  margin-right: 0.6em;
-  color: var(--faint);
-}
-
-.repere-rubrique:hover {
-  color: var(--accent);
-}
-
-/* En lecture, le titre est à sa place : pas de fil. */
-.titre-colle:not(.colle) .repere-rubrique {
-  display: none;
 }
 
 /* ---------- Dosages et formes ---------- */
@@ -550,7 +506,15 @@ span.onglet {
   scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
+/* Rubrique ouverte : son titre colle sous la bande tant qu'on lit son texte,
+   poussé par le titre suivant. Fond plein pour masquer le texte qui passe
+   dessous, filet pour le détacher. */
 .rubrique[open] > .rubrique-tete {
+  position: sticky;
+  top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) - 1px);
+  z-index: 17;
+  background: var(--bg);
+  box-shadow: 0 var(--rule-width) 0 var(--rule);
   padding-bottom: var(--sp-1);
 }
 
@@ -1085,6 +1049,10 @@ span.onglet {
     top: var(--barre-h);
   }
 
+  .rubrique[open] > .rubrique-tete {
+    top: calc(var(--barre-h) + var(--signal-h) - 1px);
+  }
+
   .produit-titre {
     text-wrap: balance;
     font-size: var(--fs-lg);
@@ -1193,7 +1161,8 @@ span.onglet {
 
 @media print {
   .signaletique,
-  .titre-colle {
+  .titre-colle,
+  .rubrique[open] > .rubrique-tete {
     position: static;
     background: none;
   }
@@ -1230,7 +1199,6 @@ span.onglet {
 
   /* Commandes inutiles sur papier. */
   .rubriques-controle,
-  .repere-rubrique,
   .formes-plus {
     display: none;
   }

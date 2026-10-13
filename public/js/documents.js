@@ -100,88 +100,11 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 }
 
 // ---------------------------------------------------------------------------
-// Repère de lecture : quand le titre de la rubrique en cours est sorti par le
-// haut, il s'affiche à côté du nom collé (« Lyrica 100 mg › 4.5 Interactions »).
-// Rien ne s'affiche tant que tout est replié.
+// Éléments collants : la barre, la dénomination et la bande. Le titre de la
+// rubrique en cours colle sous eux par le seul CSS (product.css).
 
-const repere = document.querySelector('.repere-rubrique');
 const barre = document.querySelector('.barre');
-const bande = document.querySelector('.signaletique');
 const titreColle = document.querySelector('.titre-colle');
-
-if (repere && barre && documents) {
-  // Mis en cache : ne change qu'à l'ouverture d'une rubrique ou d'un onglet.
-  let candidats = null;
-  const perimer = () => { candidats = null; };
-
-  const titres = () => {
-    if (!candidats) {
-      candidats = [...documents.querySelectorAll(
-        // Avec ou sans onglets : un document seul n'est pas un tabpanel.
-        '.document:not([hidden]) details.rubrique[open] > .rubrique-tete',
-      )];
-    }
-    return candidats;
-  };
-
-  documents.addEventListener('toggle', perimer, true);
-
-  let courant = null;
-
-  const montrer = (titre) => {
-    if (titre === courant) return;
-    courant = titre;
-
-    if (!titre) {
-      repere.hidden = true;
-      return;
-    }
-
-    const num = titre.querySelector('.num');
-    const lab = titre.querySelector('.lab');
-    repere.textContent = [num?.textContent, lab?.textContent]
-      .filter(Boolean).join(' ').trim();
-    repere.hidden = false;
-  };
-
-  const situer = () => {
-    // Sous la barre et, quand elle colle, sous la bande signalétique.
-    const seuil = (bande ?? barre).getBoundingClientRect().bottom;
-    let trouve = null;
-
-    for (const titre of titres()) {
-      const haut = titre.getBoundingClientRect().top;
-      if (haut > seuil) break;
-      // Titre passé sous la barre, mais rubrique peut-être déjà finie.
-      if (titre.parentElement.getBoundingClientRect().bottom > seuil) trouve = titre;
-    }
-
-    montrer(trouve);
-  };
-
-  let attend = false;
-  const auProchainRendu = () => {
-    if (attend) return;
-    attend = true;
-    requestAnimationFrame(() => { attend = false; situer(); });
-  };
-
-  addEventListener('scroll', auProchainRendu, { passive: true });
-  addEventListener('resize', auProchainRendu, { passive: true });
-  documents.addEventListener('toggle', auProchainRendu, true);
-
-  // Changer d'onglet ne fait pas défiler, mais change la rubrique visible.
-  for (const onglet of onglets) {
-    onglet.addEventListener('click', () => { perimer(); auProchainRendu(); });
-  }
-
-  // Le clic remonte au titre de la rubrique.
-  repere.addEventListener('click', () => {
-    courant?.scrollIntoView({ block: 'start' });
-  });
-
-  situer();
-}
 
 // ---------------------------------------------------------------------------
 // Tableaux du document : enveloppe de défilement horizontal, pour ne pas
