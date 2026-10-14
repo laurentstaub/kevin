@@ -143,7 +143,7 @@ function completer(html, candidats, type) {
   const manquantes = socle(type).filter((numero) => !presents.has(numero));
   if (manquantes.length === 0) return candidats;
 
-  const blocs = reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 });
+  const blocs = paragraphes(html, type);
   const ajouts = manquantes.map((numero) => {
     const rang = parts(numero);
     const avant = numerotes.filter((titre) => compare(parts(titre.number), rang) < 0).at(-1);
@@ -172,6 +172,47 @@ function renderHeading(number, label, canonical) {
  * d'une table de posologie passeraient sinon pour les rubriques 7 et suivantes.
  * Repli sur les tableaux si le document y range ses titres (mise en page ancienne).
  */
+/**
+ * Titre numéroté en tête de document, hors de tout bloc : la collecte du
+ * nouveau site de la BDPM coupe le <p> qui l'entourait et le document commence
+ * par « <span>1. DENOMINATION DU MEDICAMENT</span> » (679 RCP, 11 notices).
+ * Sans bloc, il échappait aux titres en paragraphe et la rubrique 1 était
+ * perdue. Rendu comme un paragraphe pour être posé, puis borné par split.js.
+ */
+/** Fin du titre nu : le premier bloc, ou le lien « haut de page » que le site pose après chaque titre. */
+const APRES_TETE = /<(?:p|div|h[1-6]|table|ul|ol)\b|<a href="#top"/i;
+
+function teteNue(html) {
+  const debut = html.search(/\S/);
+  if (debut === -1) return null;
+  const reste = html.slice(debut);
+  const fin = reste.search(APRES_TETE);
+  // Le document commence par un bloc : rien de nu en tête.
+  if (fin === 0) return null;
+  // Jusqu'au premier bloc : une entrée de sommaire nue (« 1. Qu'est-ce que
+  // <span>KALOBA</span>… ») reste entière, et le sommaire se reconnaît.
+  const match = (fin === -1 ? reste : reste.slice(0, fin)).replace(/\s+$/, '');
+  const raw = decode(stripTags(match)).replace(/\s+/g, ' ').trim();
+  if (!raw || raw.length > LONGUEUR_MAX) return null;
+  const { number, label, canonical } = splitHeading(raw);
+  if (!number) return null;
+  return { match, index: debut, number, label, canonical, depth: depthOf(number), numbered: true, balise: 'p' };
+}
+
+/**
+ * Titres en paragraphe, plus le titre nu de tête s'il y en a un — sauf si un
+ * titre reconnu du même numéro suit : le nu était l'entrée d'un sommaire
+ * (GENOPTOL : « 1. Qu'est-ce que… » nu, entrées 2 à 6 précédées d'une puce).
+ */
+function paragraphes(html, type) {
+  const tete = teteNue(html);
+  const blocs = reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 });
+  if (!tete) return blocs;
+  const suite = blocs.filter((bloc) => bloc.index >= tete.index + tete.match.length);
+  const repris = suite.some((bloc) => bloc.number === tete.number && rubriqueReconnue(type, bloc.number, bloc.label));
+  return repris ? blocs : [tete, ...suite];
+}
+
 function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
   const tableaux = [...html.matchAll(TABLEAUX)].map((tableau) => [tableau.index, tableau.index + tableau[0].length]);
   const dansTableau = (index) => tableaux.some(([debut, fin]) => index > debut && index < fin);
@@ -226,7 +267,7 @@ export function outline(html, type = 'doc', { completer: completerManquantes = t
   if (candidats.filter((candidat) => candidat.numbered).length < 3) {
     habillage.push(...candidats.filter((candidat) => !candidat.numbered));
     candidats = coherentes(sansSommaire(
-      html, reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 }),
+      html, paragraphes(html, type),
     ), { type });
   }
 
@@ -245,7 +286,8 @@ export function outline(html, type = 'doc', { completer: completerManquantes = t
   const poses = aPoser.map((candidat, i) => {
     const id = `${type}-${i + 1}`;
     const { number, label, canonical, depth, numbered } = candidat;
-    const [, tag, attrs] = candidat.match.match(/^<(\w+)([^>]*)>/);
+    // Titre nu : posé en paragraphe, seule forme que split.js reconnaît pour borne.
+    const [, tag, attrs] = candidat.balise ? [null, candidat.balise, ''] : candidat.match.match(/^<(\w+)([^>]*)>/);
     sections.push({ id, number, label, canonical, depth, numbered });
     return {
       debut: candidat.index,

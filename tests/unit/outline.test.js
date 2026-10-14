@@ -412,3 +412,31 @@ describe('outline — balisage mixte', () => {
     assert.equal(outline(notice(''), 'notice', { completer: false }).sections.length, 5);
   });
 });
+
+describe('outline — titre nu en tête de document', () => {
+  // Nouveau site BDPM : la collecte coupe le <p> du premier titre.
+  const rcp = '<span>1. DENOMINATION DU MEDICAMENT</span><a href="#top"></a><span>Redirection vers le haut de page</span>'
+    + '<p>X 10 mg, comprimé</p><p><span>2. COMPOSITION QUALITATIVE ET QUANTITATIVE</span></p><p>Y</p>'
+    + '<p><span>3. FORME PHARMACEUTIQUE</span></p><p>Comprimé.</p>';
+
+  it('repère le titre 1 hors de tout bloc, et le borne', () => {
+    const { sections } = splitDocument(rcp, 'rcp');
+    assert.deepEqual(sections.map((section) => `${section.numero} ${section.libelle}`),
+      ['1 Dénomination du médicament', '2 Composition qualitative et quantitative', '3 Forme pharmaceutique']);
+    assert.match(sections[0].texte, /X 10 mg, comprimé/);
+  });
+
+  // GENOPTOL : « 1. Qu'est-ce que… » nu, puis le vrai titre 1 plus loin.
+  it('écarte un titre nu repris plus loin : c’était le sommaire', () => {
+    const notice = '1. Qu’est-ce que X et dans quels cas est-il utilisé ?<p>· 2. Quelles sont les informations</p>'
+      + ['Qu’est-ce que X', 'Quelles sont les informations à connaître', 'Comment prendre X']
+        .map((titre, i) => `<p>${i + 1}. ${titre.toUpperCase()}</p><p>Texte ${i + 1}.</p>`).join('');
+    const { sections } = splitDocument(notice, 'notice');
+    assert.deepEqual(sections.map((section) => section.texte), ['Texte 1.', 'Texte 2.', 'Texte 3.']);
+  });
+
+  it('ne touche pas un document qui commence par un bloc', () => {
+    const { sections } = outline('<p>1. Un</p><p>a</p><p>2. Deux</p><p>b</p><p>3. Trois</p><p>c</p>', 'doc');
+    assert.equal(sections.length, 3);
+  });
+});

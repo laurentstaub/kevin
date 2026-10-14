@@ -8,6 +8,7 @@ import { structurer, renvois } from './typographie.js';
  *
  * PARSER_VERSION : à incrémenter dès que la détection change, pour rejouer les documents.
  */
+// 18 : titre nu en tête de document (collecte du nouveau site BDPM) repéré.
 // 17 : rubrique restée en paragraphe parmi des titres <h> (balisage mixte), complétée.
 // 16 : titres reconnus prioritaires sur les listes numérotées ; notice limitée à 7 rubriques.
 // 15 : sommaire de notice écarté (titres en paragraphes : tout tombait en rubrique 6).
@@ -17,7 +18,7 @@ import { structurer, renvois } from './typographie.js';
 // 9 : notes par astérisque (QRD).  8 : listes imbriquées, sous-titres QRD, espaces insécables.
 // 5 : conduite en vrais points.  4 : conduites de points (rubrique 2).  3 : paragraphes, puces.
 // 2 : plan de notice, reprises de plan EMA, sommaires écartés.
-export const PARSER_VERSION = 17;
+export const PARSER_VERSION = 18;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
