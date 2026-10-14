@@ -1,0 +1,83 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+
+//- Interactions entre les médicaments d'une saisie : pour chaque paire, ce que
+//- la rubrique 4.5 de chaque RCP dit de l'autre, cité tel quel. Deux colonnes,
+//- parce que les deux RCP divergent souvent et que l'écart est une information.
+
+mixin sens(s)
+  .sens
+    h3.sens-titre
+      | RCP de #{s.de}
+      span.sens-sur  sur #{s.sur}
+    if s.sansObjet
+      p.manque Même substance : rien à chercher dans ce sens.
+    else
+      p.sens-compte
+        if s.rcp === 0
+          | Aucun RCP découpé en rubriques.
+        else
+          | #{s.citant} RCP sur #{s.rcp} nomment #{s.cherche} en rubrique 4.5.
+      each passage in s.passages
+        blockquote.citation
+          if passage.libelleNiveau
+            span.niveau(class=`niveau-${passage.niveau}`)= passage.libelleNiveau
+          else
+            span.niveau.niveau-aucun Niveau non précisé
+          p= passage.extrait
+          footer
+            a(href=`/product/${passage.exemple.cis}#${passage.exemple.ancre}`)= specialite(passage.exemple.denomination)
+            if passage.nb > 1
+              |  et #{passage.nb - 1} autre#{passage.nb > 2 ? 's' : ''} RCP
+      if s.autres > 0
+        p.manque #{s.autres} autre#{s.autres > 1 ? 's' : ''} rédaction#{s.autres > 1 ? 's' : ''} du même passage ou d'autres passages, dans les RCP liés.
+
+block styles
+  link(rel="stylesheet", href=`/css/fiche.css?v=${v}`)
+  link(rel="stylesheet", href=`/css/interactions.css?v=${v}`)
+
+block content
+  +barreSituation('Interactions', saisie)
+
+  main.corps
+    header.fiche-entete
+      h1.fiche-titre Interactions
+      p.fiche-meta
+        span Rubrique 4.5 des RCP, citée telle quelle
+        span Recherche par nom de substance
+
+    ul.medicaments
+      each m in resultat.medicaments
+        li
+          span.medicament-nom= m.libelle
+          if m.type === 'marque' && m.substances.length
+            span.medicament-dci= m.substances.map(dci).join(' + ')
+      each inconnu in resultat.inconnus
+        li.inconnu Non reconnu : #{inconnu}
+
+    if resultat.paires.length === 0
+      p.manque Il faut au moins deux médicaments reconnus.
+
+    each paire in resultat.paires
+      section.paire
+        h2.paire-titre
+          | #{paire.a.libelle} × #{paire.b.libelle}
+          if paire.libelleNiveau
+            span.niveau(class=`niveau-${paire.niveau}`)= paire.libelleNiveau
+          else if !paire.cite && !paire.communes.length
+            span.niveau.niveau-aucun Aucune mention trouvée
+        if paire.communes.length
+          p.communes Même substance dans les deux : #{paire.communes.join(', ')}.
+        .paire-sens
+          each s in paire.sens
+            +sens(s)
+
+    p.fiche-source
+      | Seul le nom des substances est cherché, pas encore leurs classes : la 4.5
+      | d'un RCP parle souvent des « AINS » ou des « anticoagulants oraux » sans
+      | nommer la molécule. Une absence de mention n'est donc pas une absence
+      | d'interaction. Le RCP fait foi.
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

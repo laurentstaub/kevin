@@ -140,12 +140,11 @@ async function dosagesConnus(pool, molecule, nombres) {
 }
 
 /**
- * @param {import('pg').Pool} pool
- * @param {string} saisie
- * @returns {Promise<{ molecule: string, reste: string }|null>} null : aucun médicament ;
- *   reste vide : un nom seul (dosage, forme), à chercher par nom
+ * Repère, dans l'ordre de la saisie, les mots ou paires de mots que la base
+ * connaît comme substance ou début de nom de spécialité.
+ * @returns {Promise<{ originaux: string[], pris: boolean[], molecule: string[] }|null>}
  */
-export async function reconnaitreMedicament(pool, saisie) {
+async function reperer(pool, saisie) {
   // « aspirine allaitement » : la base ne connaît que l'acide acétylsalicylique.
   // Élisions (« l'acide », « d'aspirine ») : le mot seul, sans son article.
   const originaux = substituer(saisie).split(/\s+/).filter(Boolean)
@@ -175,6 +174,19 @@ export async function reconnaitreMedicament(pool, saisie) {
     }
   }
   if (molecule.length === 0) return null;
+  return { originaux, pris, molecule };
+}
+
+/**
+ * @param {import('pg').Pool} pool
+ * @param {string} saisie
+ * @returns {Promise<{ molecule: string, reste: string }|null>} null : aucun médicament ;
+ *   reste vide : un nom seul (dosage, forme), à chercher par nom
+ */
+export async function reconnaitreMedicament(pool, saisie) {
+  const repere = await reperer(pool, saisie);
+  if (!repere) return null;
+  const { originaux, pris, molecule } = repere;
 
   const restant = originaux.map((mot, i) => (pris[i] ? null : mot.replace(/[?!,;.]+$/, '')));
   // Que des nombres, unités ou formes : c'est un nom de spécialité, pas une question sur elle.
@@ -217,4 +229,33 @@ export async function reconnaitreMedicament(pool, saisie) {
   });
 
   return { molecule: [...molecule, ...precisions].join(' '), reste: restant.filter(Boolean).join(' ') };
+}
+
+/** Mots qui lient deux médicaments sans rien demander d'autre : « doliprane et kardegic ». */
+const LIAISONS = new Set([
+  'et', 'avec', 'plus', 'ou', 'vs', 'versus', 'entre', 'associe', 'associes', 'associer',
+  'association', 'interaction', 'interactions',
+]);
+
+/**
+ * Plusieurs médicaments nommés séparément (« kardegic previscan », « tramadol +
+ * sertraline ») et rien d'autre que des liaisons, dosages ou formes.
+ * Une paire connue comme un seul nom (« acide folique ») reste un médicament.
+ *
+ * @returns {Promise<string[]|null>} les médicaments dans l'ordre de la saisie, ou null
+ */
+export async function reconnaitreMedicaments(pool, saisie) {
+  // Les liaisons sont retirées avant la reconnaissance : « avec » figure dans
+  // des noms de substance (« … avec adjuvant ») et serait pris pour un médicament.
+  const sansLiaisons = String(saisie ?? '').replace(/[+,;/&]/g, ' ').split(/\s+/)
+    .filter((mot) => !LIAISONS.has(normaliser(mot))).join(' ');
+  const repere = await reperer(pool, sansLiaisons);
+  if (!repere) return null;
+  const medicaments = [...new Set(repere.molecule)];
+  if (medicaments.length < 2) return null;
+  const autres = repere.originaux
+    .filter((_, i) => !repere.pris[i])
+    .map(normaliser)
+    .filter((mot) => mot && !NOMBRE.test(mot) && motDeTexte(mot));
+  return autres.length === 0 ? medicaments : null;
 }

@@ -4,7 +4,8 @@ import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre, lien } from '../etat-recherche.js';
 import { iaActive, estQuestion, interpreterQuestion } from '../ia.js';
-import { reconnaitreMedicament } from '../reconnaissance.js';
+import { reconnaitreMedicament, reconnaitreMedicaments, normaliser } from '../reconnaissance.js';
+import { chercherInteractions, estAssociation, MEDICAMENTS_MAX } from '../interactions.js';
 import { lireCode, trouverParCode } from '../codes.js';
 import { getSecabilite } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
@@ -50,6 +51,11 @@ function messagePanne(err) {
     ? 'La recherche dans les documents n’est pas encore installée sur cette base '
       + '— exécuter « npm run db:recherche ».'
     : 'La recherche dans les documents est momentanément indisponible.';
+}
+
+/** Adresse de la page Interactions : un paramètre `m` par médicament, dans l'ordre de la saisie. */
+export function lienInteractions(elements) {
+  return `/interactions?${new URLSearchParams(elements.map((nom) => ['m', nom]))}`;
 }
 
 export function pageRoutes(pool) {
@@ -162,6 +168,16 @@ export function pageRoutes(pool) {
    * @returns {Promise<{ url: string }|null>}
    */
   const orienter = async (etat, saisie) => {
+    // Plusieurs médicaments nommés séparément : leurs interactions. Les
+    // substances d'une association commercialisée désignent ce produit.
+    const plusieurs = await reconnaitreMedicaments(pool, saisie).catch((err) => {
+      console.error('[interactions] reconnaissance indisponible :', err.message);
+      return null;
+    });
+    if (plusieurs && !(await estAssociation(pool, plusieurs).catch(() => true))) {
+      return { url: lienInteractions(plusieurs) };
+    }
+
     const documents = (changements) => ({ url: lien({ ...etat, mode: 'documents' }, { question: saisie, ...changements }) });
     const reconnu = await reconnaitreMedicament(pool, saisie).catch((err) => {
       console.error('[recherche] reconnaissance indisponible :', err.message);
@@ -237,6 +253,30 @@ export function pageRoutes(pool) {
         etat,
         title: titre(etat),
         query: query.raw, filter, results, documents, panne, colonnes: COLONNES,
+        sansRail: true,
+      });
+    }),
+  );
+
+  /**
+   * Interactions entre médicaments, deux à cinq : `?m=kardegic&m=previscan`.
+   * Chaque nom est normalisé comme à la reconnaissance ; un nom inconnu est dit.
+   */
+  router.get(
+    '/interactions',
+    wrap(async (req, res) => {
+      const bruts = [req.query.m].flat().filter((nom) => typeof nom === 'string');
+      const elements = [...new Set(bruts
+        .map((nom) => nom.slice(0, 60).split(/\s+/).map(normaliser).filter(Boolean).join(' '))
+        .filter(Boolean))].slice(0, MEDICAMENTS_MAX);
+      if (elements.length < 2) return res.redirect('/');
+
+      const resultat = await chercherInteractions(pool, elements);
+      const noms = resultat.medicaments.map((med) => med.libelle);
+      return res.render('interactions', {
+        title: `${noms.join(' × ') || 'Interactions'} · Interactions · Demander à Kevin`,
+        saisie: elements.join(' '),
+        resultat,
         sansRail: true,
       });
     }),

@@ -31,3 +31,8 @@ export function substituer(saisie) {
   }
   return texte;
 }
+
+/** Couples (nom courant, substance), pour les correspondances par racine (interactions.js). */
+export function correspondances() {
+  return Object.entries(TABLE);
+}

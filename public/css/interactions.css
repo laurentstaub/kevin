@@ -1,0 +1,83 @@
+/* Interactions : une section par paire, les deux sens côte à côte. */
+
+.medicaments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+}
+
+.medicaments li {
+  display: flex;
+  flex-direction: column;
+}
+
+.medicament-nom { font-family: var(--font-head); font-size: var(--fs-lg, 1.2rem); }
+.medicament-dci { font-size: var(--fs-xs); color: var(--muted); }
+.inconnu { font-size: var(--fs-sm); color: var(--faint); }
+
+.paire {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-2);
+  border-top: var(--rule-width) solid var(--rule-medium);
+}
+
+.paire-titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0 0 var(--sp-2);
+}
+
+.paire-sens {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 720px) {
+  .paire-sens { grid-template-columns: 1fr; }
+}
+
+.sens-titre {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.sens-sur { font-weight: 400; color: var(--muted); }
+
+.sens-compte {
+  margin: 0.2em 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.communes {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+/* Niveau du thésaurus ANSM : un mot, trois degrés sans teinte nouvelle,
+   comme les mentions de délivrance. Jamais de rouge. */
+.niveau {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-control);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.citation .niveau { margin-bottom: 0.3em; }
+.niveau-ci { background: var(--bg-fonce); border-color: var(--bg-fonce); color: #fff; }
+.niveau-deconseillee { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.niveau-pe { color: var(--ink); }
+.niveau-aucun { color: var(--faint); border-style: dashed; }
