@@ -45,7 +45,8 @@ const accentuer = (mot) => mot.split('-')
 /** Traite chaque mot crié ; laisse le reste (dosage, forme, déjà en bas de casse). */
 function parMot(texte, regle) {
   // NFC : un accent combinant (E + ◌́) ne serait pas une capitale pour la règle.
-  return String(texte ?? '').normalize('NFC').split(/(\s+|\+|\/|\(|\))/).map((mot) => {
+  // La ponctuation sépare aussi : « PLAQUETTAIRE, HEPARINE » garde sinon sa virgule et reste crié.
+  return String(texte ?? '').normalize('NFC').split(/(\s+|\+|\/|\(|\)|,|;|:)/).map((mot) => {
     if (!CRIE.test(mot)) return mot;
     return sigle(mot) ?? regle(accentuer(mot));
   }).join('');

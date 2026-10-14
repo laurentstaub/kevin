@@ -108,6 +108,14 @@
 .niveau-pe { color: var(--ink); }
 .niveau-aucun { color: var(--faint); border-style: dashed; }
 
+/* Niveau porté par une minorité des RCP : dit à côté, sans le diminuer. */
+.niveau-part {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* Provenance d'un passage : trouvé par la substance, ou seulement par sa classe. */
 .citation .par {
   display: inline-block;

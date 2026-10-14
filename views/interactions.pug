@@ -87,6 +87,9 @@ block content
           | #{paire.a.libelle} × #{paire.b.libelle}
           if paire.libelleNiveau
             span.niveau(class=`niveau-${paire.niveau}`)= paire.libelleNiveau
+            if paire.minorite
+              //- Pas « RCP de acide… » : le nom entre parenthèses évite l'élision.
+              span.niveau-part selon #{paire.minorite.nb} RCP sur #{paire.minorite.sur} (#{paire.minorite.de})
           else if !paire.cite && !paire.communes.length && !paire.memeClasse.length
             span.niveau.niveau-aucun Aucune mention trouvée
         if paire.communes.length

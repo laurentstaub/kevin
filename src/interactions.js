@@ -64,6 +64,14 @@ const ACCESSOIRES = new Set([
   'citrate', 'oxalate', 'lactate', 'gluconate', 'tosilate', 'embonate', 'pivalate',
 ]);
 
+/** Anions d'un sel minéral : jamais la substance quand un ion l'accompagne. */
+const ANIONS = new Set([
+  'chlorure', 'carbonate', 'bicarbonate', 'hydrogenocarbonate', 'oxyde', 'hydroxyde',
+  'glycerophosphate', 'pidolate', 'iodure', 'fluorure', 'bromure',
+]);
+/** Ions qui sont la substance quand le reste du nom n'est qu'un anion. */
+const IONS = new Set(['sodium', 'potassium', 'magnesium', 'calcium']);
+
 /**
  * Racine d'un mot de substance : « acétylsalicylique » et « acétylsalicylate »
  * donnent « acetylsalicyl », que nomment aussi bien le RCP de la warfarine que
@@ -78,6 +86,11 @@ export function racine(mot) {
 export function motsUtiles(nom) {
   const mots = plier(nom).split(/[^a-z0-9]+/).filter(Boolean);
   const utiles = mots.filter((mot) => mot.length >= 4 && !ACCESSOIRES.has(mot));
+  // « chlorure de potassium », « carbonate de calcium » : l'ion est la substance, l'anion ne l'est pas.
+  const sansAnion = utiles.filter((mot) => !ANIONS.has(mot));
+  if (sansAnion.length) return sansAnion;
+  const ions = mots.filter((mot) => IONS.has(mot));
+  if (ions.length) return ions;
   if (utiles.length) return utiles;
   const long = mots.reduce((a, b) => (b.length > a.length ? b : a), '');
   return long ? [long] : [];
@@ -160,12 +173,36 @@ const niveauIntitule = (texte) => {
   return 'apec';
 };
 
-/** Niveau dit par le passage lui-même, quand aucun intitulé ne le précède. */
+/** Niveau dit par une phrase, quand aucun intitulé ne le précède. */
 function niveauDuPassage(plie) {
   if (/contre-indiqu/.test(plie)) return 'ci';
   if (/deconseill/.test(plie)) return 'deconseillee';
   return null;
 }
+
+/** Au-delà, une « phrase » sans ponctuation est un tableau aplati : son niveau peut viser une autre ligne. */
+const PHRASE_NIVEAU_MAX = 300;
+
+/**
+ * Niveau lu dans la prose : seulement dans une phrase courte qui nomme ce qui
+ * a été trouvé, et après lui. « Acide fusidique : déconseillé … Amiodarone »
+ * (tableau aplati) ne fait pas de l'amiodarone une association déconseillée.
+ */
+export function niveauProse(texte, critere) {
+  for (const phrase of decouper(texte)) {
+    const plie = plier(phrase);
+    const position = plie.search(critere);
+    if (phrase.length > PHRASE_NIVEAU_MAX || position < 0) continue;
+    // Le niveau suit ce qu'il qualifie : « l'association de X et Y est
+    // déconseillée ». Placé avant, il vise une autre ligne du tableau.
+    const niveau = niveauDuPassage(plie.slice(position));
+    if (niveau) return { niveau, phrase };
+  }
+  return null;
+}
+
+/** Phrases d'un passage ; le point médian des RCP vaut une puce. */
+const decouper = (texte) => phrases(texte.replace(/\s·\s/g, ' • '));
 
 /**
  * Découpe une 4.5 en passages : par intitulé de niveau, puis par substance
@@ -213,15 +250,21 @@ export function extraire(texte, regex, classes = []) {
     const classe = parSubstance ? null : classes.find((candidate) => candidate.regex.test(plie));
     if (!parSubstance && !classe) continue;
     const critere = parSubstance ? regex : classe.regex;
+    // Niveau lu sur tout le passage, avant toute coupe : la phrase qui le
+    // porte n'est pas toujours parmi les premières.
+    const prose = passage.niveau ? null : niveauProse(passage.texte, critere);
     let extrait = passage.texte;
     if (extrait.length > BLOC_MAX) {
-      // Passage long, souvent de la prose : les phrases qui portent ce qui a été trouvé.
-      const decoupe = phrases(extrait.replace(/\s·\s/g, ' • '));
+      // Passage long, souvent de la prose : les phrases qui portent ce qui a
+      // été trouvé, dont celle qui dit le niveau.
+      const decoupe = decouper(extrait);
       const utiles = decoupe.filter((phrase) => critere.test(plier(phrase)));
-      extrait = (utiles.length ? utiles : decoupe).slice(0, 2).join(' […] ');
+      let retenues = (utiles.length ? utiles : decoupe).slice(0, 2);
+      if (prose && !retenues.includes(prose.phrase)) retenues = [retenues[0], prose.phrase];
+      extrait = retenues.join(' […] ');
     }
     trouves.push({
-      niveau: passage.niveau ?? niveauDuPassage(plier(extrait)),
+      niveau: passage.niveau ?? prose?.niveau ?? null,
       extrait,
       par: parSubstance ? 'substance' : 'classe',
       classe: classe?.nom ?? null,
@@ -288,7 +331,7 @@ export function regrouper(lignes, regex, classes = []) {
     }
   }
   return fusionnerVoisins([...groupes.values()])
-    .map(({ cis, ...groupe }) => ({ ...groupe, nb: cis.size, libelleNiveau: NIVEAUX[groupe.niveau] ?? null }))
+    .map(({ cis, ...groupe }) => ({ ...groupe, nb: cis.size, rcp: [...cis], libelleNiveau: NIVEAUX[groupe.niveau] ?? null }))
     // À niveau égal, la substance nommée avant la classe.
     .sort((a, b) => rang(a.niveau) - rang(b.niveau)
       || Number(a.par === 'classe') - Number(b.par === 'classe') || b.nb - a.nb);
@@ -372,7 +415,15 @@ export function uneParRacine(noms) {
     const deja = parRacine.get(cle);
     if (!deja || (deja.includes('(') && !nom.includes('('))) parRacine.set(cle, nom);
   }
-  return [...parRacine.values()].sort();
+  return [...parRacine.values()].map(remettreEnOrdre).sort();
+}
+
+/** « CLOPIDOGREL (HYDROGÉNOSULFATE DE) » → « HYDROGÉNOSULFATE DE CLOPIDOGREL », l'ordre de la langue. */
+export function remettreEnOrdre(nom) {
+  const inverse = /^(.+?)\s*\(([^()]+?\s(?:DE|D['’]|de|d['’]))\)$/u.exec(nom.trim());
+  if (!inverse) return nom;
+  const [, substance, sel] = inverse;
+  return /['’]$/.test(sel) ? `${sel}${substance}` : `${sel} ${substance}`;
 }
 
 /** Un code CIS désigne une spécialité précise : celle de la fiche produit. */
@@ -404,7 +455,8 @@ export function choisir(element, rows) {
   const atc = [...new Set(retenues.flatMap((row) => row.atc ?? []))].sort();
   const libelle = parSubstance
     ? dci(graphie(element, substances))
-    : specialite(retenues[0].denomination_medicament.slice(0, element.length));
+    // « DIFFU K 600 mg, gélule » → « Diffu K » : le nom jusqu'au dosage ou à la forme.
+    : specialite(retenues[0].denomination_medicament.split(/,\s|\s(?=\d)/)[0]);
 
   return {
     element,
@@ -462,6 +514,8 @@ export async function sens(pool, a, b) {
     passages: groupes.slice(0, PASSAGES_MAX),
     autres: Math.max(0, groupes.length - PASSAGES_MAX),
     niveau: groupes[0]?.niveau ?? null,
+    // RCP qui portent ce niveau : un sur soixante et onze ne vaut pas la majorité.
+    auNiveau: new Set(groupes.filter((groupe) => groupe.niveau === (groupes[0]?.niveau ?? null)).flatMap((groupe) => groupe.rcp)).size,
     // Rien trouvé : la 4.5 à lire soi-même, celle de la première spécialité.
     lecture: rows[0]
       ? { cis: rows[0].code_cis, denomination: rows[0].denomination_medicament, ancre: `rcp-${rows[0].position}` }
@@ -541,9 +595,13 @@ export async function chercherInteractions(pool, elements) {
 
   const paires = couples.map(([a, b], rangCouple) => {
     const [ab, ba] = lus[rangCouple];
-    const niveau = rang(ab.niveau) <= rang(ba.niveau) ? ab.niveau : ba.niveau;
+    const source = rang(ab.niveau) <= rang(ba.niveau) ? ab : ba;
+    const { niveau } = source;
     return {
       a, b, sens: [ab, ba], niveau, libelleNiveau: NIVEAUX[niveau] ?? null,
+      // Niveau porté par une minorité des RCP lus : la page le précise.
+      minorite: niveau && source.auNiveau * 2 < source.citant
+        ? { de: source.de, nb: source.auNiveau, sur: source.citant } : null,
       communes: communes(a, b).map(dci),
       memeClasse: classes[rangCouple].map((code) => ({ code, libelle: libelles.get(code) ?? code })),
       cite: ab.citant + ba.citant > 0,

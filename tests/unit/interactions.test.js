@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   plier, racine, motsUtiles, termes, motif, passages, extraire, regrouper, choisir, communes,
-  memesClasses, ressemblance, fusionnerVoisins, uneParRacine, estCis, sens,
+  memesClasses, ressemblance, fusionnerVoisins, uneParRacine, estCis, sens, niveauProse, remettreEnOrdre,
 } from '../../src/interactions.js';
 import { reconnaitreMedicaments } from '../../src/reconnaissance.js';
 import { lienInteractions } from '../../src/routes/pages.js';
@@ -196,5 +196,39 @@ describe('classe commune aux deux médicaments', () => {
     const pool = { query: async () => ({ rows: [{ code_cis: '1', denomination_medicament: 'MOPRAL', position: 8, texte }] }) };
     const lu = await sens(pool, omeprazole, esomeprazole);
     assert.deepEqual(lu.passages.map((passage) => passage.extrait), ['Autres IPP Pas d’intérêt à les associer.']);
+  });
+});
+
+describe('niveau lu dans la prose', () => {
+  const amiodarone = regex(['amiodarone']);
+
+  it('suit ce qu’il qualifie, dans une phrase courte', () => {
+    assert.equal(niveauProse("L'association de simvastatine et d'amiodarone est déconseillée.", amiodarone).niveau, 'deconseillee');
+    // Tableau aplati : « déconseillé » vise l'acide fusidique, avant l'amiodarone.
+    assert.equal(niveauProse('Acide fusidique Déconseillé avec la simvastatine Amiodarone Amlodipine Ne pas dépasser 20 mg.', amiodarone), null);
+    assert.equal(niveauProse(`Amiodarone ${'x '.repeat(200)}est contre-indiquée.`, amiodarone), null);
+  });
+
+  it('se lit sur tout le passage, et sa phrase reste dans la citation', () => {
+    const long = `Clopidogrel Une étude ${'a montré une baisse de l’exposition '.repeat(10)}avec le clopidogrel. `
+      + `Des données contradictoires ont été rapportées sur le clopidogrel ${'dans plusieurs études '.repeat(8)}. `
+      + 'Par mesure de précaution, l’utilisation concomitante d’oméprazole et de clopidogrel doit être déconseillée.';
+    const [trouve] = extraire(long, regex(['clopidogrel']));
+    assert.equal(trouve.niveau, 'deconseillee');
+    assert.match(trouve.extrait, /doit être déconseillée\.$/);
+  });
+
+  it('un sel minéral se cherche par son ion', () => {
+    assert.deepEqual(motsUtiles('CHLORURE DE POTASSIUM'), ['potassium']);
+    assert.deepEqual(motsUtiles('CARBONATE DE CALCIUM'), ['calcium']);
+    assert.deepEqual(motsUtiles('VALPROATE DE SODIUM'), ['valproate']);
+  });
+});
+
+describe('noms de substance', () => {
+  it('remet le sel devant la substance', () => {
+    assert.equal(remettreEnOrdre('CLOPIDOGREL (HYDROGÉNOSULFATE DE)'), 'HYDROGÉNOSULFATE DE CLOPIDOGREL');
+    assert.equal(remettreEnOrdre("AMIODARONE (CHLORHYDRATE D')"), "CHLORHYDRATE D'AMIODARONE");
+    assert.equal(remettreEnOrdre('PARACÉTAMOL'), 'PARACÉTAMOL');
   });
 });
