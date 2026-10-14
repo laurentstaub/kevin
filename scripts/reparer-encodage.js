@@ -5,11 +5,19 @@ import { createPool } from '../src/db.js';
  *
  *   npm run reparer-encodage              # constat, n'écrit rien
  *   npm run reparer-encodage -- --ecrire  # applique
+ *   npm run reparer-encodage -- --cis 61018059 [--ecrire]
+ *       une spécialité, tables dbpm seulement, réparation séquence par séquence
+ *       (document mêlant texte sain et texte abîmé) ; relancer ensuite build-sections.
  * ATTENTION : rattrapage seulement ; le chargeur des CIS_*.txt réintroduira le défaut.
  */
 
 const ECRIRE = process.argv.includes('--ecrire');
-const SCHEMAS = ['dbpm', 'docs'];
+const CIS = (() => {
+  const i = process.argv.indexOf('--cis');
+  return i !== -1 && /^\d{8}$/.test(process.argv[i + 1] ?? '') ? process.argv[i + 1] : null;
+})();
+// Ciblé : les sources (dbpm) seulement, le dérivé (docs) se reconstruit.
+const SCHEMAS = CIS ? ['dbpm'] : ['dbpm', 'docs'];
 
 // Les 27 caractères de Windows-1252 absents de Latin-1 (sinon « â€™ » reste tel quel).
 const CP1252 = new Map(
@@ -48,19 +56,57 @@ export function reparer(texte) {
   }
 }
 
+/** Un octet de continuation UTF-8 (0x80–0xBF) tel que lu en Windows-1252 ou Latin-1. */
+const SUITE = `[\\u0080-\\u00bf${[...CP1252.keys()].filter((car) => CP1252.get(car) <= 0xbf).join('')}]`;
+const SEQUENCE = new RegExp(`[\\u00c2-\\u00df]${SUITE}|[\\u00e0-\\u00ef]${SUITE}{2}`, 'g');
+const RESTE_A = new RegExp(`Ã(?!${SUITE})`, 'g');
+const RESTE_NBSP = new RegExp(`Â(?!${SUITE})`, 'g');
+
+/**
+ * Réparation séquence par séquence, pour un texte qui mêle caractères sains et
+ * abîmés (reparer() renonce alors) : chaque suite « octet de tête + octets de
+ * continuation » qui forme de l'UTF-8 valide est remise en clair. Puis les
+ * restes dont le second octet, une espace insécable (0xA0), s'est perdu :
+ * « Ã » seul était « à », « Â » seul une espace insécable. Ces restes ne se
+ * réparent qu'en mode ciblé, relu : ailleurs, « Âge » est légitime.
+ *
+ * @returns {string|null} le texte réparé, ou null s'il n'y avait rien à réparer
+ */
+export function reparerSequences(texte) {
+  if (!texte || !/[ÃÂ]|â€/.test(texte)) return null;
+  let sequences = 0;
+  const clair = String(texte)
+    .replace(SEQUENCE, (sequence) => {
+      try {
+        const lu = decodeur.decode(Uint8Array.from([...sequence].map((car) => CP1252.get(car) ?? car.codePointAt(0))));
+        sequences += 1;
+        return lu;
+      } catch {
+        return sequence;
+      }
+    });
+  // Sans séquence abîmée, le texte n'est pas doublement encodé : ses « Â » sont vrais.
+  if (sequences === 0) return null;
+  return clair.replace(RESTE_A, 'à').replace(RESTE_NBSP, '\u00a0');
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const pool = createPool({ statement_timeout: 0 });
 
   const { rows: colonnes } = await pool.query(
     `SELECT table_schema AS s, table_name AS t, column_name AS c
-     FROM information_schema.columns
+     FROM information_schema.columns k
      WHERE table_schema = ANY($1)
        AND data_type IN ('text', 'character varying')
+       -- Ciblé : les seules tables qui portent le CIS.
+       AND ($2::boolean IS NOT TRUE OR EXISTS (
+             SELECT 1 FROM information_schema.columns i
+             WHERE i.table_schema = k.table_schema AND i.table_name = k.table_name AND i.column_name = 'code_cis'))
      ORDER BY 1, 2, 3`,
-    [SCHEMAS],
+    [SCHEMAS, Boolean(CIS)],
   );
 
-  console.log(`${colonnes.length} colonne(s) texte examinée(s)${ECRIRE ? '' : ' — constat seul'}\n`);
+  console.log(`${colonnes.length} colonne(s) texte examinée(s)${CIS ? ` pour le CIS ${CIS}` : ''}${ECRIRE ? '' : ' — constat seul'}\n`);
 
   let total = 0;
   const exemples = [];
@@ -74,11 +120,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const { rows } = await pool.query(
       `SELECT ctid, ${colonne} AS v
        FROM ${table}
-       WHERE ${colonne} LIKE '%Ã%' OR ${colonne} LIKE '%Â%' OR ${colonne} LIKE '%â€%'`,
+       WHERE (${colonne} LIKE '%Ã%' OR ${colonne} LIKE '%Â%' OR ${colonne} LIKE '%â€%')
+         ${CIS ? 'AND code_cis = $1' : ''}`,
+      CIS ? [CIS] : [],
     );
 
     const atraiter = rows
-      .map((row) => ({ ctid: row.ctid, clair: reparer(row.v), avant: row.v }))
+      .map((row) => ({ ctid: row.ctid, clair: reparer(row.v) ?? (CIS ? reparerSequences(row.v) : null), avant: row.v }))
       .filter((ligne) => ligne.clair !== null);
 
     if (atraiter.length === 0) continue;

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { reparer } from '../../scripts/reparer-encodage.js';
+import { reparer, reparerSequences } from '../../scripts/reparer-encodage.js';
 
 describe('reparer', () => {
   it('remet en clair un libellé de présentation', () => {
@@ -41,5 +41,26 @@ describe('reparer', () => {
   it('renonce plutôt que de produire du charabia', () => {
     // « Ã » suivi d'un caractère hors plage : pas d'UTF-8 valide.
     assert.equal(reparer('Ãge'), null);
+  });
+});
+
+describe('reparerSequences', () => {
+  // FORMOTEROL EG (61018059) : texte sain et texte abîmé mêlés, reparer() renonce.
+  it('répare un texte qui mêle caractères sains et abîmés', () => {
+    const mele = 'Fertilité, grossesse — 4.6. FertilitÃ©, grossesse et allaitement';
+    assert.equal(reparer(mele), null);
+    assert.equal(reparerSequences(mele), 'Fertilité, grossesse — 4.6. Fertilité, grossesse et allaitement');
+  });
+
+  // Le second octet de « à » et des espaces insécables (0xA0) s'est perdu.
+  it('rétablit « à » et les espaces insécables dont il ne reste que le premier octet', () => {
+    assert.equal(reparerSequences('Excipient Ã effet notoire, rÃ©servÃ© Ã l’adulte'), 'Excipient à effet notoire, réservé à l’adulte');
+    assert.equal(reparerSequences('4.1.ÂÂ Indications thÃ©rapeutiques'), '4.1.\u00a0\u00a0 Indications thérapeutiques');
+  });
+
+  it('laisse un texte sans séquence abîmée, ses « Â » compris', () => {
+    assert.equal(reparerSequences('Âge minimal : 12 ans, Ça va'), null);
+    assert.equal(reparerSequences('Texte sain'), null);
+    assert.equal(reparerSequences(''), null);
   });
 });
