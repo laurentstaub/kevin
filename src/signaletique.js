@@ -6,6 +6,8 @@
  * valeur (état condensé). `portee` 'bloque' marque ce qui empêche la
  * délivrance en officine.
  */
+import { SECABILITE } from './galenique.js';
+
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
 /** Picto de la forme pharmaceutique, d'après son libellé BDPM. */
@@ -72,10 +74,11 @@ const taux = (valeur) => {
  * @param {boolean} importation
  * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
  * @param {number} options         alternatives proposables (substitution.js)
+ * @param {{ valeur: string, phrase: string }|null} secabilite  rubrique 3 du RCP (galenique.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0) {
+export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -190,8 +193,24 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
   }
 
   // Forme abrégée ; le dosage est dans le titre, le libellé complet en infobulle.
+  // Sécabilité lue au RCP : un mot dans la bande, la phrase citée en infobulle.
   const forme = product.forme_pharmaceutique ?? '';
-  cases.push({ cle: 'forme', picto: pictoForme(forme), libelle: 'Forme', valeur: abregerForme(forme), detail: forme || null });
+  const secable = secabilite ? SECABILITE[secabilite.valeur] : null;
+  cases.push({
+    cle: 'forme', picto: pictoForme(forme), libelle: 'Forme',
+    valeur: [abregerForme(forme), secable].filter(Boolean).join(' · '),
+    detail: [forme, secabilite && `RCP 3 : « ${secabilite.phrase} »`].filter(Boolean).join(' — ') || null,
+  });
+
+  // Triangle noir : surveillance supplémentaire, effets indésirables à déclarer.
+  if (product.surveillance_renforcee) {
+    cases.push({
+      cle: 'surveillance', picto: 'triangle', libelle: 'Surveillance supplémentaire',
+      valeur: 'Triangle noir',
+      detail: 'Médicament sous surveillance renforcée : tout effet indésirable suspecté est à déclarer',
+      lien: 'https://signalement.social-sante.gouv.fr',
+    });
+  }
 
   if (product.commercialise === false) {
     cases.push({ cle: 'etat', picto: 'barre', libelle: 'État', valeur: 'Non commercialisé', portee: 'bloque' });

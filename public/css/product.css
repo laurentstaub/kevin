@@ -279,6 +279,33 @@ a.signal-valeur {
   margin-top: 0.3em;
 }
 
+/* Informations de sécurité ANSM : une ligne par information, date en tête,
+   filets horizontaux comme les tableaux. */
+.infos-securite {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.info-securite {
+  display: grid;
+  grid-template-columns: 6.5em 1fr auto;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.info-securite:first-child {
+  border-top: none;
+}
+
+.info-date {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
 .avis-anterieurs {
   margin-top: var(--sp-2);
 }

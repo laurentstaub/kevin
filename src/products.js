@@ -52,6 +52,8 @@ export async function getProduct(pool, cis) {
         m.titulaires,
         m.type_procedure_amm,
         (m.etat_commercialisation = 'Commercialisée') AS commercialise,
+        -- Triangle noir : médicament sous surveillance supplémentaire.
+        m.surveillance_renforcee,
         -- Place dans son groupe générique : 0 princeps, 1 générique, 2 et 4 assimilés ; null hors groupe.
         (SELECT g.type_generique FROM dbpm.cis_gener_bdpm g WHERE g.code_cis = m.code_cis LIMIT 1) AS type_generique,
         string_agg(DISTINCT c.denomination_substance, ', '
@@ -60,7 +62,7 @@ export async function getProduct(pool, cis) {
       LEFT JOIN dbpm.cis_compo_bdpm c ON c.code_cis = m.code_cis
       WHERE m.code_cis = $1
       GROUP BY m.code_cis, m.denomination_medicament, m.forme_pharmaceutique,
-               m.titulaires, m.type_procedure_amm, m.etat_commercialisation
+               m.titulaires, m.type_procedure_amm, m.etat_commercialisation, m.surveillance_renforcee
     ),
     presentations AS (
       SELECT json_agg(json_build_object(

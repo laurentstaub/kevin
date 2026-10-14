@@ -5,6 +5,9 @@ import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre, lien } from '../etat-recherche.js';
 import { iaActive, estQuestion, interpreterQuestion } from '../ia.js';
 import { reconnaitreMedicament } from '../reconnaissance.js';
+import { lireCode, trouverParCode } from '../codes.js';
+import { getSecabilite } from '../galenique.js';
+import { getInfosSecurite } from '../securite.js';
 import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
@@ -190,6 +193,17 @@ export function pageRoutes(pool) {
 
       if (!query.raw) return res.redirect('/');
 
+      // Code de boîte (CIP, Datamatrix) : la fiche directement. Inconnu de la
+      // BDPM, la recherche habituelle le dira introuvable.
+      const code = lireCode(String(req.query.q).slice(0, 200));
+      if (code) {
+        const cis = await trouverParCode(pool, code).catch((err) => {
+          console.error('[code] recherche par code indisponible :', err.message);
+          return null;
+        });
+        if (cis) return res.redirect(`/product/${cis}`);
+      }
+
       // Médicament reconnu ou question interprétée → les documents, par redirection.
       if (!etat.brut && !query.tooShort) {
         const sens = await orienter(etat, query.raw);
@@ -347,6 +361,7 @@ export function pageRoutes(pool) {
 
       const [
         alternatives, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
+        secabilite, securite,
       ] = await Promise.all([
         getAlternatives(pool, cis).catch((err) => {
           console.error('[substitution] alternatives indisponibles pour', cis, err.message);
@@ -394,6 +409,16 @@ export function pageRoutes(pool) {
             return [];
           })
           : [],
+        // Absence normale : la rubrique 3 ne dit rien de la sécabilité, ou pas de RCP découpé.
+        getSecabilite(pool, cis).catch((err) => {
+          console.error('[galénique] sécabilité indisponible pour', cis, err.message);
+          return null;
+        }),
+        // Panne : `null`, sinon l'absence de bloc se lirait « aucune information ».
+        getInfosSecurite(pool, cis).catch((err) => {
+          console.error('[sécurité] informations indisponibles pour', cis, err.message);
+          return null;
+        }),
       ]);
 
       const documents = withSections(bruts, decoupe);
@@ -432,6 +457,7 @@ export function pageRoutes(pool) {
       const sections = [
         { id: 'delivrance', label: 'Délivrance' },
         evaluation?.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
+        securite?.total > 0 && { id: 'securite', label: 'Sécurité' },
         // Question de comptoir : avant les documents, qui sont la référence.
         alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         hasDocuments && {
@@ -451,7 +477,8 @@ export function pageRoutes(pool) {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
-          resumerEvaluation(evaluation), optionsAlternatives),
+          resumerEvaluation(evaluation), optionsAlternatives, secabilite),
+        securite,
         optionsAlternatives,
         // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.
         sousClasseAtc: (classeAtc ?? []).find((niveau) => niveau.code?.length === 5) ?? null,
