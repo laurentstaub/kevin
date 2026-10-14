@@ -279,6 +279,27 @@ a.signal-valeur {
   margin-top: 0.3em;
 }
 
+/* Interactions : le libellé à la place du titre de bloc, le champ de la
+   recherche à sa suite, sur le même filet. */
+.verifier-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.verifier-libelle {
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.verifier-form .input-wrapper {
+  flex: 1 1 16rem;
+}
+
 /* Informations de sécurité ANSM : une ligne par information, date en tête,
    filets horizontaux comme les tableaux. */
 .infos-securite {

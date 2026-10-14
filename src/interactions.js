@@ -21,7 +21,7 @@ import { ROOT } from './config.js';
 import { deaccent } from './text.js';
 import { phrases } from './citations.js';
 import { correspondances } from './synonymes.js';
-import { dci, specialite } from './casse.js';
+import { dci, specialite, phrase } from './casse.js';
 
 /** Du plus grave au moins grave ; `null` : le RCP ne classe pas le passage. */
 export const NIVEAUX = {
@@ -55,7 +55,7 @@ export function plier(texte) {
 /** Mots d'un nom de substance qui ne la désignent pas : sels, hydrates, articles. */
 const ACCESSOIRES = new Set([
   'acide', 'de', 'd', 'du', 'des', 'la', 'le', 'l', 'dl', 'en', 'sous', 'forme', 'base', 'sel',
-  'sodique', 'potassique', 'calcique', 'magnesique', 'disodique', 'lysine',
+  'sodique', 'potassique', 'calcique', 'magnesique', 'disodique', 'lysine', 'lysinate', 'arginine',
   'sodium', 'potassium', 'magnesium',
   'chlorhydrate', 'bromhydrate', 'dichlorhydrate', 'monochlorhydrate',
   'anhydre', 'monohydrate', 'dihydrate', 'trihydrate', 'hemihydrate', 'sesquihydrate', 'hydrate',
@@ -230,6 +230,42 @@ export function extraire(texte, regex, classes = []) {
   return trouves;
 }
 
+/** Part de mots communs au-delà de laquelle deux passages sont une même rédaction retouchée. */
+const VOISINAGE = 0.8;
+
+const motsDe = (texte) => new Set(plier(texte).split(/[^a-z0-9]+/).filter((mot) => mot.length >= 3));
+
+/** Indice de Jaccard entre deux ensembles de mots. */
+export function ressemblance(mots1, mots2) {
+  let communs = 0;
+  for (const mot of mots1) if (mots2.has(mot)) communs += 1;
+  const total = mots1.size + mots2.size - communs;
+  return total === 0 ? 1 : communs / total;
+}
+
+/**
+ * Fusionne les rédactions voisines d'un même passage (« tels que » / « par
+ * exemple » d'un générique à l'autre), à niveau, provenance et classe égaux.
+ * La rédaction portée par le plus de RCP est citée ; les autres sont comptées.
+ */
+export function fusionnerVoisins(groupes) {
+  const gardes = [];
+  const motsGardes = [];
+  for (const groupe of [...groupes].sort((g1, g2) => g2.cis.size - g1.cis.size)) {
+    const mots = motsDe(groupe.extrait);
+    const rangHote = gardes.findIndex((garde, i) => garde.niveau === groupe.niveau && garde.par === groupe.par
+      && garde.classe === groupe.classe && ressemblance(motsGardes[i], mots) >= VOISINAGE);
+    if (rangHote >= 0) {
+      for (const cis of groupe.cis) gardes[rangHote].cis.add(cis);
+      gardes[rangHote].variantes += 1;
+    } else {
+      gardes.push({ ...groupe, cis: new Set(groupe.cis), variantes: 0 });
+      motsGardes.push(mots);
+    }
+  }
+  return gardes;
+}
+
 /**
  * Regroupe les passages identiques de plusieurs RCP (génériques d'un même
  * princeps) : un passage, le nombre de RCP qui le portent, un RCP pour le lien.
@@ -251,7 +287,7 @@ export function regrouper(lignes, regex, classes = []) {
       }
     }
   }
-  return [...groupes.values()]
+  return fusionnerVoisins([...groupes.values()])
     .map(({ cis, ...groupe }) => ({ ...groupe, nb: cis.size, libelleNiveau: NIVEAUX[groupe.niveau] ?? null }))
     // À niveau égal, la substance nommée avant la classe.
     .sort((a, b) => rang(a.niveau) - rang(b.niveau)
@@ -291,10 +327,29 @@ export async function resoudre(pool, element) {
             -- Absence normale : un tiers des spécialités n'a pas de classe ATC.
             ARRAY(SELECT a.atc_code FROM ref.cis_atc_mapping a WHERE a.code_cis = m.code_cis) AS atc
      FROM dbpm.cis_bdpm m
-     WHERE m.code_cis IN (SELECT code_cis FROM par_substance UNION SELECT code_cis FROM par_marque)`,
+     WHERE m.code_cis IN (SELECT code_cis FROM par_substance UNION SELECT code_cis FROM par_marque)
+        -- Un code CIS (depuis la fiche produit) : cette spécialité seule.
+        OR m.code_cis = $1`,
     [element],
   );
   return choisir(element, rows);
+}
+
+/** Spécialité de la fiche produit : son RCP seul, ses substances, nom sans la forme. */
+function specialiteSeule(row) {
+  const substances = uneParRacine(row.substances);
+  const atc = [...new Set(row.atc ?? [])].sort();
+  return {
+    element: row.code_cis,
+    // « DEPAKINE CHRONO 500 mg, comprimé… » → « Depakine Chrono 500 mg ».
+    libelle: specialite(row.denomination_medicament.split(/,\s/)[0]),
+    type: 'specialite',
+    substances,
+    termes: termes(substances),
+    atc,
+    classes: classesDe(atc, substances),
+    cis: [row.code_cis],
+  };
 }
 
 /** Mots de la saisie dans la graphie de la base, accents compris : « acetylsalicylique » → « ACÉTYLSALICYLIQUE ». */
@@ -305,9 +360,29 @@ function graphie(element, substances) {
     .join(' ');
 }
 
+/**
+ * Une substance par racine : la BDPM écrit « ACÉTYLSALICYLATE DE DL-LYSINE » et
+ * « DL-LYSINE (ACÉTYLSALICYLATE DE) » pour la même. La graphie sans parenthèse
+ * l'emporte : « valproate de sodium », pas « sodium (valproate de) ».
+ */
+export function uneParRacine(noms) {
+  const parRacine = new Map();
+  for (const nom of noms) {
+    const cle = motsUtiles(nom).map(racine).sort().join(' ');
+    const deja = parRacine.get(cle);
+    if (!deja || (deja.includes('(') && !nom.includes('('))) parRacine.set(cle, nom);
+  }
+  return [...parRacine.values()].sort();
+}
+
+/** Un code CIS désigne une spécialité précise : celle de la fiche produit. */
+export const estCis = (element) => /^\d{8}$/.test(element);
+
 /** Partie pure de `resoudre` : substances retenues, spécialités lues, libellé. */
 export function choisir(element, rows) {
+  if (estCis(element)) rows = rows.filter((row) => row.code_cis === element);
   if (rows.length === 0) return null;
+  if (estCis(element)) return specialiteSeule(rows[0]);
   const parSubstance = rows[0].par_substance;
   const mots = element.split(' ');
   const nomme = (substance) => mots.every((mot) => ` ${plier(substance).replace(/[^a-z0-9]+/g, ' ')} `.includes(` ${mot} `));
@@ -324,15 +399,8 @@ export function choisir(element, rows) {
   const commercialisees = retenues.filter((row) => row.commercialise);
   if (commercialisees.length) retenues = commercialisees;
 
-  // Une substance par racine : la BDPM écrit « ACÉTYLSALICYLATE DE DL-LYSINE »
-  // et « DL-LYSINE (ACÉTYLSALICYLATE DE) » pour la même.
-  const parRacine = new Map();
-  for (const substance of retenues.flatMap((row) => row.substances)) {
-    if (parSubstance && !nomme(substance)) continue;
-    const cle = motsUtiles(substance).map(racine).sort().join(' ');
-    if (!parRacine.has(cle)) parRacine.set(cle, substance);
-  }
-  const substances = [...parRacine.values()].sort();
+  const substances = uneParRacine(retenues.flatMap((row) => row.substances)
+    .filter((substance) => !parSubstance || nomme(substance)));
   const atc = [...new Set(retenues.flatMap((row) => row.atc ?? []))].sort();
   const libelle = parSubstance
     ? dci(graphie(element, substances))
@@ -354,13 +422,17 @@ export function choisir(element, rows) {
  * Ce que les 4.5 des RCP de `a` disent des substances de `b`, puis de ses
  * classes. Les termes que `a` partage avec `b` sont écartés : le RCP du
  * paracétamol parle du paracétamol à chaque phrase, ce n'est pas une
- * interaction. Une classe commune reste cherchée : « autres AINS » dans le RCP
- * d'un AINS est précisément l'interaction.
+ * interaction. Une classe commune reste cherchée, mais seulement précédée de
+ * « autre(s) » : « autres AINS » dans le RCP d'un AINS est précisément
+ * l'interaction, alors que le RCP de l'oméprazole nomme « IPP » partout.
  */
 export async function sens(pool, a, b) {
   const propres = new Set(a.termes);
   const cherches = b.termes.filter((terme) => !propres.has(terme));
-  const classes = b.classes ?? [];
+  const siennes = new Set((a.classes ?? []).map((classe) => classe.id));
+  const classes = (b.classes ?? []).map((classe) => (siennes.has(classe.id)
+    ? { ...classe, termes: classe.termes.flatMap((terme) => [`autre ${terme}`, `autres ${terme}`]) }
+    : classe));
   const base = {
     de: a.libelle,
     sur: b.libelle,
@@ -404,28 +476,81 @@ export function communes(a, b) {
 }
 
 /**
- * Toutes les paires d'une liste de médicaments, la plus grave d'abord.
+ * Classes ATC de niveau 4 (cinq caractères) communes à deux médicaments :
+ * deux IPP, deux AINS. Rien quand ils partagent une substance, déjà signalée.
+ */
+export function memesClasses(a, b) {
+  if (communes(a, b).length) return [];
+  const niveau4 = (med) => new Set((med.atc ?? []).filter((code) => code.length >= 5).map((code) => code.slice(0, 5)));
+  const deB = niveau4(b);
+  return [...niveau4(a)].filter((code) => deB.has(code)).sort();
+}
+
+// ----------------------------------------------------------------- le cache
+
+/** Les données changent au mieux une fois par mois ; une heure suffit à servir les retours en arrière. */
+const DUREE_CACHE = 60 * 60 * 1000;
+const TAILLE_CACHE = 500;
+const cache = new Map();
+
+/** Valeur mémorisée, ou calculée puis mémorisée. Une erreur n'est pas mémorisée. */
+async function memoriser(cle, calcul) {
+  const trouve = cache.get(cle);
+  if (trouve && trouve.jusqua > Date.now()) return trouve.valeur;
+  const valeur = await calcul();
+  if (cache.size >= TAILLE_CACHE) cache.delete(cache.keys().next().value);
+  cache.set(cle, { valeur, jusqua: Date.now() + DUREE_CACHE });
+  return valeur;
+}
+
+/** Pour les tests et après un rechargement de la base. */
+export function viderCache() {
+  cache.clear();
+}
+
+/** Libellés des classes ATC, en une requête. */
+async function libellesAtc(pool, codes) {
+  if (codes.length === 0) return new Map();
+  const { rows } = await pool.query(
+    'SELECT atc_code, atc_label FROM ref.atc_classification WHERE atc_code = ANY($1::text[])',
+    [codes],
+  );
+  return new Map(rows.map((row) => [row.atc_code, phrase(row.atc_label)]));
+}
+
+/**
+ * Toutes les paires d'une liste de médicaments, la plus grave d'abord ; à
+ * niveau égal, celles qui citent ou partagent une classe avant le silence.
+ * Les paires se calculent en parallèle, chaque sens est mémorisé.
  * @param {string[]} elements  sortie de reconnaitreMedicaments
  */
 export async function chercherInteractions(pool, elements) {
-  const resolus = await Promise.all(elements.slice(0, MEDICAMENTS_MAX).map((element) => resoudre(pool, element)));
+  const retenus = elements.slice(0, MEDICAMENTS_MAX);
+  const resolus = await Promise.all(retenus.map((element) => memoriser(`m:${element}`, () => resoudre(pool, element))));
   const medicaments = resolus.filter(Boolean);
-  const inconnus = elements.slice(0, MEDICAMENTS_MAX).filter((_, i) => !resolus[i]);
+  const inconnus = retenus.filter((_, i) => !resolus[i]);
 
-  const paires = [];
+  const couples = [];
   for (let i = 0; i < medicaments.length; i += 1) {
-    for (let j = i + 1; j < medicaments.length; j += 1) {
-      const [a, b] = [medicaments[i], medicaments[j]];
-      const [ab, ba] = await Promise.all([sens(pool, a, b), sens(pool, b, a)]);
-      const niveau = rang(ab.niveau) <= rang(ba.niveau) ? ab.niveau : ba.niveau;
-      paires.push({
-        a, b, sens: [ab, ba], niveau, libelleNiveau: NIVEAUX[niveau] ?? null,
-        communes: communes(a, b).map(dci),
-        cite: ab.citant + ba.citant > 0,
-      });
-    }
+    for (let j = i + 1; j < medicaments.length; j += 1) couples.push([medicaments[i], medicaments[j]]);
   }
-  paires.sort((p1, p2) => rang(p1.niveau) - rang(p2.niveau) || Number(p2.cite) - Number(p1.cite));
+  const lire = (a, b) => memoriser(`s:${a.element}>${b.element}`, () => sens(pool, a, b));
+  const lus = await Promise.all(couples.map(([a, b]) => Promise.all([lire(a, b), lire(b, a)])));
+  const classes = couples.map(([a, b]) => memesClasses(a, b));
+  const libelles = await libellesAtc(pool, [...new Set(classes.flat())]).catch(() => new Map());
+
+  const paires = couples.map(([a, b], rangCouple) => {
+    const [ab, ba] = lus[rangCouple];
+    const niveau = rang(ab.niveau) <= rang(ba.niveau) ? ab.niveau : ba.niveau;
+    return {
+      a, b, sens: [ab, ba], niveau, libelleNiveau: NIVEAUX[niveau] ?? null,
+      communes: communes(a, b).map(dci),
+      memeClasse: classes[rangCouple].map((code) => ({ code, libelle: libelles.get(code) ?? code })),
+      cite: ab.citant + ba.citant > 0,
+    };
+  });
+  const signal = (paire) => Number(paire.cite || paire.memeClasse.length > 0 || paire.communes.length > 0);
+  paires.sort((p1, p2) => rang(p1.niveau) - rang(p2.niveau) || signal(p2) - signal(p1));
   return { medicaments, inconnus, paires };
 }
 

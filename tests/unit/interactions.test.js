@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   plier, racine, motsUtiles, termes, motif, passages, extraire, regrouper, choisir, communes,
+  memesClasses, ressemblance, fusionnerVoisins, uneParRacine, estCis, sens,
 } from '../../src/interactions.js';
 import { reconnaitreMedicaments } from '../../src/reconnaissance.js';
 import { lienInteractions } from '../../src/routes/pages.js';
@@ -134,5 +135,66 @@ describe('plusieurs médicaments dans une saisie', () => {
     assert.equal(await reconnaitreMedicaments(pool, 'doliprane 1000'), null);
     assert.equal(await reconnaitreMedicaments(pool, 'acide folique'), null);
     assert.equal(await reconnaitreMedicaments(pool, 'kardegic previscan grossesse'), null);
+  });
+});
+
+describe('fiche produit, classes et rédactions voisines', () => {
+  const ligne = (code_cis, denomination_medicament, substances, extra = {}) => ({
+    code_cis, denomination_medicament, substances, commercialise: true, par_substance: false, atc: [], ...extra,
+  });
+
+  it('un code CIS lit le RCP de cette seule spécialité', () => {
+    assert.equal(estCis('61358994'), true);
+    assert.equal(estCis('doliprane'), false);
+    const depakine = choisir('61358994', [
+      ligne('61358994', 'DEPAKINE CHRONO 500 mg, comprimé pelliculé sécable à libération prolongée', ['SODIUM (VALPROATE DE)', 'VALPROATE DE SODIUM'], { atc: ['N03AG01'] }),
+      ligne('60000000', 'AUTRE', ['PARACÉTAMOL']),
+    ]);
+    assert.deepEqual(depakine.cis, ['61358994']);
+    assert.equal(depakine.type, 'specialite');
+    assert.equal(depakine.libelle, 'Depakine Chrono 500 mg');
+    assert.deepEqual(depakine.substances, ['VALPROATE DE SODIUM']);
+  });
+
+  it('préfère la graphie sans parenthèse', () => {
+    assert.deepEqual(uneParRacine(['DL-LYSINE (ACÉTYLSALICYLATE DE)', 'ACÉTYLSALICYLATE DE DL-LYSINE']), ['ACÉTYLSALICYLATE DE DL-LYSINE']);
+  });
+
+  it('repère deux médicaments de la même classe ATC de niveau 4', () => {
+    const omeprazole = { substances: ['OMÉPRAZOLE'], atc: ['A02BC01'] };
+    const esomeprazole = { substances: ['ÉSOMÉPRAZOLE MAGNÉSIQUE'], atc: ['A02BC05'] };
+    const ibuprofene = { substances: ['IBUPROFÈNE'], atc: ['M01AE01'] };
+    assert.deepEqual(memesClasses(omeprazole, esomeprazole), ['A02BC']);
+    assert.deepEqual(memesClasses(omeprazole, ibuprofene), []);
+    // Même substance : déjà signalée comme telle, pas en doublon de classe.
+    assert.deepEqual(memesClasses(omeprazole, { substances: ['OMÉPRAZOLE'], atc: ['A02BC01'] }), []);
+  });
+
+  it('fusionne les rédactions voisines, cite la plus répandue', () => {
+    const base = 'De tels inhibiteurs comprennent l itraconazole, le kétoconazole, la clarithromycine et la télithromycine, contre-indiqués avec la simvastatine';
+    const groupes = [
+      { niveau: 'ci', par: 'substance', classe: null, extrait: `${base} (tels que le nelfinavir).`, cis: new Set(['1', '2', '3']) },
+      { niveau: 'ci', par: 'substance', classe: null, extrait: `${base} (par exemple le nelfinavir).`, cis: new Set(['4']) },
+      { niveau: 'pe', par: 'substance', classe: null, extrait: `${base} (tels que le nelfinavir).`, cis: new Set(['5']) },
+      { niveau: 'ci', par: 'substance', classe: null, extrait: 'Simvastatine : risque de rhabdomyolyse.', cis: new Set(['6']) },
+    ];
+    assert.ok(ressemblance(new Set(['a', 'b']), new Set(['a', 'b'])) === 1);
+    const fusion = fusionnerVoisins(groupes);
+    assert.equal(fusion.length, 3);
+    assert.deepEqual([...fusion[0].cis], ['1', '2', '3', '4']);
+    assert.equal(fusion[0].variantes, 1);
+    assert.match(fusion[0].extrait, /tels que/);
+  });
+});
+
+describe('classe commune aux deux médicaments', () => {
+  it('ne retient que « autre(s) » + classe', async () => {
+    const ipp = { id: 'ipp', nom: 'IPP', termes: ['IPP'] };
+    const omeprazole = { libelle: 'oméprazole', type: 'substance', substances: ['OMÉPRAZOLE'], termes: ['omeprazole'], classes: [ipp], cis: ['1'] };
+    const esomeprazole = { libelle: 'ésoméprazole', type: 'substance', substances: ['ÉSOMÉPRAZOLE'], termes: ['esomeprazole'], classes: [ipp], cis: ['2'] };
+    const texte = 'Associations à prendre en compte + Méthotrexate Arrêt provisoire de l’IPP. + Autres IPP Pas d’intérêt à les associer.';
+    const pool = { query: async () => ({ rows: [{ code_cis: '1', denomination_medicament: 'MOPRAL', position: 8, texte }] }) };
+    const lu = await sens(pool, omeprazole, esomeprazole);
+    assert.deepEqual(lu.passages.map((passage) => passage.extrait), ['Autres IPP Pas d’intérêt à les associer.']);
   });
 });

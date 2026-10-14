@@ -588,7 +588,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<span class="bloc-compte">4 options<\/span>/);
     assert.match(html, /<h3 class="subst-action">Génériques du groupe<\/h3>/);
     assert.match(html, /<h3 class="subst-action">Même sous-classe ATC<\/h3>/);
-    assert.match(html, /<a href="\/classe\/D01AE">Autres antifongiques a usage topique<\/a>/i);
+    assert.match(html, /<a href="\/classe\/D01AE">Autres antifongiques à usage topique<\/a>/);
     assert.match(html, /<span class="subst-molecule">éconazole<\/span><span class="subst-atc">D01AC03<\/span>/);
     assert.match(html, /<details class="subst-ecartes"><summary class="formes-plus">1 écarté, avec la raison<\/summary>/);
     assert.match(html, /Voie différente/);

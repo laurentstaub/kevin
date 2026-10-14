@@ -48,6 +48,8 @@ mixin sens(s)
             a(href=`/product/${passage.exemple.cis}#${passage.exemple.ancre}`)= specialite(passage.exemple.denomination)
             if passage.nb > 1
               |  et #{passage.nb - 1} autre#{passage.nb > 2 ? 's' : ''} RCP
+            if passage.variantes > 0
+              span.variantes  · #{passage.variantes} rédaction#{passage.variantes > 1 ? 's' : ''} voisine#{passage.variantes > 1 ? 's' : ''}
       if s.autres > 0
         p.manque #{s.autres} autre#{s.autres > 1 ? 's' : ''} rédaction#{s.autres > 1 ? 's' : ''} du même passage ou d'autres passages, dans les RCP liés.
 
@@ -69,7 +71,7 @@ block content
       each m in resultat.medicaments
         li
           span.medicament-nom= m.libelle
-          if m.type === 'marque' && m.substances.length
+          if m.type !== 'substance' && m.substances.length
             span.medicament-dci= m.substances.map(dci).join(' + ')
           if m.classes && m.classes.length
             span.medicament-classes Classe#{m.classes.length > 1 ? 's' : ''} : #{m.classes.map((classe) => classe.nom).join(', ')}
@@ -85,10 +87,21 @@ block content
           | #{paire.a.libelle} × #{paire.b.libelle}
           if paire.libelleNiveau
             span.niveau(class=`niveau-${paire.niveau}`)= paire.libelleNiveau
-          else if !paire.cite && !paire.communes.length
+          else if !paire.cite && !paire.communes.length && !paire.memeClasse.length
             span.niveau.niveau-aucun Aucune mention trouvée
         if paire.communes.length
           p.communes Même substance dans les deux : #{paire.communes.join(', ')}.
+        //- Même classe ATC de niveau 4 : un fait de classification, pas une
+        //- citation ; le RCP dit ensuite s'il y a interaction.
+        if paire.memeClasse.length
+          p.communes
+            | Même classe thérapeutique :
+            each classe, i in paire.memeClasse
+              |  
+              a(href=`/classe/${classe.code}`) #{classe.libelle} (#{classe.code})
+              if i < paire.memeClasse.length - 1
+                | ,
+            | .
         .paire-sens
           each s in paire.sens
             +sens(s)

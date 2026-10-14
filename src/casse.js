@@ -70,8 +70,12 @@ export function specialite(texte) {
   });
 }
 
-/** Libellé de classe ATC : une phrase, capitale initiale. « Médicaments en cardiologie ». */
+/**
+ * Libellé de classe ATC : une phrase, capitale initiale. « Médicaments en cardiologie ».
+ * La préposition que la source écrit « A » redevient « à » devant un mot
+ * (« corticoïdes à usage systémique »), jamais après « vitamine » (« vitamine A non associée »).
+ */
 export function phrase(texte) {
-  const bas = dci(texte);
+  const bas = dci(texte).replace(/(?<!vitamines?) A (?=\p{L}{3,})/gu, ' à ');
   return bas.charAt(0).toUpperCase() + bas.slice(1);
 }

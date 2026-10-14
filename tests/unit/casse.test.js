@@ -42,5 +42,9 @@ describe('casse d’affichage', () => {
   it('met un libellé de classe en phrase', () => {
     assert.equal(phrase('MEDICAMENTS EN CARDIOLOGIE'), 'Médicaments en cardiologie');
     assert.equal(phrase('Système nerveux'), 'Système nerveux');
+    assert.equal(phrase('INHIBITEURS DE LA POMPE A PROTONS'), 'Inhibiteurs de la pompe à protons');
+    assert.equal(phrase('CORTICOIDES A USAGE SYSTEMIQUE').endsWith('à usage systémique'), true);
+    assert.equal(phrase('VITAMINE A NON ASSOCIEE').startsWith('Vitamine A '), true);
+    assert.equal(phrase('VITAMINES A ET D, ASSOCIATIONS DES DEUX INCLUSES').startsWith('Vitamines A et D'), true);
   });
 });
