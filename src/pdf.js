@@ -192,7 +192,7 @@ export function versHtml(texte, type = 'doc') {
     if (plan.length >= 4) candidats = plan;
   }
 
-  const titres = new Set(coherentes(sansSommaire(candidats, lignes)).map((candidat) => candidat.i));
+  const titres = new Set(coherentes(sansSommaire(candidats, lignes), { type }).map((candidat) => candidat.i));
 
   const echapper = (brut) =>
     brut.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

@@ -339,3 +339,50 @@ describe('outline — titres posés à leur place, pas à la première occurrenc
     assert.equal(poses(sortie), 3, 'chaque rubrique a son ancre dans le HTML');
   });
 });
+
+describe('coherentes — titres reconnus contre listes numérotées', () => {
+  const plan = ['Qu’est-ce que X', 'Quelles sont les informations à connaître', 'Comment prendre X',
+    'Quels sont les effets indésirables éventuels', 'Comment conserver X', 'Contenu de l’emballage'];
+
+  // Collyre : neuf étapes d'instillation dans la rubrique 3, plus longues que le plan.
+  it('préfère le plan reconnu à une liste d’étapes plus longue', () => {
+    const etapes = Array.from({ length: 9 }, (_, i) => ({ number: String(i + 1), label: `Étape ${i + 1}` }));
+    const candidats = [
+      ...plan.slice(0, 3).map((label, i) => ({ number: String(i + 1), label })),
+      ...etapes,
+      ...plan.slice(3).map((label, i) => ({ number: String(i + 4), label })),
+    ];
+    assert.deepEqual(coherentes(candidats, { type: 'notice' }).map((titre) => titre.label), plan);
+  });
+
+  it('écarte d’une notice ce qui dépasse sept rubriques, et un 7 non reconnu', () => {
+    const candidats = [
+      ...plan.map((label, i) => ({ number: String(i + 1), label })),
+      { number: '7', label: 'Injecter lentement tout le contenu' },
+      { number: '8', label: 'RUE DES GRANDES TERRES' },
+    ];
+    assert.equal(coherentes(candidats, { type: 'notice' }).length, 6);
+    const avecInstructions = [...plan.map((label, i) => ({ number: String(i + 1), label })),
+      { number: '7', label: 'Instructions d’utilisation' }];
+    assert.equal(coherentes(avecInstructions, { type: 'notice' }).length, 7);
+  });
+
+  // RCP : étapes de manipulation en 6.6, puis le vrai 7.
+  it('pose le titulaire, pas l’étape de manipulation, en rubrique 7 du RCP', () => {
+    const candidats = [
+      { number: '6.5', label: 'Nature et contenu de l’emballage extérieur' },
+      { number: '6.6', label: 'Précautions particulières d’élimination et de manipulation' },
+      { number: '7', label: 'Remplacer l’aiguille' },
+      { number: '8', label: 'Chasser l’air' },
+      { number: '7', label: 'Titulaire de l’autorisation de mise sur le marché' },
+      { number: '8', label: 'Numéro(s) d’autorisation de mise sur le marché' },
+    ];
+    assert.deepEqual(coherentes(candidats, { type: 'rcp' }).map((titre) => titre.label.split(' ')[0]),
+      ['Nature', 'Précautions', 'Titulaire', 'Numéro(s)']);
+  });
+
+  it('sans type, garde la plus longue suite, comme avant', () => {
+    const candidats = [{ number: '1' }, { number: '2' }, { number: '3' }, { number: '9', label: 'adresse' }];
+    assert.equal(coherentes(candidats).length, 4);
+  });
+});

@@ -1,4 +1,4 @@
-import { canonicalLabel } from './rcp-plan.js';
+import { canonicalLabel, rubriqueReconnue } from './rcp-plan.js';
 
 /**
  * Extrait le plan d'un RCP ou d'une notice (numéro, libellé) et pose les ancres.
@@ -60,22 +60,36 @@ const compare = (a, b) => {
 };
 
 /**
- * Garde la plus longue sous-suite strictement croissante de numéros : écarte
- * les faux titres du corps (« 3 ans. » après 6.3). Un parcours glouton
- * s'ancrerait sur le premier faux positif.
+ * Poids d'un titre qui a la tournure attendue de sa rubrique (rcp-plan.js),
+ * contre 1 pour un simple numéro : une liste de onze étapes (« 7. Remplacer
+ * l'aiguille », « 8. Chasser l'air ») ne bat plus un plan de six rubriques.
  */
-export function coherentes(candidats) {
-  const eligibles = candidats.filter((candidat) => parts(candidat.number)[0] <= RUBRIQUE_MAX);
+export const POIDS_RECONNU = 10;
+
+/**
+ * Garde la sous-suite strictement croissante de numéros de plus grand poids :
+ * écarte les faux titres du corps (« 3 ans. » après 6.3, les étapes d'un mode
+ * d'emploi, une adresse « 8 RUE … »). Un parcours glouton s'ancrerait sur le
+ * premier faux positif. Sans type ni titre reconnu, c'est la plus longue.
+ */
+
+export function coherentes(candidats, { type } = {}) {
+  const reconnu = (candidat) => rubriqueReconnue(type, candidat.number, candidat.label);
+  // Une notice a six rubriques, parfois une septième (instructions d'utilisation) :
+  // au-delà, des étapes ou des adresses (« 8 RUE DES GRANDES TERRES »).
+  const maximum = (candidat) => (type !== 'notice' ? RUBRIQUE_MAX : reconnu(candidat) ? 7 : 6);
+  const eligibles = candidats.filter((candidat) => parts(candidat.number)[0] <= maximum(candidat));
   if (eligibles.length === 0) return [];
 
   const numeros = eligibles.map((eligible) => parts(eligible.number));
-  const longueur = eligibles.map(() => 1);
+  const poids = eligibles.map((eligible) => (reconnu(eligible) ? POIDS_RECONNU : 1));
+  const longueur = [...poids];
   const parent = eligibles.map(() => -1);
 
   for (let i = 1; i < eligibles.length; i += 1) {
     for (let j = 0; j < i; j += 1) {
-      if (compare(numeros[i], numeros[j]) > 0 && longueur[j] + 1 > longueur[i]) {
-        longueur[i] = longueur[j] + 1;
+      if (compare(numeros[i], numeros[j]) > 0 && longueur[j] + poids[i] > longueur[i]) {
+        longueur[i] = longueur[j] + poids[i];
         parent[i] = j;
       }
     }
@@ -181,7 +195,7 @@ export function outline(html, type = 'doc') {
     habillage.push(...candidats.filter((candidat) => !candidat.numbered));
     candidats = coherentes(sansSommaire(
       html, reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 }),
-    ));
+    ), { type });
   }
 
   if (candidats.filter((candidat) => candidat.numbered).length < 3) return { html, sections: [] };

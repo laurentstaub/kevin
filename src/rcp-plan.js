@@ -75,6 +75,39 @@ const NOTICE = {
   '7': /instructions? d.?utilisation|mode d.?emploi/,
 };
 
+/**
+ * Mots attendus dans le titre de chaque rubrique du RCP, plus tolérants que le
+ * libellé QRD exact (rédactions anciennes) : distinguent le plan d'une liste
+ * numérotée du corps (« 7. Remplacer l'aiguille » n'est pas la rubrique 7).
+ */
+const RCP_MOTS = {
+  '1': /denomination/, '2': /composition/, '3': /forme pharmaceutique/,
+  '4': /donnees cliniques|informations cliniques/, '4.1': /indication/, '4.2': /posologie/,
+  '4.3': /contre.?indication/, '4.4': /mises? en garde|precautions? d.?emploi/, '4.5': /interaction/,
+  '4.6': /grossesse|allaitement|fecondite|fertilite/, '4.7': /conduire|aptitude/,
+  '4.8': /effets? indesirable/, '4.9': /surdosage/, '5': /proprietes pharmacologiques/,
+  '5.1': /pharmacodynamique/, '5.2': /pharmacocinetique/, '5.3': /preclinique/,
+  '6': /donnees pharmaceutiques/, '6.1': /excipient/, '6.2': /incompatibilite/, '6.3': /duree de conservation/,
+  '6.4': /conservation/, '6.5': /emballage|conditionnement|recipient/, '6.6': /elimination|manipulation/,
+  '7': /titulaire/, '8': /autorisation/, '9': /premiere autorisation|renouvellement/,
+  '10': /mise a jour|revision/, '11': /dosimetrie/, '12': /radiopharmaceutique|preparation/,
+};
+
+/**
+ * Longueur au-delà de laquelle un libellé est une phrase du corps (« 4.2 La
+ * posologie doit être adaptée… »), pas un titre. Le plus long libellé QRD du
+ * RCP fait 74 caractères ; un titre de notice porte le nom complet du produit.
+ */
+const TITRE_MAX = { rcp: 100, rcp_notice: 100, notice: 200 };
+
+/** Ce titre a-t-il la tournure attendue de sa rubrique, selon le type de document ? */
+export function rubriqueReconnue(type, numero, libelle) {
+  const plan = type === 'notice' ? NOTICE : type === 'rcp' || type === 'rcp_notice' ? RCP_MOTS : null;
+  const motif = plan?.[numero];
+  const texte = String(libelle ?? '');
+  return motif ? texte.length <= TITRE_MAX[type] && motif.test(deaccent(texte).toLowerCase()) : false;
+}
+
 /** Ce libellé peut-il être la rubrique `numero` d'une notice ? */
 export function rubriqueNotice(numero, libelle) {
   const motif = NOTICE[numero];
