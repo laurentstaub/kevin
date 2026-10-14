@@ -97,7 +97,7 @@ block content
     section.signaletique(aria-label="Caractéristiques")
       ul.signaletique-inner
         each cas in signaletique
-          li.signal(class=cas.portee === 'bloque' ? 'signal-bloque' : null title=[cas.libelle, cas.detail].filter(Boolean).join(' — ') data-cle=cas.cle)
+          li.signal(class=cas.portee === 'bloque' ? 'signal-bloque' : cas.fort ? 'signal-fort' : null title=[cas.libelle, cas.detail].filter(Boolean).join(' — ') data-cle=cas.cle)
             +picto(cas.picto)
             if cas.lien
               a.signal-valeur(href=cas.lien)= cas.valeur

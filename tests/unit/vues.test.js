@@ -788,3 +788,14 @@ describe('fiche produit — condition complétée', () => {
     assert.match(html, /title="Complété : absent de la BDPM"/);
   });
 });
+
+describe('fiche produit — degrés de la bande', () => {
+  it('le stupéfiant en gras, l’aplat pour ce qui ne se délivre pas en officine', () => {
+    const html = rendre('product', produit({ signaletique: [
+      { cle: 'ordonnance', picto: 'cadenas', libelle: 'Ordonnance', valeur: 'Stupéfiant', fort: true },
+      { cle: 'cadre', picto: 'hopital', libelle: 'Prescription', valeur: 'Hors officine', portee: 'bloque' },
+    ] }));
+    assert.match(html, /<li class="signal signal-fort"[^>]*data-cle="ordonnance"/);
+    assert.match(html, /<li class="signal signal-bloque"[^>]*data-cle="cadre"/);
+  });
+});

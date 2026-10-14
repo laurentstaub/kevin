@@ -350,3 +350,24 @@ describe('compléments aux lacunes de la BDPM', () => {
     }
   });
 });
+
+describe('hors officine', () => {
+  const court = (libelle) => classer([libelle]).resume.map((mention) => `${mention.court}/${mention.portee}`);
+
+  it('reconnaît les circuits qui excluent l’officine', () => {
+    for (const libelle of [
+      'délivrance réservée aux pharmacies à usage intérieur',
+      'délivrance réservée aux ETS pour les malades qui y sont traités',
+      'réservé aux centres de vaccination habilités à effectuer la vaccination antiamarile',
+      'réservé aux centres de vaccination anti-rabique',
+      "médicament réservé aux centres de vaccination désignés par l'agence régionale de santé",
+      "réservé à l'usage militaire",
+    ]) {
+      assert.deepEqual(court(libelle), ['Hors officine/bloque'], libelle);
+    }
+  });
+
+  it('laisse le CSAPA, alternative à la pharmacie de ville', () => {
+    assert.deepEqual(court('délivrance effectuée par un CSAPA'), []);
+  });
+});

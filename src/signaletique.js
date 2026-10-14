@@ -100,7 +100,9 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
       cle: 'ordonnance', picto: stup ? 'cadenas' : 'ordonnance', libelle: 'Ordonnance',
       valeur: classement.map((mention) => mention.court).join(' · '),
       detail: classement.map((mention) => mention.long).join(' ; ') + origine,
-      portee: stup ? 'bloque' : null,
+      // Un stupéfiant se délivre en officine : cadenas et graisse, jamais l'aplat,
+      // réservé à ce qui ne s'y délivre pas.
+      fort: stup,
     });
   } else if (mentions.length === 0 && conditions.length === 0) {
     cases.push({ cle: 'ordonnance', picto: 'ordonnance', libelle: 'Ordonnance', valeur: 'Sans ordonnance' });

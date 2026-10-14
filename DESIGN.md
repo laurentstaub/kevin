@@ -45,6 +45,12 @@ une base médicale, une mention illisible est une mention absente.
 culturelle et le daltonisme rendent ce codage illisible pour une part
 significative des lecteurs. Un statut se dit par un mot.
 
+Les statuts de délivrance tiennent sur trois degrés, sans teinte nouvelle :
+l'encre pour une condition, le contour `--accent` pour un classement (liste I,
+stupéfiant), l'aplat `--bg-fonce` pour **ce qui ne se délivre pas en officine**
+et pour cela seulement (hôpital seulement, hors officine, usage professionnel).
+Le stupéfiant se délivre en officine : cadenas et graisse, jamais l'aplat.
+
 Ce qui vaut aussi pour le fond : le vert profond est réservé à l'en-tête
 d'**accueil**, la seule page sans texte long. Sur la fiche produit, il devient
 la teinte claire — même famille, même signal d'appartenance, sans l'épreuve.

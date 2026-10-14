@@ -41,6 +41,16 @@ const REGLES = [
     motif: /usage professionnel/i,
     resume: (correspondance) => mention('Usage professionnel', correspondance.input),
   },
+  // Délivrance réservée à un autre circuit : pharmacie hospitalière (PUI),
+  // établissement de transfusion, centre de vaccination, armées. Pas le CSAPA,
+  // toujours accompagné de « délivrance effectuée par une pharmacie de ville »
+  // (méthadone) : une alternative, pas une exclusion.
+  {
+    cle: 'cadre',
+    portee: 'bloque',
+    motif: /pharmacies? à usage intérieur|réservée aux ETS|centres? de vaccination|usage militaire/i,
+    resume: (correspondance) => mention('Hors officine', capitale(correspondance.input)),
+  },
   {
     cle: 'cadre',
     portee: 'bloque',

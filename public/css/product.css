@@ -169,6 +169,16 @@ a.signal-valeur {
   color: inherit;
 }
 
+/* Stupéfiant : se délivre en officine, sous conditions. La graisse et le
+   cadenas le distinguent, sans l'aplat réservé à ce qui ne s'y délivre pas. */
+.signal-fort {
+  font-weight: 600;
+}
+
+.signal-fort .picto {
+  color: var(--ink);
+}
+
 /* ---------- Grille asymétrique ---------- */
 
 /* Colonne unique. Sections repliables, fermées au chargement : la fiche

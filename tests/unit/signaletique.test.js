@@ -28,11 +28,13 @@ describe('bande signalétique', () => {
     assert.deepEqual(cles(cases), ['ordonnance', 'duree', 'cadre', 'prix', 'generique', 'forme', 'atc']);
   });
 
-  it('marque le stupéfiant par le cadenas et l\'aplat', () => {
-    const cases = signaletique(produit(), { resume: [mention('classement', 'Stupéfiant', 'bloque')] }, null, null, false);
+  // Un stupéfiant se délivre en officine : l'aplat dirait le contraire.
+  it('marque le stupéfiant par le cadenas et la graisse, sans l\'aplat', () => {
+    const cases = signaletique(produit(), classer(['stupéfiants']), null, null, false);
     const ordonnance = cases.find((cas) => cas.cle === 'ordonnance');
     assert.equal(ordonnance.picto, 'cadenas');
-    assert.equal(ordonnance.portee, 'bloque');
+    assert.equal(ordonnance.fort, true);
+    assert.notEqual(ordonnance.portee, 'bloque');
     // Le classement n'est pas répété dans la case Prescription.
     assert.equal(cases.find((cas) => cas.cle === 'cadre'), undefined);
   });
@@ -217,5 +219,26 @@ describe('bande signalétique — condition complétée', () => {
     const cas = signaletique(produit(), delivrance, null, null, false).find((entree) => entree.cle === 'ordonnance');
     assert.equal(cas.valeur, 'Liste I');
     assert.match(cas.detail, /complété, absent de la BDPM : Ses équivalentes sont en liste I\./);
+  });
+});
+
+describe('bande signalétique — hors officine', () => {
+  // ADVATE : liste I, prescription initiale hospitalière, délivrance en PUI.
+  it('marque bloquante la délivrance réservée à la pharmacie hospitalière', () => {
+    const cases = signaletique(produit(), classer([
+      'liste I', 'prescription initiale hospitalière semestrielle', 'délivrance réservée aux pharmacies à usage intérieur',
+    ]), null, null, false);
+    const cadre = cases.find((cas) => cas.cle === 'cadre');
+    assert.match(cadre.valeur, /^Hors officine/);
+    assert.equal(cadre.portee, 'bloque');
+    assert.match(cadre.detail, /Délivrance réservée aux pharmacies à usage intérieur/);
+  });
+
+  // Méthadone : CSAPA ou pharmacie de ville, au choix.
+  it('ne bloque pas une délivrance possible en CSAPA ou en ville', () => {
+    const cases = signaletique(produit(), classer([
+      'stupéfiants', 'délivrance effectuée par un CSAPA', 'délivrance effectuée par une pharmacie de ville',
+    ]), null, null, false);
+    assert.ok(!cases.some((cas) => cas.portee === 'bloque'));
   });
 });
