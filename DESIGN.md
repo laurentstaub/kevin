@@ -48,7 +48,8 @@ significative des lecteurs. Un statut se dit par un mot.
 Les statuts de délivrance tiennent sur trois degrés, sans teinte nouvelle :
 l'encre pour une condition, le contour `--accent` pour un classement (liste I,
 stupéfiant), l'aplat `--bg-fonce` pour **ce qui ne se délivre pas en officine**
-et pour cela seulement (hôpital seulement, hors officine, usage professionnel).
+et pour cela seulement (hôpital seulement, hors officine). L'usage professionnel
+conditionne qui administre, pas où se délivre : il n'a pas l'aplat.
 Le stupéfiant se délivre en officine : cadenas et graisse, jamais l'aplat.
 
 Ce qui vaut aussi pour le fond : le vert profond est réservé à l'en-tête

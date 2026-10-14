@@ -77,6 +77,15 @@ describe('classer', () => {
     assert.deepEqual(courts(classer(["réservé à l'usage professionnel DENTAIRE"])), ['Usage professionnel']);
   });
 
+  // BUVIDAL : usage professionnel et délivrance en pharmacie de ville.
+  it('l’usage professionnel se vérifie, il n’interdit pas l’officine', () => {
+    const delivrance = classer([
+      "réservé à l'usage professionnel", 'délivrance effectuée par une pharmacie de ville', 'stupéfiants',
+    ]);
+    assert.equal(delivrance.resume.find((mention) => mention.court === 'Usage professionnel').portee, 'verifier');
+    assert.equal(delivrance.bloque, false);
+  });
+
   it('signale d’un seul drapeau ce qui ne sort pas de l’hôpital', () => {
     assert.equal(classer(["réservé à l'usage HOSPITALIER"]).bloque, true);
     assert.equal(classer(['liste I']).bloque, false);

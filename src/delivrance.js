@@ -35,11 +35,14 @@ const REGLES = [
     motif: /usage hospitalier/i,
     resume: () => mention('Hôpital seulement', "Réservé à l'usage hospitalier"),
   },
+  // L'usage professionnel conditionne qui administre, pas où se délivre : BUVIDAL
+  // le porte avec « délivrance effectuée par une pharmacie de ville ». À vérifier,
+  // pas bloquant.
   {
     cle: 'cadre',
-    portee: 'bloque',
+    portee: 'verifier',
     motif: /usage professionnel/i,
-    resume: (correspondance) => mention('Usage professionnel', correspondance.input),
+    resume: (correspondance) => mention('Usage professionnel', capitale(correspondance.input)),
   },
   // Délivrance réservée à un autre circuit : pharmacie hospitalière (PUI),
   // établissement de transfusion, centre de vaccination, armées. Pas le CSAPA,
