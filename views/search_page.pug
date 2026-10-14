@@ -103,7 +103,7 @@ block content
           a.filtre.filtre-ailleurs(href=lien(etat, { mode: 'documents' }))
             | Dans les documents
             if documents && documents.total > 0
-              span.filtre-compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
+              span.filtre-compte #{documents.total.toLocaleString('fr-FR')}
 
         if results.total > 0
           //- Terme = molécule : une seule liste, sinon le princeps (SERESTA) passerait
@@ -144,7 +144,7 @@ block content
           section.groupe
             h2.groupe-titre
               | Dans les documents
-              span.compte #{documents.borne ? '+' : ''}#{documents.total.toLocaleString('fr-FR')}
+              span.compte #{documents.total.toLocaleString('fr-FR')}
             +resultatsDocuments(documents, query, true, colonnes, null, etat, lien)
 
 block scripts

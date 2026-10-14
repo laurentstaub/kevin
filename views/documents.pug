@@ -44,10 +44,10 @@ block content
               | rubrique #{rubrique}
               span.jeton-croix ×
           span.etat-compte
+            | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
+            //- Toutes classées, seules les premières détaillées : le dire.
             if documents.borne
-              | plus de #{documents.total.toLocaleString('fr-FR')} rubriques
-            else
-              | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
+              |  · #{documents.molecules.toLocaleString('fr-FR')} molécules, les #{documents.moleculesMax} premières détaillées
 
         //- Élargissements du thésaurus, annoncés et refusables (« mot pour mot » :
         //- une requête entre guillemets n'est jamais élargie).

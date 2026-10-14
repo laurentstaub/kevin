@@ -3,7 +3,8 @@
  * Unité de résultat : la rubrique, chaque numéro ancré sur sa meilleure
  * occurrence. Regroupement par molécule : ensemble trié des noms résolus des
  * substances actives (une fraction ne remplace le sel que si tous ses mots en
- * font partie). Résultats bornés à PLAFOND, et annoncés comme tels.
+ * font partie). Toutes les rubriques sont classées ; seules les MOLECULES_MAX
+ * premières molécules sont détaillées, et le total le dit.
  */
 
 import { importSql } from './groupes.js';
@@ -16,10 +17,12 @@ import { isValidCis } from './validate.js';
 const LANGUE = 'french_nu';
 
 /**
- * Au-delà, la requête est trop vague pour être classée ; une recherche utile
- * rend quelques centaines d'occurrences.
+ * Molécules détaillées au plus, après classement de toutes les rubriques
+ * trouvées (quatre pages) : au-delà, la liste n'aide plus, on affine. Couper
+ * avant de classer — 3 000 rubriques prises sans ordre — rendait une première
+ * page en partie arbitraire (« QT » : 32 des 50 vraies premières molécules).
  */
-export const PLAFOND = 3000;
+export const MOLECULES_MAX = 200;
 
 /** Trouvailles par page (une ligne d'écran chacune) ; le reste s'obtient en affinant. */
 export const PAR_PAGE = 50;
@@ -283,8 +286,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   };
 
   const limite = Math.min(Math.max(1, entier(options.limite ?? PAR_PAGE, PAR_PAGE)), 100);
-  // Au-delà du plafond, la page serait vide.
-  const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), PLAFOND);
+  // Au-delà des molécules retenues, la page serait vide.
+  const decalage = Math.min(Math.max(0, entier(options.decalage ?? 0, 0)), MOLECULES_MAX);
 
   const { atomes, elargissements } = elargir(saisie);
   // Six paramètres fixes (rubrique, limite, décalage, expression, molécule, phrases), puis les atomes.
@@ -314,10 +317,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
               WHERE mot <> '')
      ),` : ''}
-     trouve AS (
-       -- Sans le texte : jusqu'à 3 000 rubriques transitent par trois tris, et
-       -- le texte intégral les faisait dépasser le délai. Il est rejoint par sa
-       -- clé primaire pour la page affichée seulement.
+     tout AS MATERIALIZED (
+       -- Toutes les rubriques trouvées, notées pour le classement. Sans le
+       -- texte, qui faisait dépasser le délai : il est rejoint par sa clé
+       -- primaire pour la page affichée seulement.
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
               ts_rank_cd(${VECTEUR}, q.tq) AS score,
               CASE WHEN $4::text IS NULL THEN true
@@ -335,13 +338,12 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     // sur disque pour en garder 474 (3,3 s).
     ? 'AND s.code_cis = ANY (ARRAY(SELECT code_cis FROM cis_molecule))'
     : 'AND $5::text IS NULL'}
-       LIMIT ${PLAFOND}
      ),
      -- Les substances en jeu, pour ne nommer que celles-là.
      substances AS (
        SELECT DISTINCT c.code_substance
        FROM dbpm.cis_compo_bdpm c
-       WHERE c.code_cis IN (SELECT DISTINCT code_cis FROM trouve)
+       WHERE c.code_cis IN (SELECT DISTINCT code_cis FROM tout)
          AND c.nature_composant = 'SA'
      ),
      -- Les libellés du sel, découpés en mots — sans accents ni ponctuation,
@@ -399,15 +401,49 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe
      -- vide commun, qui les réunirait sans qu'elles aient rien en partage.
      -- Jointure agrégée plutôt qu'un sous-select corrélé : un seul passage
-     -- sur les compositions, quel que soit le nombre d'occurrences.
+     -- sur les compositions, quel que soit le nombre d'occurrences. Les noms
+     -- en table de correspondance : joints comme une CTE, mal estimée, ils
+     -- étaient relus en entier pour chaque spécialité (1 813 × 10 883 lignes
+     -- pour « insuffisance hépatique », 1,3 s).
+     dictionnaire AS MATERIALIZED (
+       SELECT jsonb_object_agg(code_substance, nom) AS noms FROM noms
+     ),
+     -- Le dictionnaire est lu une fois (sous-requête scalaire) : joint à
+     -- chaque ligne, il était recopié dans le tri du regroupement.
      molecule AS MATERIALIZED (
        SELECT t.code_cis,
-              coalesce(string_agg(DISTINCT n.nom, ' + ' ORDER BY n.nom),
-                       'cis:' || t.code_cis) AS signature
-       FROM (SELECT DISTINCT code_cis FROM trouve) t
-       LEFT JOIN dbpm.cis_compo_bdpm c ON c.code_cis = t.code_cis AND c.nature_composant = 'SA'
-       LEFT JOIN noms n ON n.code_substance = c.code_substance
+              coalesce(string_agg(DISTINCT x.nom, ' + ' ORDER BY x.nom), 'cis:' || t.code_cis) AS signature
+       FROM (SELECT DISTINCT code_cis FROM tout) t
+       LEFT JOIN LATERAL (
+         SELECT (SELECT noms FROM dictionnaire) ->> c.code_substance::text AS nom
+         FROM dbpm.cis_compo_bdpm c
+         WHERE c.code_cis = t.code_cis AND c.nature_composant = 'SA'
+       ) x ON true
        GROUP BY t.code_cis
+     ),
+     -- Le classement, sur toutes les rubriques : l'expression exacte d'abord,
+     -- puis la rubrique qui répond le mieux à la question du comptoir, puis le
+     -- score. Par molécule et non par rubrique : un plafond en rubriques
+     -- laissait une molécule à trois cents génériques occuper la place des autres.
+     classement AS MATERIALIZED (
+       SELECT m.signature, count(DISTINCT t.code_cis)::int AS specialites, max(t.score) AS score,
+              bool_or(t.exact) AS exact,
+              coalesce(min(t.rang) FILTER (WHERE t.exact), min(t.rang)) AS rang,
+              -- Nombre de substances : filtré sur un médicament, la molécule seule passe avant ses associations.
+              array_length(string_to_array(m.signature, ' + '), 1) AS composants
+       FROM tout t JOIN molecule m USING (code_cis)
+       GROUP BY m.signature
+     ),
+     -- Les mieux classées seulement, détaillées ci-dessous.
+     resume AS MATERIALIZED (
+       SELECT * FROM classement
+       ORDER BY CASE WHEN $5::text IS NULL THEN 0 ELSE composants END,
+                exact DESC, rang, score DESC, specialites DESC, signature
+       LIMIT ${MOLECULES_MAX}
+     ),
+     trouve AS (
+       SELECT t.* FROM tout t JOIN molecule m USING (code_cis)
+       WHERE m.signature IN (SELECT signature FROM resume)
      ),
      -- Princeps (référent de groupe générique) : la spécialité la plus connue
      -- représente sa molécule et fournit ses phrases.
@@ -470,16 +506,6 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        SELECT DISTINCT ON (code_cis) signature, code_cis,
               document_type || '-' || position AS ancre
        FROM enrichi ORDER BY code_cis, exact DESC, rang, score DESC
-     ),
-     -- Le classement : l'expression exacte d'abord, puis la rubrique qui
-     -- répond le mieux à la question du comptoir, puis le score.
-     resume AS (
-       SELECT signature, count(DISTINCT code_cis)::int AS specialites, max(score) AS score,
-              bool_or(exact) AS exact,
-              coalesce(min(rang) FILTER (WHERE exact), min(rang)) AS rang,
-              -- Nombre de substances : filtré sur un médicament, la molécule seule passe avant ses associations.
-              array_length(string_to_array(signature, ' + '), 1) AS composants
-       FROM enrichi GROUP BY signature
      )
      SELECT page.*,
             -- Phrases par rubrique, pour la page affichée seulement (après le LIMIT) :
@@ -516,7 +542,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
             -- calculer ici coûterait pour une phrase que personne ne verrait.
             CASE WHEN $1::text IS NULL THEN NULL
                  ELSE ${phraseSql('bt.texte', 'q.tq', '$4::text')} END AS extrait,
-            (SELECT count(*)::int FROM trouve) AS occurrences,
+            (SELECT count(*)::int FROM tout) AS occurrences,
+            (SELECT count(*)::int FROM classement) AS molecules,
             -- Après le LIMIT : pour la page affichée seulement.
             (SELECT json_agg(json_build_object(
                       'id', p.code_cis, 'denomination', s.denomination_medicament,
@@ -549,6 +576,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
   );
 
   const occurrences = rows[0]?.occurrences ?? 0;
+  const molecules = rows[0]?.molecules ?? 0;
   const suite = rows.length > limite;
   const page = suite ? rows.slice(0, limite) : rows;
 
@@ -559,7 +587,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     exacte: Boolean(exacte),
     // Élargissements affichés, pour que le lecteur puisse les refuser.
     elargissements,
-    resultats: page.map(({ occurrences: _, molecule, denomination, liste, detaillees, ...reste }) => ({
+    resultats: page.map(({ occurrences: _, molecules: __, molecule, denomination, liste, detaillees, ...reste }) => ({
       ...reste,
       extrait: marquer(reste.extrait),
       // Ciblée : les rubriques portent leur phrase.
@@ -570,8 +598,11 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
       molecule: molecule || denomination,
       sansMolecule: !molecule,
     })),
+    // Total exact : toutes les rubriques sont classées.
     total: occurrences,
-    // Le plafond est atteint : le décompte est un plancher, pas un total.
-    borne: occurrences >= PLAFOND,
+    molecules,
+    // Plus de molécules que de détaillées : à dire, avec l'invitation à affiner.
+    borne: molecules > MOLECULES_MAX,
+    moleculesMax: MOLECULES_MAX,
   };
 }

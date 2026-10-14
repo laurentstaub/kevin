@@ -110,7 +110,9 @@ const SANS_MOLECULE = {
 
 const RECHERCHE_PLEINE = {
   resultats: [TROUVAILLE, SANS_MOLECULE],
-  total: 3000,
+  total: 10358,
+  molecules: 461,
+  moleculesMax: 200,
   borne: true,
   decalage: 20,
   suite: true,
@@ -598,7 +600,7 @@ describe('rendu des gabarits', () => {
   });
 
   // Filtrer fait passer sous le plafond : le décompte doit rester.
-  it('compte les résultats, plafonnés ou non', () => {
+  it('compte les rubriques exactement, et dit les molécules non détaillées', () => {
     const filtre = rendre('documents', {
       query: 'QT',
       rubrique: '4.5',
@@ -606,12 +608,19 @@ describe('rendu des gabarits', () => {
       documents: { ...RECHERCHE_PLEINE, total: 312, borne: false },
     });
     assert.match(filtre, /312 rubriques/);
-    assert.doesNotMatch(filtre, /plus de/);
+    assert.doesNotMatch(filtre, /premières détaillées/);
 
-    const plafonne = rendre('documents', {
+    const large = rendre('documents', {
       query: 'QT', rubrique: null, page: 1, documents: RECHERCHE_PLEINE,
     });
-    assert.match(plafonne, /plus de 3 000 rubriques|plus de 3\u202f000 rubriques/);
+    assert.match(large, /10[\s\u202f]358 rubriques · 461 molécules, les 200 premières détaillées/);
+    assert.doesNotMatch(large, /plus de/);
+
+    // Dernière page : l'invitation à affiner remplace « Suivants ».
+    const fin = rendre('documents', {
+      query: 'QT', rubrique: null, page: 4, documents: { ...RECHERCHE_PLEINE, suite: false, decalage: 150 },
+    });
+    assert.match(fin, /Les 200 molécules les mieux classées sont détaillées, sur 461\./);
   });
 
   // Préremplie pour affiner, et dans le mode courant pour ne pas changer de question.

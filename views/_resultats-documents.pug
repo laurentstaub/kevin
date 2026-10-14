@@ -192,9 +192,9 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
   if resume && recherche.total > recherche.resultats.length
     p.trouvailles-suite
       a(href=lien(etat, { mode: 'documents' }))
-        | Voir les #{recherche.borne ? 'plus de ' : ''}#{recherche.total.toLocaleString('fr-FR')} rubriques et filtrer →
-  else if recherche.borne
-    //- Un décompte plafonné doit se dire plafonné.
+        | Voir les #{recherche.total.toLocaleString('fr-FR')} rubriques et filtrer →
+  else if recherche.borne && !recherche.suite
+    //- Toutes les molécules sont classées ; au-delà des premières, on affine.
     p.section-meta
-      | Recherche arrêtée aux #{recherche.total.toLocaleString('fr-FR')} premières rubriques trouvées.
-      |  Affinez la requête ou choisissez une rubrique pour un décompte exact.
+      | Les #{recherche.moleculesMax} molécules les mieux classées sont détaillées, sur #{recherche.molecules.toLocaleString('fr-FR')}.
+      |  Précisez la requête, un médicament ou une rubrique pour les autres.

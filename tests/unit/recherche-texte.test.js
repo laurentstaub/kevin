@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
-  normaliserRubrique, marquer, PLAFOND, PAR_PAGE, APERCU, motsTrouves, composerProximite,
+  normaliserRubrique, marquer, MOLECULES_MAX, PAR_PAGE, APERCU, motsTrouves, composerProximite,
   composerTitre,
 } from '../../src/recherche-texte.js';
 
@@ -23,10 +23,10 @@ describe('normaliserRubrique', () => {
 });
 
 describe('bornes', () => {
-  // Le classement évalue chaque occurrence : plafond assumé, signalé par la vue.
+  // Toutes les occurrences sont classées ; seules les premières molécules sont détaillées.
   it('sont des valeurs, pas des nombres épars dans le code', () => {
-    assert.equal(typeof PLAFOND, 'number');
-    assert.ok(PLAFOND >= 1000, 'assez haut pour toute recherche utile');
+    assert.equal(typeof MOLECULES_MAX, 'number');
+    assert.ok(MOLECULES_MAX >= 2 * PAR_PAGE, 'quelques pages avant d’inviter à affiner');
     assert.ok(PAR_PAGE > 0 && PAR_PAGE <= 100);
   });
 
@@ -71,7 +71,8 @@ const faussePool = (nombre) => {
     score: 1 - i / 1000,
     denomination: `PRODUIT ${i}`,
     extrait: 'intervalle <mark>QT</mark>',
-    occurrences: PLAFOND,
+    occurrences: 10358,
+    molecules: 461,
   });
   return {
     appels: vues,
@@ -105,10 +106,19 @@ describe('pagination de la recherche plein texte', () => {
   });
 
   // Au-delà, une page vide se lirait comme une panne.
-  it('borne le décalage au plafond de la recherche', async () => {
+  it('borne le décalage aux molécules détaillées', async () => {
     const pool = faussePool(0);
     await chercherDansDocuments(pool, 'QT', { decalage: 999999 });
-    assert.equal(pool.appels[0][2], PLAFOND);
+    assert.equal(pool.appels[0][2], MOLECULES_MAX);
+  });
+
+  // Le total est exact ; la borne dit qu'il y a plus de molécules que de détaillées.
+  it('rend le total exact et le nombre de molécules', async () => {
+    const recherche = await chercherDansDocuments(faussePool(3), 'QT', { limite: 20 });
+    assert.equal(recherche.total, 10358);
+    assert.equal(recherche.molecules, 461);
+    assert.equal(recherche.borne, true);
+    assert.equal(recherche.moleculesMax, MOLECULES_MAX);
   });
 
   it('refuse un décalage négatif ou absurde', async () => {
