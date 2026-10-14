@@ -8,6 +8,7 @@ import { structurer, renvois } from './typographie.js';
  *
  * PARSER_VERSION : à incrémenter dès que la détection change, pour rejouer les documents.
  */
+// 17 : rubrique restée en paragraphe parmi des titres <h> (balisage mixte), complétée.
 // 16 : titres reconnus prioritaires sur les listes numérotées ; notice limitée à 7 rubriques.
 // 15 : sommaire de notice écarté (titres en paragraphes : tout tombait en rubrique 6).
 // 14 : titres ignorés dans les tableaux (« 7 kg » d'une table de posologie).
@@ -16,7 +17,7 @@ import { structurer, renvois } from './typographie.js';
 // 9 : notes par astérisque (QRD).  8 : listes imbriquées, sous-titres QRD, espaces insécables.
 // 5 : conduite en vrais points.  4 : conduites de points (rubrique 2).  3 : paragraphes, puces.
 // 2 : plan de notice, reprises de plan EMA, sommaires écartés.
-export const PARSER_VERSION = 16;
+export const PARSER_VERSION = 17;
 
 /** Titres posés par outline(), dans l'ordre du document. */
 const TITRES_MARQUES = /<(h[1-4]|p|div)[^>]*\sid="([^"]+)"[^>]*class="doc-heading"[^>]*>[\s\S]*?<\/\1>/g;
@@ -115,10 +116,11 @@ export function composerDoses(html) {
 /**
  * @param {string} html - HTML assaini
  * @param {string} type - type de document (préfixe des ancres)
+ * @param {{ completer?: boolean }} [options] - voir outline() ; false pour un HTML tiré d'un PDF
  * @returns {{ sections: object[], statut: string, manquantes: string[] }}
  */
-export function splitDocument(html, type = 'doc') {
-  const { html: marque, sections: titres } = outline(html, type);
+export function splitDocument(html, type = 'doc', options = {}) {
+  const { html: marque, sections: titres } = outline(html, type, options);
 
   const attendues = socle(type);
 

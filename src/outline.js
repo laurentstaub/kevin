@@ -1,4 +1,4 @@
-import { canonicalLabel, rubriqueReconnue } from './rcp-plan.js';
+import { canonicalLabel, rubriqueReconnue, socle } from './rcp-plan.js';
 
 /**
  * Extrait le plan d'un RCP ou d'une notice (numéro, libellé) et pose les ancres.
@@ -130,6 +130,33 @@ function sansSommaire(html, candidats) {
   return restants.filter((candidat) => candidat.numbered).length >= 3 ? restants : candidats;
 }
 
+/**
+ * Balisage mixte : titres en <h1>-<h4>, sauf une rubrique restée en simple
+ * paragraphe (« 6. CONTENU DE L’EMBALLAGE… » dans 68 notices). Sans elle, son
+ * texte tombait dans la rubrique précédente. Une rubrique attendue absente des
+ * titres est complétée par le paragraphe numéroté qui en a la tournure et se
+ * trouve à sa place, entre les titres voisins (pas l'entrée du sommaire).
+ */
+function completer(html, candidats, type) {
+  const numerotes = candidats.filter((candidat) => candidat.numbered);
+  const presents = new Set(numerotes.map((candidat) => candidat.number));
+  const manquantes = socle(type).filter((numero) => !presents.has(numero));
+  if (manquantes.length === 0) return candidats;
+
+  const blocs = reperer(html, BLOCS, { exigerNumero: true, profondeurParDefaut: () => 2 });
+  const ajouts = manquantes.map((numero) => {
+    const rang = parts(numero);
+    const avant = numerotes.filter((titre) => compare(parts(titre.number), rang) < 0).at(-1);
+    const apres = numerotes.find((titre) => compare(parts(titre.number), rang) > 0);
+    return blocs.find((bloc) => bloc.number === numero
+      && rubriqueReconnue(type, numero, bloc.label)
+      && (!avant || bloc.index > avant.index)
+      && (!apres || bloc.index < apres.index));
+  }).filter(Boolean);
+
+  return ajouts.length === 0 ? candidats : [...candidats, ...ajouts].sort((a, b) => a.index - b.index);
+}
+
 /** « 4 » -> 1, « 4.2 » -> 2, au-delà on plafonne. */
 const depthOf = (number) => Math.min(number.split('.').length, 3);
 
@@ -177,9 +204,11 @@ function reperer(html, motif, { exigerNumero, profondeurParDefaut }) {
 /**
  * @param {string} html - HTML assaini
  * @param {string} [type] - type de document, pour préfixer les ancres
+ * @param {{ completer?: boolean }} [options] - compléter une rubrique restée en
+ *   paragraphe parmi des titres <h> ; à couper pour un HTML tiré d'un PDF
  * @returns {{ html: string, sections: object[] }}
  */
-export function outline(html, type = 'doc') {
+export function outline(html, type = 'doc', { completer: completerManquantes = true } = {}) {
   if (!html) return { html: '', sections: [] };
 
   // 1. Vrais titres, retenus seulement s'ils sont numérotés (le <h1> BDPM n'est que le titre de page).
@@ -187,6 +216,9 @@ export function outline(html, type = 'doc') {
     exigerNumero: false,
     profondeurParDefaut: (tag) => Number(tag[1]) - 1,
   });
+  if (completerManquantes && candidats.filter((candidat) => candidat.numbered).length >= 3) {
+    candidats = completer(html, candidats, type);
+  }
 
   // 2. Sinon, blocs filtrés par progression des numéros ; les titres de la passe 1
   //    sont alors de l'habillage, retiré du corps.

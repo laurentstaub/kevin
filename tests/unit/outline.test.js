@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { outline, coherentes } from '../../src/outline.js';
+import { splitDocument } from '../../src/split.js';
 
 const rcp = `
   <h1>RESUME DES CARACTERISTIQUES DU PRODUIT</h1>
@@ -384,5 +385,30 @@ describe('coherentes — titres reconnus contre listes numérotées', () => {
   it('sans type, garde la plus longue suite, comme avant', () => {
     const candidats = [{ number: '1' }, { number: '2' }, { number: '3' }, { number: '9', label: 'adresse' }];
     assert.equal(coherentes(candidats).length, 4);
+  });
+});
+
+describe('outline — balisage mixte', () => {
+  const titres = ['Qu’est-ce que X', 'Quelles sont les informations à connaître avant de prendre X',
+    'Comment prendre X', 'Quels sont les effets indésirables éventuels', 'Comment conserver X'];
+  const notice = (sommaire) => `${sommaire}${titres.map((titre, i) => `<h2>${i + 1}. ${titre}</h2><p>Texte ${i + 1}.</p>`).join('')}`
+    + '<p>6. CONTENU DE L’EMBALLAGE ET AUTRES INFORMATIONS</p><p>Texte 6.</p>';
+
+  // 68 notices : rubriques 1 à 5 en <h2>, la 6 en paragraphe, son texte tombait en 5.
+  it('complète une rubrique restée en paragraphe parmi des titres <h>', () => {
+    const { sections } = splitDocument(notice(''), 'notice');
+    assert.deepEqual(sections.map((section) => section.numero), ['1', '2', '3', '4', '5', '6']);
+    assert.deepEqual(sections.map((section) => section.texte), ['Texte 1.', 'Texte 2.', 'Texte 3.', 'Texte 4.', 'Texte 5.', 'Texte 6.']);
+  });
+
+  it('ne prend pas l’entrée du sommaire, hors de sa place', () => {
+    const sommaire = '<p>6. Contenu de l’emballage et autres informations</p>';
+    const { html, sections } = outline(`${sommaire}${notice('')}`.replace('<p>6. CONTENU DE L’EMBALLAGE ET AUTRES INFORMATIONS</p><p>Texte 6.</p>', ''), 'notice');
+    assert.equal(sections.length, 5);
+    assert.ok(html.startsWith(sommaire));
+  });
+
+  it('ne complète pas sur demande (HTML tiré d’un PDF)', () => {
+    assert.equal(outline(notice(''), 'notice', { completer: false }).sections.length, 5);
   });
 });

@@ -293,7 +293,9 @@ for (const cible of cibles) {
       const documents = pdfEnDocuments(await extraireTexte(pdf.fichier), {
         denomination: cible.denomination,
       });
-      resultats = documents.map((doc) => ({ type: doc.type, ...splitDocument(doc.html, doc.type) }));
+      // Pas de complétion du balisage mixte : pdftotext mêle les colonnes, un
+      // paragraphe porte souvent le numéro voisin (« 5 6. Comment conserver… »).
+      resultats = documents.map((doc) => ({ type: doc.type, ...splitDocument(doc.html, doc.type, { completer: false }) }));
     } catch (err) {
       soucis.push({ cis: cible.code_cis, motif: `extraction : ${err.message}` });
       bilan.echec += 1;
