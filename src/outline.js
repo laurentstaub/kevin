@@ -15,7 +15,9 @@ const BLOCS = /<(p|div)([^>]*)>([\s\S]{0,400}?)<\/\1>/gi;
 
 const TABLEAUX = /<table\b[\s\S]*?<\/table>/gi;
 
-const LONGUEUR_MAX = 250; // un titre de notice contient le nom complet du produit
+// Un titre de notice contient le nom complet du produit : « 2. QUELLES SONT LES
+// INFORMATIONS… HUMEX MAL DE GORGE LIDOCAINE/ALCOOL… » atteint 262 caractères.
+const LONGUEUR_MAX = 320;
 const RUBRIQUE_MAX = 12; // le plan type s'arrête à 12
 
 const stripTags = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();

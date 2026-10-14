@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  extraireDocument, lienPdf, pageSansDocument, rubriquesVues, equilibrer, ouvertureDuTitre,
+  extraireDocument, lienPdf, pageSansDocument, rubriquesVues, equilibrer, ouvertureDuTitre, pageErreurStockee,
 } from '../../src/document-bdpm.js';
 
 /** Une page de la BDPM : de l'habillage, le document, du pied de page. */
@@ -193,5 +193,23 @@ describe('ouvertureDuTitre', () => {
     const nouveau = RCP.replace('<p>1. DENOMINATION DU MEDICAMENT</p>',
       '<p class="AmmAnnexeTitre1"><span id="1._DENOMINATION">1. DENOMINATION DU MEDICAMENT</span><a href="#top"></a></p>');
     assert.match(extraireDocument(nouveau, 'rcp').html, /^<p class="AmmAnnexeTitre1"><span/);
+  });
+});
+
+describe('pages d’erreur stockées', () => {
+  // Collectées en mai 2025 comme notices (ÉPLÉRÉNONE EG, VIRGAN, MELPHALAN SUN, ATÉNOLOL BIOGARAN).
+  const introuvable = '<title>Notice patient - - Base de données publique des médicaments</title><br /><p>Le médicament demandé n\'existe pas dans la base</p><div>&nbsp;</div>';
+  const fichier = '<table><tr><td><h1>ATENOLOL BIOGARAN 50 mg - Notice patient</h1></td></tr></table> Erreur : le fichier https://base-donnees-publique.medicaments.gouv.fr/Rcp_Notices/notice/N0401126.htm n\'existe pas. <div>&nbsp;</div>';
+
+  it('reconnaît les deux formulations comme pages sans document', () => {
+    assert.equal(pageSansDocument(introuvable), true);
+    assert.equal(pageSansDocument(fichier), true);
+    assert.equal(pageErreurStockee(introuvable), true);
+    assert.equal(pageErreurStockee(fichier), true);
+  });
+
+  it('ne prend pas pour une erreur un vrai document qui citerait la phrase', () => {
+    const long = `<p>1. QU’EST-CE QUE X</p><p>${'Texte de notice. '.repeat(150)} Le médicament demandé n'existe pas dans la base.</p>`;
+    assert.equal(pageErreurStockee(long), false);
   });
 });

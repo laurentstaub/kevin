@@ -139,9 +139,13 @@ for (const [i, cible] of restants.entries()) {
     bilan.html += trouves.length;
     if (!SEC) {
       for (const trouve of trouves) {
+        // --cis recollecte un document déjà présent (page d'erreur stockée, version
+        // ancienne) : remplacé, l'unicité (code_cis, document_type) l'exige.
         await pool.query(
           `INSERT INTO dbpm.cis_documents (code_cis, document_type, html_content, last_updated)
-           VALUES ($1, $2, $3, now())`,
+           VALUES ($1, $2, $3, now())
+           ON CONFLICT (code_cis, document_type) DO UPDATE SET
+             html_content = excluded.html_content, last_updated = now()`,
           [cis, trouve.document_type, trouve.html],
         );
       }

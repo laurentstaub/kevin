@@ -77,12 +77,23 @@ const ABSENT = [
 
   // Homéopathiques à nom commun : jamais de RCP ni de notice (absence normale, pas une panne).
   /hom[ée]opathiques?\s+[àa]\s+nom\s+commun/i,
+
+  // Pages d'erreur servies en 200, stockées comme notices en mai 2025 (4 CIS).
+  /le m[ée]dicament demand[ée] n['’]existe pas dans la base/i,
+  /erreur\s*:\s*le fichier\s+\S+\s+n['’]existe pas/i,
 ];
 
 export const pageSansDocument = (html) => {
   const texte = texteNu(sansHabillage(html));
   return ABSENT.some((motif) => motif.test(texte));
 };
+
+/**
+ * Page d'erreur stockée à la place d'un document : courte, et reconnue comme
+ * telle. Ni affichée ni découpée. La longueur protège un vrai document qui
+ * citerait l'une de ces phrases.
+ */
+export const pageErreurStockee = (html) => texteNu(sansHabillage(html)).length < 1500 && pageSansDocument(html);
 
 /**
  * Lien vers le PDF de l'EMA d'une spécialité centralisée (sans RCP HTML).

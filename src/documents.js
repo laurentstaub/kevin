@@ -1,4 +1,5 @@
 import { sanitizeDocument, safeDocumentUrl } from './sanitize.js';
+import { pageErreurStockee } from './document-bdpm.js';
 import { outline } from './outline.js';
 import { config } from './config.js';
 
@@ -96,6 +97,9 @@ export async function getDocuments(pool, cis) {
   const seen = new Set();
 
   return rows
+    // Page d'erreur de la BDPM stockée comme document : « Le médicament demandé
+    // n'existe pas dans la base » ne doit pas devenir un onglet Notice.
+    .filter((row) => !pageErreurStockee(row.html_content))
     .map((row) => {
       const propre = sanitizeDocument(row.html_content);
       const { html, sections } = outline(

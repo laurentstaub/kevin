@@ -6,6 +6,7 @@ import { createPool } from '../src/db.js';
 import { sanitizeDocument } from '../src/sanitize.js';
 import { splitDocument, PARSER_VERSION } from '../src/split.js';
 import { purgerOrphelins } from '../src/orphelins.js';
+import { pageErreurStockee } from '../src/document-bdpm.js';
 
 /**
  * Découpe dbpm.cis_documents (lu seulement) en rubriques dans docs.rcp_sections.
@@ -68,7 +69,7 @@ const { rows: total } = await pool.query(
 console.log(`${total[0].n.toLocaleString('fr-FR')} document(s) avec du HTML`);
 console.log(`découpeur v${PARSER_VERSION}${TOUT ? ' — tout rejouer' : ''}${SEC ? ' — à blanc' : ''}\n`);
 
-const bilan = { traites: 0, sautes: 0, ok: 0, partiel: 0, echec: 0, rubriques: 0 };
+const bilan = { traites: 0, sautes: 0, ok: 0, partiel: 0, echec: 0, rubriques: 0, erreurs: 0 };
 const manquantesFreq = new Map();
 const echecs = [];
 
@@ -92,6 +93,17 @@ while (restant > 0) {
   for (const doc of rows) {
     const cle = `${doc.code_cis}|${doc.document_type}`;
     const hash = empreinte(doc.html_content);
+
+    // Page d'erreur stockée comme document : rien à découper, et son ancien
+    // découpage (« échec ») s'efface.
+    if (pageErreurStockee(doc.html_content)) {
+      bilan.erreurs += 1;
+      if (!SEC) {
+        await pool.query('DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2', [doc.code_cis, doc.document_type]);
+        await pool.query('DELETE FROM docs.document_parse WHERE code_cis = $1 AND document_type = $2', [doc.code_cis, doc.document_type]);
+      }
+      continue;
+    }
 
     if (connu.get(cle) === `${hash}|${PARSER_VERSION}`) {
       bilan.sautes += 1;
@@ -180,6 +192,7 @@ console.log(`  rubriques socle en moins ${bilan.partiel.toLocaleString('fr-FR')}
 console.log(`  aucun découpage         ${bilan.echec.toLocaleString('fr-FR')}  (${pct(bilan.echec)})`);
 console.log('');
 console.log(`  rubriques écrites       ${bilan.rubriques.toLocaleString('fr-FR')}`);
+if (bilan.erreurs > 0) console.log(`  pages d'erreur ignorées ${bilan.erreurs.toLocaleString('fr-FR')} (recollecter : collect-documents --cis)`);
 if (orphelins.purge) {
   console.log(`  orphelines purgées      ${orphelins.purge.rubriques.toLocaleString('fr-FR')} rubriques`
     + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées de la BDPM)`);

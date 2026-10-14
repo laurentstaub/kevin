@@ -98,7 +98,7 @@ const RCP_MOTS = {
  * posologie doit être adaptée… »), pas un titre. Le plus long libellé QRD du
  * RCP fait 74 caractères ; un titre de notice porte le nom complet du produit.
  */
-const TITRE_MAX = { rcp: 100, rcp_notice: 100, notice: 200 };
+const TITRE_MAX = { rcp: 100, rcp_notice: 100, notice: 320 };
 
 /** Ce titre a-t-il la tournure attendue de sa rubrique, selon le type de document ? */
 export function rubriqueReconnue(type, numero, libelle) {

@@ -440,3 +440,14 @@ describe('outline — titre nu en tête de document', () => {
     assert.equal(sections.length, 3);
   });
 });
+
+describe('outline — titres longs', () => {
+  // HUMEX MAL DE GORGE…, AMOXICILLINE/ACIDE CLAVULANIQUE ARROW LAB… : 251 à 262 caractères.
+  it('repère un titre de notice qui porte un nom de produit très long', () => {
+    const nom = 'HUMEX MAL DE GORGE LIDOCAINE/ALCOOL DICHLOROBENZYLIQUE/AMYLMETACRESOL 2 mg/1,2 mg/0,6 mg, pastille édulcorée au maltitol et à l’isomalt, sans sucre, arôme miel et citron, boîte de 24 pastilles';
+    const titres = [`QU’EST-CE QUE ${nom}`, `QUELLES SONT LES INFORMATIONS A CONNAITRE AVANT DE PRENDRE ${nom} ?`, `COMMENT PRENDRE ${nom} ?`];
+    assert.ok(titres[1].length > 250);
+    const { sections } = splitDocument(titres.map((titre, i) => `<p>${i + 1}. ${titre}</p><p>Texte ${i + 1}.</p>`).join(''), 'notice');
+    assert.deepEqual(sections.map((section) => section.texte), ['Texte 1.', 'Texte 2.', 'Texte 3.']);
+  });
+});
