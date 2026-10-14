@@ -1,9 +1,10 @@
 /* Interactions : une section par paire, les deux sens côte à côte. */
 
+/* Même grille que les deux sens d'une paire : chaque nom au-dessus de sa colonne. */
 .medicaments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2) var(--sp-3);
   list-style: none;
   margin: 0 0 var(--sp-4);
   padding: 0;
@@ -35,12 +36,37 @@
 .paire-sens {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
+  column-gap: var(--sp-3);
+}
+
+/* Les rangées de chaque sens sont celles de la paire : titres, décomptes et
+   premières citations à la même hauteur dans les deux colonnes. */
+.sens {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  align-content: start;
 }
 
 @media (max-width: 720px) {
-  .paire-sens { grid-template-columns: 1fr; }
+  .paire-sens { grid-template-columns: 1fr; row-gap: var(--sp-3); }
 }
+
+/* Sens sans passage : à la place des citations, avec le même filet. */
+.sens-vide {
+  padding-left: var(--sp-2);
+  border-left: 2px dashed var(--rule-medium);
+}
+
+.sens-vide p {
+  margin: 0 0 0.3em;
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+}
+
+.sens-vide p.manque { font-family: var(--font-body); }
+.sens-vide a { font-size: var(--fs-xs); }
 
 .sens-titre {
   margin: 0;
@@ -81,3 +107,16 @@
 .niveau-deconseillee { border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .niveau-pe { color: var(--ink); }
 .niveau-aucun { color: var(--faint); border-style: dashed; }
+
+/* Provenance d'un passage : trouvé par la substance, ou seulement par sa classe. */
+.citation .par {
+  display: inline-block;
+  margin-left: var(--sp-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.citation .par-classe { color: var(--muted); font-style: italic; }
+
+.medicament-classes { font-size: var(--fs-xs); color: var(--faint); }

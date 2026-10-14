@@ -4,14 +4,20 @@
  * ce que celui de B dit de A. Les deux se lisent séparément parce qu'ils
  * divergent souvent : l'un nomme la substance, l'autre parle de sa classe.
  *
- * Première étape : on cherche le nom de la substance (et ses noms courants),
- * pas encore ses classes (« AINS », « anticoagulants oraux »). Un silence ne
- * vaut donc jamais absence d'interaction, et la page le dit.
+ * On cherche le nom de la substance (et ses noms courants), puis ses classes
+ * telles que les RCP les nomment (« AINS », « anticoagulants oraux ») : la
+ * table data/classes-interactions.json, relue, les rattache par code ATC ou
+ * par liste. Chaque passage dit s'il a été trouvé par la substance ou par la
+ * classe. Une classe absente de la table n'est pas cherchée : un silence ne
+ * vaut jamais absence d'interaction, et la page le dit.
  *
  * Le niveau est celui du thésaurus de l'ANSM, lu dans l'intitulé sous lequel
  * tombe le passage ; à défaut, dans le passage lui-même. Le passage est cité
  * tel quel, jamais reformulé.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { ROOT } from './config.js';
 import { deaccent } from './text.js';
 import { phrases } from './citations.js';
 import { correspondances } from './synonymes.js';
@@ -90,13 +96,55 @@ export function termes(substances) {
 }
 
 /**
- * Motif commun à Postgres (ARE) et à JavaScript : un terme en début de mot,
- * sur texte plié. Les termes sont faits de lettres, chiffres et espaces.
+ * Motif commun à Postgres (ARE) et à JavaScript, sur texte plié.
+ * `prefixes` : racines de substance, en début de mot (« acetylsalicyl »).
+ * `entiers` : termes de classe, en mots entiers, pluriel en s ou x toléré ;
+ * espaces, tirets et apostrophes indifférents (« anti-inflammatoires »,
+ * « l’enzyme » : Postgres ne plie pas l'apostrophe typographique).
  */
-export function motif(liste) {
-  const alternatives = liste.map((terme) => terme.replace(/[^a-z0-9 ]/g, '').replace(/ +/g, ' '))
+export function motif(prefixes, entiers = []) {
+  const debuts = prefixes.map((terme) => terme.replace(/[^a-z0-9 ]/g, '').replace(/ +/g, ' '))
     .filter(Boolean);
-  return `(^|[^a-z0-9])(${alternatives.join('|')})`;
+  const mots = entiers
+    .map((terme) => plier(terme).split(/[^a-z0-9]+/).filter(Boolean).join('[^a-z0-9]{0,2}'))
+    .filter(Boolean)
+    .map((corps) => `${corps}[sx]?(?![a-z0-9])`);
+  return `(^|[^a-z0-9])(${[...new Set([...debuts, ...mots])].join('|')})`;
+}
+
+// ---------------------------------------------------------------- les classes
+
+const lireDonnees = (...chemin) => JSON.parse(readFileSync(path.join(ROOT, 'data', ...chemin), 'utf8'));
+
+/** Classes telles que les RCP les nomment ; table versionnée, relue par un pharmacien. */
+export const CLASSES = lireDonnees('classes-interactions.json').classes;
+
+/** Substances d'une liste de data/listes/ ; une liste absente n'inscrit personne. */
+function lireInscrits(liste) {
+  try {
+    return lireDonnees('listes', `${liste}.json`).inscriptions.map((inscription) => inscription.substance);
+  } catch {
+    return [];
+  }
+}
+const INSCRITS = new Map(CLASSES.filter((classe) => classe.liste).map((classe) => [classe.liste, lireInscrits(classe.liste)]));
+
+/**
+ * Classes d'un médicament : par un code ATC qui commence par l'un des préfixes
+ * de la classe (hors exclusions), ou par une substance inscrite sur sa liste.
+ * @returns {{ id: string, nom: string, termes: string[] }[]}
+ */
+export function classesDe(atc, substances, classes = CLASSES, inscrits = (liste) => INSCRITS.get(liste) ?? []) {
+  const racines = new Set(substances.flatMap(motsUtiles).map(racine));
+  return classes
+    .filter((classe) => {
+      const parAtc = atc.some((code) => (classe.atc ?? []).some((prefixe) => code.startsWith(prefixe))
+        && !(classe.exclure ?? []).some((prefixe) => code.startsWith(prefixe)));
+      const parListe = Boolean(classe.liste) && inscrits(classe.liste)
+        .some((inscrit) => motsUtiles(inscrit).map(racine).some((rac) => racines.has(rac)));
+      return parAtc || parListe;
+    })
+    .map(({ id, nom, termes: formulations }) => ({ id, nom, termes: formulations }));
 }
 
 // --------------------------------------------------- les passages de la 4.5
@@ -151,23 +199,33 @@ export function passages(texte) {
 }
 
 /**
- * Passages d'une 4.5 qui nomment l'un des termes.
+ * Passages d'une 4.5 qui nomment la substance, ou à défaut l'une de ses classes.
  * @param {string} texte
- * @param {RegExp} regex  motif() compilé
- * @returns {{ niveau: string|null, extrait: string }[]}
+ * @param {RegExp|null} regex  motif() compilé des termes de la substance
+ * @param {{ nom: string, regex: RegExp }[]} classes  motif() compilé de chaque classe
+ * @returns {{ niveau: string|null, extrait: string, par: 'substance'|'classe', classe: string|null }[]}
  */
-export function extraire(texte, regex) {
+export function extraire(texte, regex, classes = []) {
   const trouves = [];
   for (const passage of passages(texte)) {
-    if (!regex.test(plier(passage.texte))) continue;
+    const plie = plier(passage.texte);
+    const parSubstance = Boolean(regex?.test(plie));
+    const classe = parSubstance ? null : classes.find((candidate) => candidate.regex.test(plie));
+    if (!parSubstance && !classe) continue;
+    const critere = parSubstance ? regex : classe.regex;
     let extrait = passage.texte;
     if (extrait.length > BLOC_MAX) {
-      // Passage long, souvent de la prose : les phrases qui nomment la substance.
+      // Passage long, souvent de la prose : les phrases qui portent ce qui a été trouvé.
       const decoupe = phrases(extrait.replace(/\s·\s/g, ' • '));
-      const utiles = decoupe.filter((phrase) => regex.test(plier(phrase)));
+      const utiles = decoupe.filter((phrase) => critere.test(plier(phrase)));
       extrait = (utiles.length ? utiles : decoupe).slice(0, 2).join(' […] ');
     }
-    trouves.push({ niveau: passage.niveau ?? niveauDuPassage(plier(extrait)), extrait });
+    trouves.push({
+      niveau: passage.niveau ?? niveauDuPassage(plier(extrait)),
+      extrait,
+      par: parSubstance ? 'substance' : 'classe',
+      classe: classe?.nom ?? null,
+    });
   }
   return trouves;
 }
@@ -176,18 +234,18 @@ export function extraire(texte, regex) {
  * Regroupe les passages identiques de plusieurs RCP (génériques d'un même
  * princeps) : un passage, le nombre de RCP qui le portent, un RCP pour le lien.
  */
-export function regrouper(lignes, regex) {
+export function regrouper(lignes, regex, classes = []) {
   const groupes = new Map();
   for (const ligne of lignes) {
     if (!ligne.texte) continue;
-    for (const { niveau, extrait } of extraire(ligne.texte, regex)) {
+    for (const { niveau, extrait, par, classe } of extraire(ligne.texte, regex, classes)) {
       const cle = plier(extrait).replace(/[^a-z0-9]+/g, ' ').trim();
       const groupe = groupes.get(cle);
       if (groupe) {
         groupe.cis.add(ligne.code_cis);
       } else {
         groupes.set(cle, {
-          niveau, extrait, cis: new Set([ligne.code_cis]),
+          niveau, extrait, par, classe, cis: new Set([ligne.code_cis]),
           exemple: { cis: ligne.code_cis, denomination: ligne.denomination_medicament, ancre: `rcp-${ligne.position}` },
         });
       }
@@ -195,7 +253,9 @@ export function regrouper(lignes, regex) {
   }
   return [...groupes.values()]
     .map(({ cis, ...groupe }) => ({ ...groupe, nb: cis.size, libelleNiveau: NIVEAUX[groupe.niveau] ?? null }))
-    .sort((a, b) => rang(a.niveau) - rang(b.niveau) || b.nb - a.nb);
+    // À niveau égal, la substance nommée avant la classe.
+    .sort((a, b) => rang(a.niveau) - rang(b.niveau)
+      || Number(a.par === 'classe') - Number(b.par === 'classe') || b.nb - a.nb);
 }
 
 // ------------------------------------------------------------------ la base
@@ -227,7 +287,9 @@ export async function resoudre(pool, element) {
             (m.etat_commercialisation = 'Commercialisée') AS commercialise,
             EXISTS (SELECT 1 FROM par_substance) AS par_substance,
             ARRAY(SELECT DISTINCT c.denomination_substance FROM dbpm.cis_compo_bdpm c
-                  WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA') AS substances
+                  WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA') AS substances,
+            -- Absence normale : un tiers des spécialités n'a pas de classe ATC.
+            ARRAY(SELECT a.atc_code FROM ref.cis_atc_mapping a WHERE a.code_cis = m.code_cis) AS atc
      FROM dbpm.cis_bdpm m
      WHERE m.code_cis IN (SELECT code_cis FROM par_substance UNION SELECT code_cis FROM par_marque)`,
     [element],
@@ -271,6 +333,7 @@ export function choisir(element, rows) {
     if (!parRacine.has(cle)) parRacine.set(cle, substance);
   }
   const substances = [...parRacine.values()].sort();
+  const atc = [...new Set(retenues.flatMap((row) => row.atc ?? []))].sort();
   const libelle = parSubstance
     ? dci(graphie(element, substances))
     : specialite(retenues[0].denomination_medicament.slice(0, element.length));
@@ -281,21 +344,31 @@ export function choisir(element, rows) {
     type: parSubstance ? 'substance' : 'marque',
     substances,
     termes: termes(substances),
+    atc,
+    classes: classesDe(atc, substances),
     cis: retenues.map((row) => row.code_cis),
   };
 }
 
 /**
- * Ce que les 4.5 des RCP de `a` disent des substances de `b`. Les termes que
- * `a` partage avec `b` sont écartés : le RCP du paracétamol parle du
- * paracétamol à chaque phrase, ce n'est pas une interaction.
+ * Ce que les 4.5 des RCP de `a` disent des substances de `b`, puis de ses
+ * classes. Les termes que `a` partage avec `b` sont écartés : le RCP du
+ * paracétamol parle du paracétamol à chaque phrase, ce n'est pas une
+ * interaction. Une classe commune reste cherchée : « autres AINS » dans le RCP
+ * d'un AINS est précisément l'interaction.
  */
 export async function sens(pool, a, b) {
   const propres = new Set(a.termes);
   const cherches = b.termes.filter((terme) => !propres.has(terme));
-  const base = { de: a.libelle, sur: b.libelle, cherche: b.type === 'substance' ? b.libelle : b.substances.map(dci).join(', ') || b.libelle };
+  const classes = b.classes ?? [];
+  const base = {
+    de: a.libelle,
+    sur: b.libelle,
+    cherche: b.type === 'substance' ? b.libelle : b.substances.map(dci).join(', ') || b.libelle,
+    classes: classes.map((classe) => classe.nom),
+  };
   if (cherches.length === 0) return { ...base, rcp: 0, citant: 0, passages: [], autres: 0, niveau: null, sansObjet: true };
-  const source = motif(cherches);
+  const source = motif(cherches, classes.flatMap((classe) => classe.termes));
   const { rows } = await pool.query(
     `SELECT s.code_cis, m.denomination_medicament, s.position,
             CASE WHEN public.f_unaccent(lower(s.texte)) ~ $2 THEN s.texte END AS texte
@@ -305,8 +378,9 @@ export async function sens(pool, a, b) {
      ORDER BY length(m.denomination_medicament), s.code_cis, s.position`,
     [a.cis, source],
   );
-  const regex = new RegExp(source);
-  const groupes = regrouper(rows, regex);
+  const regex = new RegExp(motif(cherches));
+  const parClasse = classes.map((classe) => ({ nom: classe.nom, regex: new RegExp(motif([], classe.termes)) }));
+  const groupes = regrouper(rows, regex, parClasse);
   const lus = new Set(rows.map((row) => row.code_cis));
   const citant = new Set(rows.filter((row) => row.texte).map((row) => row.code_cis));
   return {
@@ -316,6 +390,10 @@ export async function sens(pool, a, b) {
     passages: groupes.slice(0, PASSAGES_MAX),
     autres: Math.max(0, groupes.length - PASSAGES_MAX),
     niveau: groupes[0]?.niveau ?? null,
+    // Rien trouvé : la 4.5 à lire soi-même, celle de la première spécialité.
+    lecture: rows[0]
+      ? { cis: rows[0].code_cis, denomination: rows[0].denomination_medicament, ancre: `rcp-${rows[0].position}` }
+      : null,
   };
 }
 

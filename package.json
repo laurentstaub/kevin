@@ -22,6 +22,7 @@
     "reparer-encodage": "node scripts/reparer-encodage.js",
     "audit-atc": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_atc.sql",
     "diag-atc": "node scripts/diag-atc.js",
+    "couverture-classes": "node scripts/couverture-classes.js",
     "audit-documents": "psql -v ON_ERROR_STOP=1 -d \"${DATABASE_URL:-${PGDATABASE:-incidents_json}}\" -f sql/audit_documents.sql",
     "check-donnees": "node scripts/check-donnees.js",
     "comparer-ia": "node scripts/comparer-ia.js",
