@@ -13,7 +13,7 @@ import { listerFiches, DOSSIER_CALCULS } from '../src/fiches.js';
 import {
   REQUETE_SUBSTANCE, motifSubstance, choisirCitations, dejaInscrite,
 } from '../src/fiches-calcul.js';
-import { chercherDansDocuments, PLAFOND } from '../src/recherche-texte.js';
+import { chercherDansDocuments, MOLECULES_MAX } from '../src/recherche-texte.js';
 
 const pool = createPool({ statement_timeout: 0 });
 mkdirSync(DOSSIER_CALCULS, { recursive: true });
@@ -28,7 +28,7 @@ const lireListe = (nom) => {
 async function toutesLesTrouvailles(termes, rubriques) {
   const vues = new Map();
   for (const rubrique of rubriques) {
-    for (let decalage = 0; decalage < PLAFOND; decalage += 100) {
+    for (let decalage = 0; decalage < MOLECULES_MAX; decalage += 100) {
       const recherche = await chercherDansDocuments(pool, termes.join(' '), { rubrique, limite: 100, decalage });
       for (const resultat of recherche.resultats) {
         const deja = vues.get(resultat.molecule);

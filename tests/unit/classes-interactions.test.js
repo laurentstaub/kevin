@@ -37,9 +37,16 @@ describe('classes d’un médicament', () => {
   const noms = (liste) => liste.map((entree) => entree.id);
 
   it('par préfixe ATC', () => {
-    assert.deepEqual(noms(classesDe(['M01AE01'], ['IBUPROFÈNE'])), ['ains']);
-    assert.deepEqual(noms(classesDe(['B01AA12'], ['FLUINDIONE'])), ['avk']);
-    assert.deepEqual(noms(classesDe(['C01BD01'], ['AMIODARONE'])), ['antiarythmiques']);
+    // Listes vides : seul le code ATC rattache (l'amiodarone est aussi torsadogène par sa liste).
+    const sansListe = (atc, substances) => noms(classesDe(atc, substances, undefined, () => []));
+    assert.deepEqual(sansListe(['M01AE01'], ['IBUPROFÈNE']), ['ains']);
+    assert.deepEqual(sansListe(['B01AA12'], ['FLUINDIONE']), ['avk']);
+    assert.deepEqual(sansListe(['C01BD01'], ['AMIODARONE']), ['antiarythmiques']);
+  });
+
+  it('par la liste des torsadogènes, désormais remplie', () => {
+    assert.ok(noms(classesDe(['C01BD01'], ['AMIODARONE'])).includes('torsadogenes'));
+    assert.ok(noms(classesDe(['N06AB04'], ['CITALOPRAM'])).includes('torsadogenes'));
   });
 
   it('sauf exclusion : le lithium n’est pas un neuroleptique', () => {
