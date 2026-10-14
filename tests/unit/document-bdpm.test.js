@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  extraireDocument, lienPdf, pageSansDocument, rubriquesVues, equilibrer,
+  extraireDocument, lienPdf, pageSansDocument, rubriquesVues, equilibrer, ouvertureDuTitre,
 } from '../../src/document-bdpm.js';
 
 /** Une page de la BDPM : de l'habillage, le document, du pied de page. */
@@ -172,5 +172,26 @@ describe('page unique portant les deux documents', () => {
     const notice = extraireDocument(DEUX, 'notice');
     assert.ok(rcp.signes > 0 && notice.signes > 0);
     assert.ok(rcp.signes < notice.signes * 3, `rcp ${rcp.signes} / notice ${notice.signes}`);
+  });
+});
+
+describe('ouvertureDuTitre', () => {
+  // Nouveau site BDPM : le titre est dans un <span> lui-même dans le <p>.
+  it('remonte au <p> qui ouvre le titre, pas au <span> le plus proche', () => {
+    const corps = '<div class="doc"><p class="titre"><span id="x">1. DENOMINATION DU MEDICAMENT</span></p>';
+    const depart = corps.indexOf('1. DENOM');
+    assert.equal(corps.slice(ouvertureDuTitre(corps, depart)).slice(0, 18), '<p class="titre"><');
+  });
+
+  it('s’arrête au titre si un texte le précède dans le bloc', () => {
+    const corps = '<p>Voir la rubrique <span>1. DENOMINATION</span></p>';
+    const depart = corps.indexOf('1. DENOM');
+    assert.equal(corps.slice(ouvertureDuTitre(corps, depart)), '<span>1. DENOMINATION</span></p>');
+  });
+
+  it('extrait un document du nouveau site avec le <p> de son premier titre', () => {
+    const nouveau = RCP.replace('<p>1. DENOMINATION DU MEDICAMENT</p>',
+      '<p class="AmmAnnexeTitre1"><span id="1._DENOMINATION">1. DENOMINATION DU MEDICAMENT</span><a href="#top"></a></p>');
+    assert.match(extraireDocument(nouveau, 'rcp').html, /^<p class="AmmAnnexeTitre1"><span/);
   });
 });

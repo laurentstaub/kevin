@@ -93,6 +93,28 @@ export function lienPdf(html) {
   return trouve ? trouve[0] : null;
 }
 
+/** Bloc qui peut porter un titre : on remonte jusqu'à lui, pas au premier « < ». */
+const BLOC_OUVRANT = /<(?:p|div|h[1-6]|li|td)\b[^>]*>/gi;
+
+/**
+ * Début du titre trouvé à `depart` : la balise de bloc qui l'ouvre, parmi les
+ * balises qui le précèdent sans texte. Reculer au premier « < » coupait le <p>
+ * du nouveau site (« <p><span>1. DENOMINATION… ») : le document commençait par
+ * un titre hors bloc, que le découpeur ne voyait pas (679 RCP, 11 notices).
+ */
+export function ouvertureDuTitre(corps, depart) {
+  const avant = corps.slice(0, depart);
+  const balises = /(?:<[^>]+>\s*)*$/.exec(avant);
+  // Après la dernière fermante de la série : ce qui s'ouvre pour ce titre.
+  const fermante = balises[0].lastIndexOf('</');
+  const apresFermante = fermante === -1 ? 0 : balises[0].indexOf('>', fermante) + 1;
+  // Le plus proche du titre : son <p>, pas le conteneur qui l'englobe.
+  const bloc = [...balises[0].slice(apresFermante).matchAll(BLOC_OUVRANT)].at(-1);
+  if (bloc) return balises.index + apresFermante + bloc.index;
+  const ouverture = corps.lastIndexOf('<', depart);
+  return ouverture === -1 ? depart : ouverture;
+}
+
 /**
  * Tranche de page qui porte le document, coupée au premier titre du plan.
  * Les quelques lignes de site restantes sont écartées plus tard par le découpeur.
@@ -111,9 +133,8 @@ export function extraireDocument(page, type = 'rcp') {
   const apres = borne ? corps.slice(depart + 1).search(borne) : -1;
   const arret = apres === -1 ? corps.length : depart + 1 + apres;
 
-  // Reculer jusqu'à la balise ouvrante du titre.
-  const ouverture = corps.lastIndexOf('<', depart);
-  const html = equilibrer(corps.slice(ouverture === -1 ? depart : ouverture, arret).trim());
+  // Reculer jusqu'au bloc qui ouvre le titre.
+  const html = equilibrer(corps.slice(ouvertureDuTitre(corps, depart), arret).trim());
 
   const rubriques = rubriquesVues(html);
   const signes = texteNu(html).length;
