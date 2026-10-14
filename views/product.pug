@@ -305,17 +305,46 @@ block content
       //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
       //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
       //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
-      if alternatives && alternatives.categories.length > 0
+      //- Un filtre actif garde le bloc ouvert, même s'il a tout masqué : sinon
+      //- plus rien ne permettrait de l'ôter.
+      - const filtreActif = Boolean(parExcipient && parExcipient.sans.length > 0)
+      if alternatives && (alternatives.categories.length > 0 || filtreActif)
         - const options = optionsAlternatives
-        details.bloc#alternatives
+        details.bloc#alternatives(open=filtreActif)
           summary.bloc-tete
             h2.section-titre Alternatives
-            span.bloc-compte #{options} option#{options > 1 ? 's' : ''}
+            span.bloc-compte
+              | #{options} option#{options > 1 ? 's' : ''}
+              if parExcipient && parExcipient.masques > 0
+                |  · #{parExcipient.masques} masquée#{parExcipient.masques > 1 ? 's' : ''}
           if genericGroup
             p.section-meta
               | Groupe générique · #{genericGroup} —
               |
               a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire de l'ANSM
+          //- Filtres « sans … » au-dessus de ce qu'ils pilotent ; l'URL porte l'état.
+          //- Proposés seulement s'ils séparent les candidats. Source : rubrique 6.1
+          //- (liste complète) et déclaration des excipients à effet notoire.
+          if parExcipient && parExcipient.filtres.length > 0
+            .filtres-excipients
+              span.filtres-libelle Sans
+              each filtre in parExcipient.filtres
+                - const suivants = filtre.actif ? parExcipient.sans.filter((id) => id !== filtre.id) : [...parExcipient.sans, filtre.id]
+                a.filtre-excipient(
+                  href=`${suivants.length ? `?sans=${suivants.join(',')}` : '?'}#alternatives`
+                  class=filtre.actif ? 'actif' : null
+                  aria-pressed=filtre.actif ? 'true' : 'false'
+                  title=filtre.dansProduit ? 'Ce produit en contient' : null
+                )
+                  = filtre.court
+                  if filtre.dansProduit
+                    span.filtre-ici  (ce produit)
+            if parExcipient.masques > 0
+              p.section-meta
+                - const plusieurs = parExcipient.masques > 1
+                | #{parExcipient.masques} spécialité#{plusieurs ? 's' : ''} masquée#{plusieurs ? 's' : ''} : #{plusieurs ? 'leur' : 'son'} RCP en indique. Une spécialité dont la liste des excipients n'a pas été lue reste affichée, marquée « non lu ».
+            if filtreActif && alternatives.categories.length === 0
+              p.vide Aucune alternative sans #{parExcipient.filtres.filter((filtre) => filtre.actif).map((filtre) => filtre.court).join(' ni ')}.
           each cat in alternatives.categories
             if cat.cle === 'BLOQUE'
               //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
@@ -355,7 +384,7 @@ block content
                           each sp, i in mol.specialites
                             if i > 0
                               span.sep
-                            a(href=`/product/${sp.id}`)= specialite(sp.denomination)
+                            a(href=`/product/${sp.id}` title=(sp.excipients && sp.excipients.courts.length ? `Contient : ${sp.excipients.courts.join(', ')}` : null))= specialite(sp.denomination)
                 else
                   table.t-substitution
                     caption.sr-only= cat.action
@@ -364,6 +393,10 @@ block content
                         tr
                           td
                             a(href=`/product/${item.id}` title=(item.court ? specialite(item.denomination) : null))= specialite(item.court || item.denomination)
+                            if item.excipients && item.excipients.courts.length > 0
+                              span.excipients-item= item.excipients.courts.join(' · ')
+                            else if item.excipients && !item.excipients.lu
+                              span.excipients-item.non-lu non lu
                           if cat.cle === 'SUBSTITUABLE'
                             td
                               span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role

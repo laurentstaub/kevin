@@ -11,6 +11,9 @@ import { substituer } from '../synonymes.js';
 import { getSecabilite } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
 import {
+  getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans,
+} from '../excipients.js';
+import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
 } from '../fiches.js';
 import { regrouperSpecialites } from '../specialites.js';
@@ -418,7 +421,7 @@ export function pageRoutes(pool) {
 
       const [
         alternatives, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
-        secabilite, securite,
+        secabilite, securite, excipients,
       ] = await Promise.all([
         getAlternatives(pool, cis).catch((err) => {
           console.error('[substitution] alternatives indisponibles pour', cis, err.message);
@@ -476,6 +479,11 @@ export function pageRoutes(pool) {
           console.error('[sécurité] informations indisponibles pour', cis, err.message);
           return null;
         }),
+        // Panne : `null`, la bande se tait plutôt que de suggérer « sans ».
+        getExcipients(pool, cis).catch((err) => {
+          console.error('[excipients] indisponibles pour', cis, err.message);
+          return null;
+        }),
       ]);
 
       const documents = withSections(bruts, decoupe);
@@ -530,11 +538,22 @@ export function pageRoutes(pool) {
       const genericGroup = alternatives.groupe;
       const optionsAlternatives = compterOptions(alternatives.categories);
 
+      // Excipients des alternatives, calculés en base, et filtre « sans … » de
+      // l'URL. Une panne laisse les alternatives sans filtre plutôt que vides.
+      const profils = await excipientsDe(pool, cisDesAlternatives(alternatives.categories)).catch((err) => {
+        console.error('[excipients] alternatives indisponibles pour', cis, err.message);
+        return null;
+      });
+      const parExcipient = profils
+        ? filtrerAlternatives(alternatives.categories, profils, lireSans(req.query.sans ?? ''),
+          new Set((excipients?.presents ?? []).map((present) => present.id)))
+        : null;
+
       res.render('product', {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
-          resumerEvaluation(evaluation), optionsAlternatives, secabilite),
+          resumerEvaluation(evaluation), optionsAlternatives, secabilite, excipients),
         securite,
         optionsAlternatives,
         // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.
@@ -543,7 +562,8 @@ export function pageRoutes(pool) {
         motsTrouves: trouves,
         importation,
         reference,
-        alternatives,
+        alternatives: parExcipient ? { ...alternatives, categories: parExcipient.categories } : alternatives,
+        parExcipient,
         variantes,
         remboursement,
         resumeAtc,

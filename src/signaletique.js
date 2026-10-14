@@ -10,6 +10,9 @@ import { SECABILITE } from './galenique.js';
 
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
+/** Excipients nommés dans la bande ; les autres sont comptés, tous sont en infobulle. */
+const EXCIPIENTS_MONTRES = 3;
+
 /** Picto de la forme pharmaceutique, d'après son libellé BDPM. */
 export function pictoForme(forme) {
   const texte = String(forme ?? '').toLowerCase();
@@ -75,10 +78,11 @@ const taux = (valeur) => {
  * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
  * @param {number} options         alternatives proposables (substitution.js)
  * @param {{ valeur: string, phrase: string }|null} secabilite  rubrique 3 du RCP (galenique.js)
+ * @param {{ lu: boolean, presents: object[] }|null} excipients  rubriques 2 et 6.1 du RCP (excipients.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null) {
+export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null, excipients = null) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -201,6 +205,24 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     valeur: [abregerForme(forme), secable].filter(Boolean).join(' · '),
     detail: [forme, secabilite && `RCP 3 : « ${secabilite.phrase} »`].filter(Boolean).join(' — ') || null,
   });
+
+  // Excipients qui comptent au comptoir : les noms dans la bande, la déclaration
+  // citée en infobulle. Rien trouvé ne s'affiche pas : la case dirait « sans »
+  // pour tous les excipients non suivis.
+  const presents = excipients?.presents ?? [];
+  if (presents.length > 0) {
+    const montres = presents.slice(0, EXCIPIENTS_MONTRES).map((present) => present.court);
+    const reste = presents.length - montres.length;
+    cases.push({
+      cle: 'excipients', picto: 'liste', libelle: 'Excipients à connaître',
+      valeur: reste > 0 ? `${montres.join(' · ')} +${reste}` : montres.join(' · '),
+      detail: presents.map((present) => {
+        const quantite = present.quantite ? ` (${present.quantite})` : '';
+        const source = present.source === 'notoire' ? 'déclaré à effet notoire' : 'liste des excipients';
+        return `${present.libelle}${quantite}, ${source}`;
+      }).join(' ; '),
+    });
+  }
 
   // Triangle noir : surveillance supplémentaire, effets indésirables à déclarer.
   if (product.surveillance_renforcee) {

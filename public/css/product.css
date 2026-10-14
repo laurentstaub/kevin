@@ -279,6 +279,47 @@ a.signal-valeur {
   margin-top: 0.3em;
 }
 
+/* Filtres « sans … » des alternatives : des puces, comme les dosages. */
+.filtres-excipients {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 var(--sp-1);
+}
+
+.filtres-libelle {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filtre-excipient {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.filtre-excipient:hover,
+.filtre-excipient:focus-visible { border-color: var(--accent); color: var(--accent); }
+/* Texte couleur du fond : lisible sur l’aplat dans les deux thèmes. */
+.filtre-excipient.actif { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.filtre-ici { color: inherit; opacity: 0.8; }
+
+/* Excipients d'une alternative, à la suite de son nom. */
+.excipients-item {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.excipients-item.non-lu { font-style: italic; }
+
 /* Interactions : le libellé à la place du titre de bloc, le champ de la
    recherche à sa suite, sur le même filet. */
 .verifier-form {
