@@ -139,6 +139,46 @@ async function dosagesConnus(pool, molecule, nombres) {
   return new Set(rows.map((ligne) => ligne.nombre));
 }
 
+/** Élisions (« l'acide », « d'aspirine ») : le mot seul, sans son article. */
+const sansElision = (mot) => mot.replace(/^(?:[ldjmnstc]|qu)['’](?=\S)/, '');
+
+/** Mot qui peut désigner un médicament : un mot plus court reste du texte. */
+const eligible = (mot) => mot.length >= LONGUEUR_MIN && /^[a-z]/.test(mot);
+
+/**
+ * Noms courants remplacés par leur substance (« aspirine allaitement » →
+ * « acide acetylsalicylique allaitement »), sauf dans une paire de mots que la
+ * base connaît telle quelle, début de nom de spécialité surtout : « aspirine
+ * upsa » est ASPIRINE UPSA, pas l'acide acétylsalicylique suivi d'un mot à
+ * chercher dans les documents. La base n'est interrogée que si un nom courant
+ * jouxte un autre mot.
+ */
+export async function substituerHorsMarques(pool, saisie) {
+  const bruts = String(saisie ?? '').split(/\s+/).filter(Boolean).map(sansElision);
+  const mots = bruts.map(normaliser);
+  const paires = mots.slice(0, -1).map((mot, i) => {
+    const paire = `${mot} ${mots[i + 1]}`;
+    return eligible(mot) && eligible(mots[i + 1]) && substituer(paire) !== paire ? paire : null;
+  });
+  const marques = paires.some(Boolean) ? await mesurer(pool, [...new Set(paires.filter(Boolean))]) : new Set();
+
+  // Les marques telles que saisies ; entre elles, la substitution habituelle.
+  const morceaux = [];
+  let courant = [];
+  for (let i = 0; i < bruts.length; i += 1) {
+    if (paires[i] && marques.has(paires[i])) {
+      if (courant.length) morceaux.push(substituer(courant.join(' ')));
+      morceaux.push(`${mots[i]} ${mots[i + 1]}`);
+      courant = [];
+      i += 1;
+    } else {
+      courant.push(bruts[i]);
+    }
+  }
+  if (courant.length) morceaux.push(substituer(courant.join(' ')));
+  return morceaux.join(' ');
+}
+
 /**
  * Repère, dans l'ordre de la saisie, les mots ou paires de mots que la base
  * connaît comme substance ou début de nom de spécialité.
@@ -146,14 +186,11 @@ async function dosagesConnus(pool, molecule, nombres) {
  */
 async function reperer(pool, saisie) {
   // « aspirine allaitement » : la base ne connaît que l'acide acétylsalicylique.
-  // Élisions (« l'acide », « d'aspirine ») : le mot seul, sans son article.
-  const originaux = substituer(saisie).split(/\s+/).filter(Boolean)
-    .map((mot) => mot.replace(/^(?:[ldjmnstc]|qu)['’](?=\S)/, ''));
+  const originaux = (await substituerHorsMarques(pool, saisie)).split(/\s+/).filter(Boolean).map(sansElision);
   const mots = originaux.map(normaliser);
   if (mots.length < 2) return null;
 
   // Paires d'abord (« acide folique »), puis mots seuls ; les mots trop courts restent du texte.
-  const eligible = (mot) => mot.length >= LONGUEUR_MIN && /^[a-z]/.test(mot);
   const paires = mots.slice(0, -1).map((mot, i) => (eligible(mot) && eligible(mots[i + 1]) ? `${mot} ${mots[i + 1]}` : null));
   const candidats = [...new Set([...paires, ...mots.filter(eligible)].filter(Boolean))];
   if (candidats.length === 0) return null;

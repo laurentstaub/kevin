@@ -4,7 +4,9 @@ import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre, lien } from '../etat-recherche.js';
 import { iaActive, estQuestion, interpreterQuestion } from '../ia.js';
-import { reconnaitreMedicament, reconnaitreMedicaments, normaliser } from '../reconnaissance.js';
+import {
+  reconnaitreMedicament, reconnaitreMedicaments, normaliser, substituerHorsMarques,
+} from '../reconnaissance.js';
 import { chercherInteractions, estAssociation, MEDICAMENTS_MAX } from '../interactions.js';
 import { lireCode, trouverParCode } from '../codes.js';
 import { substituer } from '../synonymes.js';
@@ -273,9 +275,10 @@ export function pageRoutes(pool) {
       // fiche produit, plusieurs noms séparés par des virgules ou des « + ».
       // Sans séparateur (« kardegic previscan »), la reconnaissance de la
       // recherche coupe la saisie ; les noms courants passent en substance.
-      const saisies = [req.query.avec].flat()
+      // « aspirine upsa » reste la spécialité ; « aspirine » seule devient la substance.
+      const saisies = (await Promise.all([req.query.avec].flat()
         .flatMap((saisie) => String(saisie ?? '').slice(0, 200).split(/[,;+/]/))
-        .map((saisie) => substituer(saisie))
+        .map((saisie) => substituerHorsMarques(pool, saisie).catch(() => substituer(saisie)))))
         .filter((saisie) => saisie.trim());
       const decoupees = await Promise.all(saisies.map(async (saisie) => (
         await reconnaitreMedicaments(pool, saisie).catch(() => null)) ?? [saisie]));

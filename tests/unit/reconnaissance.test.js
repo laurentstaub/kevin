@@ -1,14 +1,19 @@
 import { describe, it, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
-import { normaliser, motDeTexte, reconnaitreMedicament } from '../../src/reconnaissance.js';
+import {
+  normaliser, motDeTexte, reconnaitreMedicament, reconnaitreMedicaments, substituerHorsMarques,
+} from '../../src/reconnaissance.js';
 import { createApp } from '../../src/app.js';
 import { config } from '../../src/config.js';
 
-/** Base factice : « paracetamol » et « acide folique » sont des substances, « doliprane » une marque. */
+/**
+ * Base factice : « paracetamol » et « acide folique » sont des substances, « doliprane » une marque ;
+ * « aspirine upsa » ouvre un nom de spécialité (ASPIRINE UPSA).
+ */
 const CONNUS = {
   substances: { paracetamol: 1, 'acide folique': 1, 'acide acetylsalicylique': 1, sodium: 300 },
-  marques: new Set(['doliprane', 'aspirine']),
+  marques: new Set(['doliprane', 'aspirine', 'aspirine upsa', 'previscan']),
   // Nombres entiers des dénominations : DOLIPRANE 300 mg, 1000 mg, 2,4 %.
   dosages: { doliprane: ['300', '1000', '2,4'], paracetamol: ['500', '1000'] },
 };
@@ -62,6 +67,24 @@ describe('reconnaissance d’un médicament', () => {
       await reconnaitreMedicament(poolFactice, 'aspirine allaitement'),
       { molecule: 'acide acetylsalicylique', reste: 'allaitement' },
     );
+  });
+
+  // ASPIRINE UPSA commence par un nom courant : la marque, pas la substance suivie de « upsa ».
+  it('garde une marque qui commence par un nom courant', async () => {
+    assert.equal(await substituerHorsMarques(poolFactice, 'Aspirine Upsa allaitement'), 'aspirine upsa allaitement');
+    assert.equal(await substituerHorsMarques(poolFactice, 'aspirine allaitement'), 'acide acetylsalicylique allaitement');
+    assert.equal(
+      await substituerHorsMarques(poolFactice, "aspirine upsa et l'aspirine"),
+      'aspirine upsa et acide acetylsalicylique',
+    );
+
+    assert.deepEqual(
+      await reconnaitreMedicament(poolFactice, 'aspirine upsa allaitement'),
+      { molecule: 'aspirine upsa', reste: 'allaitement' },
+    );
+    assert.deepEqual(await reconnaitreMedicament(poolFactice, 'aspirine upsa'), { molecule: 'aspirine upsa', reste: '' });
+    assert.deepEqual(await reconnaitreMedicaments(poolFactice, 'aspirine upsa previscan'), ['aspirine upsa', 'previscan']);
+    assert.deepEqual(await reconnaitreMedicaments(poolFactice, 'aspirine previscan'), ['acide acetylsalicylique', 'previscan']);
   });
 
   it('préfère la paire au mot seul', async () => {

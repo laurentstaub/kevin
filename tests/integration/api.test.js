@@ -453,6 +453,23 @@ describe('API', { skip }, () => {
       assert.match(res.headers.location, /^\/interactions\?m=doliprane&m=previscan$/);
     });
 
+    /** « aspirine » seule est la substance ; « aspirine upsa » est la spécialité ASPIRINE UPSA. */
+    it('reconnaît une marque qui commence par un nom courant', async () => {
+      const paire = await request(app).get('/search?q=aspirine%20upsa%20previscan').expect(302);
+      assert.equal(paire.headers.location, '/interactions?m=aspirine+upsa&m=previscan');
+
+      const substance = await request(app).get('/search?q=aspirine%20previscan').expect(302);
+      assert.equal(substance.headers.location, '/interactions?m=acide+acetylsalicylique&m=previscan');
+
+      // Un nom seul : la recherche par nom, pas « upsa » cherché dans les documents.
+      await request(app).get('/search?q=aspirine%20upsa').expect(200);
+
+      // Depuis le champ de la fiche produit.
+      const fiche = await request(app).get('/interactions?m=61111120&avec=aspirine%20upsa').expect(200);
+      assert.doesNotMatch(fiche.text, /Non reconnu/);
+      assert.match(fiche.text, /<span class="medicament-nom">Aspirine Upsa</);
+    });
+
     it('revient à la fiche quand le champ est vide', async () => {
       const res = await request(app).get('/interactions?m=61111111&avec=').expect(302);
       assert.equal(res.headers.location, '/product/61111111#interactions');
