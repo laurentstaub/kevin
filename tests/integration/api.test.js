@@ -1,17 +1,15 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import request from 'supertest';
 import pg from 'pg';
-import { ROOT } from '../../src/config.js';
 import { createApp } from '../../src/app.js';
 import { searchMedications } from '../../src/search.js';
 import { parseQuery } from '../../src/validate.js';
 import { oublierClasses, getClasseAtc } from '../../src/atc.js';
+import { chargerBase } from './base.js';
 
 /**
- * Tests d'intégration sur le jeu figé tests/fixtures.sql, indépendant des mises à jour BDPM.
+ * Tests d'intégration sur le jeu figé tests/fixtures.sql (et fixtures-docs.sql), indépendant des mises à jour BDPM.
  * Base cible : TEST_DATABASE_URL, sinon la suite est ignorée.
  */
 
@@ -24,8 +22,7 @@ describe('API', { skip }, () => {
 
   before(async () => {
     pool = new pg.Pool({ connectionString: url });
-    await pool.query(await readFile(path.join(ROOT, 'tests', 'fixtures.sql'), 'utf8'));
-    await pool.query(await readFile(path.join(ROOT, 'sql', 'setup.sql'), 'utf8'));
+    await chargerBase(pool);
     // Le décompte des classes est mis en cache une heure : à vider entre suites.
     oublierClasses();
     app = createApp(pool);
@@ -164,13 +161,14 @@ describe('API', { skip }, () => {
       const fil = res.text.match(/<nav class="atc"[\s\S]*?<\/nav>/)?.[0] ?? '';
       const maillons = [...fil.matchAll(/class="atc-maillon"[^>]*>([^<]+)</g)].map((correspondance) => correspondance[1]);
 
-      assert.deepEqual(maillons, ['Système nerveux', 'ANALGESIQUES']);
+      // Libellés ATC en phrase, plus en capitales (casse d'affichage, src/casse.js).
+      assert.deepEqual(maillons, ['Système nerveux', 'Analgésiques']);
 
       // Ni taxonomie chimique…
-      assert.doesNotMatch(fil, /ANILIDES/);
-      assert.doesNotMatch(fil, /AUTRES ANALGESIQUES/);
+      assert.doesNotMatch(fil, /anilides/i);
+      assert.doesNotMatch(fil, /autres analg[ée]siques/i);
       // …ni DCI, déjà affichée plus haut.
-      assert.doesNotMatch(fil, />PARACETAMOL</);
+      assert.doesNotMatch(fil, />parac[ée]tamol</i);
 
       assert.match(fil, /class="atc-code"[^>]*>N02BE01</);
       assert.match(fil, /href="\/classe\/N02BE01"/);
@@ -206,26 +204,38 @@ describe('API', { skip }, () => {
       assert.match(res.text, /Système nerveux/);
     });
 
-    it('parcourt une classe, ses sous-classes et ses produits', async () => {
+    /** Seule la feuille (la molécule) liste ses spécialités ; au-dessus, sous-classes et molécules. */
+    it('parcourt une classe, ses sous-classes, ses molécules et leurs produits', async () => {
       const res = await request(app).get('/classe/N02B').expect(200);
 
       assert.match(res.text, /href="\/classe\/N02BE"/);
       assert.match(res.text, /href="\/classe\/N02BA"/);
-      assert.match(res.text, /DOLIPRANE/);
+      assert.match(res.text, /href="\/classe\/N02BE01"/);
+      assert.doesNotMatch(res.text, /class="specialite-nom"/);
+
+      const feuille = await request(app).get('/classe/N02BE01').expect(200);
+      assert.match(feuille.text, /<span class="specialite-nom">Doliprane/);
     });
 
-    it('compte les produits, pas les codes CIS', async () => {
-      // Cinq CIS pour quatre produits sous N02BE01.
+    it('regroupe les dosages d’un même produit, chaque CIS une seule fois', async () => {
+      // Cinq CIS pour quatre produits sous N02BE01 ; une ligne par nom et par forme,
+      // les dosages en liens (DOLIPRANE : comprimé et gélule).
       const res = await request(app).get('/classe/N02BE01').expect(200);
-      const noms = [...res.text.matchAll(/<span class="resultat-nom">\s*([A-Z][^<\n]*)/g)]
+      const noms = [...res.text.matchAll(/<span class="specialite-nom">([^<]+)</g)]
         .map((correspondance) => correspondance[1].trim());
 
-      assert.deepEqual(noms.sort(), [
-        'DAFALGAN',
-        'DOLIPRANE',
-        'PARACETAMOL ARROW',
-        'PARACETAMOL TEVA',
+      assert.deepEqual([...new Set(noms)].sort(), [
+        'Dafalgan',
+        'Doliprane',
+        'Paracétamol Arrow',
+        'Paracétamol Teva',
       ]);
+      for (const cis of ['61111114', '61111119', '61111115', '61111117', '61111118']) {
+        assert.equal(res.text.split(`href="/product/${cis}"`).length - 1, 1, `CIS ${cis}`);
+      }
+      // Le non commercialisé est replié à part.
+      const replie = res.text.match(/<details class="molecules-reste">[\s\S]*?<\/details>/)?.[0] ?? '';
+      assert.match(replie, /Paracétamol Teva/);
     });
 
     it('renvoie 404 sur une classe inexistante', async () => {
@@ -281,7 +291,8 @@ describe('API', { skip }, () => {
       const noms = res.body.suggestions.map((suggestion) => suggestion.name);
 
       assert.ok(noms.length > 0);
-      assert.equal(noms[0], 'DOLIPRANE', `reçu : ${noms.join(', ')}`);
+      // Même casse qu'à l'écran : la spécialité en nom propre.
+      assert.equal(noms[0], 'Doliprane', `reçu : ${noms.join(', ')}`);
     });
 
     /** Un CIS = marque × dosage × forme : un produit peut en compter des dizaines d'égale pertinence. */
@@ -389,6 +400,101 @@ describe('API', { skip }, () => {
     });
   });
 
+  describe('excipients', () => {
+    /** Rubrique 2 (déclaration à effet notoire) et 6.1 (liste complète) du RCP. */
+    it('signale dans la bande les excipients à effet notoire, sodium compris', async () => {
+      const res = await request(app).get('/product/61111111').expect(200);
+      assert.match(res.text, /data-cle="excipients">[\s\S]*?<span class="signal-valeur">aspartam · sodium<\/span>/);
+    });
+
+    it('ne dit rien quand la liste des excipients n’en contient aucun', async () => {
+      const res = await request(app).get('/product/61111114').expect(200);
+      assert.doesNotMatch(res.text, /data-cle="excipients"/);
+    });
+
+    it('propose « sans lactose » dans les alternatives, et masque ce qui en contient', async () => {
+      const bloc = (texte) => texte.match(/<details class="bloc" id="alternatives"[\s\S]*?<\/details>/)?.[0] ?? '';
+
+      const avant = bloc((await request(app).get('/product/61111114').expect(200)).text);
+      assert.match(avant, /href="\?sans=lactose#alternatives"/);
+      assert.match(avant, /href="\/product\/61111115">[^<]*<\/a><span class="excipients-item">lactose</);
+
+      const apres = bloc((await request(app).get('/product/61111114?sans=lactose').expect(200)).text);
+      assert.doesNotMatch(apres, /href="\/product\/61111115"/, 'DAFALGAN contient du lactose');
+      assert.match(apres, /href="\/product\/61111117"/, 'PARACETAMOL ARROW n’en contient pas');
+      assert.match(apres, /1 masquée/);
+      // 6.1 non lue : ni avec ni sans, la spécialité reste, marquée.
+      assert.match(apres, /href="\/product\/61111119">[^<]*<\/a><span class="excipients-item non-lu">non lu</);
+    });
+  });
+
+  describe('interactions', () => {
+    /** Champ de la fiche produit : le CIS en `m`, la saisie en `avec`. */
+    it('lit la rubrique 4.5 dans les deux sens, par la substance ou par la classe', async () => {
+      const res = await request(app).get('/interactions?m=61111111&avec=previscan').expect(200);
+      const [aspirine, previscan] = [...res.text.matchAll(/<div class="sens">[\s\S]*?<\/blockquote>/g)]
+        .map((correspondance) => correspondance[0]);
+
+      // Le niveau de la paire est le plus grave des deux sens.
+      assert.match(res.text, /<h2 class="paire-titre">[^<]*<span class="niveau niveau-ci">Contre-indiquée</);
+
+      // ASPIRINE UPSA ne nomme pas la fluindione, mais les anticoagulants oraux.
+      assert.match(aspirine, /niveau-deconseillee/);
+      assert.match(aspirine, /Par la classe : Antivitamines K/);
+      assert.match(aspirine, /href="\/product\/61111111#rcp-5"/);
+
+      assert.match(previscan, /niveau-ci/);
+      assert.match(previscan, /Par la substance/);
+      assert.match(previscan, /href="\/product\/61111120#rcp-1"/);
+    });
+
+    it('envoie vers les interactions deux médicaments saisis ensemble', async () => {
+      const res = await request(app).get('/search?q=doliprane%20previscan').expect(302);
+      assert.match(res.headers.location, /^\/interactions\?m=doliprane&m=previscan$/);
+    });
+
+    it('revient à la fiche quand le champ est vide', async () => {
+      const res = await request(app).get('/interactions?m=61111111&avec=').expect(302);
+      assert.equal(res.headers.location, '/product/61111111#interactions');
+    });
+  });
+
+  describe('sécurité', () => {
+    it('affiche le triangle noir des médicaments sous surveillance renforcée', async () => {
+      const surveille = await request(app).get('/product/61111120').expect(200);
+      assert.match(surveille.text, /data-cle="surveillance">[\s\S]*?href="https:\/\/signalement\.social-sante\.gouv\.fr">Triangle noir</);
+
+      const ordinaire = await request(app).get('/product/61111111').expect(200);
+      assert.doesNotMatch(ordinaire.text, /Triangle noir/);
+    });
+
+    it('liste les informations de sécurité ANSM, sans lien hors des domaines autorisés', async () => {
+      const res = await request(app).get('/product/61111120').expect(200);
+      const bloc = res.text.match(/<details class="bloc" id="securite"[\s\S]*?<\/details>/)?.[0] ?? '';
+
+      assert.match(bloc, /2 informations ANSM/);
+      // La plus récente d'abord, entités décodées, lien conservé.
+      assert.match(bloc, /href="https:\/\/ansm\.sante\.fr\/informations-de-securite\/fluindione-arret"[^>]*>Fluindione : arrêt de commercialisation programmé</);
+      assert.equal(bloc.split('En cours').length - 1, 1, 'l’information archivée n’est pas « en cours »');
+      // Domaine non autorisé : l'intitulé reste, sans lien.
+      assert.match(bloc, /<span>Ancienne information archivée<\/span>/);
+      assert.doesNotMatch(bloc, /evil\.example\.com/);
+    });
+
+    it('n’affiche pas le bloc sans information', async () => {
+      const res = await request(app).get('/product/61111111').expect(200);
+      assert.doesNotMatch(res.text, /id="securite"/);
+    });
+  });
+
+  describe('recherche dans les documents', () => {
+    /** Configuration french_nu et colonne `vecteur` de sql/recherche.sql. */
+    it('trouve une expression dans les rubriques et renvoie à la rubrique', async () => {
+      const res = await request(app).get('/documents?q=surdosage').expect(200);
+      assert.match(res.text, /href="\/product\/61111111\?q=surdosage#rcp-4"/);
+    });
+  });
+
   describe('transversal', () => {
     it('expose un healthcheck', async () => {
       const res = await request(app).get('/api/health').expect(200);
@@ -457,8 +563,7 @@ describe('rendu des pages', { skip }, () => {
 
   before(async () => {
     pool = new pg.Pool({ connectionString: url });
-    await pool.query(await readFile(path.join(ROOT, 'tests', 'fixtures.sql'), 'utf8'));
-    await pool.query(await readFile(path.join(ROOT, 'sql', 'setup.sql'), 'utf8'));
+    await chargerBase(pool);
     oublierClasses();
     app = createApp(pool);
   });

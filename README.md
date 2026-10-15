@@ -128,10 +128,12 @@ scripts/
 sql/
   setup.sql            Extensions, f_unaccent, index
   sections.sql         Schéma docs : rubriques et suivi du découpage
+  recherche.sql        Plein texte : configuration french_nu, colonne vecteur
 tests/
   unit/                Sans base
   integration/         Sur fixtures figées
-  fixtures.sql         Jeu de données de test
+  fixtures.sql         Jeu de données de test (dbpm, ref)
+  fixtures-docs.sql    Rubriques de RCP du jeu de test (docs)
 ```
 
 Quatre dépendances de production, une de développement. Le `.env` est chargé
@@ -369,18 +371,30 @@ découpé du tout.
 Runner natif de Node — aucune dépendance de test à part `supertest`.
 
 ```bash
-npm run test:unit    # 100 tests, sans base
+npm run test:unit    # sans base
 npm test             # tout ; l'intégration s'ignore si TEST_DATABASE_URL est absent
 ```
 
+L'intégration demande une base PostgreSQL dédiée, avec les extensions
+`unaccent` et `pg_trgm` disponibles. Elle est **vidée à chaque passage** :
+jamais la base de développement.
+
 ```bash
 createdb bdpm_test
-TEST_DATABASE_URL=postgres://user@localhost:5432/bdpm_test npm test   # 129 tests
+TEST_DATABASE_URL=postgres://$(whoami)@localhost:5432/bdpm_test node --test tests/integration/api.test.js
 ```
 
-Les tests d'intégration reconstruisent le schéma depuis `tests/fixtures.sql` :
-ils ne dépendent d'aucune donnée BDPM réelle et ne peuvent pas être cassés par
-une mise à jour mensuelle de la base.
+Chaque suite recharge tout, dans cet ordre (`tests/integration/base.js`) :
+`tests/fixtures.sql` (schémas `dbpm` et `ref`, suppression de `docs`),
+`sql/setup.sql`, `sql/sections.sql`, `sql/recherche.sql` (schéma `docs`,
+configuration `french_nu`, tels qu'en production), puis `tests/fixtures-docs.sql`
+(rubriques de RCP : excipients, interactions, plein texte). Aucune donnée BDPM
+réelle : une mise à jour mensuelle de la base ne peut pas casser les tests.
+
+Les tables de `tests/fixtures.sql` reprennent les colonnes de la base réelle.
+Quand le code se met à lire une colonne ou une table que le jeu de test n'a pas,
+la fiche produit renvoie 500 en intégration : comparer avec
+`psql -d incidents_json -c "\d dbpm.<table>"` et réaligner.
 
 ## Licence
 
