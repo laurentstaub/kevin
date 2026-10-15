@@ -1,0 +1,41 @@
+//- Rail de navigation à gauche : « où je suis » (plan) puis « où je peux aller »
+//- (classes, toujours déplié). Vue de la page, jamais un second modèle : de
+//- simples ancres, que documents.js déplie. Masqué sous 1200 px.
+
+//- Plan de la fiche, sous-rubriques comprises (4.3, 4.5, 4.8 sont celles qu'on cherche).
+mixin railPlan(sections, documents)
+  nav.rail-groupe.rail-plan(aria-label="Plan de la fiche")
+    each section in sections
+      a.rail-lien.rail-seul(href=`#${section.id}`)= section.label
+
+      //- Un jeu de rubriques par document ; documents.js révèle celui de l'onglet actif.
+      if section.id === 'documents' && documents
+        each doc, i in documents
+          if doc.rubriques && doc.rubriques.length > 0
+            .rail-sous(data-doc=doc.type hidden=(i > 0))
+              each rubrique in doc.rubriques
+                a.rail-lien.rail-rubrique(href=`#${rubrique.id}` class=`rail-p${rubrique.profondeur}`)
+                  span.rail-code= rubrique.numero
+                  span.rail-label= rubrique.libelle
+
+//- @param {Array}  classes    classes ATC de niveau 1, les plus fournies d'abord
+//- @param {string} actif      la lettre ATC de la page en cours, s'il y en a une
+//- @param {Array}  sections   plan de la fiche produit, absent ailleurs
+//- @param {Array}  documents  documents découpés de la fiche, absents ailleurs
+//- Pas de lien « Accueil » : la barre collante en porte déjà un.
+mixin rail(classes, actif, sections, documents)
+  aside.rail(aria-label="Navigation")
+    if sections && sections.length
+      +railPlan(sections, documents)
+
+    if classes && classes.length
+      p.rail-titre Classes thérapeutiques
+      nav.rail-groupe
+        each classe in classes
+          //- Libellé CNAM en capitales, affiché en phrase (casse.js).
+          a.rail-lien(href=`/classe/${classe.code}`
+            class=(actif === classe.code ? 'rail-actif' : null)
+            aria-current=(actif === classe.code ? 'page' : null)
+            title=`${classe.code} — ${phrase(classe.label)}`)
+            span.rail-code= classe.code
+            span.rail-label= phrase(classe.label)

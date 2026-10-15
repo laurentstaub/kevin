@@ -1,0 +1,22 @@
+include _rail.pug
+include _theme.pug
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title= title || 'Demander à Kevin'
+    //- Apparence choisie, posée avant les styles : pas de page qui change de couleur au chargement.
+    script.
+      try { const a = localStorage.getItem('apparence'); if (a === 'light' || a === 'dark') document.documentElement.dataset.theme = a; } catch (e) {}
+    link(rel="stylesheet", href=`/css/tokens.css?v=${v}`)
+    link(rel="stylesheet", href=`/css/app.css?v=${v}`)
+    block styles
+  body
+    //- Pas de rail sur l'accueil (il liste déjà les classes) ni sur les résultats :
+    //- la recherche prend toute la largeur.
+    if !sansRail
+      +rail(rail, railActif, sections, documents)
+    block content
+    script(src=`/js/theme.js?v=${v}` defer)
+    block scripts

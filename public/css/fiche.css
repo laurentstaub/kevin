@@ -1,0 +1,110 @@
+/* Fiche thématique : même colonne et même police de lecture que le RCP. */
+
+
+.fiche-entete { padding-top: var(--sp-4); margin-bottom: var(--sp-4); }
+
+.fiche-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--faint);
+  margin: var(--sp-1) 0 0;
+}
+
+.fiche-texte p,
+.fiche-texte li {
+  font-family: var(--font-lecture);
+  line-height: 1.6;
+  max-width: var(--measure);
+}
+
+.fiche-texte h2 {
+  margin-top: var(--sp-6);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+/* Substances : substance et spécialité à gauche, citation du RCP à droite. */
+.fiche-substances {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--sp-3);
+}
+
+.fiche-substances thead th {
+  text-align: left;
+  font-weight: 400;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.fiche-substances tbody th,
+.fiche-substances tbody td {
+  vertical-align: top;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+  text-align: left;
+  font-weight: 400;
+}
+
+.fiche-substances tbody th { width: 30%; }
+
+.substance {
+  display: block;
+  text-transform: uppercase;
+  font-size: var(--fs-sm);
+  letter-spacing: 0.02em;
+}
+
+.specialite {
+  display: block;
+  margin-top: 0.2em;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+}
+
+.origine {
+  display: inline-block;
+  margin-top: 0.4em;
+  padding: 0 0.4em;
+  font-size: var(--fs-xs);
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.citation {
+  margin: 0 0 var(--sp-2);
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--rule-medium);
+}
+
+.citation:last-child { margin-bottom: 0; }
+
+.citation p {
+  margin: 0;
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+}
+
+.citation footer {
+  margin-top: 0.3em;
+  font-size: var(--fs-xs);
+}
+
+.manque {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.fiche-source {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  line-height: 1.6;
+  max-width: var(--measure);
+}

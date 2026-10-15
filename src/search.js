@@ -1,190 +1,261 @@
+import { config } from './config.js';
+import { formesDuProduit } from './specialites.js';
+import { deaccent, echapperLike } from './text.js';
+import { canonique } from './synonymes.js';
+import {
+  racineSql,
+  importSql,
+  titulaireCleSql,
+  ORDRE_PERTINENCE,
+  ORDRE_REPRESENTANT,
+  etiqueter,
+} from './groupes.js';
+
 /**
- * Enhanced search for medications with categorized results
- * @param {Object} pool - PostgreSQL pool instance
- * @param {string} query - Search term
- * @param {string} filter - Filter type ('all', 'specialty', or 'active')
- * @returns {Promise<Object>} Categorized search results
+ * Recherche de médicaments en une seule requête SQL. Unité de résultat : le
+ * produit (voir `src/groupes.js`), regroupé en base avant le LIMIT.
+ * Chaque famille a son quota et son classement : un quota commun laissait les
+ * « PARACETAMOL … » évincer DOLIPRANE. `limit` s'entend par famille.
+ *
+ * @param {import('pg').Pool} pool
+ * @param {{ terms: string[], normalized: string }} query - sortie de parseQuery()
+ * @param {'all'|'specialty'|'active'} filter
+ * @param {{ limit?: number }} [options]
+ * @returns {Promise<{ brandMatches: object[], activeIngredientMatches: object[], total: number }>}
  */
+export async function searchMedications(pool, query, filter = 'all', options = {}) {
+  const empty = { brandMatches: [], activeIngredientMatches: [], total: 0 };
+  const terms = query?.terms ?? [];
+  if (terms.length === 0) return empty;
 
-const searchMedications = async (pool, query, filter = 'all') => {
-  if (!query) return { brandMatches: [], activeIngredientMatches: [], relatedProducts: [] };
+  const limit = options.limit ?? config.search.limit;
+  // Marge : la borne porte sur des produits, la sélection interne sur des CIS.
+  const innerLimit = Math.max(limit * 12, 400);
 
-  const terms = query.trim().toLowerCase().split(/\s+/);
-  const params = terms.map(term => `%${term}%`);
+  const params = terms.map((term) => `%${echapperLike(deaccent(term))}%`);
+  const exact = deaccent(query.normalized);
+  const prefix = `${echapperLike(exact)}%`;
 
-  // Phase 1: Get direct matches and identify what we're dealing with
-  const directMatches = await getDirectMatches(pool, terms, params, filter);
+  const $exact = `$${params.length + 1}`;
+  const $prefix = `$${params.length + 2}`;
+  const $inner = `$${params.length + 3}`;
+  const $limit = `$${params.length + 4}`;
+  params.push(exact, prefix, innerLimit, limit);
 
-  // Phase 2: Find related products based on shared active ingredients
-  const relatedProducts = await getRelatedProducts(pool, directMatches.brandMatches, directMatches.activeIngredientMatches);
+  // Nom courant (« aspirine ») : la substance se cherche aussi sous son nom
+  // de base (« acide acetylsalicylique »), au même rang qu'une égalité.
+  const alias = canonique(query.normalized);
+  const $alias = `$${params.length + 1}`;
+  const $aliasExact = `$${params.length + 2}`;
+  if (alias) params.push(`%${echapperLike(alias)}%`, alias);
+
+  const brandExpr = 'f_unaccent(lower(m.denomination_medicament))';
+  const substExpr = 'f_unaccent(lower(c.denomination_substance))';
+  const and = (expr) => terms.map((_, i) => `${expr} LIKE $${i + 1}`).join(' AND ');
+
+  /** Exact d'abord, puis préfixe, puis simple occurrence. */
+  const rang = (expr) => `CASE
+    WHEN ${expr} = ${$exact} THEN 0
+    WHEN ${expr} LIKE ${$prefix} THEN 1
+    ELSE 2
+  END`;
+  const rangSubstance = alias
+    ? `CASE WHEN ${substExpr} = ${$aliasExact} THEN 0 WHEN ${substExpr} LIKE ${$alias} THEN 1 ELSE ${rang(substExpr)} END`
+    : rang(substExpr);
+  const parSubstance = alias ? `(${and(substExpr)} OR ${substExpr} LIKE ${$alias})` : and(substExpr);
+
+  const wantBrand = filter !== 'active';
+  const wantActive = filter !== 'specialty';
+
+  const ctes = [];
+  const unions = [];
+
+  if (wantBrand) {
+    ctes.push(`
+      brand_hits AS (
+        SELECT m.code_cis, ${rang(brandExpr)} AS rang
+        FROM dbpm.cis_bdpm m
+        WHERE ${and(brandExpr)}
+        ORDER BY rang, length(m.denomination_medicament), m.code_cis
+        LIMIT ${$inner}
+      )`);
+    unions.push(`SELECT code_cis, 'brand'::text AS match_type, rang FROM brand_hits`);
+  }
+
+  if (wantActive) {
+    // Sur « Tous », exclut les produits qui portent déjà le terme dans leur nom :
+    // sinon doublon, et les PARACETAMOL ARROW évinceraient DOLIPRANE avant le LIMIT.
+    const horsDenomination = wantBrand
+      ? `AND NOT EXISTS (
+           SELECT 1 FROM dbpm.cis_bdpm mb
+           WHERE mb.code_cis = c.code_cis
+             AND ${terms.map((_, i) => `f_unaccent(lower(mb.denomination_medicament)) LIKE $${i + 1}`).join(' AND ')}
+         )`
+      : '';
+
+    ctes.push(`
+      subst_hits AS (
+        SELECT c.code_cis, min(${rangSubstance}) AS rang
+        FROM dbpm.cis_compo_bdpm c
+        WHERE ${parSubstance}
+          ${horsDenomination}
+        GROUP BY c.code_cis
+        ORDER BY rang, c.code_cis
+        LIMIT ${$inner}
+      )`);
+    unions.push(`SELECT code_cis, 'active'::text AS match_type, rang FROM subst_hits`);
+  }
+
+  // Si le terme est le préfixe d'une substance, les deux familles fusionnent en
+  // une liste. Préfixe plutôt qu'égalité : la page ne doit pas changer de forme
+  // en cours de frappe. La candidate la plus courte nomme la molécule de base
+  // (« OXAZEPAM », pas « OXAZEPAM SODIQUE ») affichée dans le titre.
+  ctes.unshift(`
+      dci AS (
+        SELECT denomination_substance AS substance
+        FROM dbpm.cis_compo_bdpm
+        WHERE f_unaccent(lower(denomination_substance)) LIKE ${$prefix}
+          ${alias ? `OR f_unaccent(lower(denomination_substance)) LIKE ${$alias}` : ''}
+        ORDER BY length(denomination_substance), denomination_substance
+        LIMIT 1
+      )`);
+
+  const sql = `
+    WITH ${ctes.join(',')},
+    hits AS (
+      ${unions.join(' UNION ALL ')}
+    ),
+    -- Une ligne par CIS, augmentée de tout ce qui sert à classer.
+    lignes AS (
+      SELECT
+        h.code_cis,
+        h.match_type,
+        -- Sur une recherche de molécule, le rang se lit sur la substance pour
+        -- tout le monde : sans cela, SERESTA (trouvé par sa composition) et
+        -- OXAZEPAM ARROW (trouvé par son nom) porteraient des rangs issus de
+        -- deux mesures différentes, et les comparer n'aurait aucun sens.
+        CASE WHEN (SELECT substance FROM dci) IS NOT NULL
+             THEN least(h.rang, coalesce(c.rang_substance, 2))
+             ELSE h.rang END AS rang,
+        m.denomination_medicament,
+        m.forme_pharmaceutique,
+        m.titulaires,
+        ${racineSql('m')} AS racine,
+        f_unaccent(lower(${racineSql('m')})) AS racine_cle,
+        ${importSql('m')} AS import,
+        (m.etat_commercialisation = 'Commercialisée') AS commercialise,
+        (m.statut_administratif_amm = 'Autorisation active') AS actif,
+        g.princeps,
+        c.substances,
+        c.nb_substances
+      FROM hits h
+      JOIN dbpm.cis_bdpm m ON m.code_cis = h.code_cis
+      LEFT JOIN LATERAL (
+        SELECT string_agg(DISTINCT denomination_substance, ', '
+                          ORDER BY denomination_substance) AS substances,
+               count(DISTINCT denomination_substance)::int AS nb_substances,
+               min(${rangSubstance}) AS rang_substance
+        FROM dbpm.cis_compo_bdpm c WHERE c.code_cis = h.code_cis
+      ) c ON true
+      LEFT JOIN LATERAL (
+        SELECT bool_or(type_generique = '0') AS princeps
+        FROM dbpm.cis_gener_bdpm WHERE code_cis = h.code_cis
+      ) g ON true
+    ),
+    cles AS (
+      SELECT l.*, ${titulaireCleSql('l')} AS titulaire_cle
+      FROM lignes l
+    ),
+    -- La spécialité qui représente le groupe : celle vers laquelle on pointe.
+    representants AS (
+      SELECT DISTINCT ON (match_type, racine_cle, titulaire_cle)
+        match_type, racine_cle, titulaire_cle,
+        code_cis AS id, racine, denomination_medicament,
+        forme_pharmaceutique, titulaires, substances AS active_ingredients
+      FROM cles
+      ORDER BY match_type, racine_cle, titulaire_cle, ${ORDRE_REPRESENTANT}
+    ),
+    agregats AS (
+      SELECT
+        match_type, racine_cle, titulaire_cle,
+        min(rang) AS rank,
+        bool_or(commercialise) AS commercialise,
+        bool_or(actif) AS actif,
+        bool_or(princeps) AS princeps,
+        min(nb_substances) AS nb_substances,
+        count(*)::int AS presentations,
+        -- Les spécialités du groupe, pour afficher chaque dosage en lien.
+        json_agg(json_build_object(
+          'id', code_cis, 'denomination', denomination_medicament,
+          'forme_pharmaceutique', forme_pharmaceutique, 'titulaires', titulaires,
+          'princeps', princeps, 'commercialise', commercialise, 'importation', import
+        ) ORDER BY denomination_medicament, code_cis) AS specialites,
+        count(*) FILTER (WHERE import)::int AS importations,
+        bool_and(import) AS importation,
+        -- Trouvé par sa composition et non par son nom : le produit ne
+        -- s'appelle donc pas comme la molécule. C'est ce qui sépare SERESTA
+        -- d'OXAZEPAM ARROW, et DOLIPRANE de PARACETAMOL EG.
+        (match_type = 'active') AS marque_propre
+      FROM cles
+      GROUP BY match_type, racine_cle, titulaire_cle
+    ),
+    groupes AS (
+      SELECT a.*, r.id, r.racine, r.denomination_medicament,
+             r.forme_pharmaceutique, r.titulaires, r.active_ingredients
+      FROM agregats a
+      JOIN representants r USING (match_type, racine_cle, titulaire_cle)
+    ),
+    classes AS (
+      SELECT *, row_number() OVER (
+        -- Une seule partition sur une recherche de molécule : c'est la fusion.
+        PARTITION BY CASE WHEN (SELECT substance FROM dci) IS NOT NULL THEN 'tous' ELSE match_type END
+        ORDER BY ${ORDRE_PERTINENCE}
+      ) AS n
+      FROM groupes
+    )
+    SELECT id, racine, denomination_medicament, forme_pharmaceutique, titulaires,
+           active_ingredients, match_type, rank, presentations, importations,
+           importation, commercialise, princeps, nb_substances, marque_propre, specialites,
+           (SELECT substance FROM dci) IS NOT NULL AS dci,
+           (SELECT substance FROM dci) AS substance_dci
+    FROM classes
+    WHERE n <= ${$limit}
+    ORDER BY n, match_type
+  `;
+
+  const { rows: bruts } = await pool.query(sql, params);
+  // Dosages rangés par forme, comme sur la page d'une molécule.
+  const rows = bruts.map(({ specialites, ...row }) => ({ ...row, formes: formesDuProduit(specialites) }));
+  const dci = rows[0]?.dci === true;
+  const substance = dci ? (rows[0]?.substance_dci ?? null) : null;
+
+  // Par liste affichée : l'homonymie ne compte qu'au sein d'une même liste.
+  const produits = dci
+    ? etiqueter(rows)
+    : [
+        ...etiqueter(rows.filter((row) => row.match_type === 'brand')),
+        ...etiqueter(rows.filter((row) => row.match_type === 'active')),
+      ];
 
   return {
-    brandMatches: directMatches.brandMatches,
-    activeIngredientMatches: directMatches.activeIngredientMatches,
-    relatedProducts: relatedProducts
+    // Vrai si le terme désigne une molécule : une seule liste, ordonnée par `produits`.
+    dci,
+    substance,
+    produits,
+    brandMatches: produits.filter((produit) => produit.match_type === 'brand'),
+    activeIngredientMatches: produits.filter((produit) => produit.match_type === 'active'),
+    total: rows.length,
   };
-};
+}
 
 /**
- * Get direct matches for brand names and active ingredients
+ * Suggestions d'autocomplétion : la même requête, bornée plus court.
+ * Rend `produits` dans son ordre : concaténer les deux familles remettrait les
+ * génériques devant la marque (SERESTA derrière ses génériques).
  */
-const getDirectMatches = async (pool, terms, params, filter) => {
-  let brandWhereClause, activeWhereClause;
+export async function suggest(pool, query) {
+  const limite = config.search.suggestLimit;
+  const brut = await searchMedications(pool, query, 'all', { limit: limite });
 
-  if (filter === 'specialty') {
-    // Only search brand names
-    brandWhereClause = terms.length === 1
-      ? 'unaccent(LOWER(m.denomination_medicament)) LIKE unaccent($1)'
-      : terms.map((_, i) => `unaccent(LOWER(m.denomination_medicament)) LIKE unaccent($${i + 1})`).join(' AND ');
-    activeWhereClause = 'FALSE'; // No active ingredient search
-  } else if (filter === 'active') {
-    // Only search active ingredients
-    brandWhereClause = 'FALSE'; // No brand name search
-    activeWhereClause = terms.length === 1
-      ? 'unaccent(LOWER(c.denomination_substance)) LIKE unaccent($1)'
-      : terms.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' AND ');
-  } else {
-    // Search both
-    brandWhereClause = terms.length === 1
-      ? 'unaccent(LOWER(m.denomination_medicament)) LIKE unaccent($1)'
-      : terms.map((_, i) => `unaccent(LOWER(m.denomination_medicament)) LIKE unaccent($${i + 1})`).join(' AND ');
-    activeWhereClause = terms.length === 1
-      ? 'unaccent(LOWER(c.denomination_substance)) LIKE unaccent($1)'
-      : terms.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' AND ');
-  }
-
-  const result = await pool.query(`
-    WITH brand_matches AS (
-      SELECT DISTINCT
-        m.code_cis as id,
-        m.denomination_medicament,
-        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
-        'brand' as match_type,
-        1 as priority
-      FROM dbpm.cis_bdpm m
-      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-      WHERE ${brandWhereClause}
-      GROUP BY m.code_cis, m.denomination_medicament
-    ),
-    active_ingredient_matches AS (
-      SELECT DISTINCT
-        m.code_cis as id,
-        m.denomination_medicament,
-        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
-        'active' as match_type,
-        2 as priority
-      FROM dbpm.cis_bdpm m
-      JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-      WHERE ${activeWhereClause}
-      GROUP BY m.code_cis, m.denomination_medicament
-    ),
-    all_matches AS (
-      SELECT * FROM brand_matches
-      UNION
-      SELECT * FROM active_ingredient_matches
-    )
-    SELECT
-      id,
-      denomination_medicament,
-      active_ingredients,
-      match_type,
-      priority
-    FROM all_matches
-    ORDER BY priority, denomination_medicament
-  `, params);
-
-  const brandMatches = result.rows.filter(row => row.match_type === 'brand');
-  const activeIngredientMatches = result.rows.filter(row => row.match_type === 'active');
-
-  return { brandMatches, activeIngredientMatches };
-};
-
-/**
- * Find related products based on shared active ingredients and generics
- */
-const getRelatedProducts = async (pool, brandMatches, activeIngredientMatches) => {
-  const allMatches = [...brandMatches, ...activeIngredientMatches];
-  if (allMatches.length === 0) return [];
-
-  // Extract all CIS codes from direct matches to exclude them from related products
-  const directMatchCodes = allMatches.map(match => match.id);
-
-  // Get related products through two methods: generics and active ingredients
-  const relatedProducts = new Map(); // Use Map to avoid duplicates
-
-  // Method 1: Find generics using cis_gener_bdpm table
-  for (const match of allMatches) {
-    // Find all products in the same generic group(s) as this product
-    const genericResult = await pool.query(`
-      SELECT DISTINCT
-        m.code_cis as id,
-        m.denomination_medicament,
-        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
-        'generic' as match_type
-      FROM dbpm.cis_gener_bdpm cg1
-      JOIN dbpm.cis_gener_bdpm cg2 ON cg1.identifiant_groupe_generique = cg2.identifiant_groupe_generique
-      JOIN dbpm.cis_bdpm m ON cg2.code_cis = m.code_cis
-      LEFT JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-      WHERE cg1.code_cis = $1
-        AND m.code_cis != $1
-      GROUP BY m.code_cis, m.denomination_medicament
-    `, [match.id]);
-
-    genericResult.rows.forEach(row => {
-      relatedProducts.set(row.id, row);
-    });
-  }
-
-  // Method 2: Find products with same active ingredients (existing logic)
-  const activeIngredients = new Set();
-  allMatches.forEach(match => {
-    if (match.active_ingredients) {
-      match.active_ingredients.split(', ').forEach(ingredient => {
-        activeIngredients.add(ingredient.trim());
-      });
-    }
-  });
-
-  if (activeIngredients.size > 0) {
-    // Create placeholders for excluding direct match CIS codes and already found generics
-    const existingCodes = [...directMatchCodes, ...Array.from(relatedProducts.keys())];
-    const excludePlaceholders = existingCodes.length > 0 ?
-      `AND m.code_cis NOT IN (${existingCodes.map((_, i) => `$${Array.from(activeIngredients).length + i + 1}`).join(', ')})` :
-      '';
-
-    // Find products that contain any of these active ingredients
-    const ingredientParams = Array.from(activeIngredients).map(ingredient => `%${ingredient}%`);
-    const placeholders = ingredientParams.map((_, i) => `unaccent(LOWER(c.denomination_substance)) LIKE unaccent($${i + 1})`).join(' OR ');
-
-    const ingredientResult = await pool.query(`
-      SELECT DISTINCT
-        m.code_cis as id,
-        m.denomination_medicament,
-        string_agg(DISTINCT c.denomination_substance, ', ') as active_ingredients,
-        'related' as match_type
-      FROM dbpm.cis_bdpm m
-      JOIN dbpm.cis_compo_bdpm c ON m.code_cis = c.code_cis
-      WHERE (${placeholders})
-        ${excludePlaceholders}
-      GROUP BY m.code_cis, m.denomination_medicament
-      ORDER BY m.denomination_medicament
-      LIMIT 30
-    `, [...ingredientParams, ...existingCodes]);
-
-    ingredientResult.rows.forEach(row => {
-      relatedProducts.set(row.id, row);
-    });
-  }
-
-  // Convert Map back to array and sort
-  return Array.from(relatedProducts.values())
-    .sort((a, b) => {
-      // Put generics first, then related products
-      if (a.match_type === 'generic' && b.match_type !== 'generic') return -1;
-      if (a.match_type !== 'generic' && b.match_type === 'generic') return 1;
-      return a.denomination_medicament.localeCompare(b.denomination_medicament);
-    })
-    .slice(0, 50);
-};
-
-export { searchMedications }; 
+  return { produits: brut.produits.slice(0, limite), dci: brut.dci, total: brut.total };
+}

@@ -1,0 +1,74 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+
+//- Fiche thématique publiée : texte libre du Markdown, et pour chaque molécule
+//- la citation du RCP issue du calcul, avec son lien.
+
+block styles
+  link(rel="stylesheet", href=`/css/fiche.css?v=${v}`)
+
+block content
+  +barreSituation(fiche.meta.titre || fiche.slug)
+
+  main.corps
+    if brouillon
+      //- Développement seulement : en production, une fiche non relue n'a pas d'adresse.
+      p.brouillon
+        strong Brouillon
+        |  — non relu, non publié. Dater « relu: » dans l'en-tête pour publier.
+
+    header.fiche-entete
+      h1.fiche-titre= fiche.meta.titre || fiche.slug
+      p.fiche-meta
+        if fiche.meta.auteur
+          span= fiche.meta.auteur
+        if fiche.meta.relu
+          span Relu le #{new Date(fiche.meta.relu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+
+    each bloc in fiche.blocs
+      if bloc.type === 'html'
+        .fiche-texte!= bloc.html
+      else if bloc.nom === 'substances'
+        if !calcul
+          p.vide La liste n'a pas encore été calculée — npm run build-fiches.
+        else if calcul.lignes.length === 0
+          //- Une liste vide se dit, pour ne pas suggérer qu'aucune substance n'est concernée.
+          p.vide La liste n'est pas encore établie.
+        else
+          table.fiche-substances
+            caption.sr-only= calcul.liste.titre
+            thead
+              tr
+                th(scope="col") Substance
+                th(scope="col") Ce qu'en dit le RCP
+            tbody
+              each ligne in calcul.lignes
+                tr
+                  th(scope="row")
+                    span.substance= dci(ligne.substance)
+                    if ligne.specialite
+                      a.specialite(href=`/product/${ligne.specialite.cis}`)= specialite(ligne.specialite.denomination)
+                    if ligne.origine === 'ajout'
+                      //- Hors amorce ANSM : choix éditorial, signalé comme tel.
+                      span.origine(title=ligne.motif || null) Ajout du #{ligne.valide_le}
+                  td
+                    if ligne.citations.length
+                      each citation in ligne.citations
+                        blockquote.citation
+                          p= citation.phrase
+                          footer
+                            a(href=`/product/${ligne.specialite.cis}#${citation.ancre}`) #{citation.numero} #{citation.libelle}
+                    else if ligne.specialite
+                      p.manque Aucune phrase trouvée dans les rubriques #{calcul.rubriques.join(', ')} de ce RCP.
+                    else
+                      p.manque Aucune spécialité commercialisée.
+          p.fiche-source
+            | Liste : #{calcul.liste.amorce.source}, #{calcul.liste.amorce.version}.
+            if calcul.liste.relu_le
+              |  Complétée et relue le #{calcul.liste.relu_le}.
+            br
+            | Citations : RCP de la base de données publique des médicaments, calculées le #{calcul.calcule_le}. Le RCP fait foi.
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

@@ -1,0 +1,429 @@
+/**
+ * Rend au texte de la BDPM (Word exporté) la structure qu'il ne porte qu'en
+ * caractères : puces, intitulés, espaces, notes, interactions, renvois.
+ * Aucun mot n'est modifié, fautes de la source comprises. Module pur, appliqué
+ * au découpage pour être rejoué via `PARSER_VERSION`.
+ */
+
+const BALISE = /<\/?([a-z][a-z0-9]*)\b[^>]*?(\/?)>/gi;
+
+/** Intervalles de texte hors de toute balise. */
+function horsBalise(html) {
+  const zones = [];
+  let depuis = 0;
+  BALISE.lastIndex = 0;
+  let correspondance;
+  while ((correspondance = BALISE.exec(html))) {
+    if (correspondance.index > depuis) zones.push([depuis, correspondance.index]);
+    depuis = BALISE.lastIndex;
+  }
+  if (depuis < html.length) zones.push([depuis, html.length]);
+  return zones;
+}
+
+const detaguer = (html) => String(html ?? '')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+// --------------------------------------------------------------- les puces
+
+/**
+ * Deux rangs : « · » ou tiret, puis « o » (puce Courier devenue caractère) ;
+ * aucune phrase ne commence ainsi. « a) » et « 1. » sont ignorés : le
+ * découpeur s'en sert déjà pour trouver les rubriques.
+ */
+const RANGS = [
+  { rang: 1, motif: /^([·•▪●◦‣]|[-–—])\s+/ },
+  { rang: 2, motif: /^(o)\s+/ },
+];
+
+/** Le rang d'un paragraphe, ou 0 s'il n'est pas un élément de liste. */
+export function rangDePuce(texte) {
+  for (const { rang, motif } of RANGS) if (motif.test(texte)) return rang;
+  return 0;
+}
+
+/**
+ * Signe de puce par rang. Word l'isole souvent dans un span, loin de son
+ * espace : seul le signe est retiré, le rang est établi sur le texte détagué.
+ */
+const SIGNES = { 1: /^[·•▪●◦‣\u2010-\u2015-]/, 2: /^o/ };
+
+function sansPuce(interieur, rang) {
+  for (const [debut, fin] of horsBalise(interieur)) {
+    const segment = interieur.slice(debut, fin);
+    if (!segment.trim()) continue;
+    const decale = segment.length - segment.trimStart().length;
+    if (!SIGNES[rang].test(segment.slice(decale))) return interieur;
+    const coupe = debut + decale + 1;
+    return interieur.slice(0, debut) + interieur.slice(coupe);
+  }
+  return interieur;
+}
+
+/** Assemble une suite d'éléments de rangs 1 et 2 en listes imbriquées. */
+function assembler(elements) {
+  let sortie = '<ul>';
+  let ouvert = false;
+  let premier = true;
+
+  for (const { rang, html } of elements) {
+    // Un second rang en tête n'a pas de parent (<ul> dans <ul> invalide) : rang 1.
+    const effectif = premier && rang === 2 ? 1 : rang;
+    premier = false;
+
+    if (effectif === 2) {
+      if (!ouvert) { sortie += '<ul>'; ouvert = true; }
+      sortie += `<li>${html}</li>`;
+      continue;
+    }
+    if (ouvert) { sortie += '</ul></li>'; ouvert = false; }
+    else if (sortie !== '<ul>') sortie += '</li>';
+    sortie += `<li>${html}`;
+  }
+
+  if (ouvert) sortie += '</ul>';
+  return `${sortie}</li></ul>`;
+}
+
+const PARAGRAPHE = /<p\b([^>]*)>([\s\S]*?)<\/p>/gi;
+
+/** Paragraphes marqués d'une puce → vraies listes, imbriquées sur deux rangs. */
+export function listes(html) {
+  const source = String(html ?? '');
+  let sortie = '';
+  let curseur = 0;
+  let paquet = [];
+
+  const vider = () => {
+    if (paquet.length > 0) sortie += assembler(paquet);
+    paquet = [];
+  };
+
+  PARAGRAPHE.lastIndex = 0;
+  let correspondance;
+  while ((correspondance = PARAGRAPHE.exec(source))) {
+    const avant = source.slice(curseur, correspondance.index);
+    const rang = rangDePuce(detaguer(correspondance[2]));
+
+    // Entre deux puces, seul du blanc peut s'intercaler sans rompre la liste.
+    if (avant.trim()) { vider(); sortie += avant; }
+    else if (paquet.length === 0) sortie += avant;
+
+    if (rang === 0) { vider(); sortie += correspondance[0]; }
+    else paquet.push({ rang, html: sansPuce(correspondance[2], rang).trim() });
+
+    curseur = correspondance.index + correspondance[0].length;
+  }
+
+  vider();
+  return sortie + source.slice(curseur);
+}
+
+// ----------------------------------------------------------- les intitulés
+
+const sansAccents = (texte) => texte.normalize('NFD').replace(/[̀-ͯ]/g, '');
+const clef = (texte) => sansAccents(texte).toLowerCase().replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+
+/**
+ * Intitulés internes du modèle QRD. Liste close : rien ne les signale dans la
+ * source, et un intitulé absent reste un simple paragraphe.
+ */
+export const SOUS_TITRES = new Set([
+  'posologie', 'mode d\'administration', 'voie d\'administration',
+  'duree du traitement', 'frequence d\'administration',
+  'population pediatrique', 'populations particulieres', 'population agee',
+  'personnes agees', 'sujet age', 'patients ages',
+  'insuffisance renale', 'insuffisance hepatique',
+  'adulte', 'adultes', 'enfant', 'enfants', 'nourrisson', 'nourrissons',
+  'grossesse', 'allaitement', 'fertilite',
+  'resume du profil de securite', 'liste tabulee des effets indesirables',
+  'description de certains effets indesirables',
+  'declaration des effets indesirables suspectes',
+  'symptomes', 'conduite a tenir', 'traitement',
+  'mecanisme d\'action', 'effets pharmacodynamiques',
+  'efficacite et securite cliniques',
+  'absorption', 'distribution', 'biotransformation', 'metabolisme',
+  'elimination', 'excretion', 'linearite/non-linearite',
+  // Les quatre niveaux du thésaurus des interactions de l'ANSM (rubrique 4.5).
+  'associations contre-indiquees', 'associations deconseillees',
+  "associations faisant l'objet de precautions d'emploi",
+  'associations a prendre en compte', 'a prendre en compte',
+]);
+
+/** Garde-fou contre un faux intitulé. */
+const LONGUEUR_MAX = 60;
+
+export function sousTitres(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    const texte = detaguer(interieur);
+    if (!texte || texte.length > LONGUEUR_MAX) return bloc;
+    if (!SOUS_TITRES.has(clef(texte))) return bloc;
+    return `<h5 class="sous-titre">${interieur.trim()}</h5>`;
+  });
+}
+
+// ------------------------------------------------------------- les espaces
+
+/**
+ * Rend insécable l'espace avant un signe double, sans jamais en insérer une :
+ * « 50% » et « http:// » restent intacts.
+ */
+export function espaces(html) {
+  const source = String(html ?? '');
+  let sortie = '';
+  let depuis = 0;
+
+  for (const [debut, fin] of horsBalise(source)) {
+    sortie += source.slice(depuis, debut);
+    sortie += source.slice(debut, fin)
+      .replace(/ ([:;?!%»])/g, ' $1')
+      .replace(/(«) /g, '$1 ');
+    depuis = fin;
+  }
+  return sortie + source.slice(depuis);
+}
+
+// -------------------------------------------------------------- les notes
+
+/**
+ * Appels de note du modèle QRD (« prises de poids* » → « *Les prises… ») : la
+ * note est marquée pour peser moins que le texte. L'appel reste, il la relie
+ * à sa mention.
+ */
+const APPEL = /^[*†‡]{1,3}(?=\s*\S)/;
+
+export function notes(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    // Un paragraphe déjà classé a été pris en charge par une autre passe.
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    return APPEL.test(detaguer(interieur)) ? `<p class="note"${attrs}>${interieur}</p>` : bloc;
+  });
+}
+
+// -------------------------------------------------------- les interactions
+
+/**
+ * Rubrique 4.5 (thésaurus ANSM) : met en évidence la substance en interaction
+ * (« + Millepertuis »). Le « + » reste : il se lit « en association avec ».
+ */
+const INTERACTION = /^\+\s+(?=\S)/;
+
+export function interactions(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    const texte = detaguer(interieur);
+    if (!INTERACTION.test(texte)) return bloc;
+    return `<p class="interaction"${attrs}>${interieur}</p>`;
+  });
+}
+
+// ------------------------------------------------------------ les renvois
+
+/**
+ * Change les numéros de « (voir rubrique 4.6) » en liens, avec l'intitulé de la
+ * cible en infobulle. Seul le numéro est cliquable ; un renvoi vers une
+ * rubrique absente reste du texte.
+ *
+ * @param {Map<string, {id:string, libelle:string}>} cibles - par numéro
+ */
+const echapper = (texte) => String(texte ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/"/g, '&quot;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
+/**
+ * Ancré sur « rubrique(s) » + numéro, pas sur le verbe : les tournures varient
+ * (« voir la rubrique », « à la rubrique », « rubrique 4.3 et 4.4 »).
+ */
+const RENVOI = /\brubriques?\s+\d{1,2}(?:\.\d{1,2})?(?:\s*(?:,|et|ou|à)\s*\d{1,2}(?:\.\d{1,2})?)*/gi;
+const NUMERO = /\d{1,2}(?:\.\d{1,2})?/g;
+
+export function renvois(html, cibles) {
+  const source = String(html ?? '');
+  if (!(cibles instanceof Map) || cibles.size === 0) return source;
+
+  let sortie = '';
+  let depuis = 0;
+
+  // Hors balise seulement ; une phrase coupée par une balise reste du texte.
+  for (const [debut, fin] of horsBalise(source)) {
+    sortie += source.slice(depuis, debut);
+    sortie += source.slice(debut, fin).replace(RENVOI, (phrase) => phrase.replace(NUMERO, (numero) => {
+      const cible = cibles.get(numero);
+      if (!cible?.id) return numero;
+      const titre = cible.libelle ? ` title="${echapper(`${numero} — ${cible.libelle}`)}"` : '';
+      return `<a class="renvoi" href="#${cible.id}"${titre}>${numero}</a>`;
+    }));
+    depuis = fin;
+  }
+
+  return sortie + source.slice(depuis);
+}
+
+/** Les cinq passes, dans l'ordre où chacune a besoin de la précédente. */
+export function structurer(html) {
+  return espaces(notes(interactions(sousTitres(listes(html)))));
+}
+
+// ------------------------------------------------------------ la lisibilité
+
+/**
+ * Passes de lecture, appliquées à l'affichage (pas au découpage) : on les
+ * règle sans rejouer la base. Aucun mot n'est modifié ; seules des balises et
+ * des espaces insécables s'ajoutent. Trois couches, chacune avec sa classe CSS
+ * pour être neutralisée d'une ligne : A structure, B doses, C mises en garde.
+ */
+const INSECABLE = ' ';
+
+/** Unités et décomptes qui ne doivent jamais quitter leur nombre. */
+const UNITES = [
+  'mg', 'µg', 'μg', 'mcg', 'ng', 'g', 'kg', 'mL', 'ml', 'L', 'dL', 'dl',
+  'UI', 'U', 'MUI', 'mmol', 'µmol', 'mEq', 'GBq', 'MBq', 'mmHg', '°C',
+  'h', 'heures?', 'min', 'minutes?', 'j', 'jours?', 'semaines?', 'mois', 'ans?',
+  'fois', 'gouttes?', 'comprimés?', 'gélules?', 'sachets?', 'ampoules?',
+  'flacons?', 'doses?', 'prises?', 'bouffées?', 'pulvérisations?', 'injections?',
+].join('|');
+
+// L'espace de la source : ordinaire, entité, insécable déjà posée ou fine (U+202F).
+const NOMBRE_UNITE = new RegExp(`(\\d)(?:[ \\t]|&nbsp;|\\u00a0|\\u202f)+(?=(?:${UNITES})(?![\\p{L}\\d]))`, 'gu');
+const MILLIERS = /(\d)[ \t](?=\d{3}(?!\d))/g;
+
+/** Applique `remplacer` au texte hors balise seulement. */
+function dansLeTexte(html, remplacer) {
+  const source = String(html ?? '');
+  let sortie = '';
+  let depuis = 0;
+  for (const [debut, fin] of horsBalise(source)) {
+    sortie += source.slice(depuis, debut) + remplacer(source.slice(debut, fin));
+    depuis = fin;
+  }
+  return sortie + source.slice(depuis);
+}
+
+/** « 10 mg », « 4 000 UI » : nombre et unité ne se séparent plus en fin de ligne. */
+export function insecables(html) {
+  return dansLeTexte(html, (texte) => texte
+    .replace(MILLIERS, `$1${INSECABLE}`)
+    .replace(NOMBRE_UNITE, `$1${INSECABLE}`));
+}
+
+/**
+ * Amorce d'un paragraphe (« Schizophrénie : la posologie… ») : ce qui précède
+ * le premier deux-points passe en gras. Garde-fous : majuscule initiale,
+ * quatorze mots, ni virgule ni ponctuation forte, et pas une phrase qui
+ * annonce une liste (« comme suit : »).
+ */
+const AMORCE = /^(\s*)([^<>:.;!?,&]{2,90}?)((?:\s|&nbsp;|\u00a0)*:(?:\s|&nbsp;|\u00a0))/u;
+const ANNONCE = /\b(?:suit|suivants?|suivantes?|notamment|que|ci-dessous|ci-après)\s*$/i;
+/** Une amorce est un groupe nominal : un verbe ou un pronom sujet trahit une phrase. */
+const PHRASE = /(?:^|[\s'’])(?:est|sont|a|ont|été|doit|doivent|peut|peuvent|sera|seront|faut|convient|il|elle|ils|elles|on|vous|nous)(?=[\s,]|$)/i;
+
+export function amorces(html) {
+  return String(html ?? '').replace(PARAGRAPHE, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs)) return bloc;
+    const trouve = interieur.match(AMORCE);
+    if (!trouve) return bloc;
+    const [entier, blanc, amorce, deuxPoints] = trouve;
+    const propre = amorce.trim();
+    if (!/^\p{Lu}/u.test(propre)) return bloc;
+    if (propre.split(/\s+/).length > 14 || ANNONCE.test(propre) || PHRASE.test(propre)) return bloc;
+    const suite = interieur.slice(entier.length);
+    return `<p${attrs}>${blanc}<strong class="amorce">${propre}</strong>${deuxPoints}${suite}</p>`;
+  });
+}
+
+/**
+ * Intertitre libre (« Traitement des ulcères duodénaux ») : le PDF européen a
+ * perdu l'italique qui le signalait. Un paragraphe court, groupe nominal à
+ * majuscule initiale, sans ponctuation (hors deux-points final), qui annonce
+ * ce qui suit (jamais le dernier bloc). Garde-fous : ni verbe ni pronom sujet, ni article, chiffre ou
+ * puce en tête, ni lien ni saut de ligne, ni renvoi (« voir rubrique »). Une
+ * phrase nominale sans point final passe encore : limite acceptée.
+ */
+const PARAGRAPHE_SUIVI = /<p\b([^>]*)>([\s\S]*?)<\/p>(?=\s*<(?:p|ul|ol)\b)/gi;
+const MOTS_MAX = 10;
+/** Un intitulé QRD est nominal et sans article ; une phrase commence par l'un. */
+const DETERMINANT = /^(?:(?:le|la|les|un|une|des|ce|cette|ces|il|elle|on)\s|l['’])/i;
+
+export function intertitres(html) {
+  return String(html ?? '').replace(PARAGRAPHE_SUIVI, (bloc, attrs, interieur) => {
+    if (/\bclass\s*=/.test(attrs) || /<(?:a|br)\b/i.test(interieur)) return bloc;
+    // « Réactions cutanées : » annonce ce qui suit ; le deux-points final est gardé.
+    const texte = detaguer(interieur).replace(/\s*:$/, '');
+    const mots = texte.split(' ');
+    if (mots.length < 2 || mots.length > MOTS_MAX || texte.length > 70) return bloc;
+    if (!/^\p{Lu}/u.test(texte) || /[.;:!?,]/.test(texte)) return bloc;
+    if (PHRASE.test(texte) || DETERMINANT.test(texte) || /\bvoir rubrique/i.test(texte)) return bloc;
+    return `<h6 class="intertitre">${interieur.trim()}</h6>`;
+  });
+}
+
+/** Couche A : intitulés (rejoués, la base peut dater), intertitres, amorces, insécables. */
+export function structurerLecture(html) {
+  return insecables(amorces(intertitres(sousTitres(html))));
+}
+
+/**
+ * Couche B, rubrique 4.2 : chaque dose en gras (« 10 mg/jour », « 10 à 30 mg »).
+ * Après les insécables : le nombre et l'unité y sont liés par une insécable.
+ */
+// « 4 000 » : milliers liés par une insécable (posée par `insecables`).
+const NOMBRE = '(?:\\d{1,3}(?:\\u00a0\\d{3})+|\\d+)(?:[.,]\\d+)?';
+const UNITES_DOSE = [
+  'mg', 'µg', 'μg', 'mcg', 'ng', 'g', 'mL', 'ml', 'UI', 'U', 'MUI', 'mmol', 'mEq',
+  'GBq', 'MBq', 'gouttes?', 'comprimés?', 'gélules?', 'sachets?', 'ampoules?',
+  'bouffées?', 'pulvérisations?', 'doses?',
+].join('|');
+const PAR = '(?:\\/(?:kg|m²|m2|jour|j|24\\u00a0?h|h|prise|mL|ml|semaine|dose|min))*';
+// Bornes et énumérations qui partagent l'unité finale : « 10 à 30 mg »,
+// « 400 et 800 µg », « 200 ou 400 µg », « 100, 200 ou 400 mg ». La virgule
+// suivie d'une espace sépare deux nombres ; sans espace, elle est décimale.
+// Nombre en tête de borne : décimale à la française seulement. « 4.8 » est un
+// numéro de rubrique, jamais une dose (« rubrique 4.8 et 10 mg »).
+const BORNE = '(?:\\d{1,3}(?:\\u00a0\\d{3})+|\\d+)(?:,\\d+)?(?!\\.\\d)';
+const LIEN_DOSES = '(?:[ \\u00a0]?(?:à|-|–)[ \\u00a0]?|[ \\u00a0](?:et|ou)[ \\u00a0]|,[ \\u00a0])';
+const DOSE = new RegExp(
+  `(?<![\\d.,])(?:${BORNE}${LIEN_DOSES})*${NOMBRE}\\u00a0?(?:${UNITES_DOSE})${PAR}(?![\\p{L}\\d])`,
+  'gu',
+);
+
+export function doses(html) {
+  return dansLeTexte(html, (texte) => texte.replace(DOSE, '<strong class="dose-cle">$&</strong>'));
+}
+
+/**
+ * Couche C, rubriques 4.2 et 4.4 : mises en garde (« ne doit pas dépasser »,
+ * « dose quotidienne maximale », « contre-indiqué »). Seule l'expression est
+ * marquée, jamais la phrase entière.
+ */
+const PARTICIPE = '(?:dépassée?s?|utilisée?s?|administrée?s?|associée?s?|interrompue?s?)';
+const ALERTES = [
+  new RegExp(`\\bne\\s+(?:doit|doivent|devra|devront|faut)\\s+(?:pas|jamais)\\s+(?:dépasser|être\\s+${PARTICIPE})`, 'giu'),
+  /\bne\s+(?:pas|jamais)\s+(?:dépasser|utiliser|administrer|associer|interrompre)/giu,
+  /\bdoses?\s+(?:(?:quotidiennes?|journalières?|unitaires?|totales?)\s+)?maximales?(?:\s+(?:quotidiennes?|journalières?|recommandées?))?/giu,
+  /\bcontre-indiquée?s?/giu,
+];
+const RUBRIQUES_ALERTE = new Set(['4.2', '4.4']);
+
+export function alertes(html) {
+  return dansLeTexte(html, (texte) => ALERTES.reduce(
+    (courant, motif) => courant.replace(motif, '<strong class="alerte">$&</strong>'),
+    texte,
+  ));
+}
+
+/**
+ * Passes de lecture d'une rubrique, selon son document et son numéro.
+ * @param {string} html
+ * @param {{ type?: string, numero?: string }} rubrique
+ */
+export function lisibilite(html, { type, numero } = {}) {
+  if (!html) return html;
+  if (!/^rcp/.test(type ?? '')) return html;
+  const structure = structurerLecture(html);
+  const dosee = numero === '4.2' ? doses(structure) : structure;
+  return RUBRIQUES_ALERTE.has(numero) ? alertes(dosee) : dosee;
+}

@@ -1,0 +1,1479 @@
+/* Page de recherche et éléments communs. Tokens dans tokens.css, règles dans
+   DESIGN.md. */
+
+/* ---------- Barre de situation ---------- */
+
+/* Collante, sans apparition au défilement : ce qui bouge pendant la lecture distrait. */
+.barre {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+/* La hauteur est sur la ligne elle-même, pas sur la barre : le contenu
+   s'y centre au lieu de rester collé en haut d'une barre plus haute que lui. */
+.barre-inner {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  min-height: var(--barre-h);
+  padding: var(--sp-1) var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Nom du produit, en retrait ; cède la place au champ de recherche. */
+.barre-titre {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Bandeau d'accueil ---------- */
+
+/* Même teinte claire que la barre des autres pages : un seul vert de fond
+   sur tout le site. Le titre (.accueil) défile ; le champ (.accueil-colle)
+   reste collé en haut, comme la barre des autres pages. */
+.accueil {
+  background: var(--bg-tint);
+  /* Marge basse en padding : une marge fuirait hors du bloc et laisserait
+     une bande de fond de page entre le titre et le champ. */
+  padding: var(--sp-8) var(--sp-3) var(--sp-2);
+}
+
+.accueil-colle {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+}
+
+.accueil-inner {
+  max-width: var(--colonne);
+  margin: 0 auto;
+}
+
+.accueil .titre-site {
+  color: var(--ink);
+}
+
+/* Titre du site : pas de soulignement au repos. */
+.titre-lien {
+  color: inherit;
+  text-decoration: none;
+}
+
+.titre-lien:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--accent-soft);
+}
+
+.accueil-champ {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+  max-width: var(--measure);
+}
+
+/* Exemples de requêtes plein texte, volontairement sans nom de médicament. */
+.accueil-exemple {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin: var(--sp-2) 0 0;
+}
+
+.accueil-exemple a {
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+.accueil-exemple .sep::before {
+  content: "·";
+  margin: 0 0.5em;
+  color: var(--faint);
+}
+
+.accueil .input-wrapper {
+  background: var(--bg);
+}
+
+/* Pas d'en-tête à ménager : la colonne reprend sous l'aplat. */
+.recherche {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-3) var(--sp-8);
+}
+
+/* Colonne de lecture : `.recherche` pour l'accueil, `.corps` pour la fiche et
+   la recherche plein texte. Définie ici : product.css n'est pas chargé partout. */
+.corps {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-8);
+}
+
+@media (max-width: 52rem) {
+  .corps {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+}
+
+.recherche > .classes:first-child,
+.recherche > #results:first-child {
+  margin-top: 0;
+}
+
+.recherche-tete {
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+  padding-bottom: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.titre-site {
+  font-size: var(--fs-xl);
+  letter-spacing: -0.01em;
+}
+
+/* Portrait d'une classe : chiffres en ligne, libellé dessous, sans cadre. */
+.portrait {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0 0;
+}
+
+.portrait-item { display: flex; flex-direction: column-reverse; }
+.portrait-valeur {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.portrait-libelle { font-size: var(--fs-xs); color: var(--faint); }
+.portrait-base { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--faint); }
+
+/* Texte non relu, visible en développement seulement. */
+.brouillon {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-1) var(--sp-2);
+  background: light-dark(#fff4d6, #3a3214);
+  border-left: 3px solid light-dark(#c99a1a, #d6ac3a);
+  font-size: var(--fs-sm);
+}
+
+/* Chapeau signé. */
+.chapeau { max-width: var(--measure); margin: 0 0 var(--sp-4); }
+.chapeau .brouillon { margin: 0 0 var(--sp-2); }
+.chapeau-texte p { font-family: var(--font-lecture); line-height: 1.6; margin: 0 0 var(--sp-2); }
+.chapeau-signature { font-size: var(--fs-xs); color: var(--faint); margin: 0; }
+
+/* ---------- Champ de recherche ---------- */
+
+.search-wrapper {
+  position: relative;
+}
+
+/* Rayon sur l'enveloppe : `overflow` arrondit aussi le bouton. */
+.input-wrapper {
+  display: flex;
+  align-items: stretch;
+  border: var(--rule-width) solid var(--rule-medium);
+  /* Plus rond que les autres commandes : c'est la pièce maîtresse de la page. */
+  border-radius: 14px;
+  overflow: hidden;
+  /* Ni le fond du bandeau, ni le noir de la page : une surface de saisie. */
+  background: var(--champ);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-base);
+  font-family: inherit;
+  color: var(--ink);
+  border: none;
+  outline: none;
+  background: transparent;
+  appearance: none;
+}
+
+.search-input::placeholder {
+  color: var(--faint);
+}
+
+.input-wrapper:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Dans le champ, sans aplat : la flèche de retour chariot, en gris, qui prend
+   l'accent au survol et au focus. Pas de couleur de plus sur la page. */
+.search-button {
+  display: flex;
+  align-items: center;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0 var(--sp-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-button:hover,
+.search-button:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+/* Variante d'en-tête : visible sans peser. */
+.search-compacte {
+  flex: 1 1 20rem;
+  max-width: 34rem;
+}
+
+/* Variante d'en-tête : même surface, rayon des commandes. */
+.search-compacte .input-wrapper {
+  border-radius: var(--radius-control);
+}
+
+.search-compacte .input-wrapper:focus-within {
+  border-color: var(--ink);
+}
+
+.search-compacte .search-input {
+  padding: 0.3em 0.6em;
+  font-size: var(--fs-sm);
+}
+
+.search-compacte .search-button {
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- Ligne de situation ---------- */
+
+/* Retour, recherche et fil ATC sur une ligne, groupés à gauche, au-dessus du
+   contenu. Défini ici et non dans product.css, que seule la fiche charge. */
+.identite-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) 0.4em;
+  padding-bottom: var(--sp-2);
+}
+
+/* Séparateur provenance / classification. */
+.tete-sep {
+  color: var(--faint);
+  font-size: var(--fs-xs);
+}
+
+.retour {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.retour:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Bouton de thème : toujours au même endroit, en haut à droite de la fenêtre,
+   au-dessus de la barre collante ; révélé par theme.js. Fond de la barre,
+   pour rester lisible quand il passe sur du texte au défilement. */
+.theme {
+  position: fixed;
+  top: 1.05rem;
+  right: var(--sp-3);
+  z-index: 30;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  background: var(--bg-tint);
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  padding: 0.15em 0.6em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.theme:hover { color: var(--ink); border-color: var(--ink); }
+
+/* Écran étroit : la ligne de la barre s'arrête avant le bouton, qui sur
+   téléphone ne garde que son picto. Après la règle 52rem de .barre-inner,
+   qui remettait le rembourrage à zéro et laissait le bouton couvrir le champ. */
+@media (max-width: 60rem) {
+  .barre-inner { padding-right: 7rem; }
+}
+
+/* ---------- Suggestions ---------- */
+
+/* Seule surface flottante du site : arrondie, ombre courte. */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-surface);
+  box-shadow: 0 6px 20px rgb(18 59 34 / 12%);
+  max-height: 22rem;
+  overflow: hidden auto;
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestion-item {
+  padding: var(--sp-1) var(--sp-2);
+  cursor: pointer;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+  background: var(--bg-alt);
+}
+
+.suggestion-name {
+  font-size: var(--fs-sm);
+}
+
+.suggestion-active-ingredients {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+/* ---------- États ---------- */
+
+.notice,
+.vide {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding: var(--sp-3) 0;
+  border-top: var(--rule-width) solid var(--rule);
+  margin: var(--sp-3) 0 0;
+}
+
+/* ---------- Filtres ---------- */
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 0;
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+/* Libellé insécable : c'est la rangée qui passe à la ligne. */
+.filtre {
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-decoration: none;
+  padding-bottom: var(--sp-1);
+  margin-bottom: calc(-1 * var(--sp-1) - 1px);
+  border-bottom: 2px solid transparent;
+}
+
+.filtre:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.filtre.actif {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* Encart sur la substitution des biosimilaires. */
+.substitution {
+  max-width: var(--measure);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-pale);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.substitution p { margin: 0; }
+.substitution strong { font-weight: 600; }
+.substitution-source { margin-top: var(--sp-1) !important; font-size: var(--fs-xs); color: var(--muted); }
+
+/* ---------- Spécialités d'une molécule ---------- */
+
+/* Une ligne par spécialité, laboratoire à droite. */
+.specialites-liste li { border-bottom: var(--rule-width) solid var(--rule); }
+
+.specialite-ligne {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--sp-2);
+  align-items: baseline;
+  padding: 0.45rem 0;
+}
+
+.specialite-nom { font-size: var(--fs-sm); color: var(--ink); }
+
+/* Chaque dosage est un lien vers sa spécialité. */
+/* Un lien souligné par dosage : seul élément cliquable de la ligne. */
+.specialite-dosages { margin-left: 0.5em; font-variant-numeric: tabular-nums; }
+.dosage-lien {
+  /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
+  padding: 0.2em 0.1em;
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.dosage-lien:hover,
+.dosage-lien:focus-visible { text-decoration-thickness: calc(var(--trait) + 1px); }
+.sep-point { color: var(--faint); }
+
+.specialite-labo {
+  max-width: 14rem;
+  text-align: right;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Forme : intertitre discret, décompte à droite. */
+.forme-titre {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--sp-3) 0 0;
+  padding-bottom: 0.2rem;
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Téléphone : le laboratoire passe sous le nom. */
+@media (max-width: 600px) {
+  .specialite-ligne { grid-template-columns: minmax(0, 1fr); }
+  .specialite-labo { max-width: none; text-align: left; }
+  /* Cible tactile confortable. */
+  .dosage-lien { padding: 0.35em 0.2em; }
+}
+
+/* ---------- Classes thérapeutiques ---------- */
+
+/* Une ligne par classe, pas deux colonnes : la liste triée se lirait en zigzag. */
+.classes {
+  margin-top: var(--sp-6);
+}
+
+.classes-titre {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.classes-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Pas de filet entre les lignes : le soulignement du lien structure déjà
+   chaque ligne ; seul l'en-tête garde le sien. */
+.classes-liste li {
+  max-width: none;
+}
+
+.classe-lien {
+  display: grid;
+  /* Sept signes, longueur max d'un code ATC (« R03DC01 ») : des molécules
+     peuvent figurer dans la liste des sous-classes. */
+  grid-template-columns: 4.2rem minmax(0, 1fr) max-content;
+  gap: 0 var(--sp-2);
+  align-items: baseline;
+  padding: 0.3rem var(--sp-1) 0.3rem 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+/* Seul le libellé porte le lien visible : code et compte restent des repères. */
+.classe-lien .classe-label {
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+.classe-lien:hover .classe-label { text-decoration-thickness: calc(var(--trait) + 1px); }
+
+/* Code en accent : repère visuel autant qu'information. */
+/* Lettre de classe : repère neutre, le vert reste aux liens. */
+.classe-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.classe-label {
+  font-size: var(--fs-sm);
+}
+
+.classe-compte {
+  text-align: right;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Molécules restantes, repliées : une liste écourtée en silence passerait pour complète. */
+.classes-titre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.classes-titre .classes-unite {
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+.molecules-plus {
+  display: inline-block;
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.molecules-plus::-webkit-details-marker {
+  display: none;
+}
+
+/* Repliable : triangle (règle commune en fin de fichier), pas de soulignement. */
+.molecules-plus:hover { color: var(--ink); }
+
+/* ---------- Fil ATC ---------- */
+
+/* Fil ATC, espacé par son conteneur. Capitales par le style : homogénéise les
+   niveaux sans perdre les accents du niveau 1. */
+.atc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.4em;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Code : chasse fixe, sans capitales forcées. */
+.atc-code {
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+.atc-etiquette {
+  color: var(--faint);
+}
+
+.atc-sep {
+  color: var(--faint);
+}
+
+/* Page de classe, hors flex : le chevron a besoin de marges propres. */
+.page-meta .atc-sep {
+  margin: 0 0.35em;
+}
+
+.atc-maillon {
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+/* ---------- Résultats ---------- */
+
+.groupe {
+  margin-top: var(--sp-6);
+}
+
+.groupe-titre {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-strong);
+}
+
+.compte {
+  font-variant-numeric: tabular-nums;
+}
+
+.liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.liste li {
+  border-bottom: var(--rule-width) solid var(--rule);
+  max-width: none;
+}
+
+.resultat {
+  display: block;
+  padding: var(--sp-2) 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+a.resultat .resultat-nom {
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 1px); }
+
+.resultat-nom {
+  display: block;
+}
+
+.resultat-dci {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin-top: 0.15em;
+}
+
+/* Résultat de recherche : pas de lien global, les dosages sont les liens. */
+.resultat-produit .specialite-ligne { padding: 0; }
+.resultat-produit .specialite-nom { font-size: var(--fs-base); }
+.resultat-forme {
+  margin-top: 0.25em;
+  font-size: var(--fs-sm);
+}
+.resultat-forme .specialite-dosages { margin-left: 0.4em; }
+.resultat-forme-nom { color: var(--muted); }
+
+/* Précision sur la ligne, en retrait. */
+.resultat-etendue {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin-top: 0.15em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 52rem) {
+  .barre-inner {
+    padding: var(--sp-1) var(--sp-2);
+  }
+
+  /* Écran étroit : la dénomination, répétée plus bas, cède la place au champ. */
+  .barre-titre {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .accueil {
+    padding: var(--sp-4) var(--sp-2) var(--sp-2);
+  }
+
+  .accueil-colle {
+    padding: var(--sp-2) var(--sp-2) var(--sp-2);
+  }
+
+  .recherche {
+    padding: var(--sp-4) var(--sp-2) var(--sp-6);
+  }
+
+  .titre-site {
+    font-size: var(--fs-lg);
+  }
+
+  .filtres {
+    gap: var(--sp-2);
+  }
+}
+
+/* ---------- Importation parallèle ---------- */
+
+/* Statut réglementaire, sans couleur : il n'alerte pas. */
+.marque {
+  display: inline-block;
+  margin-left: var(--sp-1);
+  padding: 0 0.35em;
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 0.15em;
+  white-space: nowrap;
+}
+
+.suggestion-variantes {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* ---------- Rail de navigation ---------- */
+
+/* Rail : sortir de la fiche (accueil, classification), pas redire son plan.
+ * Fixe et non collant ; le corps se décale d'autant, rien n'est recouvert. */
+.rail {
+  display: none;
+}
+
+@media (min-width: 75rem) {
+  :root {
+    /* 288 px : à 240, les libellés du plan passent à la ligne. Reste 912 px
+       au contenu à 1200 px, pour 736 requis. */
+    --rail-l: 18rem;
+  }
+
+  /* Sans rail (accueil) : pas de colonne réservée. */
+  body:not(:has(> .rail)) {
+    --rail-l: 0rem;
+  }
+
+  body {
+    padding-left: var(--rail-l);
+  }
+
+  /* Barre sur toute la largeur, rail compris : décalage annulé puis rendu en padding. */
+  .barre {
+    margin-left: calc(-1 * var(--rail-l));
+    padding-left: var(--rail-l);
+  }
+
+  /* Bandeau centré sur la fenêtre entière, pas sur l'espace restant. */
+  .accueil,
+  .accueil-colle {
+    margin-left: calc(-1 * var(--rail-l));
+    padding-left: var(--sp-3);
+  }
+
+  .rail {
+    display: block;
+    position: fixed;
+    inset: var(--barre-h) auto 0 0;
+    width: var(--rail-l);
+    overflow-y: auto;
+    /* En bout de rail, la molette ne fait pas défiler la page. */
+    overscroll-behavior: contain;
+    padding: var(--sp-3) var(--sp-2) var(--sp-6);
+    border-right: var(--rule-width) solid var(--rule);
+    /* Même teinte que la barre et le bandeau ; la colonne de lecture reste blanche. */
+    background: var(--bg-tint);
+  }
+}
+
+.rail-groupe {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Blocs titrés et séparés par un filet. */
+.rail-titre {
+  margin: var(--sp-3) 0 var(--sp-1);
+  padding: var(--sp-3) var(--sp-1) 0;
+  border-top: var(--rule-width) solid var(--rule);
+  /* Pas de filet en tête de rail. */
+  font-size: var(--fs-xs);
+  /* --muted : --faint passe sous 4,5 hors fond blanc (au survol). */
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.rail-titre:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Cible de clic pleine largeur. */
+.rail-lien {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0 var(--sp-1);
+  align-items: baseline;
+  padding: 0.4rem var(--sp-1);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+/* Lien sans code : pas de gouttière. */
+.rail-seul {
+  display: block;
+}
+
+/* Sur fond teinté, le survol éclaircit ; l'état sélectionné reste distinct. */
+.rail-lien:hover {
+  background: var(--bg);
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* Même aplat que l'onglet sélectionné : un seul signe pour « vous êtes ici ». */
+.rail-actif,
+.rail-actif:hover {
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.rail-code {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.rail-actif .rail-code {
+  color: var(--accent);
+}
+
+.rail-label {
+  line-height: 1.35;
+}
+
+/* Libellés CNAM reçus en capitales sans accents : remis en bas de casse. */
+/* ---------- Plan de la fiche ---------- */
+
+/* Imbrication marquée par le retrait ; sous-rubriques un cran plus petites. */
+.rail-rubrique {
+  padding-left: var(--sp-2);
+  font-size: var(--fs-xs);
+}
+
+/* Gouttière élargie pour les codes à quatre signes (« 4.10 »). */
+.rail-p2 {
+  padding-left: var(--sp-3);
+  grid-template-columns: 2.1rem 1fr;
+}
+
+
+.rail-rubrique .rail-code {
+  font-size: 0.95em;
+}
+
+/* Rubrique en cours (posée par documents.js) : même aplat « vous êtes ici ». */
+.rail-ici,
+.rail-ici:hover {
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.rail-ici .rail-code {
+  color: var(--accent);
+}
+
+/* ---------- Impression ---------- */
+
+/* Impression : la navigation disparaît, tout le texte s'ouvre. */
+@media print {
+  :root {
+    /* Largeur fixée par les marges du papier. */
+    --colonne: 100%;
+  }
+
+  body {
+    padding-left: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  .rail,
+  .barre {
+    display: none;
+  }
+
+  /* Pas de fond à l'impression, rien de collé. */
+  .accueil,
+  .accueil-colle {
+    position: static;
+    background: none;
+    border: 0;
+    padding: 0 0 var(--sp-3);
+    margin: 0;
+  }
+
+  /* Adresses imprimées seulement dans les références. */
+  .liens a[href^="http"]::after {
+    content: ' — ' attr(href);
+    font-size: 0.85em;
+    color: #444;
+    word-break: break-all;
+  }
+}
+
+/* ---------- Trouvailles dans les documents ---------- */
+
+/* Deux formes : large (une molécule par ligne, une colonne par rubrique, ramassé
+   comme un tableau) et ciblée (`.trouvailles-ciblees`, la molécule puis ses phrases).
+   Vrai tableau en `fixed` : un nom de groupe peut dépasser 1 600 caractères
+   et une grille CSS perdait l'alignement. */
+.trouvailles {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.col-rubrique { width: 2.6rem; }
+.col-autres { width: 5.5rem; }
+
+.trouvailles thead th {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--faint);
+  text-align: center;
+  padding: 0 0 var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.trouvailles thead .th-molecule,
+.trouvailles thead .th-autres { text-align: left; }
+.trouvailles thead .th-autres { text-align: center; }
+
+/* L'en-tête sert de filtre par rubrique. */
+.th-lien {
+  display: block;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+}
+
+.th-lien:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Filet sur la ligne, pas sur le tbody : les moteurs le doublent en bordures fusionnées. */
+/* `.trouvailles` en tête pour l'emporter sur tokens.css, qui retire le filet
+   de la dernière ligne de chaque tbody (ici, une molécule par tbody). */
+.trouvailles .trouvaille td,
+.trouvailles .trouvaille th {
+  padding: 0.15rem 0;
+  vertical-align: middle;
+  border: 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+/* Ciblée : la molécule ouvre un bloc, ses phrases le ferment. */
+.trouvailles-ciblees .trouvaille th { border-bottom: 0; padding: var(--sp-3) 0 0; }
+
+/* Téléphone : colonnes resserrées, compte de spécialités masqué. */
+@media (max-width: 600px) {
+  .col-rubrique { width: 1.6rem; }
+  .col-autres { width: 2.8rem; }
+  .trouvailles thead th { font-size: 0.65rem; letter-spacing: 0; }
+  .trouvailles .trouvaille-reprise { display: none; }
+  .trouvailles .trouvaille-molecule { max-width: 100%; font-size: var(--fs-xs); }
+  .trouvailles .autre { margin: 0 0.1em; }
+}
+
+.cellule-molecule {
+  text-align: left;
+  font-weight: 400;
+  padding-right: var(--sp-3);
+}
+
+/* Une ligne, tronquée ; nom complet en infobulle. */
+.trouvaille-molecule {
+  display: inline-block;
+  max-width: calc(100% - 4.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+/* Molécule à une seule spécialité : lien. Plusieurs : repliable à triangle. */
+a.trouvaille-molecule {
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+/* Nom tronqué, compte toujours visible : flex plutôt qu'une largeur calculée. */
+.trouvaille-tete {
+  display: flex;
+  align-items: baseline;
+}
+
+/* Accordéon : la molécule déplie ses dosages sur la ligne suivante. */
+.trouvaille-details > summary {
+  display: flex;
+  align-items: baseline;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trouvaille-details > summary::-webkit-details-marker { display: none; }
+
+.trouvaille-details > summary::before { flex: none; width: 1em; }
+.trouvaille-details > summary:hover { color: var(--ink); }
+
+.cellule-molecule .trouvaille-molecule {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.cellule-molecule .trouvaille-reprise { flex: none; }
+
+/* Repliée, la ligne des dosages est masquée. Sans :has(), elle reste visible. */
+.trouvaille:has(.trouvaille-details:not([open])) .ligne-dosages { display: none; }
+.trouvaille:has(.trouvaille-details[open]) > tr:first-child > * { border-bottom: 0; }
+
+.trouvailles .ligne-dosages td {
+  padding: 0 0 var(--sp-2) 1em;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+/* Accordéon de la vue large : une ligne de points par dosage, en retrait,
+   points plus petits que ceux de la molécule. La forme fait l'intertitre. */
+.trouvailles .ligne-forme td {
+  padding: var(--sp-1) 0 0 1em;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  border-bottom: 0;
+}
+
+.trouvailles .ligne-specialite th,
+.trouvailles .ligne-specialite td {
+  padding: 0.1rem 0;
+  border-bottom: 0;
+}
+
+.trouvailles .ligne-specialite th {
+  text-align: left;
+  font-weight: 400;
+  font-size: var(--fs-sm);
+  padding-left: 1em;
+}
+
+.trouvailles .ligne-specialite .cellule-autres { font-size: var(--fs-xs); }
+.trouvailles .trouvaille > .ligne-specialite:last-child > * { padding-bottom: var(--sp-2); }
+
+.point-dosage { width: 0.5rem; height: 0.5rem; }
+
+.dosages-forme {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.dosages-nom { color: var(--ink); }
+
+.cellule-rubrique { text-align: center; }
+
+/* Autres rubriques, nommées plutôt que fondues dans un « +3 ». */
+.cellule-autres {
+  text-align: center;
+  line-height: 1.6;
+}
+
+
+.point {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid var(--accent);
+  vertical-align: middle;
+}
+
+/* Creux : les mots sont dans la rubrique, pas l'expression. */
+.point.point-epars { background: transparent; }
+
+a.point:hover,
+a.point:focus-visible {
+  outline: 2px solid var(--accent-pale);
+  outline-offset: 2px;
+}
+
+.point-legende { width: 0.55rem; height: 0.55rem; margin-left: var(--sp-2); }
+.point-legende:first-child { margin-left: 0; }
+
+.legende {
+  margin: var(--sp-2) 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+
+/* Hors des huit colonnes, la rubrique est nommée en texte (« 5.2 », « N2 »). */
+.autre {
+  display: inline-block;
+  margin: 0 0.2em;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--lien);
+  text-decoration: underline;
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+/* Mots dispersés : même lien, soulignement pointillé — le creux du point.
+   La couleur reste celle des liens : un lien gris se lit comme du texte mort. */
+.autre.point-epars { text-decoration-style: dotted; }
+
+/* Recherche ciblée : les phrases suivent la molécule, une par rubrique. */
+.trouvailles .ligne-phrases td {
+  padding: 0 0 var(--sp-2) var(--sp-3);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.trouvailles .trouvaille:has(.ligne-phrases) > tr:first-child > * { border-bottom: 0; }
+
+/* Spécialité d'où vient la phrase, en retrait. */
+.phrase-source {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* Numéro de rubrique en tête de phrase : le lien vers le RCP. */
+.phrase-rubrique {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.3em;
+}
+
+/* État de la recherche : requête, filtres, décompte. */
+.etat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.etat-requete { color: var(--ink); }
+
+/* Interprétation par IA : annoncée, discrète, refusable. */
+.ia-interpretation {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.ia-interpretation a { margin-left: 0.4em; }
+
+.etat-compte {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Termes ajoutés par le thésaurus, avec refus en un clic. */
+.elargi {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  max-width: var(--measure);
+  line-height: 1.6;
+}
+
+.elargi-vers { color: var(--muted); }
+
+.elargi-exact {
+  margin-left: 0.6em;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Jeton retirable d'un clic. */
+.jeton {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  padding: 0.1em 0.5em;
+  background: var(--accent-pale);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.jeton:hover { background: var(--accent); color: var(--bg); }
+.jeton-croix { color: inherit; opacity: 0.7; }
+
+/* Provenance des substituts : ce que « Alternatives » couvre ou non. */
+.provenance {
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+.provenance strong {
+  font-weight: 400;
+  color: var(--ink);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+/* Aperçu au survol, posé sur body : dans la cellule, un parent en overflow
+   le rognerait. */
+.apercu {
+  position: absolute;
+  z-index: 20;
+  max-width: 30rem;
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule-medium);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 12%);
+  padding: var(--sp-2) var(--sp-3);
+  pointer-events: none;
+}
+
+.apercu-tete {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.apercu-texte {
+  margin: 0;
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.apercu-texte mark {
+  background: var(--surligne);
+  color: var(--sur-surligne);
+  padding: 0 0.15em;
+}
+
+.apercu-source {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+/* Extrait en police de lecture : c'est du document. */
+.trouvaille-extrait {
+  font-family: var(--font-lecture);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+}
+
+/* Terme trouvé (ts_headline) : aplat pâle plutôt que couleur de texte. */
+.trouvaille-extrait mark {
+  background: var(--surligne);
+  color: var(--sur-surligne);
+  padding: 0 0.15em;
+}
+
+/* Nombre de spécialités du groupe. */
+.trouvaille-reprise {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  margin-left: 0.5em;
+  white-space: nowrap;
+}
+
+/* Spécialité source de l'extrait : une molécule a plusieurs RCP. */
+.preuve-source {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  margin: var(--sp-1) 0 0;
+}
+
+/* Onglet qui quitte la page, signalé par une flèche. */
+.filtre-ailleurs::after {
+  content: " →";
+  color: var(--muted);
+}
+
+/* Numéro avant le nom, pour relier onglets et puces des résultats. */
+.filtre-num {
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.35em;
+}
+
+.filtre.actif .filtre-num {
+  color: var(--accent);
+}
+
+.filtre-compte {
+  margin-left: var(--sp-1);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Rang toujours centré : `space-between` seul le collait à gauche en page 1. */
+.pages {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-3);
+  border-top: var(--rule-width) solid var(--rule);
+  font-size: var(--fs-sm);
+}
+
+.page-prec {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.page-rang {
+  grid-column: 2;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.page-suiv {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.trouvailles-suite {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+}
+
+/* Espace au-dessus du titre, faute de bandeau. */
+.doc-entete {
+  margin: 0 0 var(--sp-3);
+  padding-top: var(--sp-4);
+}
+
+/* ---------- Repliables ---------- */
+
+/* Un seul signe pour tout ce qui se déplie : triangle ▸, pivoté d'un quart de
+   tour à l'ouverture. Jamais souligné : le soulignement est réservé aux liens. */
+.bloc-tete .section-titre::before,
+.rubrique-tete .num::before,
+.charniere .num::before,
+.formes-plus::before,
+.molecules-plus::before,
+.trouvaille-details > summary::before {
+  content: '▸';
+  display: inline-block;
+  /* Assez grand pour se voir et se viser au doigt ; ▸ est petit dans la plupart des polices. */
+  font-size: 1.25em;
+  line-height: 1;
+  margin-right: 0.3em;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-weight: 400;
+  transition: transform 0.15s;
+}
+
+.bloc[open] > .bloc-tete .section-titre::before,
+.rubrique[open] > .rubrique-tete .num::before,
+.charniere.ouverte .num::before,
+details[open] > .formes-plus::before,
+details[open] > .molecules-plus::before,
+.trouvaille-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* Titre de bloc en grand corps : triangle ramené à la taille du texte courant. */
+.bloc-tete .section-titre::before { font-size: 0.8em; vertical-align: 0.1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bloc-tete .section-titre::before,
+  .rubrique-tete .num::before,
+  .charniere .num::before,
+  .formes-plus::before,
+  .molecules-plus::before,
+  .trouvaille-details > summary::before { transition: none; }
+}
+
+/* Rembourrage pour le bouton de thème, en fin de feuille : l'emporte sur la
+   règle 52rem de .barre-inner. */
+@media (max-width: 60rem) {
+  .barre-inner,
+  .accueil-colle { padding-right: 7rem; }
+}
+
+@media (max-width: 40rem) {
+  .barre-inner,
+  .accueil-colle { padding-right: 3.25rem; }
+  .theme { right: var(--sp-2); }
+  .theme-libelle { display: none; }
+}

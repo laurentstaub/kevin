@@ -1,0 +1,163 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+include _dosages.pug
+
+//- Classe thérapeutique : fil, enfants directs et molécules ; seule la feuille
+//- (molécule ou association) liste ses spécialités.
+
+mixin specialites(nombre)
+  if nombre > 0
+    | #{nombre.toLocaleString('fr-FR')} spécialité#{nombre > 1 ? 's' : ''} commercialisée#{nombre > 1 ? 's' : ''}
+  else
+    | Aucune spécialité commercialisée
+
+//- Une ligne par nom, les dosages à la suite (« ABSTRAL 100 · 200 · 300 microgrammes »).
+mixin formes(groupes)
+  each groupeForme in groupes
+    //- Pas de sous-titre pour une forme unique.
+    if groupes.length > 1
+      h3.forme-titre
+        | #{groupeForme.forme.charAt(0).toUpperCase() + groupeForme.forme.slice(1)}
+        span.compte= groupeForme.total.toLocaleString('fr-FR')
+    ul.liste.specialites-liste
+      each groupeNom in groupeForme.noms
+        li
+          .specialite-ligne
+            //- Le nom n'est jamais un lien : on clique sur le dosage, toujours.
+            span.specialite-nom
+              = specialite(groupeNom.nom)
+              //- La mention suit le nom, avant les dosages, pour s'aligner d'une ligne à l'autre.
+              if groupeNom.princeps
+                span.marque Princeps
+              else if groupeNom.biologique === 'reference'
+                span.marque(title="Médicament biologique de référence de son groupe biosimilaire (ANSM)") Référence
+              if groupeNom.biologique === 'biosimilaire'
+                span.marque(title="Inscrit sur la liste de référence des groupes biologiques similaires (ANSM)") Biosimilaire
+              if groupeNom.importation
+                span.marque Importation parallèle
+              +dosages(groupeNom)
+            if groupeNom.titulaires
+              span.specialite-labo= groupeNom.titulaires
+
+block content
+  - const libelle = feuille ? dci(classe.label) : phrase(classe.label)
+  +barreSituation(libelle)
+
+  .recherche
+    header.recherche-tete
+      p.page-meta
+        each niveau, i in classe.chaine
+          if i > 0
+            span.atc-sep ›
+          if niveau.code === classe.code
+            span= niveau.code
+          else
+            a(href=`/classe/${niveau.code}`)= niveau.code
+      h1.titre-site= libelle
+      //- Unité unique de la page, portrait compris : la spécialité commercialisée (un code CIS).
+      p.page-meta
+        +specialites(classe.specialites)
+
+      //- Portrait de la classe en chiffres.
+      if portrait.length
+        dl.portrait
+          each mesure in portrait
+            .portrait-item
+              //- dt avant dd ; le CSS met le chiffre au-dessus (column-reverse).
+              dt.portrait-libelle= mesure.libelle
+              dd.portrait-valeur= mesure.valeur
+        p.portrait-base Source : BDPM
+
+    //- Chapeau : texte de pharmacien signé et relu, facultatif.
+    if chapeau
+      section.chapeau
+        if !chapeau.meta.relu
+          p.brouillon
+            strong Brouillon
+            |  — non relu, non publié.
+        each bloc in chapeau.blocs
+          if bloc.type === 'html'
+            .chapeau-texte!= bloc.html
+        p.chapeau-signature
+          if chapeau.meta.auteur
+            = chapeau.meta.auteur
+          if chapeau.meta.relu
+            |  · relu le #{new Date(chapeau.meta.relu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+
+    if classe.enfants.length > 0
+      nav.classes(aria-label="Sous-classes")
+        //- L'unité en tête de colonne, pas à chaque ligne.
+        h2.classes-titre
+          | Sous-classes
+          span.classes-unite Spécialités commercialisées
+        ul.classes-liste
+          each enfant in classe.enfants
+            li
+              a.classe-lien(href=`/classe/${enfant.code}`)
+                span.classe-code= enfant.code
+                span.classe-label= phrase(enfant.label)
+                span.classe-compte= enfant.specialites.toLocaleString('fr-FR')
+
+    //- Toutes les molécules de la classe (arbre aplati), les plus répandues
+    //- d'abord ; au-delà de vingt, le reste est replié mais jamais omis.
+    if molecules && molecules.length > 0
+      - const TETE = 20
+      - const principales = molecules.slice(0, TETE)
+      - const reste = molecules.slice(TETE)
+      nav.classes.classes-molecules(aria-label="Molécules de la classe")
+        h2.classes-titre
+          | Molécules · #{molecules.length.toLocaleString('fr-FR')}
+          span.classes-unite Spécialités commercialisées
+        ul.classes-liste
+          each molecule in principales
+            li
+              a.classe-lien(href=`/classe/${molecule.code}`)
+                span.classe-code= molecule.code
+                span.classe-label= dci(molecule.label)
+                span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
+        if reste.length > 0
+          details.molecules-reste
+            summary.molecules-plus #{reste.length.toLocaleString('fr-FR')} autre#{reste.length > 1 ? 's' : ''} molécule#{reste.length > 1 ? 's' : ''}
+            ul.classes-liste
+              each molecule in reste
+                li
+                  a.classe-lien(href=`/classe/${molecule.code}`)
+                    span.classe-code= molecule.code
+                    span.classe-label= dci(molecule.label)
+                    span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
+
+    //- Biosimilaires substituables : règle commune et lien vers l'arrêté ; les
+    //- conditions propres à la molécule changent d'un arrêté à l'autre.
+    if substitution
+      aside.substitution
+        p
+          strong Substituable en officine.
+          |  Le pharmacien peut substituer au sein du groupe biologique similaire,
+          |  sauf mention « non substituable » justifiée par le prescripteur ; il en
+          |  informe le prescripteur et le patient, et assure la continuité de la
+          |  dispensation.
+        p.substitution-source
+          | Conditions propres à la molécule :
+          |
+          a(href=substitution.url_arrete target="_blank" rel="noopener noreferrer") arrêté du #{new Date(substitution.arrete_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          |  ·
+          |
+          a(href=substitution.url_conditions target="_blank" rel="noopener noreferrer") règles de dispensation (ameli)
+
+    if feuille
+      - const nombre = (groupesFormes) => groupesFormes.reduce((total, groupeForme) => total + groupeForme.total, 0)
+      section.groupe
+        h2.groupe-titre
+          | Spécialités commercialisées
+          span.compte #{nombre(commercialisees).toLocaleString('fr-FR')}
+        +formes(commercialisees)
+        //- Les non commercialisées restent consultables, repliées.
+        if retirees.length > 0
+          - const nRetirees = nombre(retirees)
+          details.molecules-reste
+            summary.molecules-plus #{nRetirees.toLocaleString('fr-FR')} spécialité#{nRetirees > 1 ? 's' : ''} non commercialisée#{nRetirees > 1 ? 's' : ''}
+            +formes(retirees)
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

@@ -1,0 +1,27 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+
+block content
+  +barreSituation('Fiches')
+
+  main.corps
+    header.doc-entete
+      h1.section-titre Fiches
+      p.page-meta Listes thématiques, chaque substance citée depuis son RCP.
+
+    if fiches.length === 0
+      p.vide Aucune fiche publiée pour l'instant.
+    else
+      ul.liste
+        each fiche in fiches
+          li
+            a.resultat(href=`/fiches/${fiche.slug}`)
+              span.resultat-nom= fiche.meta.titre || fiche.slug
+              if fiche.meta.relu
+                span.resultat-dci Relu le #{fiche.meta.relu}
+              else
+                span.resultat-dci Brouillon
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)

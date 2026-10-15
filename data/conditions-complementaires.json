@@ -1,0 +1,15 @@
+{
+  "titre": "Conditions de prescription et de délivrance absentes de la BDPM",
+  "note": "Complète dbpm.cis_cpd_bdpm pour une spécialité que la BDPM laisse sans aucune condition alors que son statut ne fait pas de doute. Ne remplace jamais la base : sans effet dès qu'elle enregistre une condition pour ce CIS (npm run check-donnees le signale). Une entrée sans confirme_le n'est pas appliquée. Aucune règle tirée des équivalents ne suffit : une exonération (Allervi, Nexium Control, Toprec 25 mg…) est souvent la seule spécialité non listée de sa substance.",
+  "specialites": [
+    {
+      "cis": "64446079",
+      "denomination": "GABAPENTINE TEVA SANTE 400 mg, gélule",
+      "conditions": ["liste I"],
+      "motif": "La gabapentine n'a pas d'exonération : ses 70 autres spécialités de la BDPM sont en liste I. Aucune condition enregistrée pour cette AMM du 18 mars 2025.",
+      "constate_le": "2026-10-13",
+      "confirme_par": "Laurent Staub",
+      "confirme_le": "2026-10-13"
+    }
+  ]
+}

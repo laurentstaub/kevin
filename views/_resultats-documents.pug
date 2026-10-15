@@ -1,0 +1,200 @@
+//- Trouvailles en tableau, sous deux formes.
+//- Large (recherche transversale, « QT ») : une ligne par molécule, une colonne
+//- par rubrique, colonnes fixes pour rester apprises ; le reste va dans « Autres ».
+//- Ciblée (médicament reconnu, question, rubrique choisie) : plus de colonnes,
+//- la molécule puis ses phrases, chacune menant à sa rubrique.
+//- Un nom de groupe peut dépasser 1 600 caractères : vrai tableau en `fixed`.
+//-
+//- @param {object}  recherche sortie de chercherDansDocuments
+//- @param {string}  requete   la requête, pour le lien « tout voir » et les filtres
+//- @param {boolean} resume    vue courte, au sein de la page de résultats
+//- @param {Array}   colonnes  [[numéro, libellé], …] — COLONNES
+//- @param {string}  rubrique  la rubrique filtrée, ou rien
+//- @param {boolean} ciblee    recherche ciblée : les phrases remplacent les colonnes
+mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, lien, ciblee)
+  - const cles = colonnes.map((colonne) => colonne[0])
+  - const large = !rubrique && !ciblee
+  - const colonnesVues = large ? colonnes : []
+  - const colspan = 1 + colonnesVues.length + (large ? 1 : 0)
+  //- Transmise à la fiche, qui la surligne.
+  - const q = `?q=${encodeURIComponent(requete)}`
+
+  //- Légende inutile pour un mot seul ou une locution entre guillemets (tout est plein).
+  if recherche.exacte && large
+    p.legende
+      span.point.point-legende(aria-hidden="true")
+      |  expression « #{requete} » exacte
+      span.point.point-epars.point-legende(aria-hidden="true")
+      |  expression partielle
+      //- Dans « Autres », même règle par le soulignement (plein, pointillé) ;
+      //- la lettre N distingue la notice du RCP.
+      span.legende-autres  · N : présent dans la notice
+
+  table.trouvailles(class=large ? null : 'trouvailles-ciblees')
+    caption.sr-only
+      | Molécules dont un document contient l'expression cherchée, et rubriques où elle figure
+    //- Ciblée : ni colonnes ni en-tête, la molécule et ses phrases suffisent.
+    if large
+      colgroup
+        col.col-molecule
+        each colonne in colonnesVues
+          col.col-rubrique
+        col.col-autres
+      thead
+        tr
+          th.th-molecule(scope="col") Molécule
+          each colonne in colonnesVues
+            th.th-rubrique(scope="col")
+              a.th-lien(href=lien(etat, { rubrique: colonne[0] })
+                data-titre=`N'afficher que ${colonne[0]} ${colonne[1]}`)= colonne[0]
+          th.th-autres(scope="col") Autres
+
+    each trouvaille in recherche.resultats
+      -
+        const rubriques = trouvaille.rubriques || [];
+        const par = Object.fromEntries(rubriques
+          .filter((rub) => rub.type !== 'notice')
+          .map((rub) => [rub.numero, rub]));
+        const autres = rubriques.filter((rub) => rub.type === 'notice' || !cles.includes(rub.numero));
+        // Préfixe « N » : la rubrique 2 d'une notice n'est pas celle d'un RCP.
+        const court = (rub) => (rub.type === 'notice' ? 'N' : '') + rub.numero;
+        const long = (rub) => (rub.type === 'notice' ? 'Notice · ' : '') + rub.numero + ' ' + rub.libelle
+          + (recherche.exacte && !rub.exact ? ' — mots séparés' : '')
+          + (rub.denomination ? ' — ' + specialite(rub.denomination) : '');
+
+      tbody.trouvaille
+        - const formes = trouvaille.formes || []
+        tr
+          th.cellule-molecule(scope="row")
+            //- Plusieurs spécialités : la molécule déplie ses dosages (ligne suivante).
+            //- Une seule : lien direct vers son passage, requête surlignée.
+            if formes.length && trouvaille.specialites > 1
+              details.trouvaille-details
+                summary
+                  span.trouvaille-molecule(title=dci(trouvaille.molecule))= dci(trouvaille.molecule)
+                  span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
+            else
+              span.trouvaille-tete
+                a.trouvaille-molecule(
+                  href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`
+                  title=dci(trouvaille.molecule)
+                )= dci(trouvaille.molecule)
+                if trouvaille.specialites > 1
+                  span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
+
+          //- Point plein : expression telle quelle ; creux : mots dispersés.
+          //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.
+          //- Le point mène au RCP de la spécialité représentante (princeps de
+          //- préférence), nommée dans l'infobulle ; l'accordéon déplié donne les
+          //- points de chaque dosage.
+          - const vers = (rub) => `/product/${rub.cis}${q}#${rub.ancre}`
+          each colonne in colonnesVues
+            td.cellule-rubrique
+              if par[colonne[0]]
+                - const rub = par[colonne[0]]
+                a.point(
+                  class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                  href=vers(rub)
+                  title=long(rub)
+                  aria-label=long(rub)
+                  data-cis=rub.cis
+                  data-type=rub.ancre.split('-')[0]
+                  data-position=rub.ancre.split('-')[1]
+                )
+
+          if large
+            td.cellule-autres
+              each rub in autres
+                a.autre(
+                  class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                  href=vers(rub)
+                  title=long(rub)
+                  aria-label=long(rub)
+                  data-cis=rub.cis
+                  data-type=rub.ancre.split('-')[0]
+                  data-position=rub.ancre.split('-')[1]
+                )= court(rub)
+
+        //- Dépliée par la molécule ; masquée par CSS tant qu'elle est repliée.
+        //- Vue large : une ligne par dosage avec ses propres points, chacun menant
+        //- à son RCP. Vue ciblée (sans colonnes) : la liste des dosages.
+        if formes.length && trouvaille.specialites > 1 && large
+          each groupeForme in formes
+            tr.ligne-dosages.ligne-forme
+              td(colspan=colspan)= groupeForme.forme
+            each groupeNom in groupeForme.noms
+              each dosage in groupeNom.dosages
+                -
+                  const siennes = dosage.rubriques || [];
+                  const parSienne = Object.fromEntries(siennes.filter((rub) => rub.type !== 'notice').map((rub) => [rub.numero, rub]));
+                  const autresSiennes = siennes.filter((rub) => rub.type === 'notice' || !cles.includes(rub.numero));
+                  const cible = (rub) => `/product/${dosage.id}${q}#${rub.ancre}`;
+                tr.ligne-dosages.ligne-specialite
+                  th.cellule-specialite(scope="row")
+                    a.dosage-lien(href=`/product/${dosage.id}${q}${dosage.ancre ? `#${dosage.ancre}` : ''}` title=specialite(dosage.denomination))
+                      | #{specialite(groupeNom.nom)} #{dosage.etiquette}#{groupeNom.uniteCourte ? ` ${groupeNom.uniteCourte}` : ''}
+                    if groupeNom.princeps
+                      span.marque Princeps
+                  each colonne in colonnesVues
+                    td.cellule-rubrique
+                      if parSienne[colonne[0]]
+                        - const rub = parSienne[colonne[0]]
+                        a.point.point-dosage(
+                          class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                          href=cible(rub)
+                          title=long(rub)
+                          aria-label=long(rub)
+                          data-cis=dosage.id
+                          data-type=rub.ancre.split('-')[0]
+                          data-position=rub.ancre.split('-')[1]
+                        )
+                  td.cellule-autres
+                    each rub in autresSiennes
+                      a.autre(
+                        class=recherche.exacte && !rub.exact ? 'point-epars' : null
+                        href=cible(rub)
+                        title=long(rub)
+                        data-cis=dosage.id
+                        data-type=rub.ancre.split('-')[0]
+                        data-position=rub.ancre.split('-')[1]
+                      )= court(rub)
+        else if formes.length && trouvaille.specialites > 1
+          tr.ligne-dosages
+            td(colspan=colspan)
+              each groupeForme in formes
+                p.dosages-forme= groupeForme.forme
+                each groupeNom in groupeForme.noms
+                  .resultat-forme
+                    span.dosages-nom= specialite(groupeNom.nom)
+                    if groupeNom.princeps
+                      span.marque Princeps
+                    if groupeNom.importation
+                      span.marque Importation
+                    +dosages(groupeNom, requete)
+
+        //- Recherche ciblée : la phrase trouvée dans chaque rubrique, sous la ligne.
+        //- La rubrique est le lien vers le RCP ; la phrase se lit sur place.
+        - const detaillees = rubriques.filter((rub) => rub.extrait)
+        if detaillees.length > 0
+          tr.ligne-phrases
+            td(colspan=colspan)
+              each rub in detaillees
+                p.trouvaille-extrait
+                  a.phrase-rubrique(href=`/product/${rub.cis}${q}#${rub.ancre}` title=long(rub))= court(rub)
+                  |  
+                  //- Non échappé : `marquer` a tout échappé, sauf les <mark>.
+                  span!= rub.extrait
+                  //- D'où vient la phrase : une molécule a plusieurs RCP.
+                  if rub.denomination && trouvaille.specialites > 1
+                    |  
+                    span.phrase-source — #{specialite(rub.denomination)}
+
+  if resume && recherche.total > recherche.resultats.length
+    p.trouvailles-suite
+      a(href=lien(etat, { mode: 'documents' }))
+        | Voir les #{recherche.total.toLocaleString('fr-FR')} rubriques et filtrer →
+  else if recherche.borne && !recherche.suite
+    //- Toutes les molécules sont classées ; au-delà des premières, on affine.
+    p.section-meta
+      | Les #{recherche.moleculesMax} molécules les mieux classées sont détaillées, sur #{recherche.molecules.toLocaleString('fr-FR')}.
+      |  Précisez la requête, un médicament ou une rubrique pour les autres.

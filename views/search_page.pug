@@ -1,275 +1,152 @@
-doctype html
-html(lang="fr")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title Demander à Kevin
-    link(rel="stylesheet", href="/css/style.css")
-    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
+extends layout.pug
+include _recherche.pug
+include _resultats-documents.pug
+include _dosages.pug
 
-  body
-    .search-container
-      h1.page-title Demander à Kevin
-      .search-wrapper
-        form.search-form(method="GET" action="/search")
-          .input-wrapper
-            input.search-input(
-              type="text"
-              name="q"
-              placeholder="Rechercher un médicament..."
-              value=query
-              autocomplete="off"
-            )
-            button.search-button(type="submit")
-              i.fa-light.fa-magnifying-glass
-        
-        #suggestions.suggestions-dropdown
-          .suggestions-list
+//- Une ligne par produit (racine de marque), pas par code CIS, avec le nombre
+//- de présentations et d'importations regroupées.
+//- Un produit trouvé : nom et mentions, laboratoire, puis une ligne par forme
+//- avec ses dosages en liens. Le nom n'est pas un lien : on choisit le dosage,
+//- comme sur la page d'une molécule.
+mixin produit(result)
+  li
+    .resultat.resultat-produit
+      .specialite-ligne
+        span.specialite-nom
+          = specialite(result.libelle)
+          if result.princeps
+            span.marque Princeps
+          if result.importation
+            span.marque Importation parallèle
+          if result.commercialise === false
+            span.marque Non commercialisé
+        if result.titulaires
+          span.specialite-labo= result.titulaires
+      if result.active_ingredients
+        span.resultat-dci= dci(result.active_ingredients)
+      each groupeForme in result.formes || []
+        each groupeNom in groupeForme.noms
+          .resultat-forme
+            span.resultat-forme-nom= groupeForme.forme
+            +dosages(groupeNom)
 
-      #loading.loading Recherche en cours...
+block content
+  //- Bandeau en deux temps : le titre défile, le champ reste collé en haut
+  //- comme la barre des autres pages. Deux blocs frères : collé, le second
+  //- ne serait pas retenu par un parent qui défile.
+  header.accueil
+    .accueil-inner
+      +apparence
+      //- Le titre sert de retour à l'accueil (pas de barre de situation ici),
+      //- sauf sur la page nue, où il reste du texte.
+      h1.titre-site
+        if results
+          a.titre-lien(href="/") Dr Kevin
+        else
+          | Dr Kevin
+      p.accueil-champ Base de données publique des médicaments
+  .accueil-colle
+    .accueil-inner
+      +champRecherche(query, false)
 
-      if error
-        .error= error
+      //- Exemples cliquables pour révéler la recherche plein texte sur la page de garde.
+      if !results
+        p.accueil-exemple
+          | Cherchez aussi dans le texte des documents :
+          |
+          a(href=lien({ mode: 'documents', requete: 'allongement QT' })) allongement QT
+          |
+          span.sep
+          a(href=lien({ mode: 'documents', requete: 'insuffisance hépatique sévère' })) insuffisance hépatique sévère
 
-      #results
-        if query
-          .search-filters
-            .filter-tabs
-              a.filter-tab(class=(!filter || filter === 'all' ? 'active' : ''), href=`/search?q=${query}`) Tous
-              a.filter-tab(class=(filter === 'specialty' ? 'active' : ''), href=`/search?q=${query}&filter=specialty`) Spécialités
-              a.filter-tab(class=(filter === 'active' ? 'active' : ''), href=`/search?q=${query}&filter=active`) Actifs
-          .results
-            if results && (results.brandMatches.length > 0 || results.activeIngredientMatches.length > 0 || results.relatedProducts.length > 0)
+  .recherche
+    if notice
+      p.notice= notice
 
-              if results.brandMatches && results.brandMatches.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-tag
-                    span Spécialités pharmaceutiques
-                    span.result-count (#{results.brandMatches.length})
-                  .category-results
-                    each result in results.brandMatches
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
+    //- Entrée par classe ATC, pour qui ne cherche pas un nom.
+    if !results && classes && classes.length > 0
+      nav.classes(aria-label="Parcourir par classe thérapeutique")
+        h2.classes-titre
+          | Parcourir par classe thérapeutique
+          span.classes-unite Spécialités commercialisées
+        ul.classes-liste
+          each classe in classes
+            li
+              a.classe-lien(href=`/classe/${classe.code}`)
+                span.classe-code= classe.code
+                span.classe-label= phrase(classe.label)
+                span.classe-compte= classe.specialites.toLocaleString('fr-FR')
 
-              if results.activeIngredientMatches && results.activeIngredientMatches.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-flask
-                    span Principes actifs
-                    span.result-count (#{results.activeIngredientMatches.length})
-                  .category-results
-                    each result in results.activeIngredientMatches
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
+    //- Les vingt molécules les plus fournies, toutes classes confondues ; les
+    //- autres se trouvent par les classes.
+    if !results && molecules && molecules.length > 0
+      nav.classes.classes-molecules(aria-label="Top 20 des molécules avec le plus de spécialités")
+        h2.classes-titre
+          | Top 20 des molécules avec le plus de spécialités
+          span.classes-unite Spécialités commercialisées
+        ul.classes-liste
+          each molecule in molecules
+            li
+              a.classe-lien(href=`/classe/${molecule.code}`)
+                span.classe-code= molecule.code
+                span.classe-label= dci(molecule.label)
+                span.classe-compte= molecule.specialites.toLocaleString('fr-FR')
 
-              if results.relatedProducts && results.relatedProducts.length > 0
-                .result-category
-                  h3.category-title
-                    i.fa-light.fa-pills
-                    span Génériques et alternatives
-                    span.result-count (#{results.relatedProducts.length})
-                  .category-results
-                    each result in results.relatedProducts
-                      a.result-item(href=`/product/${result.id}`)
-                        div.result-name= result.denomination_medicament
-                        if result.active_ingredients
-                          div.result-active-ingredients
-                            span= result.active_ingredients
-            else
-              .no-results Pas de résultat
+    #results
+      if results
+        //- Filtres au-dessus de la liste qu'ils pilotent.
+        nav.filtres(aria-label="Filtrer les résultats")
+          a.filtre(class=(filter === 'all' ? 'actif' : ''), href=lien(etat, { filtre: 'all' })) Tous
+          a.filtre(class=(filter === 'specialty' ? 'actif' : ''), href=lien(etat, { filtre: 'specialty' })) Dénomination
+          a.filtre(class=(filter === 'active' ? 'actif' : ''), href=lien(etat, { filtre: 'active' })) Principe actif
+          //- Recherche plein texte : autre page (ses propres filtres), mais annoncée ici.
+          a.filtre.filtre-ailleurs(href=lien(etat, { mode: 'documents' }))
+            | Dans les documents
+            if documents && documents.total > 0
+              span.filtre-compte #{documents.total.toLocaleString('fr-FR')}
 
-    script.
-      const searchForm = document.querySelector('.search-form');
-      const searchWrapper = document.querySelector('.search-wrapper');
-      const searchInput = searchForm.querySelector('.search-input');
-      const suggestionsDropdown = document.getElementById('suggestions');
-      const suggestionsList = suggestionsDropdown.querySelector('.suggestions-list');
-      const loadingIndicator = document.getElementById('loading');
-      
-      let currentSuggestionIndex = -1;
-      let suggestions = [];
-      
-      // Function to show suggestions
-      function showSuggestions() {
-        suggestionsDropdown.style.display = 'block';
-        searchWrapper.classList.add('suggestions-visible');
-      }
+        if results.total > 0
+          //- Terme = molécule : une seule liste, sinon le princeps (SERESTA) passerait
+          //- sous les génériques qui portent le nom (OXAZEPAM <labo>).
+          if results.dci
+            section.groupe
+              h2.groupe-titre
+                | Médicaments contenant #{results.substance || query}
+                span.compte #{results.produits.length}
+              ul.liste
+                each result in results.produits
+                  +produit(result)
+          else
+            if results.brandMatches.length > 0
+              section.groupe
+                h2.groupe-titre
+                  | Trouvés par dénomination
+                  span.compte #{results.brandMatches.length}
+                ul.liste
+                  each result in results.brandMatches
+                    +produit(result)
 
-      // Function to hide suggestions
-      function hideSuggestions() {
-        suggestionsDropdown.style.display = 'none';
-        searchWrapper.classList.remove('suggestions-visible');
-        currentSuggestionIndex = -1;
-        updateSelectedSuggestion();
-      }
+            if results.activeIngredientMatches.length > 0
+              section.groupe
+                h2.groupe-titre
+                  | Trouvés par principe actif
+                  span.compte #{results.activeIngredientMatches.length}
+                ul.liste
+                  each result in results.activeIngredientMatches
+                    +produit(result)
+        else if !documents || documents.resultats.length === 0
+          p.vide Aucun résultat pour « #{query} ».
 
-      // Function to update the visual selection of suggestions
-      function updateSelectedSuggestion() {
-        const items = suggestionsList.querySelectorAll('.suggestion-item');
-        items.forEach((item, index) => {
-          if (index === currentSuggestionIndex) {
-            item.classList.add('selected');
-          } else {
-            item.classList.remove('selected');
-          }
-        });
-      }
+        //- Documents sous les spécialités ; seuls s'il n'y a aucune spécialité.
+        if panne
+          p.section-meta= panne
+        if documents && documents.resultats.length > 0
+          section.groupe
+            h2.groupe-titre
+              | Dans les documents
+              span.compte #{documents.total.toLocaleString('fr-FR')}
+            +resultatsDocuments(documents, query, true, colonnes, null, etat, lien)
 
-      // Function to handle keyboard navigation
-      function handleKeyboardNavigation(e) {
-        const items = suggestionsList.querySelectorAll('.suggestion-item');
-        
-        if (!items.length) return;
-
-        switch (e.key) {
-          case 'ArrowDown':
-            e.preventDefault();
-            currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, items.length - 1);
-            updateSelectedSuggestion();
-            break;
-
-          case 'ArrowUp':
-            e.preventDefault();
-            currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
-            updateSelectedSuggestion();
-            if (currentSuggestionIndex === -1) {
-              searchInput.value = searchInput.dataset.originalValue || searchInput.value;
-            }
-            break;
-
-          case 'Enter':
-            if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
-              e.preventDefault();
-              const selectedItem = items[currentSuggestionIndex];
-              window.location.href = `/product/${suggestions[currentSuggestionIndex].id}`;
-            }
-            break;
-
-          case 'Escape':
-            hideSuggestions();
-            searchInput.blur();
-            break;
-        }
-
-        // Update input value when navigating through suggestions
-        if (currentSuggestionIndex >= 0 && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-          const selectedItem = suggestions[currentSuggestionIndex];
-          if (selectedItem) {
-            if (!searchInput.dataset.originalValue) {
-              searchInput.dataset.originalValue = searchInput.value;
-            }
-            searchInput.value = selectedItem.denomination_medicament;
-          }
-        }
-      }
-
-      // Debounce function
-      function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-      }
-
-      // Function to fetch suggestions
-      async function fetchSuggestions(query) {
-        if (query.length < 3) {
-          hideSuggestions();
-          return;
-        }
-
-        loadingIndicator.style.display = 'block';
-        try {
-          const response = await fetch(`/search?q=${encodeURIComponent(query)}`, {
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          const data = await response.json();
-
-          // Flatten categorized results for suggestions
-          const allResults = [];
-          if (data.results) {
-            if (data.results.brandMatches) allResults.push(...data.results.brandMatches);
-            if (data.results.activeIngredientMatches) allResults.push(...data.results.activeIngredientMatches);
-            if (data.results.relatedProducts) allResults.push(...data.results.relatedProducts.slice(0, 3));
-          }
-
-          if (allResults.length > 0) {
-            suggestions = allResults;
-            displaySuggestions(allResults);
-          } else {
-            hideSuggestions();
-          }
-        } catch (error) {
-          console.error('Error fetching suggestions:', error);
-          hideSuggestions();
-        } finally {
-          loadingIndicator.style.display = 'none';
-        }
-      }
-
-      // Function to display suggestions
-      function displaySuggestions(results) {
-        suggestionsList.innerHTML = '';
-        currentSuggestionIndex = -1;
-        
-        results.slice(0, 5).forEach(result => {
-          const div = document.createElement('div');
-          div.className = 'suggestion-item';
-          
-          const activeIngredientsHtml = result.active_ingredients ? 
-            `<div class="suggestion-active-ingredients">
-              <span>${result.active_ingredients}</span>
-            </div>` : '';
-          
-          div.innerHTML = `
-            <div class="suggestion-name">${result.denomination_medicament}</div>
-            ${activeIngredientsHtml}
-          `;
-          
-          div.addEventListener('click', () => {
-            window.location.href = `/product/${result.id}`;
-          });
-
-          div.addEventListener('mouseenter', () => {
-            currentSuggestionIndex = Array.from(suggestionsList.children).indexOf(div);
-            updateSelectedSuggestion();
-          });
-          
-          suggestionsList.appendChild(div);
-        });
-        
-        showSuggestions();
-      }
-
-      // Event listeners
-      const debouncedFetch = debounce(fetchSuggestions, 300);
-      
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        searchInput.dataset.originalValue = query;
-        debouncedFetch(query);
-      });
-
-      searchInput.addEventListener('keydown', handleKeyboardNavigation);
-
-      // Close suggestions when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!searchForm.contains(e.target)) {
-          hideSuggestions();
-        }
-      });
-
-      // Handle form submission
-      searchForm.addEventListener('submit', () => {
-        hideSuggestions();
-      });
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
+  script(src=`/js/extraits.js?v=${v}` defer)

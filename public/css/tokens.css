@@ -1,0 +1,258 @@
+/* Socle visuel de Dr Kevin (guide : DESIGN.md).
+ * Des gris pour le texte, un vert pour l'identité, repris d'antheosdata.com
+ * mais en bordure, pas en aplat : un RCP fait 40 000 signes.
+ */
+
+:root {
+  /* Noir légèrement vert, accordé à l'accent. */
+  --ink: #14201a;
+  --ink: light-dark(#14201a, #d8ded9);
+  --muted: #5f6b62;
+  --muted: light-dark(#5f6b62, #a7b1aa);
+  /* Assez foncé pour passer le seuil WCAG : il porte des libellés et des codes ATC. */
+  --faint: #6b7770;
+  --faint: light-dark(#6b7770, #929c95);
+  --rule: #e3e9e4;
+  --rule: light-dark(#e3e9e4, #1f2a22);
+  --rule-medium: #b6c0b9;
+  --rule-medium: light-dark(#b6c0b9, #37453b);
+  --rule-strong: #14201a;
+  --rule-strong: light-dark(#14201a, #e4eae5);
+
+  --bg: #ffffff;
+  --bg: light-dark(#ffffff, #0a100c);
+  --bg-alt: #f7faf7;
+  --bg-alt: light-dark(#f7faf7, #0f1611);
+  /* Teinte de section, adoucie pour les textes longs. */
+  --bg-tint: #f2f7f2;
+  --bg-tint: light-dark(#f2f7f2, #121a14);
+  /* Champ de saisie : blanc en clair ; en sombre, un cran plus clair que le
+     bandeau, sans noir dur. */
+  --champ: #ffffff;
+  --champ: light-dark(#ffffff, #1f2321);
+  /* Réservé à l'en-tête d'accueil, seule page sans texte long. */
+  --bg-fonce: #123b22;
+
+  /* --accent porte du texte (7,79 sur blanc). Aucun aplat vert vif : le site
+     n'a plus de bouton plein, l'action de recherche est une flèche dans le champ. */
+  --accent: #1b5e33;
+  --accent: light-dark(#1b5e33, #9aec3a);
+  /* Liens : vert vif, 5,02 sur blanc, 3,35 face à l'encre. Toujours soulignés
+     dans le contenu ; la navigation ne se souligne qu'au survol. */
+  --lien: #15803d;
+  --lien: light-dark(#15803d, #9aec3a);
+  --accent-soft: #a9cdb4;
+  --accent-soft: light-dark(#a9cdb4, #3f5c48);
+  /* État sélectionné : doit se distinguer de --bg-tint. Encre 14,31, accent 6,64. */
+  --accent-pale: #e4f0e6;
+  --accent-pale: light-dark(#e4f0e6, #1a2a1e);
+  /* Surlignage des termes trouvés : un vrai stabilo, lisible sur un écran
+     médiocre en plein soleil. Encre sombre dessus dans les deux schémas (≈ 13:1). */
+  /* Substance en interaction (4.5) : ambre en clair (5,8:1 sur blanc), jaune
+     en sombre (≈ 11:1). Seul usage du jaune : il désigne la substance, pas l'alerte. */
+  --interaction: #8a5a00;
+  --interaction: light-dark(#8a5a00, #f2c14e);
+  --surligne: #c8f560;
+  --surligne: light-dark(#c8f560, #9aec3a);
+  --sur-surligne: #0a100c;
+
+  /* Typographie */
+  --font-head: Georgia, 'Times New Roman', serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Serif de lecture pour les textes longs, parmi les polices système. */
+  --font-lecture: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+
+  /* Échelle 1.333 depuis 16 px */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.333rem;
+  --fs-lg: 1.777rem;
+  --fs-xl: 2.369rem;
+
+  /* Espacement, unité 8 px */
+  --sp-1: 0.5rem;
+  --sp-2: 1rem;
+  --sp-3: 1.5rem;
+  --sp-4: 2rem;
+  --sp-6: 3rem;
+  --sp-8: 4rem;
+
+  /* Rayons (écart assumé avec le socle Antheos) : ce qui se manipule
+     s'arrondit, ce qui se lit reste droit.
+       --radius-control   ce qui se clique ou se saisit
+       --radius-surface   objet posé sur la page */
+  --radius-control: 6px;
+  --radius-surface: 10px;
+  --rule-width: 1px;
+  /* Barre de situation : ancres et rail collant s'en écartent d'autant. */
+  --barre-h: 3.75rem;
+  /* Une seule largeur, tout en dérive. Ligne à 87 signes (au-delà de 75),
+     compensée par l'interligne ; filet et texte s'arrêtent au même endroit. */
+  /* Colonne des numéros de rubrique : triangle de dépliage + « 4.10 »
+     (« 4.10 » seul en grand écran, triangle suspendu : product.css). */
+  --num-col: 3.2rem;
+  --gouttiere: calc(var(--num-col) + 0.5rem);
+  --colonne: 46rem;
+
+  /* Dérivées : la mesure ne peut pas diverger du cadre. */
+  --measure: calc(var(--colonne) - var(--gouttiere));
+  --lecture: var(--colonne);
+
+  /* Les deux schémas sont servis : champs, défilement et surlignage natifs
+     suivent celui du système, et chaque jeton couleur porte ses deux valeurs
+     en light-dark(). La valeur claire seule, juste avant, est le repli des
+     navigateurs d'avant 2024, qui restent en clair. */
+  color-scheme: light dark;
+  /* Soulignement des liens : trait et couleur, affinés en sombre. */
+  --trait: 1px;
+  --gras: currentColor;
+  --lissage: auto;
+  --trait-couleur: currentcolor;
+  --trait-couleur: light-dark(currentcolor, color-mix(in srgb, currentcolor 55%, transparent));
+}
+
+/* Sombre : fond vert-noir profond, encre blanc cassé pour les 40 000 signes
+   d'un RCP — pas blanche, la halation sur le noir amincit les traits —,
+   liens et accent en vert-jaune fluo. Contrastes sur le fond :
+   encre 13,9, gris 8,7 et 6,8, lien 13,2, alerte 7,5.
+   Apparence forcée par le bouton (theme.js) ; sans choix, celle du système.
+   Les couleurs sont en light-dark() : forcer, c'est forcer color-scheme. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* Ce qui n'est pas une couleur, light-dark() ne le couvre pas : le trait des
+   liens, et le corps. En polarité inverse l'acuité baisse et les traits clairs
+   paraissent plus maigres : 17 px au lieu de 16, tout en rem suit d'un bloc. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
+}
+
+:root[data-theme="dark"] { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
+
+/* À l'impression, toujours clair, même forcé en sombre. */
+@media print {
+  :root, :root[data-theme="dark"] { color-scheme: light; --trait: 1px; --gras: currentColor; --lissage: auto; --interaction: #000; font-size: 100%; }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Rayon posé ici, pas sur `*`, pour laisser les arrondis locaux possibles. */
+input,
+select,
+textarea,
+button {
+  border-radius: var(--radius-control);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+  /* Sombre : sans le lissage sous-pixel, le texte clair cesse de s'épaissir
+     et le gras ressort. Sans effet hors Mac et iOS. */
+  -webkit-font-smoothing: var(--lissage);
+}
+
+/* Le gras, sur fond sombre, gagne en blancheur ce qu'il ne gagne pas en
+   graisse ; en clair, la couleur du texte. Toujours le vrai gras, pas le 600
+   synthétique de certaines polices. */
+strong,
+b {
+  font-weight: 700;
+  color: var(--gras);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-head);
+  line-height: 1.15;
+  font-weight: 400;
+  margin: 0;
+}
+
+a {
+  color: var(--lien);
+  text-decoration-thickness: var(--trait);
+  text-decoration-color: var(--trait-couleur);
+  text-underline-offset: 3px;
+}
+
+a:hover,
+a:focus-visible { text-decoration-thickness: calc(var(--trait) + 1px); }
+
+/* Tableaux : filets horizontaux seuls, pas de fond alterné. */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--fs-sm);
+}
+
+th,
+td {
+  text-align: left;
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) 0;
+  border: none;
+  border-bottom: var(--rule-width) solid var(--rule);
+  vertical-align: baseline;
+}
+
+thead th {
+  font-weight: 400;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  border-bottom-color: var(--rule-strong);
+  padding-bottom: var(--sp-1);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td.code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Métadonnées de page : une seule occurrence, sous le titre. */
+.page-meta {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+  max-width: var(--measure);
+}
+
+.sep {
+  color: var(--rule);
+  margin: 0 0.6em;
+}
+
+.sep::before {
+  content: '|';
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -1,0 +1,34 @@
+//- Champ de recherche partagé : un seul balisage, car `public/js/search.js`
+//- s'accroche à ces classes et identifiants.
+//- Même invite partout : on cherche un nom, une molécule ou une expression des documents.
+//-
+//- @param {string} valeur   ce que porte le champ au chargement
+//- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
+//- @param {string} action  où resoumettre : la page courante, pour ne pas changer de mode
+mixin champRecherche(valeur, compact, action)
+  .search-wrapper(class=compact ? 'search-compacte' : null)
+    form.search-form(method="GET" action=action || "/search" role="search")
+      .input-wrapper
+        input.search-input(
+          type="search"
+          name="q"
+          placeholder='Dénomination, principe actif ou expression'
+          value=valeur
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Rechercher un médicament"
+          aria-autocomplete="list"
+          aria-controls="suggestions"
+        )
+        //- Flèche de retour chariot, dans le champ : la touche Entrée dessinée.
+        button.search-button(type="submit" aria-label="Chercher" title="Chercher")
+          svg(viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false")
+            path(d="M20 5v6a3 3 0 0 1-3 3H5M9 10l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round")
+
+    #suggestions.suggestions(role="listbox" hidden)
+      .suggestions-list
+
+    //- Pour le lecteur d'écran seulement : affiché, il faisait respirer le
+    //- bandeau à chaque lettre tapée.
+    #loading.loading.sr-only(role="status" aria-live="polite") Recherche…

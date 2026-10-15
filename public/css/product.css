@@ -1,251 +1,1504 @@
-:root {
-    --noir: #181818;
-    --grisfonce: #484747;
-    --gris: #6f6f6f;
-    --grisleger: #999999;
-    --grisclair: #dcdcdc;
-    --blanc: rgb(250, 250, 250);
-    --vert: #338336;
-    --bleu: #0066cc;
-  }
+/* Fiche produit : bandeau d'identité pleine largeur, sur l'axe unique de la page.
+ * Ni carte ni encadré : filets et blanc portent la hiérarchie. */
 
-.product-container {
-  max-width: 1200px;
+/* Bandeau d'identité blanc : la teinte est réservée à l'habillage (barre, rail).
+   En deux parts, le fil ATC au-dessus et les métadonnées au-dessous de la
+   dénomination, qui colle entre les deux. */
+.identite {
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+}
+
+.identite-haut {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.identite-bas {
+  padding-top: 0;
+}
+
+.identite-inner {
+  max-width: var(--colonne);
   margin: 0 auto;
-  padding: 0 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
-.product-header {
-  margin-bottom: 2rem;
+/* Hauteur de la dénomination collée : la bande et les ancres s'alignent dessous. */
+:root {
+  --nom-h: 3rem;
 }
 
-.back-button {
-  display: inline-flex;
+/* La dénomination colle sous la barre ; une fois collée (classe posée par
+   documents.js), elle prend le fond de la barre, un filet, et une ligne. */
+.titre-colle {
+  position: sticky;
+  top: var(--barre-h);
+  z-index: 19;
+  min-height: var(--nom-h);
+  padding: 0 var(--sp-4);
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--bleu);
-  text-decoration: none;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
 }
 
-.back-button:hover {
-  text-decoration: underline;
+.titre-colle > .identite-inner {
+  width: 100%;
 }
 
-.product-title {
-  font-size: 2rem;
-  color: var(--noir);
-  margin: 0 0 0.5rem 0;
+.titre-colle.colle {
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+/* Un cran sous le plus grand corps : une dénomination de 60 signes tient sur
+   une ligne. Jamais tronquée en lecture ; collée, elle se coupe en « … ». */
+.produit-titre {
+  font-size: var(--fs-lg);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.titre-colle.colle .produit-titre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Dosages et formes ---------- */
+
+/* Autres dosages et formes : liens alignés ; le dosage affiché est dans le titre. */
+.formes {
+  margin-top: var(--sp-2);
+}
+
+.formes-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+/* Dépliant ouvert sur toute la rangée. */
+.formes-liste > li:has(> details[open]) {
+  flex: 1 0 100%;
+  margin-top: var(--sp-1);
+}
+
+.forme-choix {
+  /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
+  padding: 0.2em 0.1em;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+/* Encore autorisé, plus distribué : lisible, mais en retrait. */
+.forme-choix.forme-retiree {
+  color: var(--faint);
+  text-decoration-style: dashed;
+}
+
+.identite .page-meta {
+  font-size: var(--fs-sm);
+  max-width: none;
+}
+
+/* ---------- Bande signalétique ---------- */
+
+/* Hauteur de la bande : les ancres s'arrêtent sous barre + dénomination + bande. */
+:root {
+  --signal-h: 2.5rem;
+}
+
+/* Une ligne de valeurs, collante sous la dénomination : même fond et même
+   filet que la barre, dont elle devient la troisième ligne. Monochrome :
+   l'encre seule, l'aplat pour ce qui bloque. Déborde en défilant plutôt que
+   de se replier. */
+.signaletique {
+  position: sticky;
+  /* 1 px de moins : la dénomination colle 1 px sous la barre (voir documents.js). */
+  top: calc(var(--barre-h) + var(--nom-h) - 1px);
+  z-index: 18;
+  background: var(--bg-tint);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.signaletique-inner {
+  max-width: var(--colonne);
+  margin: 0 auto;
+  min-height: var(--signal-h);
+  padding: 0 var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.signal {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.signal .picto {
+  flex: none;
+  color: var(--muted);
+}
+
+a.signal-valeur {
+  color: var(--accent);
+}
+
+/* Ce qui empêche la délivrance : aplat plein, comme les mentions du bloc. */
+.signal-bloque {
+  background: var(--bg-fonce);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.1em 0.5em;
+  border-radius: var(--radius-control);
+}
+
+.signal-bloque .picto {
+  color: inherit;
+}
+
+/* Stupéfiant : se délivre en officine, sous conditions. La graisse et le
+   cadenas le distinguent, sans l'aplat réservé à ce qui ne s'y délivre pas. */
+.signal-fort {
   font-weight: 600;
 }
 
-.product-subtitle {
-  margin-bottom: 1rem;
+.signal-fort .picto {
+  color: var(--ink);
 }
 
-.product-category {
-  color: var(--vert);
+/* ---------- Grille asymétrique ---------- */
+
+/* Colonne unique. Sections repliables, fermées au chargement : la fiche
+   s'ouvre sur son plan. */
+.contenu > .bloc {
+  padding-top: var(--sp-4);
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
+}
+
+.bloc-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+  cursor: pointer;
+  list-style: none;
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.bloc-tete::-webkit-details-marker {
+  display: none;
+}
+
+/* Le titre ne se coupe jamais : sinon le triangle, rétréci par les mentions,
+   passe seul sur une ligne au-dessus du mot. Les mentions prennent le reste. */
+.bloc-tete .section-titre {
+  flex: none;
+  white-space: nowrap;
+}
+
+.bloc-tete .mentions {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.section-titre {
+  font-size: var(--fs-md);
+  padding-bottom: var(--sp-1);
+}
+
+/* Le titre porte son filet quand il n'est pas dans un bloc repliable. */
+.contenu > section > .section-titre {
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+/* Volume du bloc, visible même replié. */
+.bloc-compte {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bloc-tete:hover .section-titre {
+  color: var(--accent);
+}
+
+.section-meta {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: var(--sp-1) 0 var(--sp-2);
+  max-width: none;
+}
+
+/* ---------- Évaluation HAS ---------- */
+
+.avis-has {
+  margin: var(--sp-2) 0;
+}
+
+.avis-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: 0 0 var(--sp-1);
+  max-width: none;
+}
+
+/* Libellé HAS mot pour mot, dans la voix des documents. */
+.avis-ligne {
+  font-family: var(--font-lecture);
+  margin: 0 0 0.5em;
+}
+
+.avis-valeur {
+  white-space: nowrap;
+}
+
+.avis-items {
+  font-family: var(--font-lecture);
+  margin: -0.25em 0 0.75em;
+  padding-left: 1.2em;
+}
+
+.avis-items li + li {
+  margin-top: 0.3em;
+}
+
+/* Filtres « sans … » des alternatives : des puces, comme les dosages. */
+.filtres-excipients {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 var(--sp-1);
+}
+
+.filtres-libelle {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filtre-excipient {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-xs);
+  color: var(--muted);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
 }
 
-.product-category:hover {
-  text-decoration: underline;
+.filtre-excipient:hover,
+.filtre-excipient:focus-visible { border-color: var(--accent); color: var(--accent); }
+/* Texte couleur du fond : lisible sur l’aplat dans les deux thèmes. */
+.filtre-excipient.actif { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.filtre-ici { color: inherit; opacity: 0.8; }
+
+/* Excipients d'une alternative, à la suite de son nom. */
+.excipients-item {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--faint);
 }
 
-.product-content {
+.excipients-item.non-lu { font-style: italic; }
+
+/* Interactions : le libellé à la place du titre de bloc, le champ de la
+   recherche à sa suite, sur le même filet. */
+.verifier-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  padding-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.verifier-libelle {
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.verifier-form .input-wrapper {
+  flex: 1 1 16rem;
+}
+
+/* Informations de sécurité ANSM : une ligne par information, date en tête,
+   filets horizontaux comme les tableaux. */
+.infos-securite {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.info-securite {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
+  grid-template-columns: 6.5em 1fr auto;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-top: var(--rule-width) solid var(--rule);
 }
 
-@media (min-width: 768px) {
-  .product-content {
-    grid-template-columns: 2fr 1fr;
+.info-securite:first-child {
+  border-top: none;
+}
+
+.info-date {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.avis-anterieurs {
+  margin-top: var(--sp-2);
+}
+
+/* ---------- Substitution ---------- */
+
+/* Une catégorie par action au comptoir : l'action en titre, la règle dessous. */
+.subst-categorie {
+  margin: var(--sp-3) 0 0;
+}
+
+.subst-action {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Dosage et forme communs au groupe : en tête de liste, une fois. */
+.subst-commun {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  margin: 0 0 var(--sp-1);
+  max-width: none;
+}
+
+.subst-detail {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: 0.2em 0 var(--sp-1);
+  max-width: none;
+}
+
+.subst-motif {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+/* Alternatives de classe : une molécule par ligne, ses spécialités à la suite. */
+.subst-molecules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subst-molecules > li {
+  padding: var(--sp-1) 0;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.subst-molecule {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
+.subst-atc {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.subst-specialites {
+  display: block;
+  font-size: var(--fs-sm);
+}
+
+.subst-ecartes {
+  margin-top: var(--sp-3);
+}
+
+.ligne-dci {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+td.forme {
+  color: var(--muted);
+}
+
+.t-substitution thead th:nth-child(2) { width: 11rem; }
+.t-substitution thead th:nth-child(3) { width: 8rem; }
+
+/* Rôle codé par l'encre, pas par rouge/vert ; seul le princeps ressort, en
+   gras et non en vert : le vert est réservé aux liens. */
+.role {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.role-princeps {
+  color: var(--gras, var(--ink));
+  font-weight: 600;
+}
+
+/* ---------- Documents ---------- */
+
+.document + .document {
+  margin-top: var(--sp-6);
+}
+
+/* En onglets, les panneaux se remplacent : pas de blanc entre eux. Un panneau
+   `hidden="until-found"` garde sa boîte (content-visibility) : ses marges
+   s'empilaient au-dessus de l'onglet affiché. */
+.document[role="tabpanel"] + .document[role="tabpanel"] {
+  margin-top: 0;
+}
+
+.document[hidden] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.document-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  padding: var(--sp-3) 0 var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.document-titre {
+  font-size: var(--fs-base);
+  font-family: var(--font-body);
+}
+
+.document-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin: var(--sp-2) 0 0;
+  max-width: none;
+}
+
+/* Filets posés en CSS, indépendamment des éléments présents. */
+.document-meta > * + *::before {
+  content: '|';
+  color: var(--rule);
+  margin-right: 0.6em;
+}
+
+/* ---------- Découpe des titres : numéro / libellé ---------- */
+
+/* Titres de rubrique au-dessus du corps de lecture (1,0625 rem) : la
+   sous-rubrique à sa hauteur, le chapitre un cran dessus, les blocs au-dessus. */
+:root {
+  --titre-n2: 1.0625rem;
+  --titre-n1: 1.2rem;
+  --titre-bloc: 1.333rem;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.lab {
+  min-width: 0;
+}
+
+/* Libellé resté en capitales faute de correspondance dans le plan type. */
+.lab-brut {
+  font-size: 0.92em;
+  letter-spacing: 0.04em;
+}
+
+/* Texte emprunté à la spécialité de référence : à signaler avant lecture. */
+.emprunt {
+  max-width: var(--measure);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-2);
+  border-left: 2px solid var(--accent);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.emprunt strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Autres formes galéniques : le même repli, en plus discret. */
+.formes-plus {
+  display: inline-block;
+  padding: var(--sp-1) 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.formes-plus::-webkit-details-marker {
+  display: none;
+}
+
+/* Repliable : triangle (règle commune en fin d'app.css), pas de soulignement. */
+.formes-plus:hover { color: var(--ink); }
+
+/* ---------- Onglets RCP / Notice ---------- */
+
+/* Pas de filet sous la barre : l'état actif est un aplat. */
+/* Onglets = titre de la section : le document lu (« RCP ») en titre serif gras,
+   les autres au même corps, en gris. Filet commun, trait sous l'actif. */
+.onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  margin-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.onglet {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: calc(-1 * var(--rule-width));
+  padding: 0 0 var(--sp-1);
+  font-family: var(--font-head);
+  font-size: var(--titre-bloc);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.onglet:hover {
+  color: var(--ink);
+}
+
+.onglet[aria-selected='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* Document unique : titre, pas commande. */
+span.onglet {
+  cursor: auto;
+}
+
+/* ---------- Rubriques repliables ---------- */
+
+/* « Tout déplier » au fer à droite, aligné sur la fin des filets. */
+.rubriques-controle {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  max-width: var(--lecture);
+  font-size: var(--fs-xs);
+}
+
+.deplier {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.manquantes {
+  color: var(--muted);
+}
+
+.rubriques {
+  max-width: var(--lecture);
+}
+
+/* Une rubrique = un filet et un titre, sans cadre. */
+.rubrique {
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.rubrique-tete {
+  display: grid;
+  grid-template-columns: var(--num-col) 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  font-size: var(--titre-n2);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
+}
+
+/* Rubrique ouverte : son titre colle sous la bande tant qu'on lit son texte,
+   poussé par le titre suivant. Fond plein pour masquer le texte qui passe
+   dessous, filet pour le détacher. */
+.rubrique[open] > .rubrique-tete {
+  position: sticky;
+  top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) - 1px);
+  z-index: 17;
+  background: var(--bg);
+  box-shadow: 0 var(--rule-width) 0 var(--rule);
+  padding-bottom: var(--sp-1);
+}
+
+.rubrique-tete::-webkit-details-marker {
+  display: none;
+}
+
+.rubrique-tete:hover .lab {
+  color: var(--accent);
+}
+
+/* Tous les titres de rubrique en encre pleine : le gris les effaçait, surtout
+   en sombre. Le socle (.essentielle) ne se distingue plus par la couleur. */
+.rubrique .lab {
+  color: var(--ink);
+}
+
+/* Rubrique de premier niveau : charnière du document. Le titre suit son
+   numéro de près, quand les sous-rubriques s'alignent sur la gouttière :
+   l'écart d'indentation dit le niveau. */
+.rubrique.rub-n1 > .rubrique-tete {
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
+}
+
+.rubrique.rub-n1 > .rubrique-tete {
+  font-size: var(--titre-n1);
+  font-family: var(--font-head);
+  font-weight: 700;
+}
+
+/* Titres serif de la fiche en gras : blocs et chapitres dominent les sous-rubriques.
+   Blocs et onglets un cran au-dessus des chapitres. */
+.bloc-tete .section-titre {
+  font-size: var(--titre-bloc);
+  font-weight: 700;
+}
+
+/* Numéros : repères, jamais en gras. */
+.rubrique-tete .num,
+.charniere .num {
+  font-weight: 400;
+}
+
+/* Repliées : pas de blanc entre rubriques, filet clair. Le filet ne se
+   renforce qu'au bord d'une rubrique ouverte. */
+.rubrique.rub-n1 {
+  border-top: var(--rule-width) solid var(--rule);
+  margin-top: var(--sp-1);
+}
+
+/* Rubrique ouverte : filet des deux côtés. */
+.rubrique.rub-n1[open],
+.rubrique[open] + .rubrique.rub-n1 {
+  border-top-color: var(--rule-medium);
+}
+
+/* Rubrique ouverte : de l'air sous le texte seulement. Une marge au-dessus
+   tombait sous la rubrique précédente, repliée, comme un trou dans la liste. */
+.rubrique[open] {
+  padding-bottom: var(--sp-2);
+}
+
+/* Charnière (« 4. » avant « 4.1 ») : même filet et même rythme que les rubriques. */
+.charniere {
+  display: grid;
+  /* Comme une rubrique de premier niveau : le titre suit le numéro. */
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
+  align-items: baseline;
+  /* Même corps que les rubriques de premier niveau (1, 2, 3…) : c'en est une. */
+  font-family: var(--font-head);
+  font-size: var(--titre-n1);
+  font-weight: 700;
+  margin: var(--sp-1) 0 0;
+  padding: 0.35rem 0;
+  border-top: var(--rule-width) solid var(--rule);
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
+}
+
+/* Le bouton reprend la grille du titre pour garder les numéros alignés. */
+.charniere:has(> .charniere-bascule) {
+  display: block;
+}
+
+.charniere-bascule {
+  display: grid;
+  /* Comme une rubrique de premier niveau : le titre suit le numéro. */
+  grid-template-columns: max-content 1fr;
+  column-gap: 0.45em;
+  align-items: baseline;
+  width: 100%;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Surface de lecture d'un RCP : corps 17 px, interligne 1,75 (WCAG 1.4.8 :
+   1,5 minimum, davantage pour des lignes de 87 signes). Fer à gauche, sans césure. */
+.rubrique-corps {
+  font-family: var(--font-lecture);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  /* Environ 70 signes par ligne (WCAG 1.4.8 : 80 au plus). */
+  max-width: calc(66ch + var(--gouttiere));
+  padding: var(--sp-1) 0 0 var(--gouttiere);
+  hyphens: none;
+  text-wrap: pretty;
+  /* Coupe les mots plus longs que la colonne (conduites de points, URL, codes). */
+  overflow-wrap: break-word;
+}
+
+.rubrique-corps > :first-child {
+  margin-top: 0;
+}
+
+/* Pas de marge sous le dernier paragraphe : le blanc de fin appartient à la rubrique. */
+.rubrique-corps > :last-child {
+  margin-bottom: 0;
+}
+
+/* Condition de délivrance : population avant le deux-points, discipline en
+   capitales. Portée sur `.axe-valeur` pour l'emporter sur `.axe-valeur p + p`. */
+.axe-valeur .condition + .condition {
+  margin-top: 0.5em;
+  padding-top: 0.5em;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+/* Population : même corps que la condition, distinguée par la couleur. */
+.condition-population {
+  display: block;
+  color: var(--accent);
+  margin-bottom: 0.1em;
+}
+
+/* Discipline : décide de la recevabilité de l'ordonnance. */
+.condition-texte strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Composition : nom à gauche, dose à droite, conduite de points entre les deux. */
+.rubrique-corps .dose,
+.document-corps .dose {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  margin: 0 0 0.75em;
+}
+
+/* Conduite : chaîne de points trop longue, coupée par le conteneur.
+ * Base à zéro, pas « auto » : sinon elle réclame sa largeur et écrase le nom. */
+.dose-liaison {
+  flex: 1 1 0;
+  min-width: 2em;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--faint);
+  user-select: none;
+}
+
+.dose-valeur {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Trois quarts d'interligne entre paragraphes. */
+.rubrique-corps p {
+  margin: 0 0 0.75em;
+}
+
+/* Renvoi vers une autre rubrique (modèle QRD) : seul le numéro est cliquable.
+   Discret, souligné en pointillé : un RCP en compte jusqu'à quarante. */
+.rubrique-corps .renvoi,
+.document-corps .renvoi {
+  color: inherit;
+  /* Intitulé de la rubrique visée en infobulle, signalé par le curseur d'aide. */
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--rule-medium);
+  white-space: nowrap;
+}
+
+.rubrique-corps .renvoi:hover,
+.document-corps .renvoi:hover {
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline solid;
+  text-decoration-color: var(--accent);
+}
+
+/* Substance d'interaction (4.5, thésaurus ANSM) : titre de troisième niveau
+   sous le niveau de gravité, marqué par le contraste, pas la taille.
+   Le « + » (« en association avec ») reste en retrait négatif. */
+.rubrique-corps .interaction,
+.document-corps .interaction {
+  margin: 1.2em 0 0.35em;
+  font-weight: 600;
+  color: var(--interaction);
+  padding-left: 1.1em;
+  text-indent: -1.1em;
+}
+
+.rubrique-corps .interaction::first-letter,
+.document-corps .interaction::first-letter {
+  font-weight: 400;
+  color: var(--faint);
+}
+
+/* Niveau de gravité : espacé comme un titre de section. */
+.rubrique-corps .sous-titre + .interaction,
+.document-corps .sous-titre + .interaction {
+  margin-top: 0.4em;
+}
+
+/* Lisibilité, couche A : amorce d'un paragraphe (« Schizophrénie : … »).
+   Neutraliser : font-weight: inherit. */
+.rubrique-corps .amorce {
+  font-weight: 700;
+}
+
+/* Couche B, rubrique 4.2 : doses en gras. Neutraliser : font-weight: inherit. */
+.rubrique-corps .dose-cle {
+  font-weight: 700;
+}
+
+/* Couche C, 4.2 et 4.4 : mises en garde, rouge sombre (7:1 sur blanc,
+   7,1 en sombre). Neutraliser : font-weight: inherit; color: inherit. */
+.rubrique-corps .alerte {
+  font-weight: 700;
+  color: light-dark(#9b2c1f, #e8877a);
+}
+
+/* Renvoi de bas de rubrique (astérisque QRD) : italique, corps réduit.
+   L'appel reste en tête. */
+.rubrique-corps .note,
+.document-corps .note {
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Notes consécutives serrées, avec du blanc avant la première. */
+.rubrique-corps .note + .note,
+.document-corps .note + .note {
+  margin-top: -0.4em;
+}
+
+/* Listes reconstituées par le découpeur depuis les « · » / « o » de la BDPM :
+   réglage propre, distinct des listes d'interface. */
+.rubrique-corps ul,
+.rubrique-corps ol,
+.document-corps ul,
+.document-corps ol {
+  margin: 0 0 0.75em;
+  /* Puce hors du texte : les lignes suivantes s'alignent sous la première. */
+  padding-left: 1.4em;
+}
+
+/* Éléments serrés ; l'écart reste après la liste. */
+.rubrique-corps li,
+.document-corps li {
+  margin-bottom: 0.2em;
+}
+
+/* Liste imbriquée : espace au-dessus, pas en dessous. */
+.rubrique-corps li > ul,
+.document-corps li > ul {
+  margin: 0.25em 0 0;
+}
+
+/* Intitulé QRD (« Posologie »…) : distingué par la police, pas par la taille. */
+/* Trois niveaux sous le titre de rubrique, sans couleur ajoutée :
+   l'intitulé QRD (h5) dans la famille du titre de rubrique, un cran dessous ;
+   l'intertitre libre (h6) dans la voix du document, en gras. Le gris reste
+   au méta. */
+.rubrique-corps .sous-titre,
+.document-corps .sous-titre {
+  font-family: var(--font-body);
+  /* Un cran au-dessus de l'intertitre serif (1 em) : le sans-serif paraît plus petit à corps égal. */
+  font-size: 1.08em;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 1.6em 0 0.5em;
+}
+
+.rubrique-corps .intertitre,
+.document-corps .intertitre {
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--gras);
+  margin: 1.2em 0 0.35em;
+}
+
+.rubrique-corps .sous-titre + .intertitre,
+.document-corps .sous-titre + .intertitre {
+  margin-top: 0.4em;
+}
+
+.rubrique-corps > .sous-titre:first-child,
+.document-corps > .sous-titre:first-child,
+.rubrique-corps > .intertitre:first-child,
+.document-corps > .intertitre:first-child {
+  margin-top: 0;
+}
+
+.rubrique-corps li::marker {
+  color: var(--faint);
+}
+
+/* ---------- Tableaux du document ---------- */
+
+/* Tableaux du RCP : en em pour suivre la surface de lecture, à peine plus
+   petits qu'elle. Filets horizontaux seuls, pas de fond alterné. */
+.rubrique-corps table,
+.document-corps table {
+  font-size: 0.82em;
+  margin: var(--sp-3) 0;
+}
+
+/* Filets de tête et de pied pour délimiter le tableau. */
+.rubrique-corps table,
+.document-corps table {
+  border-top: var(--rule-width) solid var(--rule-medium);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.rubrique-corps th,
+.rubrique-corps td,
+.document-corps th,
+.document-corps td {
+  /* Gouttière entre colonnes plutôt que filet vertical ; lignes resserrées. */
+  padding: 0.4em 1.6em 0.4em 0;
+  line-height: 1.45;
+  /* Centré : les cellules d'une rangée peuvent faire une ou trois lignes. */
+  vertical-align: middle;
+}
+
+.rubrique-corps tr > :last-child,
+.document-corps tr > :last-child {
+  padding-right: 0;
+}
+
+/* Les <p> d'une cellule (Word exporté par la BDPM) forment une valeur sur
+   plusieurs lignes, pas des paragraphes : resserrés. */
+.rubrique-corps td > p,
+.rubrique-corps th > p,
+.document-corps td > p,
+.document-corps th > p {
+  margin: 0;
+}
+
+/* Deux vrais paragraphes dans une cellule restent légèrement séparés. */
+.rubrique-corps td > p + p,
+.rubrique-corps th > p + p,
+.document-corps td > p + p,
+.document-corps th > p + p {
+  margin-top: 0.15em;
+}
+
+/* En-tête : la BDPM n'utilise presque jamais <thead> ; la première ligne d'un
+   tableau sans en-tête déclaré est traitée comme tel. */
+.rubrique-corps thead th,
+.document-corps thead th,
+.rubrique-corps table:not(:has(thead)) tr:first-child > *,
+.document-corps table:not(:has(thead)) tr:first-child > * {
+  font-size: 0.88em;
+  font-weight: 400;
+  /* Ligne d'en-tête en accent : elle nomme les colonnes. */
+  color: var(--accent);
+  border-bottom: var(--rule-width) solid var(--rule-strong);
+  padding-bottom: 0.55em;
+}
+
+/* Première colonne (poids, âge, voie) à l'encre pleine : c'est l'entrée de lecture. */
+.rubrique-corps tbody tr > :first-child,
+.document-corps tbody tr > :first-child {
+  color: var(--ink);
+}
+
+/* Écran étroit : défilement horizontal, colonne d'entrée collée à gauche.
+   Enveloppe posée par documents.js. */
+.table-defilante {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 40rem) {
+  .table-defilante table {
+    min-width: 34rem;
+  }
+
+  .table-defilante tr > :first-child {
+    position: sticky;
+    left: 0;
+    background: var(--bg);
   }
 }
 
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.rubrique-corps table {
+  margin: var(--sp-2) 0;
+  font-family: var(--font-body);
 }
 
-.section-title {
-  font-size: 1.25rem;
-  color: var(--noir);
-  margin: 0 0 1rem 0;
-  font-weight: 500;
-}
-
-.presentations-section {
-  background: var(--blanc);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px var(--grisclair);
-}
-
-.cip-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.cip-item p {
-  margin: 0;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.9rem;
-  color: var(--grisfonce);
-}
-
-.incidents-section {
-  background: var(--blanc);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px var(--grisclair);
-}
-
-.incidents-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.incident-item {
-  padding: 1rem;
-  border-radius: 6px;
-  border-left: 4px solid var(--grisclair);
-}
-
-.incident-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.incident-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.incident-dates {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
-  color: var(--gris);
-}
-
-.date-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.date-label {
-  font-weight: 500;
-}
-
-.other-info-section {
-  background: var(--blanc);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px var(--grisclair);
-}
-
-.info-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.info-item h3 {
-  font-size: 1rem;
-  color: var(--grisfonce);
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
-}
-
-.info-item p {
-  margin: 0;
-  color: var(--gris);
+/* Tableau repris d'un PDF : alignement d'origine conservé pour ne déplacer aucune dose. */
+.rubrique-corps pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
   line-height: 1.5;
+  overflow-x: auto;
+  padding: var(--sp-1) 0;
+  margin: var(--sp-2) 0;
+  border-top: var(--rule-width) solid var(--rule);
+  border-bottom: var(--rule-width) solid var(--rule);
 }
 
-/* Related products section */
-.related-products-section {
-  background: var(--blanc);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px var(--grisclair);
+@media (max-width: 40rem) {
+  .rubrique-tete {
+    grid-template-columns: 2.8rem 1fr;
+  }
+
+  .rubrique-corps {
+    padding-left: 0;
+  }
 }
 
-.related-products-list {
+.document-corps {
+  font-family: var(--font-lecture);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: var(--lecture);
+  hyphens: none;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+/* Même gouttière que le plan pour la numérotation. */
+.document-corps .doc-heading {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: var(--num-col) 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-family: var(--font-body);
+  font-size: var(--titre-n2);
+  font-weight: 600;
+  color: var(--ink);
+  margin: var(--sp-4) 0 var(--sp-2);
+  padding-top: var(--sp-1);
+  border-top: var(--rule-width) solid var(--rule);
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
-.related-product-item {
+/* Rubrique de premier niveau : charnière du document. */
+.document-corps h1.doc-heading,
+.document-corps h2.doc-heading {
+  font-family: var(--font-head);
+  font-size: var(--titre-n1);
+  font-weight: 700;
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-2);
+  border-top: var(--rule-width) solid var(--rule-medium);
+}
+
+.document-corps .doc-heading .num {
+  font-weight: 400;
+}
+
+.document-corps .doc-heading strong,
+.document-corps .doc-heading b {
+  font-weight: 600;
+}
+
+/* Un titre non numéroté n'a pas de gouttière à occuper. */
+.document-corps .doc-heading:not(:has(.num)) {
   display: block;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  text-decoration: none;
-  color: inherit;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
 }
 
-.related-product-item:hover {
-  background: #f1f3f4;
-  border-color: var(--bleu);
-  text-decoration: none;
+.document-corps p {
+  margin: 0 0 0.75em;
 }
 
-.related-product-item .product-name {
-  font-weight: 500;
-  color: var(--noir);
-  margin-bottom: 0.25rem;
-  font-size: 0.95rem;
+.document-corps table {
+  margin: var(--sp-2) 0;
 }
 
-.related-product-item .product-ingredients {
-  color: var(--gris);
-  font-size: 0.85rem;
-  line-height: 1.4;
+.doc-externe {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  padding: var(--sp-2) 0;
+  max-width: var(--measure);
 }
 
-.related-product-item .product-type {
-  color: var(--vert);
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  margin-top: 0.25rem;
+/* ---------- Références ---------- */
+
+.liens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.related-product-item.generic-product {
-  border-left: 3px solid var(--vert);
+.liens li {
+  max-width: none;
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: var(--sp-1) 0;
 }
 
-/* Status color variations */
-.status-rupture {
-  color: #e53e3e;
-  border-left-color: #e53e3e;
+/* ---------- Écran étroit ---------- */
+
+@media (max-width: 52rem) {
+  .identite {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+
+  .signaletique-inner {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+
+  /* Dénomination sur deux lignes possibles : elle défile, la bande colle sous la barre. */
+  .titre-colle {
+    position: static;
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+
+  .signaletique {
+    top: var(--barre-h);
+  }
+
+  .rubrique[open] > .rubrique-tete {
+    top: calc(var(--barre-h) + var(--signal-h) - 1px);
+  }
+
+  .produit-titre {
+    text-wrap: balance;
+    font-size: var(--fs-lg);
+    max-width: none;
+  }
+
+  /* Forme masquée : la dénomination la contient presque toujours. */
+  .t-substitution td:nth-child(2),
+  .t-substitution thead th:nth-child(2) {
+    display: none;
+  }
 }
 
-.status-disponible {
-  color: var(--vert);
-  border-left-color: var(--vert);
+/* ---------- Délivrance ---------- */
+
+/* Résumé abrégé en mentions, lisible bloc fermé. Des étiquettes, pas des
+   alertes : un stupéfiant est un cadre de délivrance, pas une erreur. */
+.mentions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--sp-1);
 }
 
-.status-tension {
-  color: #d69e2e;
-  border-left-color: #d69e2e;
+.mention {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Le classement commande le reste : filet noir, sans couleur ni fond. */
+.mention-classement {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Mention qui répond non (« Hôpital seulement »…) : aplat plein, texte blanc.
+   Le poids plutôt que la teinte, pour rester lisible par les daltoniens. */
+.mention-bloque {
+  background: var(--bg-fonce);
+  border-color: var(--bg-fonce);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Condition par axe, en deux colonnes : texte de loi, pas un indicateur. */
+.axes {
+  display: grid;
+  grid-template-columns: minmax(5rem, 9rem) 1fr;
+  /* Blanc entre groupes = trois fois celui entre conditions : c'est le
+     rapport qui fait le groupe. */
+  gap: var(--sp-3) var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  max-width: var(--measure);
+  /* Ligne de base : l'intitulé et la valeur n'ont pas le même corps. */
+  align-items: baseline;
+}
+
+.axe-titre {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.axe-valeur {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.axe-valeur p {
+  margin: 0;
+  max-width: none;
+}
+
+.axe-valeur p + p {
+  margin-top: 0.15em;
+}
+
+#delivrance .liens {
+  margin-top: var(--sp-1);
+}
+
+@media (max-width: 40rem) {
+  .mentions {
+    justify-content: flex-start;
+  }
+
+  .axes {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .axe-titre {
+    margin-top: var(--sp-2);
+  }
+}
+
+
+/* ---------- Impression de la fiche ---------- */
+
+@media print {
+  .signaletique,
+  .titre-colle,
+  .rubrique[open] > .rubrique-tete {
+    position: static;
+    background: none;
+  }
+
+  .signal-bloque {
+    background: none;
+    color: #000;
+    border: var(--rule-width) solid #666;
+  }
+
+  /* Tout s'ouvre : une rubrique repliée ne s'imprime pas. */
+  details > *:not(summary) {
+    display: block !important;
+  }
+
+  /* Seul le panneau affiché s'imprime ; l'onglet actif en devient le titre. */
+  .onglets {
+    display: block;
+    margin: var(--sp-3) 0 var(--sp-1);
+    max-width: none;
+  }
+
+  .onglet[aria-selected='false'] {
+    display: none;
+  }
+
+  .onglet[aria-selected='true'] {
+    padding: 0;
+    background: none;
+    color: #000;
+    font-family: var(--font-head);
+    font-size: var(--fs-md);
+  }
+
+  /* Commandes inutiles sur papier. */
+  .rubriques-controle,
+  .formes-plus {
+    display: none;
+  }
+
+  /* Le triangle annonce un pli qui n'existe plus sur papier. */
+  .rubrique-tete .num::before,
+  .charniere .num::before,
+  .bloc-tete .section-titre::before {
+    content: none;
+  }
+
+  .charniere-bascule {
+    cursor: auto;
+  }
+
+  /* Pas de titre seul en bas de page. */
+  .rubrique-tete,
+  .charniere,
+  .bloc-tete,
+  .sous-titre {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Pas de posologie coupée entre deux pages. */
+  tr,
+  .dose,
+  li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Pas de défilement sur papier : le tableau tient dans la largeur. */
+  .table-defilante {
+    overflow: visible;
+  }
+
+  .table-defilante table {
+    min-width: 0;
+  }
+
+  /* Aplats d'état retirés : le filet suffit. */
+  .mention,
+  .forme-choix.actif {
+    background: none;
+    color: #000;
+    border: var(--rule-width) solid #666;
+  }
+
+  /* Pas de conduite de points sur papier : nom et dose séparés d'une espace. */
+  .dose-liaison {
+    display: none;
+  }
+
+  .dose {
+    gap: 0.6em;
+  }
+
+  .rubrique-corps,
+  .document-corps {
+    color: #000;
+    max-width: none;
+  }
+}
+
+/* ---------- Prise en charge limitée ---------- */
+
+/* Prise en charge limitée à certaines indications. Texte de l'Assurance
+   Maladie donné tel quel : un résumé engagerait plus qu'il n'aide. */
+.remboursement {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) 0 0;
+  border-top: var(--rule-width) solid var(--rule-medium);
+  max-width: var(--measure);
+}
+
+.remboursement-titre {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+/* Le taux, première information cherchée. */
+.remboursement-taux {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+/* Les <br> de la source séparent deux cas de prise en charge. */
+.remboursement-texte {
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Requête venue de la recherche dans les documents. */
+mark.surligne {
+  background: var(--surligne);
+  color: var(--sur-surligne);
+  padding: 0 0.1em;
+  border-radius: 2px;
+}
+
+/* Un lien surligné garde son soulignement mais prend l'encre du stabilo. */
+mark.surligne a,
+a mark.surligne {
+  color: var(--sur-surligne);
+}
+
+/* Grand écran : triangle de dépliage suspendu dans la marge. La colonne des
+   numéros ne loge plus que « 4.10 » : texte plus près du numéro, numéros
+   alignés au fer. Sous 52rem, pas de marge où le suspendre. */
+@media (min-width: 52rem) {
+  :root {
+    --num-col: 2.1rem;
+  }
+
+  .rubrique-tete .num,
+  .charniere .num {
+    position: relative;
+  }
+
+  .rubrique-tete .num::before,
+  .charniere .num::before {
+    position: absolute;
+    right: 100%;
+  }
 }

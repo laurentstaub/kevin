@@ -1,0 +1,875 @@
+{
+  "slug": "torsadogenes",
+  "calcule_le": "2026-10-14",
+  "liste": {
+    "titre": "Substances susceptibles de donner des torsades de pointes",
+    "amorce": {
+      "source": "ANSM — Thésaurus des interactions médicamenteuses",
+      "version": "15 septembre 2023, version finale : l'ANSM a cessé de le mettre à jour et renvoie aux RCP",
+      "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
+      "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf",
+      "extraite_le": "2026-10-14"
+    },
+    "relu_par": null,
+    "relu_le": null
+  },
+  "rubriques": [
+    "4.3",
+    "4.4",
+    "4.5"
+  ],
+  "termes": [
+    "QT"
+  ],
+  "lignes": [
+    {
+      "substance": "amiodarone",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "64408662",
+        "denomination": "CORDARONE 200 mg, comprimé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cette modification \"cordaronique\" consiste en un allongement de QT traduisant l'allongement de la repolarisation, avec éventuellement l'apparition d'une onde U ; c'est un signe d'imprégnation thérapeutique et non de toxicité. · La survenue sous traitement d'un bloc auriculo-ventriculaire du 2ème ou 3ème degré, d'un bloc sino-auriculaire ou d'un bloc bifasciculaire doit faire arrêter le traitement."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Un bloc auriculo-ventriculaire du 1er degré doit faire renforcer la surveillance. · La survenue d'un nouveau trouble du rythme ou l'aggravation d'un trouble du rythme préexistant et traité, a été rapportée (voir rubrique 4.8). · Un tel effet arythmogène est possible en particulier en présence de facteurs favorisant l'allongement de l'intervalle QT tels que certaines associations médicamenteuses et/ou l'existence d'une hypokaliémie (voir rubriques 4.5 et 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "amisulpride",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "60019927",
+        "denomination": "SOLIAN 100 mg, comprimé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l'intervalle QT L'amisulpride prolonge de façon dose-dépendante l'intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointes est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QTc) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "arsenieux",
+      "origine": "amorce",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "chloroquine",
+      "origine": "amorce",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "chlorpromazine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "65676987",
+        "denomination": "LARGACTIL 25 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l'intervalle QT La chlorpromazine prolonge de façon dose-dépendante l'intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointes potentiellement fatals (mort subite), est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "citalopram",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "69388669",
+        "denomination": "SEROPRAM 20 mg, comprimé pelliculé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l'intervalle QT Il a été démontré que le citalopram entraîne un allongement dose-dépendant de l’intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Des cas d’allongement de l’intervalle QT et d’arythmie ventriculaire, incluant des torsades de pointes, ont été rapportés depuis sa commercialisation, en particulier chez les femmes et les patients présentant une hypokaliémie, un allongement de l’intervalle QT pré-existant ou d’autres pathologies cardiaques (voir sections 4.3., 4.5., 4.8. et 5.1.)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "cocaine",
+      "origine": "amorce",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "crizotinib",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61506083",
+        "denomination": "XALKORI 250 mg, gélule"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT Des allongements de l’intervalle QTc ont été observés chez les patients traités par crizotinib dans les études cliniques (voir rubriques 4.8 et 5.2), pouvant conduire à une augmentation du risque de tachyarythmies ventriculaires (par ex, torsade de pointes) ou de mort subite."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Les bénéfices et les risques potentiels du crizotinib doivent être pris en compte avant de commencer le traitement chez les patients qui présentent une bradycardie pré-existante ainsi que des antécédents ou une prédisposition à l’allongement de l’intervalle QTc, qui prennent des antiarythmiques ou d’autres médicaments connus pour allonger l’intervalle QT ainsi que chez les patients présentant des maladies cardiaques pré-existantes et/ou des perturbations électrolytiques."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "cyamemazine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "63400513",
+        "denomination": "TERCIAN 25 mg, comprimé pelliculé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l'intervalle QT : la cyamémazine prolonge de façon dose-dépendante l'intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointe, est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "disopyramide",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "63063487",
+        "denomination": "RYTHMODAN 100 mg, gélule"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "La prise concomitante de ce médicament est déconseillée avec certains antiparasitaires et neuroleptiques susceptibles de donner des torsades de pointes, avec l'érythromycine (voie orale), la josamycine, la clarithromycine et la méthadone (voir rubrique 4.5)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Modifications électrocardiographiques · Le disopyramide doit être administré avec précaution chez les malades ayant des anomalies préexistantes de la conduction. · La survenue sous traitement d'un bloc auriculoventriculaire, d'un bloc de branche complet permanent ou d'un bloc sino-auriculaire doit faire arrêter l'usage du disopyramide. · Un élargissement de QRS et/ou un allongement de QT supérieur à 25 % des valeurs de base amènera à réduire la posologie."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "domperidone",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "66585953",
+        "denomination": "DOMPERIDONE TEVA 10 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Effets cardiovasculaires La dompéridone a été associée à un allongement de l'intervalle QT à l'électrocardiogramme."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Au cours de la surveillance après commercialisation, de très rares cas d'allongement de l'intervalle QT et de torsades de pointes ont été rapportés chez des patients traités par la dompéridone."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "dronedarone",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "69213011",
+        "denomination": "MULTAQ 400 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT L’activité pharmacologique de la dronédarone peut entraîner un allongement modéré de l’intervalle QTc Bazett (environ 10 msec), liée à une prolongation de la repolarisation."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Si l’intervalle QTc Bazett est ≥500 millisecondes, la dronédarone doit être arrêtée (voir rubrique 4.3)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "droperidol",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61646847",
+        "denomination": "DROLEPTAN 1,25 mg/2,5 ml, solution injectable"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Le dropéridol ne doit jamais être utilisé dans les cas suivants : · hypersensibilité à la substance active ou à l'un des excipients mentionnés à la rubrique 6.1 ; · hypersensibilité aux butyrophénones ; · allongement connu ou suspecté de l'intervalle QT (QTc > 450 ms chez les femmes et > 440 ms chez les hommes)."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Ceci inclut les patients présentant un syndrome du QT long congénital, les patients ayant des antécédents familiaux d'allongement congénital de l'intervalle QT ainsi que les patients traités concomitamment avec des médicaments connus pour leur risque de provoquer des torsades de pointes par allongement de l'intervalle QT (voir rubrique 4.5) ; · hypokaliémie ou hypomagnésémie ; · bradycardie (fréquence cardiaque < 55 battements par minute) ; · traitement concomitant connu pour induire une bradycardie ; · phéochromocytome ; · états comateux ; · maladie de Parkinson ; · dépression sévère."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "erythromycine",
+      "origine": "amorce",
+      "restriction": "voie intraveineuse seulement (thésaurus)",
+      "specialite": {
+        "cis": "64620665",
+        "denomination": "ERYTHROCINE 1 g, poudre pour solution à diluer pour perfusion"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Évènements cardiovasculaires L’allongement de l’intervalle QT, reflétant les effets sur la repolarisation cardiaque entraînant un risque d’arythmie cardiaque et de torsades de pointes, a été observé chez des patients traités par des macrolides, dont l’érythromycine (voir rubriques 4.3, 4.5 et 4.8)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "L'érythromycine doit être utilisée avec prudence dans les cas suivants : · Patients atteints de maladie coronarienne, d’insuffisance cardiaque sévère, de troubles de la conduction ou de bradycardie cliniquement significative. · Patients prenant simultanément d’autres médicaments associés à un allongement de l’intervalle QT (voir rubriques 4.3 et 4.5) Les patients âgés risquent davantage de souffrir des effets sur l'intervalle QT associés au médicament (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "escitalopram",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "60958897",
+        "denomination": "SEROPLEX 5 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "L’escitalopram est contre-indiqué chez les patients présentant un allongement acquis ou congénital de l’intervalle QT."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "L’escitalopram est contre-indiqué en association avec d’autres médicaments connus pour induire un allongement de l’intervalle QT (voir rubrique 4.5)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "flupentixol",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62571671",
+        "denomination": "FLUANXOL 4 %, solution buvable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT Le flupentixol peut provoquer un allongement de l’espace QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointes, est majoré par l’existence d’une bradycardie, d’une hypokaliémie, d’un QT long congénital ou acquis (association à un médicament augmentant l’intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "fluphenazine",
+      "origine": "amorce",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "halofantrine",
+      "origine": "amorce",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "haloperidol",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61505095",
+        "denomination": "HALDOL DECANOAS 50 mg/ml, solution injectable"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "· Hypersensibilité à la substance active ou à l’un des excipients mentionnés à la rubrique 6.1. · État comateux. · Dépression du système nerveux central (SNC). · Maladie de Parkinson. · Démence à corps de Lewy. · Paralysie supranucléaire progressive. · Allongement connu de l’intervalle QTc ou syndrome du QT long congénital. · Infarctus du myocarde aigu récent. · Insuffisance cardiaque non compensée. · Antécédents d’arythmies ventriculaires ou de torsades de pointes. · Hypokaliémie non corrigée. · Traitement concomitant par des médicaments allongeant l’intervalle QT (voir rubrique 4.5)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Effets cardiovasculaires Outre les cas de mort subite, des allongements de l’intervalle QTc et/ou des arythmies ventriculaires ont été signalés avec l’halopéridol (voir rubriques 4.3 et 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "hydroquinidine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "60518136",
+        "denomination": "SERECOR 300 mg, gélule à libération prolongée"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Modifications électrocardiographiques · l’hydroquinidine doit être administrée avec précaution chez les patients ayant des anomalies préexistantes de la conduction, · la survenue sous traitement d’un bloc auriculo-ventriculaire, d’un bloc de branche complet permanent ou d’un bloc sino-auriculaire doit faire interrompre l’hydroquinidine, · un élargissement de QRS supérieur à 25 % des valeurs de base amènera à réduire la dose, · un allongement de QT supérieur à 25 % des valeurs de base entraînera l’arrêt du médicament."
+        },
+        {
+          "numero": "4.5",
+          "libelle": "Interactions avec d'autres médicaments et autres formes d'interactions",
+          "ancre": "rcp-8",
+          "phrase": "L’association d’antiarythmiques donnant des torsades de pointes (amiodarone, disopyramide, quinidiniques, sotalol…) est contre-indiquée."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "hydroxychloroquine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "67767535",
+        "denomination": "PLAQUENIL 200 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QTc L'hydroxychloroquine a le potentiel d’allonger l'intervalle QTc chez certains patients à risque."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "L’amplitude de l’allongement de l’intervalle QT peut augmenter avec l’augmentation des concentrations du médicament."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "hydroxyzine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61519586",
+        "denomination": "ATARAX 25 mg, comprimé pelliculé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Mises en garde spéciales Allongement de l’espace QT L’hydroxyzine est associée à un allongement de l’espace QT sur l’électrocardiogramme."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Lors de la surveillance post-marketing, des cas d’allongement de l’intervalle QT et de torsade de pointes ont été rapportés chez des patients prenant de l’hydroxyzine."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "levomepromazine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "67477165",
+        "denomination": "NOZINAN 40 mg/ml, solution buvable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Le traitement antipsychotique doit être arrêté immédiatement, une prise en charge appropriée doit être mise en place, ainsi qu’une surveillance étroite de l'état du patient.Allongement de l'intervalle QT : la lévomépromazine prolonge l’intervalle QT avec un dose-dépendant."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointe, est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) ( voir rubrique 4.8 )."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "lumefantrine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "65574434",
+        "denomination": "RIAMET 20 mg/120 mg, comprimé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Comme d’autres antipaludiques (tels que: l’halofantrine, la quinine et la quinidine), RIAMET peut entraîner un allongement de l’intervalle QT (voir rubrique 5.1)."
+        },
+        {
+          "numero": "4.5",
+          "libelle": "Interactions avec d'autres médicaments et autres formes d'interactions",
+          "ancre": "rcp-8",
+          "phrase": "Dans cette étude, l’administration de RIAMET chez 14 sujets n’a pas entraîné d’effet sur l’intervalle QTc."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "mequitazine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "63036718",
+        "denomination": "PRIMALAN, sirop"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Mises en garde spéciales PRIMALAN est un racémique dont l'énantiomère lévogyre (lévoméquitazine), a montré, lors d'une étude clinique spécifique avec électrocardiogramme, un allongement significatif de l'intervalle QT, en particulier chez le métaboliseur lent du cytochrome P-450 2 D6 (CYP2D6)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Par analogie avec la cinétique de la lévoméquitazine, des concentrations sanguines élevées chez ces patients peuvent induire un risque d'allongement du QT."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "methadone",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "67296909",
+        "denomination": "METHADONE AP-HP 1 mg, gélule"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT et torsades de pointe Des cas d’allongement de l’intervalle QT et de torsades de pointe pouvant aboutir à une mort subite d’originecardiaque ont été rapportés au cours de traitements par la méthadone, principalement à des posologies élevées (> 120 mg/j)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Pour les patients présentant des facteurs de risque d'allongement de l'intervalle QT, un ECG à l’instauration du traitement par méthadone doit être réalisé ainsi que dans les 30 jours qui suivent."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "moxifloxacine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62419261",
+        "denomination": "IZILOX 400 mg/250 ml, solution pour perfusion"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Lors d’investigations précliniques et d’études cliniques menées chez l’homme, des modifications de l’activité électrophysiologique cardiaque, sous forme d’un allongement de l’intervalle QT, ont été observées avec la moxifloxacine."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Pour ces raisons, la moxifloxacine est donc contre-indiquée chez les patients présentant : · un allongement congénital ou acquis de l’intervalle QT, · des troubles hydroélectrolytiques, en particulier une hypokaliémie non corrigée, · une bradycardie cliniquement significative, · une insuffisance cardiaque par réduction de la fraction d’éjection ventriculaire gauche cliniquement significative, · des antécédents de troubles du rythme cliniquement significatifs."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "pentamidine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61423246",
+        "denomination": "PENTACARINAT 300 mg, poudre pour aérosol et pour usage parentéral"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "PENTACARINAT peut entraîner un allongement de l’intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "En effet, des arythmies cardiaques évocatrices d’allongement de l’intervalle QT, telles que des torsades de pointes, ont été rapportées dans des cas isolés suite à la prise de PENTACARINAT."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "pimozide",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "60625647",
+        "denomination": "ORAP 4 mg, comprimé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT (voir rubrique 4.3) Les neuroleptiques de la classe des diphénylbutylpipéridines prolongent de façon dose-dépendante l’intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire grave, notamment à type de torsades de pointes, est majoré par l’existence d’une bradycardie, d’une hypokaliémie, d’un QT long congénital ou acquis (association à un médicament augmentant l’intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "pipamperone",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "69537173",
+        "denomination": "DIPIPERON 40 mg, comprimé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Effets cardiovasculaires De très rares cas d’allongement de l’intervalle QT ont été rapportés avec le pipampérone."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire grave, notamment à type de torsade de pointes est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "piperaquine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62434676",
+        "denomination": "EURARTESIM 320 mg/40 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Syndrome du QT long congénital connu, ou toute pathologie connue pour prolonger l’intervalle QTc."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Traitement par des médicaments connus pour induire un allongement de l’intervalle QTc."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "pipotiazine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62000861",
+        "denomination": "PIPORTIL L4 25 mg/ml, solution injectable en ampoule (I.M.)"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l'intervalle QT: les neuroleptiques de la classe des phénothiazines prolongent de façon dose-dépendante l'intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointe, est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) ( voir rubrique 4.8 )."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "quinidine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "64289681",
+        "denomination": "QUINIMAX 125 mg, comprimé pelliculé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Ce médicament est déconseillé avec le crizotinib, l’idélalisib, la rifampicine, la codéine, le tamoxifène, le tramadol, le vérapamil, le fingolimod, l’ozanimod, la délamanid, certains antiparasitaires susceptibles de donner des torsades de pointes (la chloroquine, l’halofantrine, la luméfantrine, la pentamidine), la méthadone, le cotrimoxazole, certains neuroleptiques, les arsénieux, l’hydroxychloroquine (voir rubrique 4.5)."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Affections cardiaques La quinine possède des effets dose-dépendants d’allongement de l’intervalle QT."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "sotalol",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62519799",
+        "denomination": "SOTALEX 80 mg, comprimé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Les produits qui allongent l'intervalle QT, dont le sotalol, peuvent provoquer des torsades de pointes."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Les facteurs favorisant cet effet ont été identifiés : · Intervalle QT spontanément long (> 450 ms) avant le traitement ; · Bradycardies (< 60 battements par minute) ; · Hypokaliémie ou hypomagnésémie, (notamment sous diurétiques proximaux) ; · Taux sériques élevés de sotalol, soit par surdosage, soit par accumulation au cours d'une insuffisance rénale ; · Associations à d'autres produits favorisant des torsades de pointes (voir rubriques 4.3 et 4.5) ; · Troubles graves du rythme ventriculaire."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "spiramycine",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "67535280",
+        "denomination": "ROVAMYCINE 3 MILLIONS UI, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT Des cas d’allongement de l’intervalle QT ont été rapportés chez des patients prenant des macrolides, y compris la spiramycine."
+        },
+        {
+          "numero": "4.5",
+          "libelle": "Interactions avec d'autres médicaments et autres formes d'interactions",
+          "ancre": "rcp-8",
+          "phrase": "Surveillance clinique et adaptation éventuelle de la posologie de la lévodopa. + Hydroxychloroquine ou chloroquine La spiramycine doit être utilisée avec prudence chez les patients traités avec ces médicaments connus pour allonger l’intervalle QT, en raison de la possibilité d’induire des effets indésirables cardiovasculaires graves (incluant un allongement de l’intervalle QT, des arythmies cardiaques et des torsades de pointes) et pour augmenter le risque de mortalité cardiovasculaire."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "sulpiride",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "62344129",
+        "denomination": "DOGMATIL 50 mg, gélule"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Bien que cet effet des neuroleptiques puisse avoir une origine idiosyncrasique, certains facteurs de risque semblent y prédisposer, tels que la déshydratation ou des atteintes organiques cérébrales. · Allongement de l'intervalle QT : le sulpiride prolonge de façon dose-dépendante l'intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire grave notamment à type de torsades de pointe, est majoré par l'existence d'une bradycardie, d'une hypokaliémie, d'un QT long congénital ou acquis (association à un médicament augmentant l'intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "tiapride",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "67890598",
+        "denomination": "TIAPRIDAL 100 mg, comprimé sécable"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Bien que cet effet des neuroleptiques puisse avoir une origine idiosyncrasique, certains facteurs de risque semblent y prédisposer, tels que la déshydratation ou des atteintes organiques cérébrales. · Allongement de l’intervalle QT : Le tiapride prolonge de façon dose-dépendante l’intervalle QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire grave, notamment à type de torsades de pointes, est majoré par l’existence d’une bradycardie, d’une hypokaliémie, d’un QT long congénital ou acquis (association à un médicament augmentant l’intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "toremifene",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "60433369",
+        "denomination": "FARESTON 60 mg, comprimé"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Tant dans les investigations précliniques que chez l’être humain, des effets électrophysiologiques cardiaques ont été observés suite à l’exposition au torémifène, sous forme de prolongation de l’intervalle QT."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Pour des raisons de sécurité médicamenteuse, le torémifène est donc contre-indiqué chez les patientes présentant : un allongement congénital ou acquis de l'intervalle QT, des troubles hydroélectrolytiques, en particulier une hypokaliémie non corrigée une bradycardie cliniquement significative une insuffisance cardiaque par réduction de la fraction d’éjection ventriculaire gauche cliniquement significative, des antécédents de troubles du rythme cliniquement significatifs."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "vandetanib",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "65808531",
+        "denomination": "CAPRELSA 100 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Syndrome du QTc long congénital."
+        },
+        {
+          "numero": "4.3",
+          "libelle": "Contre-indications",
+          "ancre": "rcp-6",
+          "phrase": "Patients avec un intervalle QTc supérieur à 480 msec."
+        }
+      ],
+      "manque": false
+    },
+    {
+      "substance": "vincamine",
+      "origine": "amorce",
+      "restriction": "voie intraveineuse seulement (thésaurus)",
+      "specialite": null,
+      "citations": [],
+      "manque": true
+    },
+    {
+      "substance": "zuclopenthixol",
+      "origine": "amorce",
+      "specialite": {
+        "cis": "61323662",
+        "denomination": "CLOPIXOL 10 mg, comprimé pelliculé"
+      },
+      "citations": [
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Allongement de l’intervalle QT Le zuclopenthixol peut provoquer un allongement de l’espace QT."
+        },
+        {
+          "numero": "4.4",
+          "libelle": "Mises en garde spéciales et précautions d'emploi",
+          "ancre": "rcp-7",
+          "phrase": "Cet effet, connu pour potentialiser le risque de survenue de troubles du rythme ventriculaire graves, notamment à type de torsades de pointes, est majoré par l’existence d’une bradycardie, d’une hypokaliémie, d’un QT long congénital ou acquis (association à un médicament augmentant l’intervalle QT) (voir rubrique 4.8)."
+        }
+      ],
+      "manque": false
+    }
+  ]
+}

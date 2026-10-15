@@ -1,0 +1,95 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+include _resultats-documents.pug
+include _dosages.pug
+
+//- Recherche plein texte, vue complète. Seule page à porter le filtre par rubrique.
+
+block content
+  //- La requête est dans le champ de la barre ; le titre dit où l'on est.
+  //- Question interprétée : le champ garde la question telle que tapée.
+  +barreSituation('Dans les documents', etat.question || query, '/documents')
+
+  main.corps
+    header.doc-entete
+      h1.section-titre Dans les documents
+      p.page-meta
+        | Recherche du texte des résumés des caractéristiques et des notices,
+        |  rubrique par rubrique.
+
+      //- Saisie réorientée : par l'IA (annoncée, AI Act art. 50) ou par la base ; refusable.
+      if etat.question
+        p.ia-interpretation
+          if etat.ia
+            | Question « #{etat.question} » interprétée par IA. Résultats : texte officiel des RCP.
+          else
+            | « #{etat.molecule} » reconnu comme médicament : résultats limités à ses spécialités.
+          |
+          a(href=lien({ mode: 'documents', requete: etat.question, brut: '1' })) Chercher tel quel
+
+      //- État de la recherche en un seul endroit : requête, molécule, rubrique, décompte.
+      if !panne && !notice
+        p.etat
+          span.etat-requete= `« ${query} »`
+          if etat.molecule
+            a.jeton(href=lien(etat, { molecule: null })
+              title="Chercher pour toutes les molécules")
+              | #{dci(etat.molecule)}
+              span.jeton-croix ×
+          if rubrique
+            //- Le jeton retire le filtre d'un clic.
+            a.jeton(href=lien(etat, { rubrique: null })
+              title="Rechercher dans tout le document")
+              | rubrique #{rubrique}
+              span.jeton-croix ×
+          span.etat-compte
+            | #{documents.total.toLocaleString('fr-FR')} rubrique#{documents.total > 1 ? 's' : ''}
+            //- Toutes classées, seules les premières détaillées : le dire.
+            if documents.borne
+              |  · #{documents.molecules.toLocaleString('fr-FR')} molécules, les #{documents.moleculesMax} premières détaillées
+
+        //- Élargissements du thésaurus, annoncés et refusables (« mot pour mot » :
+        //- une requête entre guillemets n'est jamais élargie).
+        if documents.elargissements && documents.elargissements.length > 0
+          p.elargi
+            each elargissement, i in documents.elargissements
+              if i > 0
+                |  ·
+              | « #{elargissement.terme} » cherché aussi comme
+              |
+              span.elargi-vers= elargissement.vers.map((v) => `« ${v} »`).join(', ')
+            | .
+            |  Recherche de l’expression exacte
+            |
+            a.elargi-exact(href=lien(etat, { requete: `"${query.replace(/"/g, '')}"` })
+              title="Chercher les mots tapés, et rien d'autre") « #{query.replace(/"/g, '')} »
+            | .
+
+    //- Le filtre par rubrique est dans l'en-tête du tableau.
+    if panne
+      p.vide= panne
+    else if notice
+      p.vide= notice
+    else if documents.resultats.length === 0
+      p.vide
+        | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
+        if rubrique
+          |  
+          a(href=lien(etat, { rubrique: null })) Chercher dans toutes les rubriques
+    else
+      +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien, ciblee)
+
+      //- Pagination précédent/suivant, sans numéros (trop de pages pour en choisir une).
+      - const premier = documents.decalage + 1
+      - const dernier = documents.decalage + documents.resultats.length
+      nav.pages(aria-label="Pagination des résultats")
+        if page > 1
+          a.page-prec(href=lien(etat, { page: page - 1 })) ← Précédents
+        span.page-rang Résultats #{premier.toLocaleString('fr-FR')} à #{dernier.toLocaleString('fr-FR')}
+        if documents.suite
+          a.page-suiv(href=lien(etat, { page: page + 1 })) Suivants →
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
+  script(src=`/js/extraits.js?v=${v}` defer)

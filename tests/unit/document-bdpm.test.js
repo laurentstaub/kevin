@@ -1,0 +1,215 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  extraireDocument, lienPdf, pageSansDocument, rubriquesVues, equilibrer, ouvertureDuTitre, pageErreurStockee,
+} from '../../src/document-bdpm.js';
+
+/** Une page de la BDPM : de l'habillage, le document, du pied de page. */
+const page = (corps) => `<!doctype html><html><head><title>BDPM</title>
+<script>var suivi = 1;</script><style>.x{color:red}</style></head><body>
+<nav><a href="/">Accueil</a><a href="/1">1. Recherche</a></nav>
+<header><h1>Base de données publique des médicaments</h1></header>
+<div class="fil">Accueil › Médicaments › 2. Résultats</div>
+${corps}
+<footer><p>3. Mentions légales</p><p>Ministère de la Santé</p></footer>
+</body></html>`;
+
+const RCP = page(`<div class="doc">
+<p>1. DENOMINATION DU MEDICAMENT</p><p>AMOXICILLINE ALMUS 1 g, comprimé dispersible</p>
+<p>2. COMPOSITION QUALITATIVE ET QUANTITATIVE</p><p>Amoxicilline ....... 1 g</p>
+<p>3. FORME PHARMACEUTIQUE</p><p>Comprimé dispersible.</p>
+<p>4. DONNEES CLINIQUES</p>
+<p>4.1. Indications thérapeutiques</p><p>AMOXICILLINE ALMUS est indiqué dans le traitement
+des infections suivantes chez l'adulte et l'enfant. ${'Texte clinique. '.repeat(60)}</p>
+<p>4.2. Posologie et mode d'administration</p><p>${'Posologie détaillée. '.repeat(40)}</p>
+</div>`);
+
+describe('extraireDocument', () => {
+  it('coupe au premier titre du plan, non à un conteneur', () => {
+    const doc = extraireDocument(RCP, 'rcp');
+    assert.ok(doc, 'document trouvé');
+    assert.match(doc.html.slice(0, 80), /1\. DENOMINATION/);
+  });
+
+  // Sans sélecteur CSS, qui casserait à la prochaine refonte du site.
+  it('laisse dehors la navigation et l’en-tête', () => {
+    const doc = extraireDocument(RCP, 'rcp');
+    assert.doesNotMatch(doc.html, /Accueil/);
+    assert.doesNotMatch(doc.html, /Base de données publique/);
+    assert.doesNotMatch(doc.html, /var suivi/);
+  });
+
+  it('n’ouvre pas une balise sans la fermer', () => {
+    const doc = extraireDocument(RCP, 'rcp');
+    const ouvrants = (doc.html.match(/<div\b/g) || []).length;
+    const fermants = (doc.html.match(/<\/div>/g) || []).length;
+    assert.equal(ouvrants, fermants, 'les div sont équilibrés');
+  });
+
+  it('compte les rubriques et les signes', () => {
+    const doc = extraireDocument(RCP, 'rcp');
+    assert.ok(doc.rubriques >= 6, `rubriques vues : ${doc.rubriques}`);
+    assert.ok(doc.signes > 800);
+  });
+
+  // Un « 1. Dénomination » dans un menu ne fait pas un RCP.
+  it('refuse ce qui n’a ni volume ni numérotation', () => {
+    assert.equal(extraireDocument(page('<p>1. DENOMINATION DU MEDICAMENT</p>'), 'rcp'), null);
+    assert.equal(extraireDocument(page('<p>Rien à voir ici.</p>'), 'rcp'), null);
+    assert.equal(extraireDocument('', 'rcp'), null);
+  });
+
+  it('reconnaît le plan propre à la notice', () => {
+    const notice = page(`<div>
+      <p>NOTICE : INFORMATION DE L'UTILISATEUR</p>
+      <p>1. Qu'est-ce que AMOXICILLINE ALMUS et dans quels cas est-il utilisé</p>
+      <p>${'Texte. '.repeat(80)}</p>
+      <p>2. Quelles sont les informations à connaître</p><p>${'Texte. '.repeat(50)}</p>
+      <p>3. Comment prendre AMOXICILLINE ALMUS</p><p>${'Texte. '.repeat(50)}</p>
+      <p>4. Quels sont les effets indésirables éventuels</p><p>${'Texte. '.repeat(50)}</p>
+    </div>`);
+    const doc = extraireDocument(notice, 'notice');
+    assert.ok(doc, 'notice trouvée');
+    assert.match(doc.html.slice(0, 120), /NOTICE/);
+  });
+});
+
+describe('pageSansDocument', () => {
+  // La BDPM répond 200 avec une page d'explication.
+  it('reconnaît la page d’excuse', () => {
+    assert.equal(pageSansDocument(page(
+      "<p>Le médicament demandé n'existe pas ou n'entre pas dans le périmètre.</p>")), true);
+  });
+
+  // Cas majoritaire : légalement sans RCP ni notice, à distinguer d'une panne de lecture.
+  it('reconnaît l’absence propre aux homéopathiques à nom commun', () => {
+    assert.equal(pageSansDocument(page(
+      '<p>Aucune indication thérapeutique, aucune posologie et aucune notice ne '
+      + 'sont attribuées aux médicaments homéopathiques à nom commun.</p>')), true);
+  });
+
+  it('ne confond pas un document avec une absence', () => {
+    assert.equal(pageSansDocument(RCP), false);
+  });
+});
+
+describe('lienPdf', () => {
+  it('trouve le PDF européen des spécialités centralisées', () => {
+    assert.equal(
+      lienPdf(page('<a href="https://ema.europa.eu/docs/fr_FR/keppra.pdf">Vers le RCP</a>')),
+      'https://ema.europa.eu/docs/fr_FR/keppra.pdf',
+    );
+  });
+
+  it('rend null quand la page porte le texte', () => {
+    assert.equal(lienPdf(RCP), null);
+  });
+});
+
+describe('rubriquesVues', () => {
+  it('compte les numéros distincts, non les occurrences', () => {
+    assert.equal(rubriquesVues('<p>1. UN</p><p>1. UN</p><p>2. DEUX</p>'), 2);
+    assert.equal(rubriquesVues('<p>4.1 A</p><p>4.2 B</p><p>4 C</p>'), 3);
+  });
+});
+
+describe('equilibrer', () => {
+  // Un fragment déséquilibré est recollé par le navigateur, qui déplace tout.
+  it('retire une fermante orpheline', () => {
+    assert.equal(equilibrer('<p>texte</p></div>'), '<p>texte</p>');
+  });
+
+  it('referme une ouvrante restée béante', () => {
+    assert.equal(equilibrer('<div><p>texte</p>'), '<div><p>texte</p></div>');
+  });
+
+  it('respecte l’ordre d’imbrication en refermant', () => {
+    assert.equal(equilibrer('<div><ul><li>a'), '<div><ul><li>a</li></ul></div>');
+  });
+
+  it('ne compte pas les balises vides', () => {
+    assert.equal(equilibrer('<p>a<br>b</p>'), '<p>a<br>b</p>');
+    assert.equal(equilibrer('<p>a<br/>b'), '<p>a<br/>b</p>');
+  });
+
+  it('laisse intact ce qui est déjà équilibré', () => {
+    const sain = '<div><p>un</p><p>deux</p></div>';
+    assert.equal(equilibrer(sain), sain);
+  });
+});
+
+// /medicament/<CIS>/extrait porte le RCP puis la notice.
+describe('page unique portant les deux documents', () => {
+  const DEUX = page(`<div class="doc">
+    <p>1. DENOMINATION DU MEDICAMENT</p><p>AMOXICILLINE ALMUS 1 g</p>
+    <p>2. COMPOSITION QUALITATIVE ET QUANTITATIVE</p><p>${'Composition. '.repeat(40)}</p>
+    <p>3. FORME PHARMACEUTIQUE</p><p>${'Forme. '.repeat(40)}</p>
+    <p>4. DONNEES CLINIQUES</p><p>${'Clinique. '.repeat(60)}</p>
+    <p>NOTICE : INFORMATION DE L'UTILISATEUR</p>
+    <p>1. Qu'est-ce que AMOXICILLINE ALMUS et dans quels cas est-il utilisé</p>
+    <p>${'Patient. '.repeat(80)}</p>
+    <p>2. Quelles sont les informations à connaître</p><p>${'Patient. '.repeat(50)}</p>
+    <p>3. Comment prendre AMOXICILLINE ALMUS</p><p>${'Patient. '.repeat(50)}</p>
+    <p>4. Quels sont les effets indésirables éventuels</p><p>${'Patient. '.repeat(40)}</p>
+    <p>5. Comment conserver AMOXICILLINE ALMUS</p><p>${'Patient. '.repeat(30)}</p>
+    <p>6. Contenu de l'emballage et autres informations</p><p>${'Patient. '.repeat(30)}</p>
+  </div>`);
+
+  it('le RCP s’arrête où la notice commence', () => {
+    const rcp = extraireDocument(DEUX, 'rcp');
+    assert.doesNotMatch(rcp.html, /INFORMATION DE L'UTILISATEUR/);
+    assert.doesNotMatch(rcp.html, /Patient\./);
+  });
+
+  it('la notice ne reprend pas le RCP', () => {
+    const notice = extraireDocument(DEUX, 'notice');
+    assert.doesNotMatch(notice.html, /DENOMINATION DU MEDICAMENT/);
+    assert.match(notice.html, /INFORMATION DE L'UTILISATEUR/);
+  });
+
+  it('les deux mis bout à bout font le document entier, sans recouvrement', () => {
+    const rcp = extraireDocument(DEUX, 'rcp');
+    const notice = extraireDocument(DEUX, 'notice');
+    assert.ok(rcp.signes > 0 && notice.signes > 0);
+    assert.ok(rcp.signes < notice.signes * 3, `rcp ${rcp.signes} / notice ${notice.signes}`);
+  });
+});
+
+describe('ouvertureDuTitre', () => {
+  // Nouveau site BDPM : le titre est dans un <span> lui-même dans le <p>.
+  it('remonte au <p> qui ouvre le titre, pas au <span> le plus proche', () => {
+    const corps = '<div class="doc"><p class="titre"><span id="x">1. DENOMINATION DU MEDICAMENT</span></p>';
+    const depart = corps.indexOf('1. DENOM');
+    assert.equal(corps.slice(ouvertureDuTitre(corps, depart)).slice(0, 18), '<p class="titre"><');
+  });
+
+  it('s’arrête au titre si un texte le précède dans le bloc', () => {
+    const corps = '<p>Voir la rubrique <span>1. DENOMINATION</span></p>';
+    const depart = corps.indexOf('1. DENOM');
+    assert.equal(corps.slice(ouvertureDuTitre(corps, depart)), '<span>1. DENOMINATION</span></p>');
+  });
+
+  it('extrait un document du nouveau site avec le <p> de son premier titre', () => {
+    const nouveau = RCP.replace('<p>1. DENOMINATION DU MEDICAMENT</p>',
+      '<p class="AmmAnnexeTitre1"><span id="1._DENOMINATION">1. DENOMINATION DU MEDICAMENT</span><a href="#top"></a></p>');
+    assert.match(extraireDocument(nouveau, 'rcp').html, /^<p class="AmmAnnexeTitre1"><span/);
+  });
+});
+
+describe('pages d’erreur stockées', () => {
+  // Collectées en mai 2025 comme notices (ÉPLÉRÉNONE EG, VIRGAN, MELPHALAN SUN, ATÉNOLOL BIOGARAN).
+  const introuvable = '<title>Notice patient - - Base de données publique des médicaments</title><br /><p>Le médicament demandé n\'existe pas dans la base</p><div>&nbsp;</div>';
+  const fichier = '<table><tr><td><h1>ATENOLOL BIOGARAN 50 mg - Notice patient</h1></td></tr></table> Erreur : le fichier https://base-donnees-publique.medicaments.gouv.fr/Rcp_Notices/notice/N0401126.htm n\'existe pas. <div>&nbsp;</div>';
+
+  it('reconnaît les deux formulations comme pages sans document', () => {
+    assert.equal(pageSansDocument(introuvable), true);
+    assert.equal(pageSansDocument(fichier), true);
+    assert.equal(pageErreurStockee(introuvable), true);
+    assert.equal(pageErreurStockee(fichier), true);
+  });
+
+  it('ne prend pas pour une erreur un vrai document qui citerait la phrase', () => {
+    const long = `<p>1. QU’EST-CE QUE X</p><p>${'Texte de notice. '.repeat(150)} Le médicament demandé n'existe pas dans la base.</p>`;
+    assert.equal(pageErreurStockee(long), false);
+  });
+});

@@ -1,223 +1,492 @@
-doctype html
-html(lang="fr")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title #{product.denomination_medicament} - Détails du médicament
-    link(rel="stylesheet", href="/css/style.css")
-    link(rel="stylesheet", href="/css/product.css")
-    link(rel="stylesheet", href="https://site-assets.fontawesome.com/releases/v6.5.1/css/all.css")
-    link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet")
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+include _picto.pug
 
-  body
-    .product-container
-      .product-header
-        a.back-button(href="/") 
-          i.fa-light.fa-arrow-left
-          span Retour à la recherche
-        h1.product-title= product.denomination_medicament
-        .product-subtitle
-          if product.active_ingredients
-            a.product-category(href="#")= product.active_ingredients.toUpperCase()
+block styles
+  link(rel="stylesheet", href=`/css/product.css?v=${v}`)
 
-      .product-content
-        .main-content
-          .presentations-section
-            h2.section-title Présentations
-            if product.cip_products && product.cip_products.length > 0
-              .cip-list
-                each cip in product.cip_products
-                  .cip-item
-                    p= `${cip.code_cip7} - ${cip.libelle_presentation}`
+block content
+  mixin choixForme(choix)
+    a.forme-choix(
+      href=`/product/${choix.id}`
+      class=(choix.commercialise === false ? 'forme-retiree' : '')
+      title=(choix.commercialise === false ? 'Non commercialisé' : null)
+    )= choix.variante
 
-          if product.incidents && product.incidents.length > 0
-            .incidents-section
-              h2.section-title État de disponibilité
-              .incidents-list
-                each incident in product.incidents
-                  .incident-item
-                    .incident-header
-                      .incident-status(class=`status-${incident.status.toLowerCase()}`)
-                        i.fa-light.fa-circle-exclamation
-                        span= incident.status
-                      .incident-dates
-                        if incident.start_date
-                          .date-item
-                            i.fa-light.fa-calendar-day
-                            span.date-label Début:
-                            span.date-value= new Date(incident.start_date).toLocaleDateString('fr-FR')
-                        if incident.end_date
-                          .date-item
-                            i.fa-light.fa-calendar-check
-                            span.date-label Fin:
-                            span.date-value= new Date(incident.end_date).toLocaleDateString('fr-FR')
-                    .incident-content
-                      if incident.original_specialite
-                        .incident-detail
-                          span.detail-label Spécialité:
-                          span.detail-value= incident.original_specialite
+  mixin rubrique(entree, ouverte)
+    if entree.charniere
+      h4.charniere(id=entree.id)
+        span.num= entree.numero
+        span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
+    else
+      details.rubrique(id=entree.id open=ouverte class=`rub-n${entree.profondeur}` class=(entree.essentielle ? 'essentielle' : null))
+        summary.rubrique-tete
+          span.num= entree.numero
+          span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
+        .rubrique-corps!= entree.html
 
+  //- Sans titre : la dénomination elle-même colle sous la barre au défilement.
+  +barreSituation()
 
-          if relatedProducts && relatedProducts.length > 0
-            - const generics = relatedProducts.filter(p => p.match_type === 'generic')
-            - const relatedByIngredients = relatedProducts.filter(p => p.match_type === 'related')
+  //- Identité : fil ATC, dénomination, métadonnées. La dénomination est hors
+  //- de l'en-tête pour pouvoir coller sous la barre jusqu'au bas de la page ;
+  //- documents.js la marque `colle` une fois collée (fond, filet, une ligne).
+  header.identite.identite-haut
+    .identite-inner
+      //- Fil ATC du produit ; retour et recherche sont dans la barre collante.
+      .identite-tete
+        if resumeAtc
+          nav.atc(aria-label="Classe thérapeutique")
+            span.atc-etiquette Classe
+            each niveau in resumeAtc.contexte
+              span.atc-sep ›
+              a.atc-maillon(href=`/classe/${niveau.code}` title=`${niveau.code} — ${phrase(niveau.label)}`)= phrase(niveau.label)
+            span.atc-sep ›
+            //- La feuille s'affiche par son code : son libellé répéterait la DCI.
+            a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${dci(resumeAtc.feuille.label)}`)= resumeAtc.feuille.code
 
-            if generics && generics.length > 0
-              .related-products-section
-                h2.section-title Médicaments génériques
-                .related-products-list
-                  each genericProduct in generics
-                    a.related-product-item.generic-product(href=`/product/${genericProduct.id}`)
-                      .product-name= genericProduct.denomination_medicament
-                      if genericProduct.active_ingredients
-                        .product-ingredients= genericProduct.active_ingredients
-                      if genericProduct.type_generique
-                        .product-type= genericProduct.type_generique === '0' ? 'Princeps' : 'Générique'
+  .titre-colle
+    .identite-inner
+      h1.produit-titre= specialite(product.denomination_medicament)
+  .identite.identite-bas
+    .identite-inner
+      p.page-meta
+        if product.active_ingredients
+          span.dci= dci(product.active_ingredients)
+          span.sep
+        if product.titulaires
+          span= product.titulaires
+          span.sep
+        span CIS #{product.id}
+        //- Importation parallèle : même médicament, sans documentation propre.
+        if importation
+          span.sep
+          span.marque Importation parallèle
 
-            if relatedByIngredients && relatedByIngredients.length > 0
-              .related-products-section
-                h2.section-title Produits contenant les mêmes principes actifs
-                .related-products-list
-                  each relatedProduct in relatedByIngredients
-                    a.related-product-item(href=`/product/${relatedProduct.id}`)
-                      .product-name= relatedProduct.denomination_medicament
-                      if relatedProduct.active_ingredients
-                        .product-ingredients= relatedProduct.active_ingredients
+      //- Autres dosages et formes du même nom, sur un rang ; les autres formes ne
+      //- sont repliées qu'au-delà de SEUIL_REPLI variantes. Le dosage affiché est
+      //- dans le titre : il n'est pas répété.
+      - const SEUIL_REPLI = 8
+      - const forme = product.forme_pharmaceutique
+      - const soeurs = (variantes || []).filter((variante) => !variante.courante)
+      - const memeForme = soeurs.filter((variante) => variante.forme_pharmaceutique === forme)
+      - const autresFormes = soeurs.filter((variante) => variante.forme_pharmaceutique !== forme)
+      - const replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
+      - const enTete = replier ? memeForme : soeurs
+      if soeurs.length > 0
+        nav.formes(aria-label="Autres dosages et formes")
+          ul.formes-liste
+            each soeur in enTete
+              li
+                +choixForme(soeur)
 
-          // Documents section
-          if documents && (documents.rcp.length > 0 || documents.notice.length > 0 || documents.main.length > 0)
-            .documents-section
-              h2.section-title Documents officiels
-              
-              .document-tabs
-                ul.nav.nav-tabs(role="tablist")
-                  if documents.rcp && documents.rcp.length > 0
-                    li.nav-item
-                      a.nav-link.active(data-bs-toggle="tab" href="#rcp-tab" role="tab") RCP
-                  if documents.notice && documents.notice.length > 0
-                    li.nav-item
-                      a.nav-link(class=(documents.rcp.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#notice-tab" role="tab") Notice
-                  if documents.main && documents.main.length > 0
-                    li.nav-item
-                      a.nav-link(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'active' : ''), data-bs-toggle="tab" href="#main-tab" role="tab") Principal
-                
-                .tab-content
-                  if documents.rcp && documents.rcp.length > 0
-                    .tab-pane.fade.show.active#rcp-tab(role="tabpanel")
-                      each doc in documents.rcp
-                        .document-item
-                          .document-header
-                            h4 Résumé des Caractéristiques du Produit
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/rcp` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
-                  
-                  if documents.notice && documents.notice.length > 0
-                    .tab-pane.fade(class=(documents.rcp.length === 0 ? 'show active' : '') id="notice-tab" role="tabpanel")
-                      each doc in documents.notice
-                        .document-item
-                          .document-header
-                            h4 Notice Patient
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/notice` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
-                  
-                  if documents.main && documents.main.length > 0
-                    .tab-pane.fade(class=(documents.rcp.length === 0 && documents.notice.length === 0 ? 'show active' : '') id="main-tab" role="tabpanel")
-                      each doc in documents.main
-                        .document-item
-                          .document-header
-                            h4 Document Principal
-                            if doc.date_maj
-                              small.text-muted Mis à jour le #{new Date(doc.date_maj).toLocaleDateString('fr-FR')}
-                          .document-content
-                            .document-link
-                              a.btn.btn-primary(href=`/api/document/${product.id}/main` target="_blank")
-                                i.fas.fa-external-link-alt
-                                | Consulter le document
+            if replier
+              li
+                details.formes-autres
+                  summary.formes-plus #{autresFormes.length} autre#{autresFormes.length > 1 ? 's' : ''} forme#{autresFormes.length > 1 ? 's' : ''}
+                  ul.formes-liste
+                    each soeur in autresFormes
+                      li
+                        +choixForme(soeur)
 
-          .other-info-section
-            h2.section-title Autres informations
-            .info-grid
-              .info-item
-                h3 Titulaire de l'autorisation de mise sur le marché (AMM)
-                p= product.titulaires
+  //- Bande signalétique : les caractéristiques sur une ligne, en cases fixes
+  //- toujours dans le même ordre, valeurs seules ; libellé et détail en infobulle.
+  //- Collante sous la dénomination, troisième ligne fixe au défilement.
+  if signaletique && signaletique.length > 0
+    section.signaletique(aria-label="Caractéristiques")
+      ul.signaletique-inner
+        each cas in signaletique
+          li.signal(class=cas.portee === 'bloque' ? 'signal-bloque' : cas.fort ? 'signal-fort' : null title=[cas.libelle, cas.detail].filter(Boolean).join(' — ') data-cle=cas.cle)
+            +picto(cas.picto)
+            if cas.lien
+              a.signal-valeur(href=cas.lien)= cas.valeur
+            else
+              span.signal-valeur= cas.valeur
 
-    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
-    
-    style.
-      .documents-section {
-        margin-bottom: 2rem;
-      }
-      
-      .document-tabs .nav-tabs {
-        border-bottom: 2px solid #dee2e6;
-        margin-bottom: 1rem;
-      }
-      
-      .document-tabs .nav-link {
-        color: #495057;
-        border: none;
-        border-bottom: 2px solid transparent;
-        padding: 0.75rem 1rem;
-        font-weight: 500;
-      }
-      
-      .document-tabs .nav-link:hover {
-        border-color: #dee2e6;
-        background-color: #f8f9fa;
-      }
-      
-      .document-tabs .nav-link.active {
-        color: #0d6efd;
-        border-bottom-color: #0d6efd;
-        background-color: transparent;
-      }
-      
-      .document-item {
-        margin-bottom: 1.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        background-color: #f8f9fa;
-      }
-      
-      .document-header {
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
-      }
-      
-      .document-header h4 {
-        margin: 0;
-        color: #212529;
-        font-size: 1.1rem;
-      }
-      
-      .document-content .document-link {
-        text-align: center;
-      }
-      
-      .document-link .btn {
-        padding: 0.75rem 2rem;
-        font-weight: 500;
-        text-decoration: none;
-      }
-      
-      .document-link .btn i {
-        margin-right: 0.5rem;
-      }
-      
-      .text-muted {
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-      }
+  //- Colonne unique centrée, sans sommaire latéral : le document replié sert de plan.
+  .corps
+    main.contenu
 
+      //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
+      //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
+      - const nbConditions = delivrance.groupes.reduce((total, groupe) => total + groupe.conditions.length, 0)
+      //- `remboursement` : indications lues, `null` sans restriction, `indisponible` en panne.
+      - const rembourse = Boolean(remboursement && !remboursement.indisponible)
+      - const priseEnChargeIllisible = Boolean(remboursement && remboursement.indisponible)
+      - const bdpm = links.official.find((lien) => lien.key === 'bdpm')
+      details.bloc#delivrance
+        summary.bloc-tete
+          h2.section-titre Délivrance
+          if delivrance.resume.length > 0 || remboursement || delivrance.indisponible
+            //- Mentions courtes ; le libellé exact BDPM est en infobulle et dans le corps.
+            span.mentions
+              //- Pannes d'abord, lisibles bloc fermé : ce qui suit peut être incomplet.
+              if delivrance.indisponible
+                span.mention(title="Les conditions de prescription et de délivrance n'ont pas pu être lues") Conditions indisponibles
+              //- « à vérifier » et non « indisponible », qui se lirait « non remboursé ».
+              if priseEnChargeIllisible
+                span.mention(title="Les indications ouvrant droit au remboursement n'ont pas pu être lues") Prise en charge à vérifier
+              //- Prise en charge limitée à certaines indications : condition de
+              //- délivrance issue d'une autre table, d'où sa pose ici et non dans `classer`.
+              if rembourse
+                span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
+              each mention in delivrance.resume
+                //- La mention bloquante se distingue par la graisse, pas la couleur (daltonisme).
+                span.mention(
+                  class=(mention.portee === 'bloque' ? 'mention-bloque'
+                    : mention.cle === 'classement' ? 'mention-classement' : null)
+                  title=([mention.long !== mention.court ? mention.long : null,
+                    delivrance.complement ? 'Complété : absent de la BDPM' : null].filter(Boolean).join(' — ') || null)
+                )= mention.court
+          else if nbConditions > 0
+            span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
+          else
+            span.bloc-compte Aucune condition enregistrée
+
+        //- Panne de lecture : le dire, et renvoyer à la source, plutôt que « aucune liste ».
+        if delivrance.indisponible
+          p.vide
+            | Les conditions de prescription et de délivrance n'ont pas pu être lues.
+            if bdpm
+              |  Vérifiez-les sur la
+              |
+              a(href=bdpm.url target="_blank" rel="noopener noreferrer") fiche officielle BDPM
+              | .
+        if priseEnChargeIllisible
+          p.vide
+            | Les indications ouvrant droit au remboursement n'ont pas pu être lues : la prise en charge peut être limitée à certaines indications.
+            if bdpm
+              |  Vérifiez-la sur la
+              |
+              a(href=bdpm.url target="_blank" rel="noopener noreferrer") fiche officielle BDPM
+              | .
+
+        if nbConditions > 0 || rembourse
+          if nbConditions > 0
+            dl.axes
+              each groupe in delivrance.groupes
+                dt.axe-titre= groupe.titre
+                dd.axe-valeur
+                  each condition in groupe.conditions
+                    //- Libellé d'origine intact en infobulle : mis en forme, pas réécrit.
+                    p.condition(title=condition.brut)
+                      if condition.population
+                        span.condition-population= condition.population
+                      span.condition-texte
+                        each seg in condition.segments
+                          if seg.fort
+                            strong= seg.texte
+                          else
+                            = seg.texte
+
+          //- Texte de l'Assurance Maladie, mot pour mot. Pas de titre « médicament
+          //- d'exception » : toutes les restrictions n'en relèvent pas ; Meddispar
+          //- n'est donné qu'en référence de la catégorie.
+          if rembourse
+            .remboursement
+              h3.remboursement-titre
+                | Prise en charge
+                if remboursement.taux
+                  //- Le taux doit porter son unité.
+                  span.remboursement-taux(title="Taux de remboursement par l’Assurance Maladie")= remboursement.taux
+              .remboursement-texte!= remboursement.texte
+              p.section-meta
+                a(href="https://www.meddispar.fr/Medicaments-d-exception/Criteres"
+                  target="_blank" rel="noopener noreferrer") Médicaments d'exception — critères, sur Meddispar
+
+          //- Complément relu (data/conditions-complementaires.json) : la source le dit.
+          if delivrance.complement
+            p.section-meta
+              | Condition absente de la BDPM, complétée le #{delivrance.complement.confirme_le.split('-').reverse().join('/')} : #{delivrance.complement.motif}
+
+          if delivrance.liens.length > 0
+            p.section-meta Conduite à tenir détaillée sur Meddispar, édité par l'Ordre national des pharmaciens :
+            ul.liens
+              each lien in delivrance.liens
+                li
+                  a(href=lien.url target="_blank" rel="noopener noreferrer")= lien.label
+        else if !delivrance.indisponible
+          p.vide La base publique n'enregistre aucune condition de prescription ni de délivrance pour cette spécialité : elle n'est inscrite sur aucune liste de substances vénéneuses et n'est pas à prescription restreinte.
+
+      //- Évaluation HAS : avis de la Commission de la transparence, du plus récent
+      //- au plus ancien. SMR et ASMR sont donnés par indication, libellé HAS mot
+      //- pour mot ; l'avis complet est seulement lié.
+      if evaluation && evaluation.length > 0
+        - const ROMAIN = /^(?:I{1,3}|IV|V)$/
+        //- Libellé découpé en phrase d'introduction et énumération (has.js).
+        mixin libelleHas(valeur, lignes)
+          p.avis-ligne
+            strong.avis-valeur= valeur
+            if lignes && lignes.intro
+              |  — #{lignes.intro}
+          if lignes && lignes.items.length > 0
+            ul.avis-items
+              each item in lignes.items
+                li= item
+
+        mixin avisHas(avis)
+          .avis-has
+            p.avis-tete
+              span= avis.date ? avis.date.toLocaleDateString('fr-FR') : 'Date inconnue'
+              if avis.motif
+                span.sep
+                span= avis.motif
+              if avis.lien
+                span.sep
+                a(href=avis.lien target="_blank" rel="noopener noreferrer") Avis de la Commission
+            each ligne in avis.smr
+              +libelleHas(`SMR ${ligne.valeur.toLowerCase()}`, ligne.lignes)
+            each ligne in avis.asmr
+              +libelleHas(ROMAIN.test(ligne.valeur) ? `ASMR ${ligne.valeur}` : ligne.valeur, ligne.lignes)
+
+        details.bloc#evaluation
+          summary.bloc-tete
+            h2.section-titre Évaluation HAS
+            span.bloc-compte #{evaluation.length} avis
+          +avisHas(evaluation[0])
+          if evaluation.length > 1
+            details.avis-anterieurs
+              summary.formes-plus #{evaluation.length - 1} avis antérieur#{evaluation.length > 2 ? 's' : ''}
+              each avis in evaluation.slice(1)
+                +avisHas(avis)
+
+      //- Informations de sécurité de l'ANSM (CIS_InfoImportantes) : intitulé et lien
+      //- seulement. Ouvert d'office tant qu'une information est en cours d'affichage
+      //- sur la BDPM ; passées, elles restent lisibles, dites archivées.
+      if securite === null
+        p.section-meta#securite Informations de sécurité ANSM momentanément indisponibles.
+      else if securite && securite.total > 0
+        - const enCours = securite.infos.filter((info) => info.enCours).length
+        details.bloc#securite(open=enCours > 0)
+          summary.bloc-tete
+            h2.section-titre Informations de sécurité
+            span.bloc-compte #{securite.total} information#{securite.total > 1 ? 's' : ''} ANSM
+          ul.infos-securite
+            each info in securite.infos
+              li.info-securite
+                span.info-date= info.date
+                if info.url
+                  a(href=info.url target="_blank" rel="noopener noreferrer")= info.intitule
+                else
+                  span= info.intitule
+                if info.enCours
+                  span.mention En cours
+          if securite.total > securite.infos.length
+            p.section-meta
+              | #{securite.total - securite.infos.length} plus ancienne#{securite.total - securite.infos.length > 1 ? 's' : ''} —
+              |
+              a(href=bdpm ? bdpm.url : '#' target="_blank" rel="noopener noreferrer") fiche BDPM
+
+      //- Interactions : cette spécialité contre un ou plusieurs autres médicaments,
+      //- lus dans la 4.5 des RCP (page /interactions). Le CIS fait lire le RCP de
+      //- cette spécialité précise, pas celui de toute sa gamme. Même champ que la
+      //- recherche ; search.js ne s'accroche qu'au premier formulaire de la page.
+      section.bloc.verifier#interactions
+        form.verifier-form(method="GET" action="/interactions")
+          input(type="hidden" name="m" value=product.id)
+          label.verifier-libelle(for="verifier-avec") Interactions avec
+          .input-wrapper
+            input.search-input#verifier-avec(
+              type="search"
+              name="avec"
+              placeholder="un ou plusieurs médicaments"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              required
+              maxlength="200"
+            )
+            button.search-button(type="submit" aria-label="Vérifier les interactions" title="Vérifier les interactions")
+              svg(viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false")
+                path(d="M20 5v6a3 3 0 0 1-3 3H5M9 10l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round")
+
+      //- Alternatives : les candidats classés par action au comptoir (substitution.js,
+      //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
+      //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
+      //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
+      //- Un filtre actif garde le bloc ouvert, même s'il a tout masqué : sinon
+      //- plus rien ne permettrait de l'ôter.
+      - const filtreActif = Boolean(parExcipient && parExcipient.sans.length > 0)
+      if alternatives && (alternatives.categories.length > 0 || filtreActif)
+        - const options = optionsAlternatives
+        details.bloc#alternatives(open=filtreActif)
+          summary.bloc-tete
+            h2.section-titre Alternatives
+            span.bloc-compte
+              | #{options} option#{options > 1 ? 's' : ''}
+              if parExcipient && parExcipient.masques > 0
+                |  · #{parExcipient.masques} masquée#{parExcipient.masques > 1 ? 's' : ''}
+          if genericGroup
+            p.section-meta
+              | Groupe générique · #{genericGroup} —
+              |
+              a(href=links.repertoire target="_blank" rel="noopener noreferrer") Répertoire de l'ANSM
+          //- Filtres « sans … » au-dessus de ce qu'ils pilotent ; l'URL porte l'état.
+          //- Proposés seulement s'ils séparent les candidats. Source : rubrique 6.1
+          //- (liste complète) et déclaration des excipients à effet notoire.
+          if parExcipient && parExcipient.filtres.length > 0
+            .filtres-excipients
+              span.filtres-libelle Sans
+              each filtre in parExcipient.filtres
+                - const suivants = filtre.actif ? parExcipient.sans.filter((id) => id !== filtre.id) : [...parExcipient.sans, filtre.id]
+                a.filtre-excipient(
+                  href=`${suivants.length ? `?sans=${suivants.join(',')}` : '?'}#alternatives`
+                  class=filtre.actif ? 'actif' : null
+                  aria-pressed=filtre.actif ? 'true' : 'false'
+                  title=filtre.dansProduit ? 'Ce produit en contient' : null
+                )
+                  = filtre.court
+                  if filtre.dansProduit
+                    span.filtre-ici  (ce produit)
+            if parExcipient.masques > 0
+              p.section-meta
+                - const plusieurs = parExcipient.masques > 1
+                | #{parExcipient.masques} spécialité#{plusieurs ? 's' : ''} masquée#{plusieurs ? 's' : ''} : #{plusieurs ? 'leur' : 'son'} RCP en indique. Une spécialité dont la liste des excipients n'a pas été lue reste affichée, marquée « non lu ».
+            //- Les écartés ne sont pas des alternatives : seuls, ils ne comptent pas.
+            if filtreActif && alternatives.categories.every((cat) => cat.cle === 'BLOQUE')
+              p.vide Aucune alternative sans #{parExcipient.filtres.filter((filtre) => filtre.actif).map((filtre) => filtre.court).join(' ni ')}.
+          each cat in alternatives.categories
+            if cat.cle === 'BLOQUE'
+              //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
+              details.subst-ecartes
+                summary.formes-plus #{cat.lignes.length} écarté#{cat.lignes.length > 1 ? 's' : ''}, avec la raison
+                table.t-substitution
+                  caption.sr-only Spécialités écartées et raison
+                  tbody
+                    each item in cat.lignes
+                      tr
+                        td
+                          a(href=`/product/${item.id}`)= specialite(item.denomination)
+                        td.subst-motif= item.motif
+            else
+              section.subst-categorie(class=`subst-${cat.cle.toLowerCase()}`)
+                h3.subst-action= cat.action
+                if cat.cle === 'ALTERNATIVE_CLASSE' && typeof sousClasseAtc !== 'undefined' && sousClasseAtc
+                  //- La sous-classe nommée ; sa page détaille toutes ses molécules.
+                  p.subst-commun
+                    a(href=`/classe/${sousClasseAtc.code}`)= phrase(sousClasseAtc.label)
+                    |
+                    |
+                    span.subst-atc= sousClasseAtc.code
+                p.subst-detail= cat.detail
+                if cat.commun
+                  //- Dosage et forme du groupe, dits une fois ; nom complet au survol.
+                  p.subst-commun= cat.commun
+                if cat.molecules
+                  //- Une molécule par ligne : on cherche une alternative disponible.
+                  ul.subst-molecules
+                    each mol in cat.molecules
+                      li
+                        span.subst-molecule= dci(mol.nom)
+                        if mol.atc5
+                          span.subst-atc= mol.atc5
+                        span.subst-specialites
+                          each sp, i in mol.specialites
+                            if i > 0
+                              span.sep
+                            a(href=`/product/${sp.id}` title=(sp.excipients && sp.excipients.courts.length ? `Contient : ${sp.excipients.courts.join(', ')}` : null))= specialite(sp.denomination)
+                else
+                  table.t-substitution
+                    caption.sr-only= cat.action
+                    tbody
+                      each item in cat.lignes
+                        tr
+                          td
+                            a(href=`/product/${item.id}` title=(item.court ? specialite(item.denomination) : null))= specialite(item.court || item.denomination)
+                            if item.excipients && item.excipients.courts.length > 0
+                              span.excipients-item= item.excipients.courts.join(' · ')
+                            else if item.excipients && !item.excipients.lu
+                              span.excipients-item.non-lu non lu
+                          if cat.cle === 'SUBSTITUABLE'
+                            td
+                              span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
+                          else
+                            td.subst-motif= item.motif
+
+      //- Contenu principal, jamais replié : le document lu sert de titre
+      //- (« RCP »), les autres documents en onglets au même niveau.
+      if hasDocuments
+        //- Mots trouvés par la recherche (?q=…), surlignés par documents.js.
+        section.bloc.bloc-documents#documents(data-mots=(motsTrouves && motsTrouves.length > 0 ? JSON.stringify(motsTrouves) : null))
+          h2.sr-only Documents officiels
+          if documents.length > 1
+            .onglets(role="tablist" aria-label="Documents officiels")
+              each doc, i in documents
+                button.onglet(
+                  type="button"
+                  role="tab"
+                  id=`onglet-${doc.type}`
+                  aria-controls=doc.anchor
+                  aria-selected=(i === 0 ? 'true' : 'false')
+                  tabindex=(i === 0 ? 0 : -1)
+                  title=doc.label
+                )= doc.court
+          else
+            .onglets
+              span.onglet(aria-selected="true" title=documents[0].label)= documents[0].court
+
+          //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
+          //- Non supporté (Safari), il vaut `hidden`.
+          each doc, i in documents
+            article.document(
+              id=doc.anchor
+              data-type=doc.type
+              role=(documents.length > 1 ? 'tabpanel' : null)
+              aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
+              hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
+            )
+              //- Ligne de service unique : date, provenance, lien officiel, commande.
+              p.document-meta
+                if doc.lastUpdated
+                  span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
+                if doc.source === 'bdpm_pdf'
+                  span Texte reconstruit depuis le PDF européen
+                if doc.url
+                  a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
+                if doc.rubriques && doc.rubriques.length > 0
+                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
+                if doc.manquantes && doc.manquantes.length > 0
+                  span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
+
+              if doc.emprunte
+                p.emprunt
+                  strong Texte emprunté.
+                  |  Cette spécialité est une importation parallèle : la base publique ne lui attribue ni RCP ni notice. Le document ci-dessous est celui de&nbsp;
+                  a(href=`/product/${doc.emprunte.id}`)= specialite(doc.emprunte.denomination_medicament)
+                  if doc.emprunte.titulaires
+                    |  (#{doc.emprunte.titulaires.trim()})
+                  | , dont ce produit est la copie distribuée en France.
+
+              if doc.rubriques && doc.rubriques.length > 0
+                .rubriques
+                  //- Numérotation et ordre officiels ; seules les rubriques cliniques s'ouvrent.
+                  each rubrique in doc.rubriques
+                    +rubrique(rubrique, rubrique.clinique === true)
+
+              else if doc.html
+                .document-corps!= doc.html
+
+              else if doc.url
+                p.doc-externe
+                  | Ce document n'est disponible qu'au format PDF sur le site officiel.
+
+      details.bloc#references
+        summary.bloc-tete
+          h2.section-titre Références
+          span.bloc-compte Ce produit ailleurs
+        //- Liens sortants officiels.
+        ul.liens
+          each link in links.official
+            li
+              a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
+        if links.scientific.length > 0
+          p.section-meta Littérature et registres, sur #{links.scientific[0].hint}
+          ul.liens
+            each link in links.scientific
+              li
+                a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
+  script(src=`/js/documents.js?v=${v}` defer)

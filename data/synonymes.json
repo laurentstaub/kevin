@@ -1,0 +1,23 @@
+{
+  "_": "Nom courant → substance telle que la BDPM la nomme (sans accent, en bas de casse). Clé en mots simples, sans accent.",
+  "aspirine": "acide acetylsalicylique",
+  "acetaminophene": "paracetamol",
+  "nitroglycerine": "trinitrine",
+  "eau oxygenee": "peroxyde d'hydrogene",
+  "alcool": "ethanol",
+  "vitamine a": "retinol",
+  "vitamine b1": "thiamine",
+  "vitamine b2": "riboflavine",
+  "vitamine b3": "nicotinamide",
+  "vitamine pp": "nicotinamide",
+  "vitamine b6": "pyridoxine",
+  "vitamine b9": "acide folique",
+  "vitamine b12": "cyanocobalamine",
+  "vitamine c": "acide ascorbique",
+  "vitamine d": "cholecalciferol",
+  "vitamine d3": "cholecalciferol",
+  "vitamine d2": "ergocalciferol",
+  "vitamine e": "tocopherol",
+  "vitamine k": "phytomenadione",
+  "vitamine k1": "phytomenadione"
+}

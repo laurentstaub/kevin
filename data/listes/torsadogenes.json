@@ -1,0 +1,180 @@
+{
+  "titre": "Substances susceptibles de donner des torsades de pointes",
+  "amorce": {
+    "source": "ANSM — Thésaurus des interactions médicamenteuses",
+    "version": "15 septembre 2023, version finale : l'ANSM a cessé de le mettre à jour et renvoie aux RCP",
+    "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
+    "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf",
+    "extraite_le": "2026-10-14"
+  },
+  "relu_par": null,
+  "relu_le": null,
+  "inscriptions": [
+    {
+      "substance": "amiodarone",
+      "origine": "amorce"
+    },
+    {
+      "substance": "amisulpride",
+      "origine": "amorce"
+    },
+    {
+      "substance": "arsenieux",
+      "origine": "amorce"
+    },
+    {
+      "substance": "chloroquine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "chlorpromazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "citalopram",
+      "origine": "amorce"
+    },
+    {
+      "substance": "cocaine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "crizotinib",
+      "origine": "amorce"
+    },
+    {
+      "substance": "cyamemazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "disopyramide",
+      "origine": "amorce"
+    },
+    {
+      "substance": "domperidone",
+      "origine": "amorce"
+    },
+    {
+      "substance": "dronedarone",
+      "origine": "amorce"
+    },
+    {
+      "substance": "droperidol",
+      "origine": "amorce"
+    },
+    {
+      "substance": "erythromycine",
+      "origine": "amorce",
+      "restriction": "voie intraveineuse seulement (thésaurus)"
+    },
+    {
+      "substance": "escitalopram",
+      "origine": "amorce"
+    },
+    {
+      "substance": "flupentixol",
+      "origine": "amorce"
+    },
+    {
+      "substance": "fluphenazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "halofantrine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "haloperidol",
+      "origine": "amorce"
+    },
+    {
+      "substance": "hydroquinidine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "hydroxychloroquine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "hydroxyzine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "levomepromazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "lumefantrine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "mequitazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "methadone",
+      "origine": "amorce"
+    },
+    {
+      "substance": "moxifloxacine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "pentamidine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "pimozide",
+      "origine": "amorce"
+    },
+    {
+      "substance": "pipamperone",
+      "origine": "amorce"
+    },
+    {
+      "substance": "piperaquine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "pipotiazine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "quinidine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "sotalol",
+      "origine": "amorce"
+    },
+    {
+      "substance": "spiramycine",
+      "origine": "amorce"
+    },
+    {
+      "substance": "sulpiride",
+      "origine": "amorce"
+    },
+    {
+      "substance": "tiapride",
+      "origine": "amorce"
+    },
+    {
+      "substance": "toremifene",
+      "origine": "amorce"
+    },
+    {
+      "substance": "vandetanib",
+      "origine": "amorce"
+    },
+    {
+      "substance": "vincamine",
+      "origine": "amorce",
+      "restriction": "voie intraveineuse seulement (thésaurus)"
+    },
+    {
+      "substance": "zuclopenthixol",
+      "origine": "amorce"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { ROOT } from '../src/config.js';
+import { createPool } from '../src/db.js';
+import { sanitizeDocument } from '../src/sanitize.js';
+import { splitDocument, PARSER_VERSION } from '../src/split.js';
+import { purgerOrphelins } from '../src/orphelins.js';
+import { pageErreurStockee } from '../src/document-bdpm.js';
+
+/**
+ * Découpe dbpm.cis_documents (lu seulement) en rubriques dans docs.rcp_sections.
+ * Incrémental : saute un document d'empreinte et de PARSER_VERSION inchangées ;
+ * incrémenter PARSER_VERSION rejoue tout.
+ *
+ *   npm run build-sections                 # incrémental
+ *   npm run build-sections -- --all        # tout rejouer
+ *   npm run build-sections -- --type rcp   # un seul type
+ *   npm run build-sections -- --limit 200  # échantillon
+ *   npm run build-sections -- --dry-run    # mesurer sans écrire
+ *
+ * Les spécialités retirées de la BDPM ne sont plus découpées (cis_documents
+ * garde leurs documents) et leurs rubriques sont purgées en fin de passage.
+ */
+
+const args = process.argv.slice(2);
+const flag = (nom) => args.includes(`--${nom}`);
+const valeur = (nom, defaut) => {
+  const i = args.indexOf(`--${nom}`);
+  return i !== -1 && args[i + 1] ? args[i + 1] : defaut;
+};
+
+const TOUT = flag('all');
+const SEC = flag('dry-run');
+const TYPE = valeur('type', null);
+const LIMITE = Number.parseInt(valeur('limit', ''), 10) || null;
+const LOT = 200;
+
+const empreinte = (contenu) => createHash('sha1').update(contenu ?? '').digest('hex');
+
+const pool = createPool({ statement_timeout: 0 });
+
+await pool.query(await readFile(path.join(ROOT, 'sql', 'sections.sql'), 'utf8'));
+
+const connu = new Map();
+if (!TOUT) {
+  const { rows } = await pool.query(
+    'SELECT code_cis, document_type, source_hash, parser_version FROM docs.document_parse',
+  );
+  for (const row of rows) {
+    connu.set(`${row.code_cis}|${row.document_type}`, `${row.source_hash}|${row.parser_version}`);
+  }
+}
+
+/** Exclut « main » (fiche info BDPM, sans rubriques) : il fausserait le taux de réussite. */
+const TYPES_DECOUPABLES = ['rcp', 'rcp_notice', 'notice'];
+
+const conditions = ["coalesce(html_content, '') <> ''"];
+const params = [TYPE ? [TYPE] : TYPES_DECOUPABLES];
+conditions.push('document_type = ANY($1)');
+// Spécialité retirée de la BDPM : son document reste collecté, il n'est plus découpé.
+conditions.push('EXISTS (SELECT 1 FROM dbpm.cis_bdpm m WHERE m.code_cis = cis_documents.code_cis)');
+
+const { rows: total } = await pool.query(
+  `SELECT count(*)::int AS n FROM dbpm.cis_documents WHERE ${conditions.join(' AND ')}`,
+  params,
+);
+
+console.log(`${total[0].n.toLocaleString('fr-FR')} document(s) avec du HTML`);
+console.log(`découpeur v${PARSER_VERSION}${TOUT ? ' — tout rejouer' : ''}${SEC ? ' — à blanc' : ''}\n`);
+
+const bilan = { traites: 0, sautes: 0, ok: 0, partiel: 0, echec: 0, rubriques: 0, erreurs: 0 };
+const manquantesFreq = new Map();
+const echecs = [];
+
+let offset = 0;
+let restant = LIMITE ?? Infinity;
+
+while (restant > 0) {
+  const taille = Math.min(LOT, restant);
+  const { rows } = await pool.query(
+    `SELECT code_cis, document_type, html_content
+     FROM dbpm.cis_documents
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY code_cis, document_type
+     LIMIT ${taille} OFFSET ${offset}`,
+    params,
+  );
+  if (rows.length === 0) break;
+  offset += rows.length;
+  restant -= rows.length;
+
+  for (const doc of rows) {
+    const cle = `${doc.code_cis}|${doc.document_type}`;
+    const hash = empreinte(doc.html_content);
+
+    // Page d'erreur stockée comme document : rien à découper, et son ancien
+    // découpage (« échec ») s'efface.
+    if (pageErreurStockee(doc.html_content)) {
+      bilan.erreurs += 1;
+      if (!SEC) {
+        await pool.query('DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2', [doc.code_cis, doc.document_type]);
+        await pool.query('DELETE FROM docs.document_parse WHERE code_cis = $1 AND document_type = $2', [doc.code_cis, doc.document_type]);
+      }
+      continue;
+    }
+
+    if (connu.get(cle) === `${hash}|${PARSER_VERSION}`) {
+      bilan.sautes += 1;
+      continue;
+    }
+
+    const { sections, statut, manquantes } = splitDocument(
+      sanitizeDocument(doc.html_content),
+      doc.document_type,
+    );
+
+    bilan.traites += 1;
+    bilan[statut] += 1;
+    bilan.rubriques += sections.length;
+    for (const manquante of manquantes) manquantesFreq.set(manquante, (manquantesFreq.get(manquante) ?? 0) + 1);
+    if (statut === 'echec' && echecs.length < 20) echecs.push(cle);
+
+    if (SEC) continue;
+
+    // Réécriture complète du document : une rubrique disparue doit disparaître.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2',
+        [doc.code_cis, doc.document_type],
+      );
+
+      for (const section of sections) {
+        await client.query(
+          `INSERT INTO docs.rcp_sections
+             (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte, source)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bdpm_html')`,
+          [
+            doc.code_cis, doc.document_type, section.position, section.numero,
+            section.libelle, section.profondeur, section.canonical, section.html, section.texte,
+          ],
+        );
+      }
+
+      // Provenance réécrite à chaque fois : un document repris en HTML après une
+      // reconstruction depuis le PDF ne doit plus s'annoncer « reconstruit du PDF ».
+      await client.query(
+        `INSERT INTO docs.document_parse
+           (code_cis, document_type, source_hash, parser_version, section_count, statut, manquantes, source, parsed_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'bdpm_html', now())
+         ON CONFLICT (code_cis, document_type) DO UPDATE SET
+           source_hash = excluded.source_hash,
+           parser_version = excluded.parser_version,
+           section_count = excluded.section_count,
+           statut = excluded.statut,
+           manquantes = excluded.manquantes,
+           source = excluded.source,
+           parsed_at = now()`,
+        [doc.code_cis, doc.document_type, hash, PARSER_VERSION, sections.length, statut, manquantes],
+      );
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error(`  ✗ ${cle} : ${err.message}`);
+    } finally {
+      client.release();
+    }
+  }
+
+  process.stdout.write(`\r  ${offset.toLocaleString('fr-FR')} parcourus…`);
+}
+
+// ------------------------------------------------------------- orphelins
+
+// Rubriques des spécialités retirées : purgées, sauf si la BDPM paraît vide
+// ou en cours de chargement (garde-fou de purgerOrphelins).
+const orphelins = await purgerOrphelins(pool, { aBlanc: SEC });
+
+// ------------------------------------------------------------------ bilan
+
+const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
+
+console.log(`\n\n${'─'.repeat(52)}`);
+console.log(`  sautés (inchangés)      ${bilan.sautes.toLocaleString('fr-FR')}`);
+console.log(`  traités                 ${bilan.traites.toLocaleString('fr-FR')}`);
+console.log('');
+console.log(`  découpage complet       ${bilan.ok.toLocaleString('fr-FR')}  (${pct(bilan.ok)})`);
+console.log(`  rubriques socle en moins ${bilan.partiel.toLocaleString('fr-FR')}  (${pct(bilan.partiel)})`);
+console.log(`  aucun découpage         ${bilan.echec.toLocaleString('fr-FR')}  (${pct(bilan.echec)})`);
+console.log('');
+console.log(`  rubriques écrites       ${bilan.rubriques.toLocaleString('fr-FR')}`);
+if (bilan.erreurs > 0) console.log(`  pages d'erreur ignorées ${bilan.erreurs.toLocaleString('fr-FR')} (recollecter : collect-documents --cis)`);
+if (orphelins.purge) {
+  console.log(`  orphelines purgées      ${orphelins.purge.rubriques.toLocaleString('fr-FR')} rubriques`
+    + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées de la BDPM)`);
+} else if (orphelins.orphelins > 0) {
+  console.log(`  orphelines              ${orphelins.rubriques.toLocaleString('fr-FR')} rubriques`
+    + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées)`
+    + (orphelins.raison ? ` — ${orphelins.raison}` : SEC ? ' — à purger' : ''));
+}
+if (bilan.traites) {
+  console.log(`  moyenne par document    ${(bilan.rubriques / bilan.traites).toFixed(1)}`);
+}
+
+if (manquantesFreq.size > 0) {
+  console.log('\n  Rubriques socle les plus souvent absentes :');
+  for (const [numero, nombre] of [...manquantesFreq].sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+    console.log(`    ${numero.padEnd(6)} ${nombre.toLocaleString('fr-FR')}`);
+  }
+}
+
+if (echecs.length > 0) {
+  console.log('\n  Documents sans aucune rubrique (échantillon) :');
+  console.log(`    ${echecs.join(', ')}`);
+  console.log('\n  Pour inspecter le balisage :');
+  console.log(
+    `    psql -d $PGDATABASE -c "SELECT left(html_content, 600) FROM dbpm.cis_documents WHERE code_cis = '${echecs[0].split('|')[0]}'"`,
+  );
+}
+
+console.log('');
+await pool.end();

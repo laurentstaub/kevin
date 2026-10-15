@@ -1,0 +1,408 @@
+import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
+import { promisify } from 'node:util';
+import path from 'node:path';
+import { ROOT, config } from '../src/config.js';
+import { createPool } from '../src/db.js';
+import { safeDocumentUrl } from '../src/sanitize.js';
+import { pdfEnDocuments } from '../src/pdf.js';
+import { splitDocument, PARSER_VERSION } from '../src/split.js';
+
+/**
+ * Découpe en rubriques les RCP qui n'existent qu'en PDF EMA (procédure centralisée).
+ * Le `file_path` en base ne pointe sur rien : simple drapeau « PDF seulement » ;
+ * le vrai lien se lit sur la fiche document de la BDPM.
+ *
+ *   npm run build-pdf-sections                # incrémental
+ *   npm run build-pdf-sections -- --limit 20  # échantillon
+ *   npm run build-pdf-sections -- --dry-run   # mesurer sans écrire en base
+ *   npm run build-pdf-sections -- --all       # rejouer tout
+ *   npm run build-pdf-sections -- --cis 62474215,66747729 --all   # rejouer ceux-là
+ * Cache (.cache/pdf) des liens et des PDF : une reprise ne redemande rien.
+ */
+
+const execFileP = promisify(execFile);
+
+const args = process.argv.slice(2);
+const flag = (option) => args.includes(`--${option}`);
+const valeur = (option, defaut) => {
+  const i = args.indexOf(`--${option}`);
+  return i !== -1 && args[i + 1] ? args[i + 1] : defaut;
+};
+
+const TOUT = flag('all');
+const SEC = flag('dry-run');
+const LIMITE = Number.parseInt(valeur('limit', ''), 10) || null;
+const CIS = valeur('cis', '')
+  .split(',')
+  .map((cis) => cis.trim())
+  .filter(Boolean);
+const PAUSE = Number.parseInt(valeur('pause', '400'), 10); // ms entre deux fiches BDPM
+// L'EMA limite plus durement le débit que la BDPM.
+let pausePdf = Number.parseInt(valeur('pause-pdf', '1000'), 10);
+const PAUSE_PDF_MAX = 8000;
+const TENTATIVES = 6;
+// Au-delà, l'EMA refuse tout : inutile d'insister.
+const ABANDONS_AVANT_ARRET = 40;
+const CACHE = path.join(ROOT, '.cache', 'pdf');
+const LIENS = path.join(CACHE, 'liens.json');
+
+const UA = { 'User-Agent': 'dr-kevin/2.0 (découpage de RCP, usage interne)' };
+
+const empreinte = (buf) => createHash('sha1').update(buf).digest('hex');
+const dormir = (ms) => new Promise((reveil) => setTimeout(reveil, ms));
+
+// ------------------------------------------------------------- prérequis
+
+try {
+  await execFileP('pdftotext', ['-v']);
+} catch {
+  console.error('pdftotext est introuvable — il vient de poppler.');
+  console.error('  macOS  : brew install poppler');
+  console.error('  Debian : apt install poppler-utils');
+  process.exit(1);
+}
+
+await mkdir(CACHE, { recursive: true });
+
+const pool = createPool({ statement_timeout: 0 });
+await pool.query(await readFile(path.join(ROOT, 'sql', 'sections.sql'), 'utf8'));
+
+// ------------------------------------------------------------- documents
+
+const connu = new Map();
+if (!TOUT) {
+  const { rows } = await pool.query(
+    `SELECT code_cis, source_hash, parser_version
+     FROM docs.document_parse WHERE source = 'bdpm_pdf'`,
+  );
+  for (const row of rows) connu.set(row.code_cis, `${row.source_hash}|${row.parser_version}`);
+}
+
+// La dénomination choisit la forme dans un PDF qui les décrit toutes (posologies différentes).
+// Jointure stricte : une spécialité retirée de la BDPM n'est plus ni téléchargée
+// ni découpée (cis_documents garde son document) ; build-sections purge ses rubriques.
+const { rows: cibles } = await pool.query(
+  `SELECT d.code_cis, s.denomination_medicament AS denomination
+   FROM dbpm.cis_documents d
+   JOIN dbpm.cis_bdpm s USING (code_cis)
+   WHERE d.document_type = 'rcp_notice'
+     AND coalesce(d.html_content, '') = ''
+     AND ($1::text[] IS NULL OR d.code_cis = ANY($1))
+   ORDER BY d.code_cis
+   ${LIMITE ? `LIMIT ${LIMITE}` : ''}`,
+  [CIS.length > 0 ? CIS : null],
+);
+
+console.log(`${cibles.length.toLocaleString('fr-FR')} spécialité(s) sans HTML`);
+console.log(`découpeur v${PARSER_VERSION}${SEC ? ' — à blanc' : ''}\n`);
+
+const bilan = {
+  sautes: 0, traites: 0, ok: 0, partiel: 0, echec: 0, retires: 0,
+  rubriques: 0, pages: 0, telecharges: 0, mutualises: 0, freine: 0, html: 0,
+};
+
+// Le texte officiel l'emporte : un RCP ou une notice que la BDPM publie en HTML
+// n'est jamais reconstruit du PDF (sinon les deux découpeurs le réécrivent tour à tour).
+const { rows: publiesEnHtml } = await pool.query(
+  `SELECT code_cis || '|' || document_type AS cle FROM dbpm.cis_documents
+   WHERE document_type IN ('rcp', 'notice') AND coalesce(html_content, '') <> ''`,
+);
+const enHtml = new Set(publiesEnHtml.map((ligne) => ligne.cle));
+const soucis = [];
+
+// -------------------------------------------------- résolution du lien réel
+
+/** Fiche document de la BDPM, qui porte le lien du PDF (visée directe, sans la 301 de affichageDoc.php). */
+const fiche = (cis) =>
+  `${config.documentBaseUrl}/medicament/${encodeURIComponent(cis)}/extrait`;
+
+const PDF_DANS_PAGE = /https?:\/\/[^\s"'<>]+?\.pdf/gi;
+
+/** cis -> URL du PDF, persisté. */
+let liens = {};
+try {
+  liens = JSON.parse(await readFile(LIENS, 'utf8'));
+} catch {
+  /* premier passage */
+}
+let liensModifies = 0;
+
+const enregistrerLiens = async () => {
+  if (liensModifies === 0) return;
+  await writeFile(LIENS, JSON.stringify(liens, null, 1));
+  liensModifies = 0;
+};
+
+async function resoudreLien(cis) {
+  if (cis in liens) return liens[cis]; // null = fiche sans PDF, déjà constaté
+
+  const reponse = await fetch(fiche(cis), { headers: UA, redirect: 'follow' });
+  await dormir(PAUSE);
+
+  // 404 : CIS disparu de la BDPM, traité comme une fiche sans lien et mémorisé.
+  if (reponse.status === 404) {
+    liens[cis] = null;
+    liensModifies += 1;
+    return null;
+  }
+  if (!reponse.ok) throw new Error(`fiche BDPM HTTP ${reponse.status}`);
+
+  const page = await reponse.text();
+  bilan.pages += 1;
+
+  // Le premier PDF d'un domaine autorisé est le bon. Son absence est normale pour une AMM retirée.
+  const url = [...page.matchAll(PDF_DANS_PAGE)].map((lien) => safeDocumentUrl(lien[0])).find(Boolean);
+
+  liens[cis] = url ?? null;
+  liensModifies += 1;
+  if (liensModifies >= 25) await enregistrerLiens();
+  return liens[cis];
+}
+
+// --------------------------------------------------------- téléchargement
+
+/**
+ * Nom local haché sur l'URL entière : l'EMA réutilise un même nom de fichier dans
+ * des répertoires différents pour des médicaments différents.
+ */
+const nomLocal = (url) => {
+  const base = path
+    .basename(new URL(url).pathname, '.pdf')
+    .replace(/[^\w.-]/g, '_')
+    .slice(0, 80);
+  return path.join(CACHE, `${base}-${createHash('sha1').update(url).digest('hex').slice(0, 12)}.pdf`);
+};
+
+/** URL abandonnées pendant cette exécution. */
+const perdues = new Map();
+
+async function recupererPdf(url) {
+  const fichier = nomLocal(url);
+  try {
+    return { buffer: await readFile(fichier), fichier };
+  } catch {
+    /* absent du cache */
+  }
+
+  // Un PDF sert plusieurs CIS : un refus ne se paie qu'une fois.
+  if (perdues.has(url)) throw new Error(perdues.get(url));
+
+  for (let essai = 1; essai <= TENTATIVES; essai += 1) {
+    const reponse = await fetch(url, { headers: UA, redirect: 'follow' });
+
+    // Débit limité : respecter Retry-After et ralentir pour le reste de l'exécution.
+    if (reponse.status === 429 || reponse.status === 503) {
+      bilan.freine += 1;
+      pausePdf = Math.min(pausePdf + 1000, PAUSE_PDF_MAX);
+      const entete = Number.parseInt(reponse.headers.get('retry-after') ?? '', 10);
+      await dormir(Number.isFinite(entete) ? entete * 1000 : essai * 8000);
+      continue;
+    }
+
+    if (!reponse.ok) {
+      const motif = `PDF HTTP ${reponse.status}`;
+      perdues.set(url, motif);
+      throw new Error(motif);
+    }
+
+    const buffer = Buffer.from(await reponse.arrayBuffer());
+    if (buffer.subarray(0, 4).toString() !== '%PDF') {
+      const motif = 'la réponse n’est pas un PDF';
+      perdues.set(url, motif);
+      throw new Error(motif);
+    }
+
+    await writeFile(fichier, buffer);
+    await dormir(pausePdf);
+    bilan.telecharges += 1;
+    return { buffer, fichier };
+  }
+
+  const motif = `refus répété de l’EMA après ${TENTATIVES} tentatives`;
+  perdues.set(url, motif);
+  throw new Error(motif);
+}
+
+async function extraireTexte(fichier) {
+  const sortie = `${fichier}.txt`;
+  await execFileP('pdftotext', ['-layout', '-enc', 'UTF-8', fichier, sortie]);
+  const texte = await readFile(sortie, 'utf8');
+  await unlink(sortie).catch(() => {});
+  return texte;
+}
+
+// ------------------------------------------------------------- traitement
+
+/** Un PDF sert plusieurs CIS : découpé une seule fois. */
+const dejaDecoupe = new Map();
+
+let abandonsSuite = 0;
+let arreteTot = false;
+let rang = 0;
+for (const cible of cibles) {
+  rang += 1;
+  process.stdout.write(`\r  ${rang} / ${cibles.length}…`);
+
+  let url;
+  try {
+    url = await resoudreLien(cible.code_cis);
+  } catch (err) {
+    soucis.push({ cis: cible.code_cis, motif: err.message });
+    bilan.echec += 1;
+    continue;
+  }
+
+  // Hors périmètre BDPM : pas un échec de découpage.
+  if (!url) {
+    bilan.retires += 1;
+    continue;
+  }
+
+  let pdf;
+  try {
+    pdf = await recupererPdf(url);
+    abandonsSuite = 0;
+  } catch (err) {
+    soucis.push({ cis: cible.code_cis, motif: `téléchargement : ${err.message}` });
+    bilan.echec += 1;
+    abandonsSuite += 1;
+    // L'EMA refuse tout : arrêt propre, le travail fait est déjà en base.
+    if (abandonsSuite >= ABANDONS_AVANT_ARRET) {
+      arreteTot = true;
+      break;
+    }
+    continue;
+  }
+
+  const hash = empreinte(pdf.buffer);
+  if (connu.get(cible.code_cis) === `${hash}|${PARSER_VERSION}`) {
+    bilan.sautes += 1;
+    continue;
+  }
+
+  // Le découpage dépend aussi de la forme : deux CIS d'une spécialité diffèrent.
+  const cle = `${hash}|${cible.denomination ?? ''}`;
+
+  let resultats = dejaDecoupe.get(cle);
+  if (resultats) {
+    bilan.mutualises += 1;
+  } else {
+    try {
+      const documents = pdfEnDocuments(await extraireTexte(pdf.fichier), {
+        denomination: cible.denomination,
+      });
+      // Pas de complétion du balisage mixte : pdftotext mêle les colonnes, un
+      // paragraphe porte souvent le numéro voisin (« 5 6. Comment conserver… »).
+      resultats = documents.map((doc) => ({ type: doc.type, ...splitDocument(doc.html, doc.type, { completer: false }) }));
+    } catch (err) {
+      soucis.push({ cis: cible.code_cis, motif: `extraction : ${err.message}` });
+      bilan.echec += 1;
+      continue;
+    }
+    dejaDecoupe.set(cle, resultats);
+  }
+
+  bilan.traites += 1;
+
+  const rcp = resultats.find((resultat) => resultat.type === 'rcp');
+  const statut = rcp?.statut ?? 'echec';
+  bilan[statut] += 1;
+  bilan.rubriques += resultats.reduce((somme, resultat) => somme + resultat.sections.length, 0);
+
+  if (statut !== 'ok') {
+    soucis.push({
+      cis: cible.code_cis,
+      motif: `RCP ${statut}${rcp?.manquantes.length ? ` — manque ${rcp.manquantes.join(', ')}` : ''}`,
+    });
+  }
+
+  if (SEC) continue;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (const resultat of resultats) {
+      if (enHtml.has(`${cible.code_cis}|${resultat.type}`)) {
+        bilan.html += 1;
+        continue;
+      }
+      await client.query(
+        'DELETE FROM docs.rcp_sections WHERE code_cis = $1 AND document_type = $2',
+        [cible.code_cis, resultat.type],
+      );
+
+      for (const section of resultat.sections) {
+        await client.query(
+          `INSERT INTO docs.rcp_sections
+             (code_cis, document_type, position, numero, libelle, profondeur, canonical, html, texte, source)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bdpm_pdf')`,
+          [
+            cible.code_cis, resultat.type, section.position, section.numero,
+            section.libelle, section.profondeur, section.canonical, section.html, section.texte,
+          ],
+        );
+      }
+
+      await client.query(
+        `INSERT INTO docs.document_parse
+           (code_cis, document_type, source_hash, parser_version, section_count, statut, manquantes, source, parsed_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'bdpm_pdf', now())
+         ON CONFLICT (code_cis, document_type) DO UPDATE SET
+           source_hash = excluded.source_hash,
+           parser_version = excluded.parser_version,
+           section_count = excluded.section_count,
+           statut = excluded.statut,
+           manquantes = excluded.manquantes,
+           source = excluded.source,
+           parsed_at = now()`,
+        [cible.code_cis, resultat.type, hash, PARSER_VERSION, resultat.sections.length, resultat.statut, resultat.manquantes],
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    soucis.push({ cis: cible.code_cis, motif: `écriture : ${err.message}` });
+  } finally {
+    client.release();
+  }
+}
+
+await enregistrerLiens();
+
+// ------------------------------------------------------------------ bilan
+
+if (arreteTot) {
+  console.log(
+    `\n\n  Arrêt : ${ABANDONS_AVANT_ARRET} refus consécutifs de l'EMA.` +
+      '\n  Relancer plus tard reprend où on en est — rien n\'est perdu.',
+  );
+}
+
+const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
+const nb = (nombre) => nombre.toLocaleString('fr-FR');
+
+console.log(`\n\n${'─'.repeat(52)}`);
+console.log(`  fiches BDPM lues        ${nb(bilan.pages)}`);
+console.log(`  hors périmètre BDPM     ${nb(bilan.retires)}`);
+console.log(`  PDF téléchargés         ${nb(bilan.telecharges)}${bilan.freine ? `  (${nb(bilan.freine)} refus de débit, pause portée à ${pausePdf} ms)` : ''}`);
+console.log(`  sautés (inchangés)      ${nb(bilan.sautes)}`);
+console.log(`  traités                 ${nb(bilan.traites)}  dont ${nb(bilan.mutualises)} sur un PDF déjà découpé`);
+console.log('');
+console.log(`  RCP complet             ${nb(bilan.ok)}  (${pct(bilan.ok)})`);
+console.log(`  RCP partiel             ${nb(bilan.partiel)}  (${pct(bilan.partiel)})`);
+console.log(`  échec                   ${nb(bilan.echec)}`);
+console.log('');
+console.log(`  rubriques écrites       ${nb(bilan.rubriques)}`);
+if (bilan.html > 0) console.log(`  laissés au HTML BDPM    ${nb(bilan.html)} document(s), publiés en HTML`);
+
+if (soucis.length > 0) {
+  console.log(`\n  ${soucis.length} document(s) à regarder (20 premiers) :`);
+  for (const souci of soucis.slice(0, 20)) console.log(`    ${souci.cis}  ${souci.motif}`);
+}
+
+console.log(`\n  Cache dans ${path.relative(ROOT, CACHE)} — supprimable sans risque.\n`);
+await pool.end();
