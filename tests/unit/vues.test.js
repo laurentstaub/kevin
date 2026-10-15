@@ -595,6 +595,43 @@ describe('rendu des gabarits', () => {
     assert.match(html, /ansm\.sante\.fr\/documents\/reference\/repertoire-des-medicaments-generiques/);
   });
 
+  it('filtre « sans … » : puces, masqués comptés, étiquettes, et le vide dit', () => {
+    const filtre = (categories, masques) => ({
+      optionsAlternatives: 3,
+      alternatives: { groupe: null, categories },
+      parExcipient: {
+        sans: ['lactose'], masques, categories,
+        filtres: [
+          { id: 'lactose', court: 'lactose', actif: true, dansProduit: true },
+          { id: 'gelatine', court: 'gélatine', actif: false, dansProduit: false },
+        ],
+      },
+    });
+    const html = rendre('product', produit(filtre([
+      { cle: 'SUBSTITUABLE', action: 'Génériques du groupe', detail: 'De droit', lignes: [
+        { id: '2', denomination: 'X 1 mg, comprimé', role: 'Générique', excipients: { lu: true, courts: ['gélatine'] } },
+        { id: '3', denomination: 'Y 1 mg, comprimé', role: 'Générique', excipients: { lu: false, courts: [] } },
+      ] },
+    ], 1)));
+    assert.match(html, /<details class="bloc" id="alternatives" open/);
+    assert.match(html, /3 options · 1 masquée/);
+    assert.match(html, /class="filtre-excipient actif"[^>]*>lactose<span class="filtre-ici"> \(ce produit\)/);
+    // Ôter le seul filtre actif ramène à la fiche sans paramètre ; en ajouter un les cumule.
+    assert.match(html, /class="filtre-excipient actif" href="\?#alternatives"/);
+    assert.match(html, /href="\?sans=lactose,gelatine#alternatives"/);
+    assert.match(html, /1 spécialité masquée : son RCP en indique/);
+    assert.match(html, /<span class="excipients-item">gélatine<\/span>/);
+    assert.match(html, /<span class="excipients-item non-lu">non lu<\/span>/);
+    assert.doesNotMatch(html, /Aucune alternative sans/);
+
+    // Tout masqué sauf les écartés : le bloc reste, le vide est dit, le filtre s'ôte.
+    const vide = rendre('product', produit(filtre([
+      { cle: 'BLOQUE', action: 'Non substituables', detail: '', lignes: [{ id: '5', denomination: 'Z', motif: 'Voie différente' }] },
+    ], 2)));
+    assert.match(vide, /Aucune alternative sans lactose\./);
+    assert.match(vide, /class="filtre-excipient actif"/);
+  });
+
   it('sans candidat, pas de bloc Alternatives', () => {
     assert.doesNotMatch(rendre('product', produit()), /id="alternatives"/);
   });

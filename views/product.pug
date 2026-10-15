@@ -343,7 +343,8 @@ block content
               p.section-meta
                 - const plusieurs = parExcipient.masques > 1
                 | #{parExcipient.masques} spécialité#{plusieurs ? 's' : ''} masquée#{plusieurs ? 's' : ''} : #{plusieurs ? 'leur' : 'son'} RCP en indique. Une spécialité dont la liste des excipients n'a pas été lue reste affichée, marquée « non lu ».
-            if filtreActif && alternatives.categories.length === 0
+            //- Les écartés ne sont pas des alternatives : seuls, ils ne comptent pas.
+            if filtreActif && alternatives.categories.every((cat) => cat.cle === 'BLOQUE')
               p.vide Aucune alternative sans #{parExcipient.filtres.filter((filtre) => filtre.actif).map((filtre) => filtre.court).join(' ni ')}.
           each cat in alternatives.categories
             if cat.cle === 'BLOQUE'
