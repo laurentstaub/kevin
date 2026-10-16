@@ -430,7 +430,9 @@ describe('rendu des gabarits', () => {
   // Apparence : choix mémorisé posé avant les styles, bouton caché sans JavaScript.
   it('chaque page porte le bouton d’apparence et l’applique avant les styles', () => {
     const accueil = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
-    assert.match(accueil, /localStorage\.getItem\('apparence'\)[\s\S]*<link rel="stylesheet"/);
+    // Fichier externe, avant les styles : la CSP (script-src 'self') refuse un script en ligne.
+    assert.match(accueil, /<script src="\/js\/apparence\.js\?v=test"><\/script>[\s\S]*<link rel="stylesheet"/);
+    assert.doesNotMatch(accueil, /<script>/);
     assert.match(accueil, /<button class="theme" type="button" hidden="hidden"/);
     assert.match(accueil, /src="\/js\/theme\.js\?v=test"/);
     const docs = rendre('documents', { query: 'QT', rubrique: null, documents: RECHERCHE_VIDE });

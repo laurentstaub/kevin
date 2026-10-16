@@ -1,9 +1,9 @@
 /**
  * Apparence : automatique (réglage du système), claire ou sombre.
  * Un bouton par page, qui passe d'un état au suivant. Le choix est mémorisé
- * dans le navigateur ; en automatique, rien n'est écrit. Le gabarit applique
- * le choix mémorisé avant les feuilles de style, pour ne pas voir la page
- * changer au chargement.
+ * dans le navigateur ; en automatique, rien n'est écrit. apparence.js
+ * applique le choix mémorisé avant les feuilles de style, pour ne pas voir la
+ * page changer au chargement.
  */
 (function () {
   const ETATS = ['auto', 'light', 'dark'];
