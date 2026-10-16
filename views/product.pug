@@ -307,7 +307,10 @@ block content
       //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
       //- Un filtre actif garde le bloc ouvert, même s'il a tout masqué : sinon
       //- plus rien ne permettrait de l'ôter.
-      - const filtreActif = Boolean(parExcipient && parExcipient.sans.length > 0)
+      - const sansActifs = parExcipient ? parExcipient.sans : []
+      - const deglutitionActif = Boolean(deglutition && deglutition.actif)
+      - const filtreActif = sansActifs.length > 0 || deglutitionActif
+      - const masquesTotal = (parExcipient ? parExcipient.masques : 0) + (deglutition ? deglutition.masques : 0)
       if alternatives && (alternatives.categories.length > 0 || filtreActif)
         - const options = optionsAlternatives
         details.bloc#alternatives(open=filtreActif)
@@ -315,8 +318,8 @@ block content
             h2.section-titre Alternatives
             span.bloc-compte
               | #{options} option#{options > 1 ? 's' : ''}
-              if parExcipient && parExcipient.masques > 0
-                |  · #{parExcipient.masques} masquée#{parExcipient.masques > 1 ? 's' : ''}
+              if masquesTotal > 0
+                |  · #{masquesTotal} masquée#{masquesTotal > 1 ? 's' : ''}
           if genericGroup
             p.section-meta
               | Groupe générique · #{genericGroup} —
@@ -325,13 +328,23 @@ block content
           //- Filtres « sans … » au-dessus de ce qu'ils pilotent ; l'URL porte l'état.
           //- Proposés seulement s'ils séparent les candidats. Source : rubrique 6.1
           //- (liste complète) et déclaration des excipients à effet notoire.
+          if deglutition && deglutition.propose
+            //- Forme buvable ou fondante (BDPM), ou RCP qui permet d'écraser, d'ouvrir,
+            //- de disperser ou d'utiliser une sonde : ce qui se prend sans avaler entier.
+            .filtres-excipients
+              a.filtre-excipient(
+                href=lienAlternatives(sansActifs, !deglutitionActif)
+                class=deglutitionActif ? 'actif' : null
+                aria-pressed=deglutitionActif ? 'true' : 'false'
+                title="Formes buvables, orodispersibles, effervescentes ou dispersibles, et médicaments dont le RCP permet d'écraser, d'ouvrir, de disperser ou d'administrer par sonde"
+              ) Déglutition difficile
           if parExcipient && parExcipient.filtres.length > 0
             .filtres-excipients
               span.filtres-libelle Sans
               each filtre in parExcipient.filtres
                 - const suivants = filtre.actif ? parExcipient.sans.filter((id) => id !== filtre.id) : [...parExcipient.sans, filtre.id]
                 a.filtre-excipient(
-                  href=`${suivants.length ? `?sans=${suivants.join(',')}` : '?'}#alternatives`
+                  href=lienAlternatives(suivants, deglutitionActif)
                   class=filtre.actif ? 'actif' : null
                   aria-pressed=filtre.actif ? 'true' : 'false'
                   title=filtre.dansProduit ? 'Ce produit en contient' : null
@@ -343,9 +356,14 @@ block content
               p.section-meta
                 - const plusieurs = parExcipient.masques > 1
                 | #{parExcipient.masques} spécialité#{plusieurs ? 's' : ''} masquée#{plusieurs ? 's' : ''} : #{plusieurs ? 'leur' : 'son'} RCP en indique. Une spécialité dont la liste des excipients n'a pas été lue reste affichée, marquée « non lu ».
-            //- Les écartés ne sont pas des alternatives : seuls, ils ne comptent pas.
-            if filtreActif && alternatives.categories.every((cat) => cat.cle === 'BLOQUE')
-              p.vide Aucune alternative sans #{parExcipient.filtres.filter((filtre) => filtre.actif).map((filtre) => filtre.court).join(' ni ')}.
+          if deglutition && deglutition.masques > 0
+            p.section-meta
+              - const plusieursD = deglutition.masques > 1
+              | #{deglutition.masques} spécialité#{plusieursD ? 's' : ''} masquée#{plusieursD ? 's' : ''} : ni forme buvable ou fondante, ni RCP qui permette de l'écraser, de l'ouvrir, de la disperser ou de l'administrer par sonde.
+          //- Les écartés ne sont pas des alternatives : seuls, ils ne comptent pas.
+          if filtreActif && alternatives.categories.every((cat) => cat.cle === 'BLOQUE')
+            - const sansTexte = parExcipient ? parExcipient.filtres.filter((filtre) => filtre.actif).map((filtre) => filtre.court).join(' ni ') : ''
+            p.vide Aucune alternative#{sansTexte ? ` sans ${sansTexte}` : ''}#{deglutitionActif ? `${sansTexte ? ' et' : ''} pour une déglutition difficile` : ''}.
           each cat in alternatives.categories
             if cat.cle === 'BLOQUE'
               //- Écartés repliés : ils servent à répondre « pourquoi pas celui-là ».
@@ -398,6 +416,8 @@ block content
                               span.excipients-item= item.excipients.courts.join(' · ')
                             else if item.excipients && !item.excipients.lu
                               span.excipients-item.non-lu non lu
+                            if deglutitionActif && item.deglutition
+                              span.excipients-item= item.deglutition
                           if cat.cle === 'SUBSTITUABLE'
                             td
                               span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role

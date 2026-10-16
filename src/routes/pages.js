@@ -10,10 +10,12 @@ import {
 import { chercherInteractions, estAssociation, MEDICAMENTS_MAX } from '../interactions.js';
 import { lireCode, trouverParCode } from '../codes.js';
 import { substituer } from '../synonymes.js';
-import { getSecabilite } from '../galenique.js';
+import {
+  getSecabilite, getAdministration, administrationDe, filtrerDeglutition,
+} from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
 import {
-  getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans,
+  getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans, lienAlternatives,
 } from '../excipients.js';
 import {
   lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
@@ -424,7 +426,7 @@ export function pageRoutes(pool) {
 
       const [
         alternatives, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
-        secabilite, securite, excipients,
+        secabilite, securite, excipients, administration,
       ] = await Promise.all([
         getAlternatives(pool, cis).catch((err) => {
           console.error('[substitution] alternatives indisponibles pour', cis, err.message);
@@ -486,6 +488,11 @@ export function pageRoutes(pool) {
         getExcipients(pool, cis).catch((err) => {
           console.error('[excipients] indisponibles pour', cis, err.message);
           return null;
+        }),
+        // Panne ou RCP muet : rien, la bande ne conclut pas.
+        getAdministration(pool, cis).catch((err) => {
+          console.error('[administration] indisponible pour', cis, err.message);
+          return [];
         }),
       ]);
 
@@ -552,11 +559,19 @@ export function pageRoutes(pool) {
           new Set((excipients?.presents ?? []).map((present) => present.id)), product.voies_administration)
         : null;
 
+      // Déglutition difficile : forme (BDPM) ou ce que le RCP permet. Panne : pas de filtre.
+      const categoriesFiltrees = parExcipient ? parExcipient.categories : alternatives.categories;
+      const mentions = await administrationDe(pool, cisDesAlternatives(categoriesFiltrees)).catch((err) => {
+        console.error('[administration] alternatives indisponibles pour', cis, err.message);
+        return null;
+      });
+      const deglutition = mentions ? filtrerDeglutition(categoriesFiltrees, mentions, req.query.deglutition === '1') : null;
+
       res.render('product', {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
         signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
-          resumerEvaluation(evaluation), optionsAlternatives, secabilite, excipients),
+          resumerEvaluation(evaluation), optionsAlternatives, secabilite, excipients, administration),
         securite,
         optionsAlternatives,
         // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.
@@ -565,8 +580,10 @@ export function pageRoutes(pool) {
         motsTrouves: trouves,
         importation,
         reference,
-        alternatives: parExcipient ? { ...alternatives, categories: parExcipient.categories } : alternatives,
+        alternatives: { ...alternatives, categories: deglutition ? deglutition.categories : categoriesFiltrees },
         parExcipient,
+        deglutition,
+        lienAlternatives,
         variantes,
         remboursement,
         resumeAtc,

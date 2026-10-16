@@ -242,3 +242,26 @@ describe('bande signalétique — hors officine', () => {
     assert.ok(!cases.some((cas) => cas.portee === 'bloque'));
   });
 });
+
+describe('bande : administration selon le RCP', () => {
+  const produit = { forme_pharmaceutique: 'gélule gastro-résistante', commercialise: true, cip_products: [] };
+  const mention = (cle, libelle) => ({ cle, libelle, phrase: `Phrase ${cle}.` });
+
+  it('nomme deux mentions, compte les autres, cite toutes les phrases', () => {
+    const cases = signaletique(produit, { resume: [] }, null, null, false, null, 0, null, null, [
+      mention('ne-pas-ecraser', 'ne pas écraser'), mention('ouvrable', 'gélule ouvrable'), mention('sonde', 'sonde possible'),
+    ]);
+    const administration = cases.find((cas) => cas.cle === 'administration');
+    assert.equal(administration.valeur, 'ne pas écraser · gélule ouvrable +1');
+    // Deux interdictions et une permission : l'interdiction et la permission d'abord.
+    const inexium = signaletique(produit, { resume: [] }, null, null, false, null, 0, null, null, [
+      mention('ne-pas-ecraser', 'ne pas écraser'), mention('avaler-entier', 'avaler entier'), mention('dispersible', 'dispersible'),
+    ]).find((cas) => cas.cle === 'administration');
+    assert.equal(inexium.valeur, 'ne pas écraser · dispersible +1');
+    assert.match(administration.detail, /sonde possible : « Phrase sonde\. »/);
+  });
+
+  it('RCP muet : pas de case', () => {
+    assert.equal(signaletique(produit, { resume: [] }, null, null, false).find((cas) => cas.cle === 'administration'), undefined);
+  });
+});

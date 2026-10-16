@@ -253,6 +253,12 @@ export function lireSans(parametre) {
   return FILTRABLES.filter((excipient) => demandes.has(excipient.id)).map((excipient) => excipient.id);
 }
 
+/** Lien des filtres d'alternatives : chaque lien garde les autres filtres actifs. */
+export function lienAlternatives(sans, deglutition) {
+  const parties = [sans.length ? `sans=${sans.join(',')}` : null, deglutition ? 'deglutition=1' : null].filter(Boolean);
+  return `?${parties.join('&')}#alternatives`;
+}
+
 /** Spécialités proposées par les alternatives, hors écartées. */
 export function cisDesAlternatives(categories) {
   return (categories ?? [])

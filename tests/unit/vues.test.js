@@ -5,6 +5,7 @@ import pug from 'pug';
 import { ROOT } from '../../src/config.js';
 import { COLONNES } from '../../src/recherche-texte.js';
 import { productLinks } from '../../src/links.js';
+import { lienAlternatives } from '../../src/excipients.js';
 import { lireEtat, lien } from '../../src/etat-recherche.js';
 import { dci, specialite, phrase } from '../../src/casse.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
@@ -46,6 +47,8 @@ const produit = (extra = {}) => ({
   importation: false,
   reference: null,
   alternatives: { categories: [], groupe: null },
+  deglutition: null,
+  lienAlternatives,
   variantes: [],
   remboursement: null,
   resumeAtc: null,

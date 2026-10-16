@@ -10,6 +10,10 @@ import { SECABILITE } from './galenique.js';
 
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
+/** Mentions d'administration nommées dans la bande ; les autres sont comptées, toutes en infobulle. */
+const ADMINISTRATION_MONTREES = 2;
+const INTERDITS = new Set(['ne-pas-ecraser', 'ne-pas-ouvrir', 'avaler-entier']);
+
 /** Excipients nommés dans la bande ; les autres sont comptés, tous sont en infobulle. */
 const EXCIPIENTS_MONTRES = 3;
 
@@ -79,10 +83,11 @@ const taux = (valeur) => {
  * @param {number} options         alternatives proposables (substitution.js)
  * @param {{ valeur: string, phrase: string }|null} secabilite  rubrique 3 du RCP (galenique.js)
  * @param {{ lu: boolean, presents: object[] }|null} excipients  rubriques 2 et 6.1 du RCP (excipients.js)
+ * @param {{ cle: string, libelle: string, phrase: string }[]} administration  rubriques 4.2 et 6.6 du RCP (galenique.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null, excipients = null) {
+export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null, excipients = null, administration = []) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -205,6 +210,24 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     valeur: [abregerForme(forme), secable].filter(Boolean).join(' · '),
     detail: [forme, secabilite && `RCP 3 : « ${secabilite.phrase} »`].filter(Boolean).join(' — ') || null,
   });
+
+  // Administration : avaler entier, écraser, ouvrir, sonde, comme le RCP le dit
+  // (rubriques 4.2 et 6.6) ; le mot dans la bande, la phrase citée en infobulle.
+  // RCP muet, rien : on ne déduit pas l'interdit d'une forme à libération prolongée.
+  if (administration?.length > 0) {
+    // Une interdiction et une permission d'abord : « ne pas écraser · dispersible »
+    // dit plus que deux interdictions.
+    const interdits = administration.filter((mention) => INTERDITS.has(mention.cle));
+    const permis = administration.filter((mention) => !INTERDITS.has(mention.cle));
+    const choisies = [interdits[0], permis[0], ...interdits.slice(1), ...permis.slice(1)].filter(Boolean);
+    const montrees = choisies.slice(0, ADMINISTRATION_MONTREES).map((mention) => mention.libelle);
+    const reste = administration.length - montrees.length;
+    cases.push({
+      cle: 'administration', picto: 'pilon', libelle: 'Administration, selon le RCP',
+      valeur: reste > 0 ? `${montrees.join(' · ')} +${reste}` : montrees.join(' · '),
+      detail: administration.map((mention) => `${mention.libelle} : « ${mention.phrase} »`).join(' ; '),
+    });
+  }
 
   // Excipients à effet notoire : ceux que le RCP déclare (rubrique 2), nommés
   // comme l'annexe européenne, la déclaration citée en infobulle. Rien de
