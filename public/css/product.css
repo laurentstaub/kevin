@@ -106,15 +106,16 @@
 
 /* ---------- Bande signalétique ---------- */
 
-/* Hauteur de la bande : les ancres s'arrêtent sous barre + dénomination + bande. */
+/* Hauteur de la bande : les ancres s'arrêtent sous barre + dénomination + bande.
+   Valeur d'une ligne ; repliée, la bande est mesurée par documents.js. */
 :root {
   --signal-h: 2.5rem;
 }
 
 /* Une ligne de valeurs, collante sous la dénomination : même fond et même
    filet que la barre, dont elle devient la troisième ligne. Monochrome :
-   l'encre seule, l'aplat pour ce qui bloque. Déborde en défilant plutôt que
-   de se replier. */
+   l'encre seule, l'aplat pour ce qui bloque. Trop longue, elle se replie
+   sur une ligne de plus plutôt que de cacher la fin. */
 .signaletique {
   position: sticky;
   /* 1 px de moins : la dénomination colle 1 px sous la barre (voir documents.js). */
@@ -127,13 +128,12 @@
 .signaletique-inner {
   max-width: var(--colonne);
   margin: 0 auto;
-  min-height: var(--signal-h);
-  padding: 0 var(--sp-4);
+  min-height: 2.5rem;
+  padding: 0.35rem var(--sp-4);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-2);
-  overflow-x: auto;
-  scrollbar-width: none;
+  gap: 0.35rem var(--sp-2);
   list-style: none;
 }
 
@@ -1203,9 +1203,14 @@ span.onglet {
     padding-right: var(--sp-2);
   }
 
+  /* Repliée, la bande collante couvrirait un quart de l'écran : elle reste
+     sur une ligne, qui défile au doigt. */
   .signaletique-inner {
     padding-left: var(--sp-2);
     padding-right: var(--sp-2);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   /* Dénomination sur deux lignes possibles : elle défile, la bande colle sous la barre. */

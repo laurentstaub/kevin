@@ -119,6 +119,18 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 const barre = document.querySelector('.barre');
 const titreColle = document.querySelector('.titre-colle');
 
+// Bande repliée sur plusieurs lignes : sa hauteur réelle remplace celle d'une
+// ligne dans --signal-h, dont dépendent les titres collants et les ancres.
+const bande = document.querySelector('.signaletique-inner');
+if (bande) {
+  const mesurer = () => {
+    const hauteur = bande.getBoundingClientRect().height;
+    if (hauteur > 0) document.documentElement.style.setProperty('--signal-h', `${hauteur}px`);
+  };
+  mesurer();
+  if ('ResizeObserver' in window) new ResizeObserver(mesurer).observe(bande);
+}
+
 // ---------------------------------------------------------------------------
 // Tableaux du document : enveloppe de défilement horizontal, pour ne pas
 // écraser une posologie sur téléphone.
