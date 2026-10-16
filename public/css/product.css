@@ -86,6 +86,12 @@
   margin-top: var(--sp-1);
 }
 
+/* Ce que sont ces liens, en petit et en gris, sur la même ligne. */
+.formes-etiquette {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
 .forme-choix {
   /* Le rembourrage agrandit la zone de clic sans décaler la ligne. */
   padding: 0.2em 0.1em;
@@ -183,8 +189,9 @@ a.signal-valeur {
 
 /* Colonne unique. Sections repliables, fermées au chargement : la fiche
    s'ouvre sur son plan. */
+/* Peu d'air au-dessus : le titre annonce le bloc, il ne porte pas l'information. */
 .contenu > .bloc {
-  padding-top: var(--sp-4);
+  padding-top: var(--sp-2);
   scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
@@ -503,7 +510,9 @@ td.forme {
 :root {
   --titre-n2: 1.0625rem;
   --titre-n1: 1.2rem;
-  --titre-bloc: 1.333rem;
+  /* Même corps que les chapitres du RCP : un titre de bloc n'est pas plus
+     gros que ce qu'il contient. */
+  --titre-bloc: 1.2rem;
 }
 
 .num {
@@ -1206,8 +1215,15 @@ span.onglet {
 
 @media (max-width: 52rem) {
   .identite {
-    padding-left: var(--sp-2);
-    padding-right: var(--sp-2);
+    padding: var(--sp-2) var(--sp-2) var(--sp-2);
+  }
+
+  .identite-haut {
+    padding-bottom: 0;
+  }
+
+  .identite-bas {
+    padding-top: 0;
   }
 
   .signaletique-inner {
@@ -1239,10 +1255,15 @@ span.onglet {
     scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
   }
 
+  /* Un cran de moins : le nom ne doit pas occuper l'écran à lui seul. */
   .produit-titre {
     text-wrap: balance;
-    font-size: var(--fs-lg);
+    font-size: var(--fs-md);
     max-width: none;
+  }
+
+  .titre-colle {
+    min-height: 0;
   }
 
   /* Forme masquée : la dénomination la contient presque toujours. */
@@ -1272,21 +1293,6 @@ span.onglet {
   font-size: var(--fs-xs);
   color: var(--muted);
   white-space: nowrap;
-}
-
-/* Le classement commande le reste : filet noir, sans couleur ni fond. */
-.mention-classement {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Mention qui répond non (« Hôpital seulement »…) : aplat plein, texte blanc.
-   Le poids plutôt que la teinte, pour rester lisible par les daltoniens. */
-.mention-bloque {
-  background: var(--bg-fonce);
-  border-color: var(--bg-fonce);
-  color: #fff;
-  font-weight: 600;
 }
 
 /* Condition par axe, en deux colonnes : texte de loi, pas un indicateur. */

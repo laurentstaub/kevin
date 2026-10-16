@@ -7,12 +7,14 @@ block styles
   link(rel="stylesheet", href=`/css/product.css?v=${v}`)
 
 block content
-  mixin choixForme(choix)
+  //- @param {string} libelle  ce qui change par rapport à la fiche (« 30 mg »), sinon la variante entière
+  mixin choixForme(choix, libelle)
     a.forme-choix(
       href=`/product/${choix.id}`
       class=(choix.commercialise === false ? 'forme-retiree' : '')
-      title=(choix.commercialise === false ? 'Non commercialisé' : null)
-    )= choix.variante
+      title=([choix.commercialise === false ? 'Non commercialisé' : null,
+        libelle !== choix.variante ? choix.variante : null].filter(Boolean).join(' — ') || null)
+    )= libelle || choix.variante
 
   mixin rubrique(entree, ouverte)
     if entree.charniere
@@ -94,16 +96,25 @@ block content
       - const SEUIL_REPLI = 8
       - const forme = product.forme_pharmaceutique
       - const soeurs = (variantes || []).filter((variante) => !variante.courante)
+      - const courante = (variantes || []).find((variante) => variante.courante)
       - const memeForme = soeurs.filter((variante) => variante.forme_pharmaceutique === forme)
       - const autresFormes = soeurs.filter((variante) => variante.forme_pharmaceutique !== forme)
       - const replier = soeurs.length > SEUIL_REPLI && memeForme.length > 0 && autresFormes.length > 0
       - const enTete = replier ? memeForme : soeurs
+      //- Même forme que la fiche : « 30 mg, microgranules à libération prolongée en
+      //- gélule » se lit « 30 mg », la forme est déjà dans le titre. La variante
+      //- entière reste en infobulle.
+      - const suffixe = (variante) => variante.includes(',') ? variante.slice(variante.indexOf(',')) : null
+      - const commun = courante ? suffixe(courante.variante) : null
+      - const court = (soeur) => (commun && suffixe(soeur.variante) === commun ? soeur.variante.slice(0, soeur.variante.indexOf(',')) : soeur.variante)
+      - const queDosages = enTete.every((soeur) => court(soeur) !== soeur.variante)
       if soeurs.length > 0
         nav.formes(aria-label="Autres dosages et formes")
           ul.formes-liste
+            li.formes-etiquette= queDosages ? 'Autres dosages' : 'Autres dosages et formes'
             each soeur in enTete
               li
-                +choixForme(soeur)
+                +choixForme(soeur, court(soeur))
 
             if replier
               li
@@ -142,8 +153,9 @@ block content
       details.bloc#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
-          if delivrance.resume.length > 0 || remboursement || delivrance.indisponible
-            //- Mentions courtes ; le libellé exact BDPM est en infobulle et dans le corps.
+          //- Pannes et prise en charge seulement : les conditions elles-mêmes
+          //- (classement, durée, support) sont dans la bande, juste au-dessus.
+          if delivrance.indisponible || priseEnChargeIllisible || rembourse
             span.mentions
               //- Pannes d'abord, lisibles bloc fermé : ce qui suit peut être incomplet.
               if delivrance.indisponible
@@ -155,14 +167,6 @@ block content
               //- délivrance issue d'une autre table, d'où sa pose ici et non dans `classer`.
               if rembourse
                 span.mention(title="La prise en charge ne couvre que certaines indications, précisées dans le bloc") Indications remboursées
-              each mention in delivrance.resume
-                //- La mention bloquante se distingue par la graisse, pas la couleur (daltonisme).
-                span.mention(
-                  class=(mention.portee === 'bloque' ? 'mention-bloque'
-                    : mention.cle === 'classement' ? 'mention-classement' : null)
-                  title=([mention.long !== mention.court ? mention.long : null,
-                    delivrance.complement ? 'Complété : absent de la BDPM' : null].filter(Boolean).join(' — ') || null)
-                )= mention.court
           else if nbConditions > 0
             span.bloc-compte #{nbConditions} condition#{nbConditions > 1 ? 's' : ''}
           else

@@ -9,6 +9,7 @@ import { lienAlternatives } from '../../src/excipients.js';
 import { lireEtat, lien } from '../../src/etat-recherche.js';
 import { dci, specialite, phrase } from '../../src/casse.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
+import { signaletique } from '../../src/signaletique.js';
 
 /**
  * Rend chaque gabarit : `pug.compileFile` laisse passer mixin absent, variable indéfinie
@@ -852,7 +853,9 @@ describe('fiche produit — condition complétée', () => {
     };
     const html = rendre('product', produit({ delivrance }));
     assert.match(html, /Condition absente de la BDPM, complétée le 13\/10\/2026 : Ses équivalentes sont en liste I\./);
-    assert.match(html, /title="Complété : absent de la BDPM"/);
+    // L'en-tête du bloc ne répète plus les conditions : la bande les porte, origine comprise.
+    const bande = signaletique({ id: '1', denomination_medicament: 'X' }, delivrance, null, null, null);
+    assert.match(bande.find((signal) => signal.cle === 'ordonnance').detail, /complété, absent de la BDPM : Ses équivalentes/);
   });
 });
 
