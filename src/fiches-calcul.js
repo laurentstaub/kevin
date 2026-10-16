@@ -79,10 +79,3 @@ export function choisirCitations(lignes, termes, max = PHRASES_MAX) {
     manque: true,
   };
 }
-
-/** Molécule déjà dans la liste ? Comparaison par mots, indépendante du sel. */
-export function dejaInscrite(molecule, inscriptions) {
-  const mots = new Set(deaccent(String(molecule)).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-  return inscriptions.some((i) => deaccent(String(i.substance)).toLowerCase()
-    .split(/[^a-z0-9]+/).filter(Boolean).every((mot) => mots.has(mot)));
-}

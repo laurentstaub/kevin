@@ -18,4 +18,4 @@ Pour chacune, la phrase de son RCP, citée telle quelle, et un lien vers la rubr
 
 ## D'où vient cette liste
 
-Le socle est le groupe des substances torsadogènes du [thésaurus des interactions médicamenteuses de l'ANSM](https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1), dans sa version finale du 15 septembre 2023. L'ANSM a cessé de le mettre à jour et renvoie aux RCP. Les molécules autorisées depuis sont ajoutées une à une, sur la foi de leur RCP, après relecture.
+La liste est le groupe des substances torsadogènes du [thésaurus des interactions médicamenteuses de l'ANSM](https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1), dans sa version finale du 15 septembre 2023, reprise telle quelle, sans ajout ni retrait. L'ANSM a cessé de mettre le thésaurus à jour et renvoie aux RCP : pour un médicament autorisé depuis, c'est son RCP qui fait foi.

@@ -9,9 +9,9 @@ import {
   lireEnTete, lireDirective, decouper, lireFiche, listerFiches, lireCalcul, publiee,
 } from '../../src/fiches.js';
 import { phrases, phrasesPertinentes, motifs } from '../../src/citations.js';
-import { choisirCitations, dejaInscrite, motifSubstance } from '../../src/fiches-calcul.js';
+import { choisirCitations, motifSubstance } from '../../src/fiches-calcul.js';
 import { chargerThesaurus } from '../../src/thesaurus.js';
-import { dci, specialite } from '../../src/casse.js';
+import { dci, specialite, phrase } from '../../src/casse.js';
 
 /** Fiches publiées : texte échappé, citations entières, rien de non relu. */
 
@@ -120,11 +120,6 @@ describe('calcul d’une fiche', () => {
     assert.equal(choisirCitations([], ['QT']).specialite, null);
   });
 
-  it('reconnaît une substance inscrite quel que soit le sel', () => {
-    assert.equal(dejaInscrite('CHLORHYDRATE D’AMIODARONE', [{ substance: 'amiodarone' }]), true);
-    assert.equal(dejaInscrite('SOTALOL', [{ substance: 'amiodarone' }]), false);
-  });
-
   it('borne le motif Postgres aux limites de mot', () => {
     assert.equal(motifSubstance('Érythromycine'), '\\merythromycine\\M');
   });
@@ -133,19 +128,19 @@ describe('calcul d’une fiche', () => {
 describe('fiche — rendu', () => {
   const fiche = { slug: 't', meta: { titre: 'T', auteur: 'A' }, blocs: decouper('Texte\n\n::: substances t') };
   const rendre = (calcul) => pug.renderFile(path.join(ROOT, 'views', 'fiche.pug'),
-    { v: 'test', fiche, calcul, brouillon: true, title: 'T', dci, specialite });
+    { v: 'test', fiche, calcul, brouillon: true, title: 'T', dci, specialite, phrase });
 
   it('sans calcul, avec une liste vide, avec des lignes', () => {
     assert.match(rendre(null), /pas encore été calculée/);
-    const base = { calcule_le: '2026-09-01', rubriques: ['4.4'], liste: { titre: 'L', amorce: { source: 'ANSM', version: 'v' } } };
+    const base = { calcule_le: '2026-09-01', rubriques: ['4.4'], liste: { titre: 'L', source: { titre: 'Thésaurus ANSM', version: 'v', date: '15 septembre 2023', groupe: 'SUBSTANCES À RISQUE' } } };
     assert.match(rendre({ ...base, lignes: [] }), /pas encore établie/);
     const page = rendre({ ...base, lignes: [{
-      substance: 'amiodarone', origine: 'ajout', valide_le: '2026-09-02',
+      substance: 'amiodarone',
       specialite: { cis: '1', denomination: 'CORDARONE' },
       citations: [{ numero: '4.4', libelle: 'Mises en garde', ancre: 'rcp-7', phrase: 'Allongement du QT.' }],
     }] });
     assert.match(page, /href="\/product\/1#rcp-7"/);
-    assert.match(page, /Ajout du 2026-09-02/);
+    assert.match(page, /groupe « Substances à risque » du thésaurus des interactions médicamenteuses de l'ANSM \(15 septembre 2023\), repris tel quel, sans ajout ni retrait/);
     assert.match(page, /Le RCP fait foi/);
     assert.match(page, /Brouillon/);
   });
