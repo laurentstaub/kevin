@@ -1,17 +1,17 @@
 {
   "slug": "torsadogenes",
-  "calcule_le": "2026-10-14",
+  "calcule_le": "2026-10-15",
   "liste": {
     "titre": "Substances susceptibles de donner des torsades de pointes",
-    "amorce": {
-      "source": "ANSM — Thésaurus des interactions médicamenteuses",
-      "version": "15 septembre 2023, version finale : l'ANSM a cessé de le mettre à jour et renvoie aux RCP",
+    "source": {
+      "titre": "ANSM — Thésaurus des interactions médicamenteuses",
+      "version": "15 septembre 2023, version finale : l’ANSM a cessé de le mettre à jour et renvoie aux RCP",
+      "date": "15 septembre 2023",
       "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
       "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf",
-      "extraite_le": "2026-10-14"
+      "groupe": "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
     },
-    "relu_par": null,
-    "relu_le": null
+    "extraite_le": "2026-10-15"
   },
   "rubriques": [
     "4.3",
@@ -24,7 +24,6 @@
   "lignes": [
     {
       "substance": "amiodarone",
-      "origine": "amorce",
       "specialite": {
         "cis": "64408662",
         "denomination": "CORDARONE 200 mg, comprimé sécable"
@@ -47,7 +46,6 @@
     },
     {
       "substance": "amisulpride",
-      "origine": "amorce",
       "specialite": {
         "cis": "60019927",
         "denomination": "SOLIAN 100 mg, comprimé sécable"
@@ -70,21 +68,18 @@
     },
     {
       "substance": "arsenieux",
-      "origine": "amorce",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "chloroquine",
-      "origine": "amorce",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "chlorpromazine",
-      "origine": "amorce",
       "specialite": {
         "cis": "65676987",
         "denomination": "LARGACTIL 25 mg, comprimé pelliculé"
@@ -107,7 +102,6 @@
     },
     {
       "substance": "citalopram",
-      "origine": "amorce",
       "specialite": {
         "cis": "69388669",
         "denomination": "SEROPRAM 20 mg, comprimé pelliculé sécable"
@@ -130,14 +124,12 @@
     },
     {
       "substance": "cocaine",
-      "origine": "amorce",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "crizotinib",
-      "origine": "amorce",
       "specialite": {
         "cis": "61506083",
         "denomination": "XALKORI 250 mg, gélule"
@@ -160,7 +152,6 @@
     },
     {
       "substance": "cyamemazine",
-      "origine": "amorce",
       "specialite": {
         "cis": "63400513",
         "denomination": "TERCIAN 25 mg, comprimé pelliculé sécable"
@@ -183,7 +174,6 @@
     },
     {
       "substance": "disopyramide",
-      "origine": "amorce",
       "specialite": {
         "cis": "63063487",
         "denomination": "RYTHMODAN 100 mg, gélule"
@@ -206,7 +196,6 @@
     },
     {
       "substance": "domperidone",
-      "origine": "amorce",
       "specialite": {
         "cis": "66585953",
         "denomination": "DOMPERIDONE TEVA 10 mg, comprimé pelliculé"
@@ -229,7 +218,6 @@
     },
     {
       "substance": "dronedarone",
-      "origine": "amorce",
       "specialite": {
         "cis": "69213011",
         "denomination": "MULTAQ 400 mg, comprimé pelliculé"
@@ -252,7 +240,6 @@
     },
     {
       "substance": "droperidol",
-      "origine": "amorce",
       "specialite": {
         "cis": "61646847",
         "denomination": "DROLEPTAN 1,25 mg/2,5 ml, solution injectable"
@@ -275,8 +262,7 @@
     },
     {
       "substance": "erythromycine",
-      "origine": "amorce",
-      "restriction": "voie intraveineuse seulement (thésaurus)",
+      "restriction": "Pour l’érythromycine et la vincamine, seules les formes administrées par voie intraveineuse sont concernées par cette interaction.",
       "specialite": {
         "cis": "64620665",
         "denomination": "ERYTHROCINE 1 g, poudre pour solution à diluer pour perfusion"
@@ -299,7 +285,6 @@
     },
     {
       "substance": "escitalopram",
-      "origine": "amorce",
       "specialite": {
         "cis": "60958897",
         "denomination": "SEROPLEX 5 mg, comprimé pelliculé"
@@ -322,7 +307,6 @@
     },
     {
       "substance": "flupentixol",
-      "origine": "amorce",
       "specialite": {
         "cis": "62571671",
         "denomination": "FLUANXOL 4 %, solution buvable"
@@ -345,21 +329,18 @@
     },
     {
       "substance": "fluphenazine",
-      "origine": "amorce",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "halofantrine",
-      "origine": "amorce",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "haloperidol",
-      "origine": "amorce",
       "specialite": {
         "cis": "61505095",
         "denomination": "HALDOL DECANOAS 50 mg/ml, solution injectable"
@@ -382,7 +363,6 @@
     },
     {
       "substance": "hydroquinidine",
-      "origine": "amorce",
       "specialite": {
         "cis": "60518136",
         "denomination": "SERECOR 300 mg, gélule à libération prolongée"
@@ -405,7 +385,6 @@
     },
     {
       "substance": "hydroxychloroquine",
-      "origine": "amorce",
       "specialite": {
         "cis": "67767535",
         "denomination": "PLAQUENIL 200 mg, comprimé pelliculé"
@@ -428,7 +407,6 @@
     },
     {
       "substance": "hydroxyzine",
-      "origine": "amorce",
       "specialite": {
         "cis": "61519586",
         "denomination": "ATARAX 25 mg, comprimé pelliculé sécable"
@@ -451,7 +429,6 @@
     },
     {
       "substance": "levomepromazine",
-      "origine": "amorce",
       "specialite": {
         "cis": "67477165",
         "denomination": "NOZINAN 40 mg/ml, solution buvable"
@@ -474,7 +451,6 @@
     },
     {
       "substance": "lumefantrine",
-      "origine": "amorce",
       "specialite": {
         "cis": "65574434",
         "denomination": "RIAMET 20 mg/120 mg, comprimé"
@@ -497,7 +473,6 @@
     },
     {
       "substance": "mequitazine",
-      "origine": "amorce",
       "specialite": {
         "cis": "63036718",
         "denomination": "PRIMALAN, sirop"
@@ -520,7 +495,6 @@
     },
     {
       "substance": "methadone",
-      "origine": "amorce",
       "specialite": {
         "cis": "67296909",
         "denomination": "METHADONE AP-HP 1 mg, gélule"
@@ -543,7 +517,6 @@
     },
     {
       "substance": "moxifloxacine",
-      "origine": "amorce",
       "specialite": {
         "cis": "62419261",
         "denomination": "IZILOX 400 mg/250 ml, solution pour perfusion"
@@ -566,7 +539,6 @@
     },
     {
       "substance": "pentamidine",
-      "origine": "amorce",
       "specialite": {
         "cis": "61423246",
         "denomination": "PENTACARINAT 300 mg, poudre pour aérosol et pour usage parentéral"
@@ -589,7 +561,6 @@
     },
     {
       "substance": "pimozide",
-      "origine": "amorce",
       "specialite": {
         "cis": "60625647",
         "denomination": "ORAP 4 mg, comprimé"
@@ -612,7 +583,6 @@
     },
     {
       "substance": "pipamperone",
-      "origine": "amorce",
       "specialite": {
         "cis": "69537173",
         "denomination": "DIPIPERON 40 mg, comprimé sécable"
@@ -635,7 +605,6 @@
     },
     {
       "substance": "piperaquine",
-      "origine": "amorce",
       "specialite": {
         "cis": "62434676",
         "denomination": "EURARTESIM 320 mg/40 mg, comprimé pelliculé"
@@ -658,7 +627,6 @@
     },
     {
       "substance": "pipotiazine",
-      "origine": "amorce",
       "specialite": {
         "cis": "62000861",
         "denomination": "PIPORTIL L4 25 mg/ml, solution injectable en ampoule (I.M.)"
@@ -681,7 +649,6 @@
     },
     {
       "substance": "quinidine",
-      "origine": "amorce",
       "specialite": {
         "cis": "64289681",
         "denomination": "QUINIMAX 125 mg, comprimé pelliculé sécable"
@@ -704,7 +671,6 @@
     },
     {
       "substance": "sotalol",
-      "origine": "amorce",
       "specialite": {
         "cis": "62519799",
         "denomination": "SOTALEX 80 mg, comprimé sécable"
@@ -727,7 +693,6 @@
     },
     {
       "substance": "spiramycine",
-      "origine": "amorce",
       "specialite": {
         "cis": "67535280",
         "denomination": "ROVAMYCINE 3 MILLIONS UI, comprimé pelliculé"
@@ -750,7 +715,6 @@
     },
     {
       "substance": "sulpiride",
-      "origine": "amorce",
       "specialite": {
         "cis": "62344129",
         "denomination": "DOGMATIL 50 mg, gélule"
@@ -773,7 +737,6 @@
     },
     {
       "substance": "tiapride",
-      "origine": "amorce",
       "specialite": {
         "cis": "67890598",
         "denomination": "TIAPRIDAL 100 mg, comprimé sécable"
@@ -796,7 +759,6 @@
     },
     {
       "substance": "toremifene",
-      "origine": "amorce",
       "specialite": {
         "cis": "60433369",
         "denomination": "FARESTON 60 mg, comprimé"
@@ -819,7 +781,6 @@
     },
     {
       "substance": "vandetanib",
-      "origine": "amorce",
       "specialite": {
         "cis": "65808531",
         "denomination": "CAPRELSA 100 mg, comprimé pelliculé"
@@ -842,15 +803,13 @@
     },
     {
       "substance": "vincamine",
-      "origine": "amorce",
-      "restriction": "voie intraveineuse seulement (thésaurus)",
+      "restriction": "Pour l’érythromycine et la vincamine, seules les formes administrées par voie intraveineuse sont concernées par cette interaction.",
       "specialite": null,
       "citations": [],
       "manque": true
     },
     {
       "substance": "zuclopenthixol",
-      "origine": "amorce",
       "specialite": {
         "cis": "61323662",
         "denomination": "CLOPIXOL 10 mg, comprimé pelliculé"

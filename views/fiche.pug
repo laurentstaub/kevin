@@ -49,9 +49,6 @@ block content
                     span.substance= dci(ligne.substance)
                     if ligne.specialite
                       a.specialite(href=`/product/${ligne.specialite.cis}`)= specialite(ligne.specialite.denomination)
-                    if ligne.origine === 'ajout'
-                      //- Hors amorce ANSM : choix éditorial, signalé comme tel.
-                      span.origine(title=ligne.motif || null) Ajout du #{ligne.valide_le}
                   td
                     if ligne.citations.length
                       each citation in ligne.citations
@@ -63,10 +60,9 @@ block content
                       p.manque Aucune phrase trouvée dans les rubriques #{calcul.rubriques.join(', ')} de ce RCP.
                     else
                       p.manque Aucune spécialité commercialisée.
+          //- La liste est la copie d'un groupe du thésaurus : c'est l'ANSM qui l'établit.
           p.fiche-source
-            | Liste : #{calcul.liste.amorce.source}, #{calcul.liste.amorce.version}.
-            if calcul.liste.relu_le
-              |  Complétée et relue le #{calcul.liste.relu_le}.
+            | Liste : groupe « #{phrase(calcul.liste.source.groupe)} » du thésaurus des interactions médicamenteuses de l'ANSM (#{calcul.liste.source.date}), repris tel quel, sans ajout ni retrait.
             br
             | Citations : RCP de la base de données publique des médicaments, calculées le #{calcul.calcule_le}. Le RCP fait foi.
 

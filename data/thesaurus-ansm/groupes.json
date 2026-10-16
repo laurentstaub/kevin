@@ -1,0 +1,3831 @@
+{
+  "source": {
+    "titre": "ANSM — Thésaurus des interactions médicamenteuses",
+    "version": "15 septembre 2023, version finale : l’ANSM a cessé de le mettre à jour et renvoie aux RCP",
+    "date": "15 septembre 2023",
+    "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
+    "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf"
+  },
+  "extrait_le": "2026-10-15",
+  "note": "Groupes de substances du thésaurus, repris tels quels (nom, membres, description). Les formulations cherchées dans les RCP sont le nom du groupe sans ses précisions entre parenthèses, l’autre nom que la parenthèse lui donne, et les abréviations que le thésaurus emploie pour lui. Fichier généré par scripts/extraire-thesaurus.js : ne pas modifier à la main.",
+  "groupes": [
+    {
+      "id": "alcalinisants-urinaires",
+      "nom": "ALCALINISANTS URINAIRES",
+      "membres": [
+        "acetazolamide",
+        "sodium (bicarbonate de)",
+        "trometamol"
+      ],
+      "description": "",
+      "termes": [
+        "ALCALINISANTS URINAIRES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "alcaloides-de-l-ergot-de-seigle-dopaminergiques",
+      "nom": "ALCALOÏDES DE L'ERGOT DE SEIGLE DOPAMINERGIQUES",
+      "membres": [
+        "bromocriptine",
+        "cabergoline",
+        "lisuride"
+      ],
+      "description": "",
+      "termes": [
+        "ALCALOÏDES DE L'ERGOT DE SEIGLE DOPAMINERGIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "alcaloides-de-l-ergot-de-seigle-vasoconstricteurs",
+      "nom": "ALCALOÏDES DE L'ERGOT DE SEIGLE VASOCONSTRICTEURS",
+      "membres": [
+        "dihydroergotamine",
+        "ergotamine",
+        "méthylergométrine"
+      ],
+      "description": "",
+      "termes": [
+        "ALCALOÏDES DE L'ERGOT DE SEIGLE VASOCONSTRICTEURS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "alphabloquants-a-visee-urologique",
+      "nom": "ALPHABLOQUANTS À VISÉE UROLOGIQUE",
+      "membres": [
+        "alfuzosine",
+        "doxazosine",
+        "prazosine",
+        "silodosine",
+        "tamsulosine",
+        "terazosine"
+      ],
+      "description": "",
+      "termes": [
+        "ALPHABLOQUANTS À VISÉE UROLOGIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "aluminium-sels",
+      "nom": "ALUMINIUM (SELS)",
+      "membres": [
+        "gel d'hydroxyde d'aluminium et de carbonate de magnesium codesseches",
+        "hydrotalcite",
+        "magaldrate",
+        "oxyde d'aluminium",
+        "phosphate d'aluminium"
+      ],
+      "description": "",
+      "termes": [
+        "ALUMINIUM"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "aminosides",
+      "nom": "AMINOSIDES",
+      "membres": [
+        "amikacine",
+        "gentamicine",
+        "isepamicine",
+        "netilmicine",
+        "streptomycine",
+        "tobramycine"
+      ],
+      "description": "",
+      "termes": [
+        "AMINOSIDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "analgesiques-morphiniques-agonistes",
+      "nom": "ANALGÉSIQUES MORPHINIQUES AGONISTES",
+      "membres": [
+        "alfentanil",
+        "codeine",
+        "dihydrocodeine",
+        "fentanyl",
+        "hydromorphone",
+        "morphine",
+        "oxycodone",
+        "pethidine",
+        "remifentanil",
+        "sufentanil",
+        "tapentadol",
+        "tramadol"
+      ],
+      "description": "",
+      "termes": [
+        "ANALGÉSIQUES MORPHINIQUES AGONISTES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "analgesiques-morphiniques-de-palier-ii",
+      "nom": "ANALGÉSIQUES MORPHINIQUES DE PALIER II",
+      "membres": [
+        "codeine",
+        "dihydrocodeine",
+        "tapentadol",
+        "tramadol"
+      ],
+      "description": "",
+      "termes": [
+        "ANALGÉSIQUES MORPHINIQUES DE PALIER II"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "analgesiques-morphiniques-de-palier-iii",
+      "nom": "ANALGÉSIQUES MORPHINIQUES DE PALIER III",
+      "membres": [
+        "alfentanil",
+        "fentanyl",
+        "hydromorphone",
+        "morphine",
+        "oxycodone",
+        "pethidine",
+        "remifentanil",
+        "sufentanil"
+      ],
+      "description": "",
+      "termes": [
+        "ANALGÉSIQUES MORPHINIQUES DE PALIER III"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "analogues-de-la-somatostatine",
+      "nom": "ANALOGUES DE LA SOMATOSTATINE",
+      "membres": [
+        "lanreotide",
+        "octreotide",
+        "pasiréotide"
+      ],
+      "description": "",
+      "termes": [
+        "ANALOGUES DE LA SOMATOSTATINE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "androgenes",
+      "nom": "ANDROGÈNES",
+      "membres": [
+        "androstanolone",
+        "norethandrolone",
+        "testosterone"
+      ],
+      "description": "",
+      "termes": [
+        "ANDROGÈNES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anesthesiques-volatils-halogenes",
+      "nom": "ANESTHÉSIQUES VOLATILS HALOGÉNÉS",
+      "membres": [
+        "desflurane",
+        "halothane",
+        "isoflurane",
+        "methoxyflurane",
+        "sevoflurane"
+      ],
+      "description": "",
+      "termes": [
+        "ANESTHÉSIQUES VOLATILS HALOGÉNÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antabuse-reaction",
+      "nom": "ANTABUSE (RÉACTION)",
+      "membres": [
+        "cefamandole",
+        "disulfirame",
+        "glibenclamide",
+        "glipizide",
+        "griseofulvine",
+        "ketoconazole",
+        "metronidazole",
+        "ornidazole",
+        "procarbazine",
+        "secnidazole",
+        "tenonitrozole",
+        "tinidazole"
+      ],
+      "description": "Les médicaments provoquant une réaction antabuse avec l’alcool sont nombreux, et leur association avec l’alcool est déconseillée.",
+      "termes": [
+        "ANTABUSE",
+        "RÉACTION"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antagonistes-des-canaux-calciques",
+      "nom": "ANTAGONISTES DES CANAUX CALCIQUES",
+      "membres": [
+        "amlodipine",
+        "clévidipine",
+        "diltiazem",
+        "felodipine",
+        "isradipine",
+        "lacidipine",
+        "lercanidipine",
+        "manidipine",
+        "nicardipine",
+        "nifedipine",
+        "nimodipine",
+        "nitrendipine",
+        "verapamil"
+      ],
+      "description": "",
+      "termes": [
+        "ANTAGONISTES DES CANAUX CALCIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antagonistes-des-recepteurs-de-l-angiotensine-ii",
+      "nom": "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II",
+      "membres": [
+        "azilsartan",
+        "candesartan cilexetil",
+        "eprosartan",
+        "irbesartan",
+        "losartan",
+        "olmesartan",
+        "telmisartan",
+        "valsartan"
+      ],
+      "description": "",
+      "termes": [
+        "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antiagregants-plaquettaires",
+      "nom": "ANTIAGRÉGANTS PLAQUETTAIRES",
+      "membres": [
+        "abciximab (c 7e3b fab)",
+        "acide acetylsalicylique",
+        "cangrélor",
+        "caplacizumab",
+        "clopidogrel",
+        "epoprostenol",
+        "eptifibatide",
+        "iloprost",
+        "iloprost trometamol",
+        "prasugrel",
+        "proteine c activee recombinante",
+        "proteine c humaine",
+        "ticagrelor",
+        "ticlopidine",
+        "tirofiban",
+        "treprostinil"
+      ],
+      "description": "Plusieurs substances sont impliquées dans des interactions, du fait de leurs propriétés antiagrégantes plaquettaires. L’utilisation de plusieurs antiagrégants plaquettaires majore le risque de saignement, de même que leur association à l’héparine et aux molécules apparentées, aux anticoagulants oraux et aux thrombolytiques, et doit être prise en compte en maintenant une surveillance clinique régulière. Pour l'acide acétylsalicylique, se reporter aux interactions qui lui sont propres.",
+      "termes": [
+        "ANTIAGRÉGANTS PLAQUETTAIRES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antiarythmiques",
+      "nom": "ANTIARYTHMIQUES",
+      "membres": [
+        "amiodarone",
+        "cibenzoline",
+        "diltiazem",
+        "disopyramide",
+        "dronedarone",
+        "flecainide",
+        "hydroquinidine",
+        "lidocaine",
+        "mexiletine",
+        "propafenone",
+        "quinidine",
+        "sotalol",
+        "verapamil"
+      ],
+      "description": "De nombreux antiarythmiques sont dépresseurs de l’automatisme, de la conduction et de la contractilité cardiaques. L’association d’antiarythmiques de classes différentes peut apporter un effet thérapeutique bénéfique, mais s’avère le plus souvent très délicate, nécessitant une surveillance clinique étroite et un contrôle de l’ECG. L’association d’antiarythmiques donnant des torsades de pointes (amiodarone, disopyramide, quinidiniques, sotalol…) est contre-indiquée. L’association d’antiarythmiques de même classe est déconseillée, sauf cas exceptionnel, en raison du risque accru d’effets indésirables cardiaques. L’association à des médicaments ayant des propriétés inotropes négatives, bradycardisantes et/ou ralentissant la conduction auriculo-ventriculaire est délicate et nécessite une surveillance clinique et un contrôle de l’ECG.",
+      "termes": [
+        "ANTIARYTHMIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antiarythmiques-classe-ia",
+      "nom": "ANTIARYTHMIQUES CLASSE IA",
+      "membres": [
+        "disopyramide",
+        "hydroquinidine",
+        "quinidine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIARYTHMIQUES CLASSE IA"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anticoagulants-oraux",
+      "nom": "ANTICOAGULANTS ORAUX",
+      "membres": [
+        "acenocoumarol",
+        "apixaban",
+        "dabigatran",
+        "édoxaban",
+        "fluindione",
+        "phenindione",
+        "rivaroxaban",
+        "warfarine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTICOAGULANTS ORAUX"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anticonvulsivants-metabolises",
+      "nom": "ANTICONVULSIVANTS MÉTABOLISÉS",
+      "membres": [
+        "acide valproique",
+        "ethosuximide",
+        "felbamate",
+        "fosphenytoine",
+        "lamotrigine",
+        "oxcarbazepine",
+        "pérampanel",
+        "phenobarbital",
+        "phenytoine",
+        "primidone",
+        "retigabine",
+        "tiagabine",
+        "topiramate",
+        "valpromide",
+        "zonisamide"
+      ],
+      "description": "",
+      "termes": [
+        "ANTICONVULSIVANTS MÉTABOLISÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anticorps-monoclonaux-hors-anti-tnf-alpha",
+      "nom": "ANTICORPS MONOCLONAUX (HORS ANTI-TNF ALPHA)",
+      "membres": [
+        "alemtuzumab",
+        "amivantamab",
+        "anifrolumab",
+        "atezolizumab",
+        "bélimumab",
+        "bimékizumab",
+        "blinatumomab",
+        "brentuximab",
+        "canakinumab",
+        "cétuximab",
+        "daratumumab",
+        "dénosumab",
+        "durvalumab",
+        "guselkumab",
+        "ibritumomab",
+        "inébilizumab",
+        "inotuzumab",
+        "ipilimumab",
+        "ixékizumab",
+        "natalizumab",
+        "nivolumab",
+        "obinutuzumab",
+        "ocrélizumab",
+        "ofatumumab",
+        "panitumumab",
+        "pembrolizumab",
+        "ramucirumab",
+        "rituximab",
+        "satralizumab",
+        "sécukinumab",
+        "siltuximab",
+        "spésolimab",
+        "tafasitamab",
+        "tézépelumab",
+        "tocilizumab",
+        "tralokinumab",
+        "ustékinumab",
+        "védolizumab"
+      ],
+      "description": "",
+      "termes": [
+        "ANTICORPS MONOCLONAUX"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antidepresseurs-imipraminiques",
+      "nom": "ANTIDÉPRESSEURS IMIPRAMINIQUES",
+      "membres": [
+        "amitriptyline",
+        "amoxapine",
+        "clomipramine",
+        "dosulepine",
+        "doxepine",
+        "imipramine",
+        "maprotiline",
+        "trimipramine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIDÉPRESSEURS IMIPRAMINIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antihypertenseurs-alpha-bloquants",
+      "nom": "ANTIHYPERTENSEURS ALPHA-BLOQUANTS",
+      "membres": [
+        "doxazosine",
+        "prazosine",
+        "urapidil"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIHYPERTENSEURS ALPHA-BLOQUANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antihypertenseurs-centraux",
+      "nom": "ANTIHYPERTENSEURS CENTRAUX",
+      "membres": [
+        "clonidine",
+        "guanfacine",
+        "methyldopa",
+        "moxonidine",
+        "rilmenidine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIHYPERTENSEURS CENTRAUX"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antihypertenseurs-sauf-alpha-bloquants",
+      "nom": "ANTIHYPERTENSEURS SAUF ALPHA-BLOQUANTS",
+      "membres": [
+        "acebutolol",
+        "altizide",
+        "amiloride",
+        "amlodipine",
+        "atenolol",
+        "azilsartan",
+        "benazepril",
+        "bendroflumethiazide",
+        "betaxolol",
+        "bisoprolol",
+        "bumetanide",
+        "candesartan cilexetil",
+        "canrenoate de potassium",
+        "captopril",
+        "carteolol",
+        "celiprolol",
+        "chlortalidone",
+        "cicletanine",
+        "cilazapril",
+        "clévidipine",
+        "clonidine",
+        "clopamide",
+        "dihydralazine",
+        "diltiazem",
+        "enalapril",
+        "eplerenone",
+        "eprosartan",
+        "felodipine",
+        "fosinopril",
+        "furosemide",
+        "hydrochlorothiazide",
+        "indapamide",
+        "irbesartan",
+        "isradipine",
+        "labetalol",
+        "lacidipine",
+        "lercanidipine",
+        "levobunolol",
+        "lisinopril",
+        "losartan",
+        "manidipine",
+        "methyclothiazide",
+        "methyldopa",
+        "metoprolol",
+        "moexipril",
+        "moxonidine",
+        "nadolol",
+        "nebivolol",
+        "nicardipine",
+        "nifedipine",
+        "nimodipine",
+        "nitrendipine",
+        "olmesartan",
+        "périndopril",
+        "pindolol",
+        "piretanide",
+        "propranolol",
+        "quinapril",
+        "ramipril",
+        "rilmenidine",
+        "sotalol",
+        "spironolactone",
+        "telmisartan",
+        "tertatolol",
+        "timolol",
+        "trandolapril",
+        "triamterene",
+        "valsartan",
+        "verapamil",
+        "zofenopril"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIHYPERTENSEURS SAUF ALPHA-BLOQUANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anti-inflammatoires-non-steroidiens",
+      "nom": "ANTI-INFLAMMATOIRES NON STÉROÏDIENS",
+      "membres": [
+        "aceclofenac",
+        "acide mefenamique",
+        "acide niflumique",
+        "acide tiaprofenique",
+        "alminoprofene",
+        "celecoxib",
+        "dexketoprofene trometamol",
+        "diclofenac",
+        "etodolac",
+        "étoricoxib",
+        "fenoprofene",
+        "flurbiprofene",
+        "ibuprofene",
+        "indometacine",
+        "ketoprofene",
+        "meloxicam",
+        "morniflumate",
+        "nabumetone",
+        "naproxene",
+        "nimesulide",
+        "parecoxib",
+        "piroxicam",
+        "rofecoxib",
+        "sulindac",
+        "tenoxicam"
+      ],
+      "description": "",
+      "termes": [
+        "ANTI-INFLAMMATOIRES NON STÉROÏDIENS",
+        "AINS"
+      ],
+      "abreviations": [
+        {
+          "terme": "AINS",
+          "occurrences": 9
+        }
+      ]
+    },
+    {
+      "id": "antiparasitaires-susceptibles-de-donner-des-torsades-de-pointes",
+      "nom": "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+      "membres": [
+        "chloroquine",
+        "halofantrine",
+        "lumefantrine",
+        "pentamidine",
+        "pipéraquine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antiparkinsoniens-anticholinergiques",
+      "nom": "ANTIPARKINSONIENS ANTICHOLINERGIQUES",
+      "membres": [
+        "biperidene",
+        "trihexyphenidyle",
+        "tropatepine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIPARKINSONIENS ANTICHOLINERGIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antiparkinsoniens-dopaminergiques",
+      "nom": "ANTIPARKINSONIENS DOPAMINERGIQUES",
+      "membres": [
+        "amantadine",
+        "apomorphine",
+        "bromocriptine",
+        "entacapone",
+        "lisuride",
+        "piribedil",
+        "pramipexole",
+        "rasagiline",
+        "ropinirole",
+        "rotigotine",
+        "selegiline",
+        "tolcapone"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIPARKINSONIENS DOPAMINERGIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antipurines",
+      "nom": "ANTIPURINES",
+      "membres": [
+        "azathioprine",
+        "mercaptopurine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTIPURINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antisecretoires-antihistaminiques-h2",
+      "nom": "ANTISÉCRÉTOIRES ANTIHISTAMINIQUES H2",
+      "membres": [
+        "cimetidine",
+        "famotidine",
+        "nizatidine",
+        "ranitidine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTISÉCRÉTOIRES ANTIHISTAMINIQUES H2"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antisecretoires-inhibiteurs-de-la-pompe-a-protons",
+      "nom": "ANTISÉCRÉTOIRES INHIBITEURS DE LA POMPE À PROTONS",
+      "membres": [
+        "esomeprazole",
+        "lansoprazole",
+        "omeprazole",
+        "pantoprazole",
+        "rabeprazole"
+      ],
+      "description": "",
+      "termes": [
+        "ANTISÉCRÉTOIRES INHIBITEURS DE LA POMPE À PROTONS",
+        "IPP"
+      ],
+      "abreviations": [
+        {
+          "terme": "IPP",
+          "occurrences": 2
+        }
+      ]
+    },
+    {
+      "id": "antiseptiques-mercuriels",
+      "nom": "ANTISEPTIQUES MERCURIELS",
+      "membres": [
+        "merbromine",
+        "thiomersal"
+      ],
+      "description": "",
+      "termes": [
+        "ANTISEPTIQUES MERCURIELS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antispasmodiques-urinaires",
+      "nom": "ANTISPASMODIQUES URINAIRES",
+      "membres": [
+        "darifenacine",
+        "fesoterodine",
+        "oxybutynine",
+        "solifenacine",
+        "tolterodine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTISPASMODIQUES URINAIRES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "anti-tnf-alpha",
+      "nom": "ANTI-TNF ALPHA",
+      "membres": [
+        "adalimumab",
+        "certolizumab",
+        "etanercept",
+        "golimumab",
+        "infliximab"
+      ],
+      "description": "",
+      "termes": [
+        "ANTI-TNF ALPHA"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antitussifs-morphine-like",
+      "nom": "ANTITUSSIFS MORPHINE-LIKE",
+      "membres": [
+        "dextromethorphane",
+        "noscapine",
+        "pholcodine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTITUSSIFS MORPHINE-LIKE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antitussifs-morphiniques-vrais",
+      "nom": "ANTITUSSIFS MORPHINIQUES VRAIS",
+      "membres": [
+        "codeine",
+        "ethylmorphine"
+      ],
+      "description": "",
+      "termes": [
+        "ANTITUSSIFS MORPHINIQUES VRAIS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "antivitamines-k",
+      "nom": "ANTIVITAMINES K",
+      "membres": [
+        "acenocoumarol",
+        "fluindione",
+        "warfarine"
+      ],
+      "description": "ANTI-INFECTIEUX ET HEMOSTASE De nombreux cas d’augmentation de l’activité des antivitamines K ont été rapportés chez des patients recevant des antibiotiques. Le contexte infectieux ou inflammatoire marqué, l’âge et l’état général du patient apparaissent comme des facteurs de risque. Dans ces circonstances, il apparaît difficile de faire la part entre la pathologie infectieuse et son traitement dans la survenue du déséquilibre de l’INR. Cependant, certaines classes d’antibiotiques sont davantage impliquées : il s’agit notamment des fluoroquinolones, des macrolides, des cyclines, du cotrimoxazole et de certaines céphalosporines, qui imposent, dans ces conditions, de renforcer la surveillance de l'INR. Certaines céphalosporines (céfamandole, ceftriaxone, céfazoline), la clindamycine, semblent interagir au niveau de l’hémostase avec apparition d’anticorps anti facteur V. Enfin, la tigécycline et le danazol possèdent une action fibrinolytique propre. AVK et INR Chez un patient traité par antivitamines K, il convient de contrôler l’INR à chaque initiation ou suppression d’un ou plusieurs médicaments. La modification soudaine des habitudes alimentaires doit être également prise en compte et la régularité est préconisée pour le maintien à l’équilibre de l’INR. Les aliments riches en vitamine K sont essentiellement représentés par les choux, épinards, brocolis, certaines salades.",
+      "termes": [
+        "ANTIVITAMINES K",
+        "AVK"
+      ],
+      "abreviations": [
+        {
+          "terme": "AVK",
+          "occurrences": 3
+        }
+      ]
+    },
+    {
+      "id": "barbituriques",
+      "nom": "BARBITURIQUES",
+      "membres": [
+        "phenobarbital",
+        "primidone",
+        "thiopental"
+      ],
+      "description": "",
+      "termes": [
+        "BARBITURIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "benzodiazepines-et-apparentes",
+      "nom": "BENZODIAZÉPINES ET APPARENTÉS",
+      "membres": [
+        "alprazolam",
+        "avizafone",
+        "bromazepam",
+        "chlordiazepoxide",
+        "clobazam",
+        "clonazepam",
+        "clorazepate",
+        "clotiazepam",
+        "diazepam",
+        "estazolam",
+        "eszopiclone",
+        "flunitrazepam",
+        "flurazepam",
+        "loflazépate",
+        "loprazolam",
+        "lorazepam",
+        "lormetazepam",
+        "midazolam",
+        "nitrazepam",
+        "nordazepam",
+        "oxazepam",
+        "prazepam",
+        "tetrazepam",
+        "zolpidem",
+        "zopiclone"
+      ],
+      "description": "",
+      "termes": [
+        "BENZODIAZÉPINES ET APPARENTÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "beta-2-mimetiques",
+      "nom": "BÊTA-2 MIMÉTIQUES",
+      "membres": [
+        "bambuterol",
+        "indacatérol",
+        "olodatérol",
+        "salbutamol",
+        "terbutaline",
+        "vilantérol"
+      ],
+      "description": "",
+      "termes": [
+        "BÊTA-2 MIMÉTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "beta-bloquants-sauf-esmolol-et-sotalol-y-compris-collyres",
+      "nom": "BÊTA-BLOQUANTS (SAUF ESMOLOL ET SOTALOL) (Y COMPRIS COLLYRES)",
+      "membres": [
+        "acebutolol",
+        "atenolol",
+        "betaxolol",
+        "bisoprolol",
+        "carteolol",
+        "celiprolol",
+        "labetalol",
+        "levobunolol",
+        "metoprolol",
+        "nadolol",
+        "nebivolol",
+        "pindolol",
+        "propranolol",
+        "tertatolol",
+        "timolol"
+      ],
+      "description": "",
+      "termes": [
+        "BÊTA-BLOQUANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "beta-bloquants-sauf-esmolol-y-compris-collyres",
+      "nom": "BÊTA-BLOQUANTS (SAUF ESMOLOL) (Y COMPRIS COLLYRES)",
+      "membres": [
+        "acebutolol",
+        "atenolol",
+        "betaxolol",
+        "bisoprolol",
+        "carteolol",
+        "celiprolol",
+        "labetalol",
+        "levobunolol",
+        "metoprolol",
+        "nadolol",
+        "nebivolol",
+        "pindolol",
+        "propranolol",
+        "sotalol",
+        "tertatolol",
+        "timolol"
+      ],
+      "description": "",
+      "termes": [
+        "BÊTA-BLOQUANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "beta-bloquants-dans-l-insuffisance-cardiaque",
+      "nom": "BÊTA-BLOQUANTS DANS L'INSUFFISANCE CARDIAQUE",
+      "membres": [
+        "bisoprolol",
+        "carvedilol",
+        "metoprolol",
+        "nebivolol"
+      ],
+      "description": "A l’heure actuelle, 4 bêta-bloquants ont l'indication \"insuffisance cardiaque\" : le carvédilol, le bisoprolol, le métoprolol et le névibolol. Les interactions médicamenteuses des bêta-bloquants, lorsqu’ils sont prescrits dans l’insuffisance cardiaque, peuvent avoir des conséquences cliniques plus sévères que celles rencontrées lors de leur prescription dans d’autres indications. Ainsi, certaines associations médicamenteuses, couramment réalisées dans les indications classiques des bêta-bloquants, doivent être reconsidérées à la lumière de cette indication très particulière, avec un niveau de recommandation souvent plus contraignant.",
+      "termes": [
+        "BÊTA-BLOQUANTS DANS L'INSUFFISANCE CARDIAQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "beta-bloquants-non-cardio-selectifs-y-compris-collyres",
+      "nom": "BÊTA-BLOQUANTS NON CARDIO-SÉLECTIFS (Y COMPRIS COLLYRES)",
+      "membres": [
+        "carteolol",
+        "carvedilol",
+        "labetalol",
+        "nadolol",
+        "pindolol",
+        "propranolol",
+        "sotalol",
+        "tertatolol",
+        "timolol"
+      ],
+      "description": "",
+      "termes": [
+        "BÊTA-BLOQUANTS NON CARDIO-SÉLECTIFS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "bisphosphonates",
+      "nom": "BISPHOSPHONATES",
+      "membres": [
+        "acide alendronique",
+        "acide clodronique",
+        "acide etidronique",
+        "acide ibandronique",
+        "acide oxidronique",
+        "acide pamidronique",
+        "acide risedronique",
+        "acide tiludronique",
+        "acide zoledronique"
+      ],
+      "description": "",
+      "termes": [
+        "BISPHOSPHONATES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "bradycardisants",
+      "nom": "BRADYCARDISANTS",
+      "membres": [
+        "acebutolol",
+        "ambenonium",
+        "amiodarone",
+        "atenolol",
+        "betaxolol",
+        "bisoprolol",
+        "carteolol",
+        "carvedilol",
+        "celiprolol",
+        "clonidine",
+        "crizotinib",
+        "digoxine",
+        "diltiazem",
+        "disopyramide",
+        "donepezil",
+        "dronedarone",
+        "esmolol",
+        "fampridine",
+        "fingolimod",
+        "galantamine",
+        "hydroquinidine",
+        "ivabradine",
+        "labetalol",
+        "levobunolol",
+        "mefloquine",
+        "metoprolol",
+        "midodrine",
+        "nadolol",
+        "nebivolol",
+        "neostigmine",
+        "pasiréotide",
+        "pilocarpine",
+        "pindolol",
+        "propranolol",
+        "pyridostigmine",
+        "quinidine",
+        "rivastigmine",
+        "sotalol",
+        "tertatolol",
+        "thalidomide",
+        "timolol",
+        "verapamil"
+      ],
+      "description": "De nombreux médicaments peuvent entraîner une bradycardie. C'est le cas notamment des antiarythmiques de classe Ia, des bêta-bloquants, de certains antiarythmiques de classe III, de certains antagonistes du calcium, de la digoxine, de la pilocarpine, des anticholinestérasiques… etc.",
+      "termes": [
+        "BRADYCARDISANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "citrates",
+      "nom": "CITRATES",
+      "membres": [
+        "citrate de gallium [67ga]",
+        "dicitrate trimagnesien",
+        "potassium (citrate de)",
+        "sodium (citrate de)",
+        "sodium (citrate diacide de)"
+      ],
+      "description": "",
+      "termes": [
+        "CITRATES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "corticoides",
+      "nom": "CORTICOÏDES",
+      "membres": [
+        "betamethasone",
+        "cortisone",
+        "cortivazol",
+        "desoxycortone",
+        "dexamethasone",
+        "fludrocortisone",
+        "hydrocortisone",
+        "methylprednisolone",
+        "prednisolone",
+        "prednisone",
+        "tetracosactide",
+        "triamcinolone"
+      ],
+      "description": "",
+      "termes": [
+        "CORTICOÏDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "corticoides-voie-intra-articulaire",
+      "nom": "CORTICOÏDES (VOIE INTRA-ARTICULAIRE)",
+      "membres": [
+        "betamethasone",
+        "dexamethasone",
+        "méthylprednisolone",
+        "prednisolone",
+        "triamcinolone"
+      ],
+      "description": "",
+      "termes": [
+        "CORTICOÏDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "corticoides-metabolises-notamment-inhales",
+      "nom": "CORTICOÏDES MÉTABOLISÉS, NOTAMMENT INHALÉS",
+      "membres": [
+        "budesonide",
+        "ciclesonide",
+        "dexamethasone",
+        "fluticasone",
+        "methylprednisolone",
+        "mometasone",
+        "prednisolone",
+        "prednisone",
+        "triamcinolone"
+      ],
+      "description": "",
+      "termes": [
+        "CORTICOÏDES MÉTABOLISÉS, NOTAMMENT INHALÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "curares",
+      "nom": "CURARES",
+      "membres": [
+        "atracurium",
+        "cisatracurium",
+        "mivacurium",
+        "rocuronium",
+        "suxamethonium",
+        "vecuronium"
+      ],
+      "description": "Certaines substances peuvent modifier l'intensité et/ou la durée de l'effet des curares non dépolarisants. Les médicaments susceptibles de potentialiser l'action des curares non dépolarisants sont : - les anesthésiques volatils tels que isoflurane, enflurane, desflurane, sévoflurane ou halothane, - les anesthésiques locaux, - certains antibiotiques (aminosides, polymyxines, lincosanides), - le sulfate de magnésium (IV), - les antagonistes du calcium - les médicaments aggravant ou révélant un syndrome myasthénique, comme les fluoroquinolones, la télithromycine, l’érythromycine IV, la quinidine ou le lithium.. Les médicaments susceptibles de diminuer l'action des curares non dépolarisants sont : - la phénytoïne ou la carbamazépine, en administration chronique L’utilisation de curares chez des patients recevant des corticoïdes injectables expose au risque de myopathie, éventuellement longue. En principe, un monitoring maintenu jusqu'à complète décurarisation permet d'éviter la survenue d'une interaction. Toutefois, une recurarisation non prévue pourrait se produire, dans le cas d'une couverture antibiotique post-opératoire avec un aminoside, par exemple.",
+      "termes": [
+        "CURARES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "curares-non-depolarisants",
+      "nom": "CURARES NON DÉPOLARISANTS",
+      "membres": [
+        "atracurium",
+        "cisatracurium",
+        "rocuronium",
+        "vecuronium"
+      ],
+      "description": "",
+      "termes": [
+        "CURARES NON DÉPOLARISANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "cyclines",
+      "nom": "CYCLINES",
+      "membres": [
+        "chlortetracycline",
+        "déméclocycline",
+        "doxycycline",
+        "lymecycline",
+        "methylenecycline",
+        "minocycline",
+        "oxytetracycline",
+        "tetracycline",
+        "tigecycline"
+      ],
+      "description": "",
+      "termes": [
+        "CYCLINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "cytotoxiques",
+      "nom": "CYTOTOXIQUES",
+      "membres": [
+        "altretamine",
+        "amsacrine",
+        "asparaginase",
+        "azacitidine",
+        "azathioprine",
+        "bendamustine",
+        "bleomycine",
+        "bortezomib",
+        "busulfan",
+        "cabazitaxel",
+        "capecitabine",
+        "carboplatine",
+        "carmustine",
+        "chlorambucil",
+        "cisplatine",
+        "cladribine",
+        "clofarabine",
+        "cyclophosphamide",
+        "cytarabine",
+        "dacarbazine",
+        "dactinomycine",
+        "daunorubicine",
+        "décitabine",
+        "dexrazoxane",
+        "docetaxel",
+        "doxorubicine",
+        "epirubicine",
+        "éribuline",
+        "estramustine",
+        "etoposide",
+        "fludarabine",
+        "fluorouracile",
+        "fotemustine",
+        "gemcitabine",
+        "giméracil",
+        "hydroxycarbamide",
+        "idarubicine",
+        "ifosfamide",
+        "irinotecan",
+        "lomustine",
+        "melphalan",
+        "mercaptopurine",
+        "methotrexate",
+        "mitomycine c",
+        "mitoxantrone",
+        "nélarabine",
+        "otéracil",
+        "oxaliplatine",
+        "paclitaxel",
+        "pemetrexed",
+        "pentostatine",
+        "pipobroman",
+        "pixantrone",
+        "procarbazine",
+        "raltitrexed",
+        "streptozocine",
+        "tegafur",
+        "temozolomide",
+        "thiotepa",
+        "tioguanine",
+        "topotecane",
+        "vinblastine",
+        "vincristine",
+        "vindesine",
+        "vinflunine",
+        "vinorelbine"
+      ],
+      "description": "",
+      "termes": [
+        "CYTOTOXIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "derives-de-l-acide-aminosalicylique-asa",
+      "nom": "DÉRIVÉS DE L'ACIDE AMINOSALICYLIQUE (ASA)",
+      "membres": [
+        "mesalazine",
+        "olsalazine",
+        "p a s sodique",
+        "sulfasalazine"
+      ],
+      "description": "",
+      "termes": [
+        "DÉRIVÉS DE L'ACIDE AMINOSALICYLIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "derives-nitres-et-apparentes",
+      "nom": "DÉRIVÉS NITRÉS ET APPARENTÉS",
+      "membres": [
+        "dinitrate d'isosorbide",
+        "isosorbide",
+        "molsidomine",
+        "nicorandil",
+        "trinitrine"
+      ],
+      "description": "",
+      "termes": [
+        "DÉRIVÉS NITRÉS ET APPARENTÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "dihydropyridines",
+      "nom": "DIHYDROPYRIDINES",
+      "membres": [
+        "amlodipine",
+        "clévidipine",
+        "felodipine",
+        "isradipine",
+        "lacidipine",
+        "lercanidipine",
+        "manidipine",
+        "nicardipine",
+        "nifedipine",
+        "nimodipine",
+        "nitrendipine"
+      ],
+      "description": "",
+      "termes": [
+        "DIHYDROPYRIDINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "diuretiques",
+      "nom": "DIURÉTIQUES",
+      "membres": [
+        "altizide",
+        "amiloride",
+        "bendroflumethiazide",
+        "bumetanide",
+        "canrenoate de potassium",
+        "chlortalidone",
+        "cicletanine",
+        "clopamide",
+        "eplerenone",
+        "furosemide",
+        "hydrochlorothiazide",
+        "indapamide",
+        "methyclothiazide",
+        "piretanide",
+        "spironolactone",
+        "triamterene"
+      ],
+      "description": "",
+      "termes": [
+        "DIURÉTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "diuretiques-de-l-anse",
+      "nom": "DIURÉTIQUES DE L'ANSE",
+      "membres": [
+        "bumetanide",
+        "furosemide",
+        "piretanide"
+      ],
+      "description": "",
+      "termes": [
+        "DIURÉTIQUES DE L'ANSE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "diuretiques-epargneurs-de-potassium-seuls-ou-associes",
+      "nom": "DIURÉTIQUES ÉPARGNEURS DE POTASSIUM (SEULS OU ASSOCIÉS)",
+      "membres": [
+        "amiloride",
+        "canrenoate de potassium",
+        "eplerenone",
+        "spironolactone",
+        "triamterene"
+      ],
+      "description": "",
+      "termes": [
+        "DIURÉTIQUES ÉPARGNEURS DE POTASSIUM"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "diuretiques-hypokaliemiants",
+      "nom": "DIURÉTIQUES HYPOKALIÉMIANTS",
+      "membres": [
+        "altizide",
+        "bendroflumethiazide",
+        "bumetanide",
+        "chlortalidone",
+        "cicletanine",
+        "clopamide",
+        "furosemide",
+        "hydrochlorothiazide",
+        "indapamide",
+        "methyclothiazide",
+        "piretanide"
+      ],
+      "description": "",
+      "termes": [
+        "DIURÉTIQUES HYPOKALIÉMIANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "diuretiques-thiazidiques-et-apparentes",
+      "nom": "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS",
+      "membres": [
+        "altizide",
+        "bendroflumethiazide",
+        "chlortalidone",
+        "cicletanine",
+        "clopamide",
+        "hydrochlorothiazide",
+        "indapamide",
+        "methyclothiazide"
+      ],
+      "description": "",
+      "termes": [
+        "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "dopaminergiques",
+      "nom": "DOPAMINERGIQUES",
+      "membres": [
+        "amantadine",
+        "apomorphine",
+        "bromocriptine",
+        "cabergoline",
+        "entacapone",
+        "lisuride",
+        "piribedil",
+        "pramipexole",
+        "quinagolide",
+        "rasagiline",
+        "ropinirole",
+        "rotigotine",
+        "selegiline",
+        "tolcapone"
+      ],
+      "description": "",
+      "termes": [
+        "DOPAMINERGIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "dopaminergiques-hors-parkinson",
+      "nom": "DOPAMINERGIQUES, HORS PARKINSON",
+      "membres": [
+        "cabergoline",
+        "quinagolide"
+      ],
+      "description": "",
+      "termes": [
+        "DOPAMINERGIQUES, HORS PARKINSON"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "estrogenes-non-contraceptifs",
+      "nom": "ESTROGÈNES NON CONTRACEPTIFS",
+      "membres": [
+        "diethylstilbestrol",
+        "estétrol",
+        "estradiol",
+        "estriol",
+        "estrogènes conjugués",
+        "estrone",
+        "promestriene"
+      ],
+      "description": "",
+      "termes": [
+        "ESTROGÈNES NON CONTRACEPTIFS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "estroprogestatifs-contraceptifs",
+      "nom": "ESTROPROGESTATIFS CONTRACEPTIFS",
+      "membres": [
+        "estradiol",
+        "ethinylestradiol"
+      ],
+      "description": "",
+      "termes": [
+        "ESTROPROGESTATIFS CONTRACEPTIFS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "fibrates",
+      "nom": "FIBRATES",
+      "membres": [
+        "bezafibrate",
+        "ciprofibrate",
+        "fenofibrate",
+        "gemfibrozil"
+      ],
+      "description": "",
+      "termes": [
+        "FIBRATES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "fluoroquinolones",
+      "nom": "FLUOROQUINOLONES",
+      "membres": [
+        "ciprofloxacine",
+        "délafloxacine",
+        "enoxacine",
+        "levofloxacine",
+        "lomefloxacine",
+        "moxifloxacine",
+        "norfloxacine",
+        "ofloxacine",
+        "pefloxacine"
+      ],
+      "description": "",
+      "termes": [
+        "FLUOROQUINOLONES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "fluorouracile-et-par-extrapolation-autres-fluoropyrimidines",
+      "nom": "FLUOROURACILE (ET, PAR EXTRAPOLATION, AUTRES FLUOROPYRIMIDINES)",
+      "membres": [
+        "capecitabine",
+        "fluorouracile",
+        "giméracil",
+        "otéracil",
+        "tegafur"
+      ],
+      "description": "",
+      "termes": [
+        "FLUOROURACILE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "folates",
+      "nom": "FOLATES",
+      "membres": [
+        "acide folinique",
+        "acide folique"
+      ],
+      "description": "",
+      "termes": [
+        "FOLATES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "glinides",
+      "nom": "GLINIDES",
+      "membres": [
+        "nateglinide",
+        "repaglinide"
+      ],
+      "description": "",
+      "termes": [
+        "GLINIDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "gliptines",
+      "nom": "GLIPTINES",
+      "membres": [
+        "linagliptine",
+        "saxagliptine",
+        "sitagliptine",
+        "vildagliptine"
+      ],
+      "description": "",
+      "termes": [
+        "GLIPTINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "globulines-antilymphocytaires",
+      "nom": "GLOBULINES ANTILYMPHOCYTAIRES",
+      "membres": [
+        "immunoglobuline de lapin anti-lymphocyte t humain",
+        "immunoglobulines equines antilymphocyte humain"
+      ],
+      "description": "",
+      "termes": [
+        "GLOBULINES ANTILYMPHOCYTAIRES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "glucocorticoides-sauf-hydrocortisone",
+      "nom": "GLUCOCORTICOÏDES (SAUF HYDROCORTISONE)",
+      "membres": [
+        "betamethasone",
+        "budesonide",
+        "cortisone",
+        "cortivazol",
+        "dexamethasone",
+        "methylprednisolone",
+        "prednisolone",
+        "prednisone",
+        "tetracosactide",
+        "triamcinolone"
+      ],
+      "description": "",
+      "termes": [
+        "GLUCOCORTICOÏDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "glucocorticoides-par-voie-intra-articulaire-et-metabolises",
+      "nom": "GLUCOCORTICOÏDES PAR VOIE INTRA-ARTICULAIRE ET MÉTABOLISÉS",
+      "membres": [
+        "betamethasone",
+        "dexamethasone",
+        "méthylprednisolone",
+        "triamcinolone"
+      ],
+      "description": "",
+      "termes": [
+        "GLUCOCORTICOÏDES PAR VOIE INTRA-ARTICULAIRE ET MÉTABOLISÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "heparines",
+      "nom": "HÉPARINES",
+      "membres": [
+        "dalteparine sodique",
+        "danaparoide sodique",
+        "enoxaparine",
+        "fondaparinux",
+        "heparine calcique",
+        "heparine sodique",
+        "nadroparine calcique",
+        "reviparine",
+        "tinzaparine"
+      ],
+      "description": "",
+      "termes": [
+        "HÉPARINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "heparines-doses-curatives-et-ou-sujet-age",
+      "nom": "HÉPARINES (DOSES CURATIVES ET/OU SUJET ÂGÉ)",
+      "membres": [
+        "dalteparine sodique",
+        "danaparoide sodique",
+        "enoxaparine",
+        "fondaparinux",
+        "heparine calcique",
+        "heparine sodique",
+        "nadroparine calcique",
+        "reviparine",
+        "tinzaparine"
+      ],
+      "description": "",
+      "termes": [
+        "HÉPARINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "heparines-doses-preventives",
+      "nom": "HÉPARINES (DOSES PRÉVENTIVES)",
+      "membres": [
+        "dalteparine sodique",
+        "danaparoide sodique",
+        "enoxaparine",
+        "fondaparinux",
+        "heparine calcique",
+        "heparine sodique",
+        "nadroparine calcique",
+        "reviparine",
+        "tinzaparine"
+      ],
+      "description": "",
+      "termes": [
+        "HÉPARINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "hormones-thyroidiennes",
+      "nom": "HORMONES THYROÏDIENNES",
+      "membres": [
+        "levothyroxine",
+        "liothyronine sodique",
+        "thyroxines",
+        "tiratricol"
+      ],
+      "description": "",
+      "termes": [
+        "HORMONES THYROÏDIENNES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "huiles-minerales",
+      "nom": "HUILES MINÉRALES",
+      "membres": [
+        "paraffine",
+        "silicone"
+      ],
+      "description": "",
+      "termes": [
+        "HUILES MINÉRALES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "hyperkaliemiants",
+      "nom": "HYPERKALIÉMIANTS",
+      "membres": [
+        "aceclofenac",
+        "acide mefenamique",
+        "acide niflumique",
+        "acide tiaprofenique",
+        "alminoprofene",
+        "amiloride",
+        "azilsartan",
+        "benazepril",
+        "candesartan cilexetil",
+        "canrenoate de potassium",
+        "captopril",
+        "celecoxib",
+        "ciclosporine",
+        "cilazapril",
+        "dalteparine sodique",
+        "danaparoide sodique",
+        "dexketoprofene trometamol",
+        "diclofenac",
+        "drospirenone",
+        "enalapril",
+        "enoxaparine",
+        "eplerenone",
+        "eprosartan",
+        "etodolac",
+        "fenoprofene",
+        "flurbiprofene",
+        "fondaparinux",
+        "fosinopril",
+        "heparine calcique",
+        "heparine sodique",
+        "ibuprofene",
+        "indometacine",
+        "irbesartan",
+        "ketoprofene",
+        "lisinopril",
+        "losartan",
+        "meloxicam",
+        "moexipril",
+        "morniflumate",
+        "nabumetone",
+        "nadroparine calcique",
+        "naproxene",
+        "nimesulide",
+        "olmesartan",
+        "parecoxib",
+        "périndopril",
+        "piroxicam",
+        "piroxicam-betadex",
+        "potassium",
+        "quinapril",
+        "ramipril",
+        "reviparine",
+        "rofecoxib",
+        "spironolactone",
+        "sulindac",
+        "tacrolimus",
+        "telmisartan",
+        "tenoxicam",
+        "tinzaparine",
+        "trandolapril",
+        "triamterene",
+        "trimethoprime",
+        "valsartan",
+        "zofenopril"
+      ],
+      "description": "Certains médicaments ou classes thérapeutiques sont susceptibles de favoriser la survenue d'une hyperkaliémie : les sels de potassium, les diurétiques hyperkaliémiants, les inhibiteurs de l'enzyme de conversion, les antagonistes de l'angiotensine II, les anti-inflammatoires non stéroïdiens, les héparines (de bas poids moléculaire ou non fractionnées), les immunosuppresseurs comme la ciclosporine ou le tacrolimus, le triméthoprime. L’association de ces médicaments majore le risque d’hyperkaliémie. Ce risque est particulièrement important avec les diurétiques épargneurs de potassium, notamment lorsqu’ils sont associés entre eux ou avec des sels de potassium, tandis que l’association d’un IEC et d’un AINS, par exemple, est à moindre risque dès l’instant que sont mises en œuvre les précautions recommandées. Pour connaître les risques et les niveaux de contrainte spécifiques aux médicaments hyperkaliémiants, il convient de se reporter aux interactions propres à chaque substance. Toutefois, certaines substances, comme le triméthoprime, ne font pas l’objet d’interactions spécifiques au regard de ce risque. Néanmoins, ils peuvent agir comme facteurs favorisants lorsqu’ils sont associés à d’autres médicaments déjà mentionnés dans ce chapeau.",
+      "termes": [
+        "HYPERKALIÉMIANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "hypnotiques",
+      "nom": "HYPNOTIQUES",
+      "membres": [
+        "alimemazine",
+        "doxylamine",
+        "estazolam",
+        "eszopiclone",
+        "loprazolam",
+        "lormetazepam",
+        "nitrazepam",
+        "promethazine",
+        "zolpidem",
+        "zopiclone"
+      ],
+      "description": "Les hypnotiques actuellement prescrits sont soit des benzodiazépines et apparentés (zolpidem, zopiclone), soit des antihistaminiques H1. Outre une majoration de la sédation lorsqu’il sont prescrits avec d’autres médicaments dépresseurs du SNC, ou en cas de consommation alcoolique, il faut prendre en compte également, pour les benzodiazépines, la possibilité de majoration de l’effet dépresseur respiratoire lorsqu’elles sont associées avec des morphinomimétiques, d’autres benzodiazépines, ou du phénobarbital, et cela notamment chez le sujet âgé. Se reporter à \"médicaments sédatifs\" (benzodiazépines et apparentés, antihistaminiques H1 sédatifs).",
+      "termes": [
+        "HYPNOTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "hypokaliemiants",
+      "nom": "HYPOKALIÉMIANTS",
+      "membres": [
+        "altizide",
+        "amphotericine b",
+        "bendroflumethiazide",
+        "betamethasone",
+        "bisacodyl",
+        "boldo",
+        "bourdaine",
+        "bumetanide",
+        "cascara",
+        "cascara sagrada",
+        "chlortalidone",
+        "cicletanine",
+        "clopamide",
+        "cortisone",
+        "cortivazol",
+        "dexamethasone",
+        "fludrocortisone",
+        "furosemide",
+        "hydrochlorothiazide",
+        "hydrocortisone",
+        "indapamide",
+        "methyclothiazide",
+        "methylprednisolone",
+        "piretanide",
+        "prednisolone",
+        "prednisone",
+        "reglisse",
+        "rhubarbe",
+        "ricin",
+        "ricinus communis",
+        "sene",
+        "sene de l'inde",
+        "sodium (docusate de)",
+        "sodium (picosulfate de)",
+        "sodium (ricinoleate de)",
+        "tetracosactide",
+        "triamcinolone"
+      ],
+      "description": "L'hypokaliémie est un facteur favorisant l'apparition de troubles du rythme cardiaque (torsades de pointes, notamment) et augmentant la toxicité de certains médicaments, par exemple la digoxine. De ce fait, les médicaments qui peuvent entraîner une hypokaliémie sont impliqués dans un grand nombre d'interactions. Il s'agit des diurétiques hypokaliémiants, seuls ou associés, des laxatifs stimulants, des glucocorticoïdes, du tétracosactide et de l'amphotéricine B (voie IV).",
+      "termes": [
+        "HYPOKALIÉMIANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "hyponatremiants",
+      "nom": "HYPONATRÉMIANTS",
+      "membres": [
+        "altizide",
+        "amiloride",
+        "argipressine",
+        "bendroflumethiazide",
+        "bumetanide",
+        "canrenoate de potassium",
+        "carbamazepine",
+        "chlortalidone",
+        "cicletanine",
+        "citalopram",
+        "clopamide",
+        "desmopressine",
+        "eplerenone",
+        "escitalopram",
+        "fluoxetine",
+        "fluvoxamine",
+        "furosemide",
+        "hydrochlorothiazide",
+        "indapamide",
+        "methyclothiazide",
+        "oxcarbazepine",
+        "paroxetine",
+        "piretanide",
+        "sertraline",
+        "spironolactone",
+        "triamterene"
+      ],
+      "description": "Certains médicaments sont plus fréquemment impliqués dans la survenue d’une hyponatrémie. Ce sont les diurétiques, la desmopressine, les antidépresseurs inhibant la recapture de la sérotonine, la carbamazépine et l’oxcarbazépine. L’association de ces médicaments majore le risque d’hyponatrémie.",
+      "termes": [
+        "HYPONATRÉMIANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "imao-irreversibles",
+      "nom": "IMAO IRRÉVERSIBLES",
+      "membres": [
+        "iproniazide",
+        "phénelzine"
+      ],
+      "description": "",
+      "termes": [
+        "IMAO IRRÉVERSIBLES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "imao-a-reversibles-y-compris-oxazolidinones-et-bleu-de-methylene",
+      "nom": "IMAO-A RÉVERSIBLES, Y COMPRIS OXAZOLIDINONES ET BLEU DE MÉTHYLÈNE",
+      "membres": [
+        "bleu de methylene",
+        "linezolide",
+        "moclobemide",
+        "tédizolide"
+      ],
+      "description": "",
+      "termes": [
+        "IMAO-A RÉVERSIBLES, Y COMPRIS OXAZOLIDINONES ET BLEU DE MÉTHYLÈNE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "imao-b",
+      "nom": "IMAO-B",
+      "membres": [
+        "rasagiline",
+        "safinamide",
+        "selegiline"
+      ],
+      "description": "",
+      "termes": [
+        "IMAO-B"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "immunosuppresseurs",
+      "nom": "IMMUNOSUPPRESSEURS",
+      "membres": [
+        "ciclosporine",
+        "everolimus",
+        "sirolimus",
+        "tacrolimus",
+        "temsirolimus"
+      ],
+      "description": "",
+      "termes": [
+        "IMMUNOSUPPRESSEURS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inducteurs-enzymatiques",
+      "nom": "INDUCTEURS ENZYMATIQUES",
+      "membres": [
+        "apalutamide",
+        "carbamazepine",
+        "cénobamate",
+        "dabrafénib",
+        "efavirenz",
+        "enzalutamide",
+        "eslicarbazépine",
+        "fosphenytoine",
+        "létermovir",
+        "lorlatinib",
+        "lumacaftor",
+        "nevirapine",
+        "oxcarbazepine",
+        "phenobarbital",
+        "phenytoine",
+        "pitolisant",
+        "primidone",
+        "rifabutine",
+        "rifampicine",
+        "sotorasib"
+      ],
+      "description": "Certains médicaments ont la propriété d'activer considérablement certaines voies métaboliques hépatiques par induction enzymatique. Associés à des médicaments fortement métabolisés au niveau du foie, ils sont, de ce fait, en mesure d'en modifier les concentrations plasmatiques. Il peut s'ensuivre, dans la majorité des cas, une moindre activité des médicaments associés à l'inducteur, voire la formation de métabolites toxiques. Les inducteurs enzymatiques à l'origine d'interactions cliniquement pertinentes sont notamment représentés par certains antiépileptiques, certains antituberculeux et antirétroviraux et le millepertuis (pour ce dernier, se reporter aux interactions qui lui sont propres). Les médicaments dont l'efficacité peut être altérée sont nombreux : immunosuppresseurs, estroprogestatifs et progestatifs, inhibiteurs de protéase, anticoagulants oraux, glucocorticoïdes, hormones thyroïdiennes, antagonistes du calcium, isoniazide, théophylline, etc…",
+      "termes": [
+        "INDUCTEURS ENZYMATIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inducteurs-enzymatiques-puissants",
+      "nom": "INDUCTEURS ENZYMATIQUES PUISSANTS",
+      "membres": [
+        "apalutamide",
+        "carbamazepine",
+        "enzalutamide",
+        "fosphenytoine",
+        "phenobarbital",
+        "phenytoine",
+        "primidone"
+      ],
+      "description": "",
+      "termes": [
+        "INDUCTEURS ENZYMATIQUES PUISSANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-la-5-alpha-reductase",
+      "nom": "INHIBITEURS DE LA 5-ALPHA REDUCTASE",
+      "membres": [
+        "dutasteride",
+        "finasteride"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE LA 5-ALPHA REDUCTASE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-la-catechol-o-methyltransferase-comt",
+      "nom": "INHIBITEURS DE LA CATÉCHOL-O-MÉTHYLTRANSFÉRASE (COMT)",
+      "membres": [
+        "entacapone",
+        "tolcapone"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE LA CATÉCHOL-O-MÉTHYLTRANSFÉRASE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-la-phosphodiesterase-de-type-5",
+      "nom": "INHIBITEURS DE LA PHOSPHODIESTERASE DE TYPE 5",
+      "membres": [
+        "avanafil",
+        "sildenafil",
+        "tadalafil",
+        "vardenafil"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE LA PHOSPHODIESTERASE DE TYPE 5"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-la-xanthine-oxydase",
+      "nom": "INHIBITEURS DE LA XANTHINE OXYDASE",
+      "membres": [
+        "allopurinol",
+        "febuxostat"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE LA XANTHINE OXYDASE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-l-enzyme-de-conversion",
+      "nom": "INHIBITEURS DE L'ENZYME DE CONVERSION",
+      "membres": [
+        "benazepril",
+        "captopril",
+        "cilazapril",
+        "enalapril",
+        "fosinopril",
+        "lisinopril",
+        "moexipril",
+        "périndopril",
+        "quinapril",
+        "ramipril",
+        "trandolapril",
+        "zofenopril"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE L'ENZYME DE CONVERSION",
+        "IEC"
+      ],
+      "abreviations": [
+        {
+          "terme": "IEC",
+          "occurrences": 22
+        }
+      ]
+    },
+    {
+      "id": "inhibiteurs-de-l-hmg-coa-reductase-statines",
+      "nom": "INHIBITEURS DE L'HMG-COA RÉDUCTASE (STATINES)",
+      "membres": [
+        "atorvastatine",
+        "fluvastatine",
+        "pitavastatine",
+        "pravastatine",
+        "rosuvastatine",
+        "simvastatine"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE L'HMG-COA RÉDUCTASE",
+        "STATINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-proteases-boostes-par-ritonavir",
+      "nom": "INHIBITEURS DE PROTÉASES BOOSTÉS PAR RITONAVIR",
+      "membres": [
+        "atazanavir",
+        "darunavir",
+        "fosamprenavir",
+        "lopinavir",
+        "nirmatrelvir",
+        "ritonavir",
+        "saquinavir",
+        "tipranavir"
+      ],
+      "description": "Le ritonavir est désormais utilisé à la dose de 100 mg 2 fois par jour en association à un autre inhibiteur de protéase, dans le but d'augmenter de façon très significative la biodisponibilité de l'inhibiteur de protéase associé (ou boosté), ce qui permet d'augmenter ainsi l'efficacité du traitement antirétroviral. Eu égard à ce schéma thérapeutique, chaque inhibiteur de protéase acquiert de la sorte les propriétés d'inhibition puissante du CYP3A4 que possède le ritonavir, et ce, même lorsque celui-ci est donné à doses 6 fois moindres que lors des premières années de son utilisation. En pratique, ceci revient donc à considérer tous les inhibiteurs de protéase comme des inhibiteurs enzymatiques de puissance comparable. Par conséquent, les interactions communes à cette classe découlent, pour la plupart, de cette propriété.",
+      "termes": [
+        "INHIBITEURS DE PROTÉASES BOOSTÉS PAR RITONAVIR"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-de-tyrosine-kinases-metabolises",
+      "nom": "INHIBITEURS DE TYROSINE KINASES MÉTABOLISÉS",
+      "membres": [
+        "abémaciclib",
+        "acalabrutinib",
+        "axitinib",
+        "bosutinib",
+        "brigatinib",
+        "cabozantinib",
+        "céritinib",
+        "cobimétinib",
+        "crizotinib",
+        "dabrafénib",
+        "dasatinib",
+        "entrectinib",
+        "erlotinib",
+        "fédratinib",
+        "fostamatinib",
+        "gefitinib",
+        "giltéritinib",
+        "ibrutinib",
+        "imatinib",
+        "lapatinib",
+        "larotrectinib",
+        "lorlatinib",
+        "nilotinib",
+        "osimertinib",
+        "palbociclib",
+        "pazopanib",
+        "pémigatinib",
+        "ponatinib",
+        "pralsétinib",
+        "ribociclib",
+        "riprétinib",
+        "ruxolitinib",
+        "selpercatinib",
+        "sélumétinib",
+        "sorafenib",
+        "sunitinib",
+        "tucatinib",
+        "upadacitinib",
+        "vandétanib",
+        "zanubrutinib"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DE TYROSINE KINASES MÉTABOLISÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-d-integrase",
+      "nom": "INHIBITEURS D'INTÉGRASE",
+      "membres": [
+        "bictégravir",
+        "cabotegravir",
+        "dolutégravir",
+        "raltégravir"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS D'INTÉGRASE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-directs-de-la-thrombine-a-indication-specifique",
+      "nom": "INHIBITEURS DIRECTS DE LA THROMBINE À INDICATION SPÉCIFIQUE",
+      "membres": [
+        "argatroban",
+        "bivalirudine"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS DIRECTS DE LA THROMBINE À INDICATION SPÉCIFIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-puissants-du-cyp3a4",
+      "nom": "INHIBITEURS PUISSANTS DU CYP3A4",
+      "membres": [
+        "clarithromycine",
+        "cobicistat",
+        "erythromycine",
+        "itraconazole",
+        "ketoconazole",
+        "posaconazole",
+        "ritonavir",
+        "telithromycine",
+        "tucatinib",
+        "voriconazole"
+      ],
+      "description": "Certains médicaments possèdent la capacité d’inhiber fortement le CYP3A4, une enzyme qui intervient dans le métabolisme de nombreux médicaments. Lorsque l’activité de cette enzyme est inhibée, elle n’est plus en mesure de métaboliser le médicament qui va alors s’accumuler. Si la marge thérapeutique de ce médicament est étroite et qu’il n'y a pas d’autre voie métabolique efficace, le risque d’observer une interaction cliniquement significative devient élevé. Les principaux inhibiteurs du CYP3A4 sont : - les azolés antifongiques (kétoconazole, itraconazole, voriconazole, posaconazole), - les inhibiteurs de protéase, représentés ici par le ritonavir, avec lequel ils sont boostés, - certains macrolides (la clarithromycine, l’érythromycine, la télithromycine). Parmi les substrats du CYP3A4 à marge thérapeutique étroite et pour lesquels un risque de surdosage est plus particulièrement à redouter en cas d’association avec un inhibiteur du CYP3A4, on peut citer : - l'ergotamine, alcaloïde vasocontricteur de l'ergot de seigle : risque de nécrose des extrémités ; - les immunosuppresseurs (ciclosporine, tacrolimus…) : risque néphrotoxique ; - certaines statines (simvastatine, et dans une moindre mesure, atorvastatine) : risque musculaire, notamment rhabdomyolyse ; - certains médicaments donnant des torsades de pointes : pimozide, halofantrine, luméfantrine ; - des médicaments dépresseurs du centre respiratoire : alfentanil, sufentanil, oxycodone, midazolam ; - certains cytotoxiques : bortezomib, docétaxel, inhibiteurs des tyrosine kinases. Pour connaître les risques et les niveaux de contrainte de chacun de ces substrats, il convient de se reporter aux interactions spécifiques avec chaque inhibiteur.",
+      "termes": [
+        "INHIBITEURS PUISSANTS DU CYP3A4"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "inhibiteurs-selectifs-de-la-recapture-de-la-serotonine",
+      "nom": "INHIBITEURS SÉLECTIFS DE LA RECAPTURE DE LA SÉROTONINE",
+      "membres": [
+        "citalopram",
+        "dapoxétine",
+        "escitalopram",
+        "fluoxetine",
+        "fluvoxamine",
+        "paroxetine",
+        "sertraline",
+        "vortioxétine"
+      ],
+      "description": "",
+      "termes": [
+        "INHIBITEURS SÉLECTIFS DE LA RECAPTURE DE LA SÉROTONINE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "ivacaftor-seul-ou-associe",
+      "nom": "IVACAFTOR (SEUL OU ASSOCIÉ)",
+      "membres": [
+        "élexacaftor",
+        "ivacaftor",
+        "lumacaftor",
+        "tézacaftor"
+      ],
+      "description": "",
+      "termes": [
+        "IVACAFTOR"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "lincosanides",
+      "nom": "LINCOSANIDES",
+      "membres": [
+        "clindamycine",
+        "lincomycine"
+      ],
+      "description": "",
+      "termes": [
+        "LINCOSANIDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "macrolides-sauf-spiramycine",
+      "nom": "MACROLIDES (SAUF SPIRAMYCINE)",
+      "membres": [
+        "azithromycine",
+        "clarithromycine",
+        "erythromycine",
+        "josamycine",
+        "midecamycine",
+        "roxithromycine",
+        "telithromycine"
+      ],
+      "description": "",
+      "termes": [
+        "MACROLIDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-a-l-origine-d-atteintes-musculaires",
+      "nom": "MÉDICAMENTS À L'ORIGINE D'ATTEINTES MUSCULAIRES",
+      "membres": [
+        "atorvastatine",
+        "bezafibrate",
+        "ciclosporine",
+        "ciprofibrate",
+        "colchicine",
+        "daptomycine",
+        "dasatinib",
+        "ezetimibe",
+        "fenofibrate",
+        "fluvastatine",
+        "gemfibrozil",
+        "imatinib",
+        "lenalidomide",
+        "pitavastatine",
+        "pravastatine",
+        "rosuvastatine",
+        "simvastatine"
+      ],
+      "description": "Certains médicaments présentent une toxicité musculaire qui peut conjuguer des crampes, une faiblesse, des douleurs parfois intenses (myalgies), voire la destruction des fibres du muscle strié (rhabdomyolyse), avec atteinte du rein puis d’autres organes engageant le pronostic vital. L’association de plusieurs médicaments ayant ce potentiel majore ce risque. Le dosage des CPK est impératif en cas de signes cliniques évocateurs.",
+      "termes": [
+        "MÉDICAMENTS À L'ORIGINE D'ATTEINTES MUSCULAIRES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-a-l-origine-d-un-hypogonadisme-masculin",
+      "nom": "MÉDICAMENTS À L'ORIGINE D'UN HYPOGONADISME MASCULIN",
+      "membres": [
+        "abiraterone",
+        "apalutamide",
+        "bicalutamide",
+        "cyproterone",
+        "dégarélix",
+        "dutasteride",
+        "enzalutamide",
+        "finasteride",
+        "flutamide",
+        "gosereline",
+        "leuproreline",
+        "nilutamide",
+        "triptoreline"
+      ],
+      "description": "",
+      "termes": [
+        "MÉDICAMENTS À L'ORIGINE D'UN HYPOGONADISME MASCULIN"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-a-l-origine-d-un-syndrome-serotoninergique",
+      "nom": "MÉDICAMENTS À L'ORIGINE D'UN SYNDROME SÉROTONINERGIQUE",
+      "membres": [
+        "amitriptyline",
+        "bleu de methylene",
+        "bupropion",
+        "citalopram",
+        "clomipramine",
+        "duloxetine",
+        "escitalopram",
+        "fluoxetine",
+        "fluvoxamine",
+        "imipramine",
+        "iproniazide",
+        "linezolide",
+        "lithium",
+        "millepertuis",
+        "milnacipran",
+        "moclobemide",
+        "oxitriptan",
+        "paroxetine",
+        "pethidine",
+        "sertraline",
+        "tramadol",
+        "trimipramine",
+        "tryptophane",
+        "venlafaxine"
+      ],
+      "description": "Certains surdosages ou certains médicaments peuvent donner lieu à un syndrome sérotoninergique justifiant l'arrêt immédiat du traitement. Ces médicaments sont essentiellement représentés par - le linézolide - le bleu de méthylène - le millepertuis - la péthidine et le tramadol - la plupart des antidépresseurs - la classe des inhibiteurs de la recapture de la sérotonine, - certains tricycliques (clomipramine, amitriptyline, imipramine, trimipramine) - les mixtes (venlafaxine, milnacipran, sibutramine) - avec indications d’autres que la dépression : duloxétine, oxitriptan) - les IMAO, essentiellement non sélectifs, voire les IMAO-A sélectifs Le syndrome sérotoninergique se manifeste par l'apparition (éventuellement brutale) simultanée ou séquentielle, d'un ensemble de symptômes pouvant nécessiter l'hospitalisation, voire exceptionnellement entraîner le décès. Ces symptômes peuvent être d'ordre : - digestifs (diarrhée), - neuropsychiques (agitation, confusion, hypomanie), - moteurs (myoclonies, tremblements, hyperréflexie, rigidité, hyperactivité), - végétatifs (variations tensionnelles, tachycardie, frissons, hyperthermie, sueurs, éventuellement coma). Le strict respect des doses préconisées constitue un facteur essentiel dans la prévention de l'apparition de ce syndrome. Le niveau de risque est très variable selon les associations. Le tableau est sévère, voire fatal, notamment avec les IMAO non sélectifs (se reporter aux interactions contre-indiquées dans le Thesaurus).",
+      "termes": [
+        "MÉDICAMENTS À L'ORIGINE D'UN SYNDROME SÉROTONINERGIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-a-l-origine-d-une-hypotension-orthostatique",
+      "nom": "MÉDICAMENTS À L'ORIGINE D'UNE HYPOTENSION ORTHOSTATIQUE",
+      "membres": [
+        "alfuzosine",
+        "alimemazine",
+        "alizapride",
+        "amantadine",
+        "amifostine",
+        "amisulpride",
+        "amitriptyline",
+        "amoxapine",
+        "apomorphine",
+        "aripiprazole",
+        "avanafil",
+        "baclofene",
+        "bromocriptine",
+        "chlorpromazine",
+        "clomipramine",
+        "clozapine",
+        "cyamemazine",
+        "dinitrate d'isosorbide",
+        "dosulepine",
+        "doxazosine",
+        "doxepine",
+        "droperidol",
+        "entacapone",
+        "flupentixol",
+        "fluphenazine",
+        "haloperidol",
+        "imipramine",
+        "isosorbide",
+        "levodopa",
+        "levomepromazine",
+        "lévosimendan",
+        "lisuride",
+        "loxapine",
+        "maprotiline",
+        "metopimazine",
+        "molsidomine",
+        "nicorandil",
+        "olanzapine",
+        "oxomemazine",
+        "paliperidone",
+        "penfluridol",
+        "périndopril",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "piribedil",
+        "pramipexole",
+        "prazosine",
+        "promethazine",
+        "propericiazine",
+        "quetiapine",
+        "rasagiline",
+        "riociguat",
+        "risperidone",
+        "ropinirole",
+        "rotigotine",
+        "selegiline",
+        "sildenafil",
+        "silodosine",
+        "sulpiride",
+        "tadalafil",
+        "tamsulosine",
+        "terazosine",
+        "tiapride",
+        "tolcapone",
+        "trimipramine",
+        "trinitrine",
+        "vardenafil",
+        "vortioxétine",
+        "zuclopenthixol"
+      ],
+      "description": "Outre les antihypertenseurs, de nombreux médicaments peuvent entraîner une hypotension orthostatique. C'est le cas notamment des dérivés nitrés, des inhibiteurs de la phosphodiestérase de type 5, des alpha-bloquants à visée urologique, des antidépresseurs imipraminiques et des neuroleptiques phénothiaziniques, des agonistes dopaminergiques et de la lévodopa. Leur utilisation conjointe risque donc de majorer la fréquence et l’intensité de cet effet indésirable. Se reporter aux interactions propres à chaque classe, avec les niveaux de contrainte correspondants.",
+      "termes": [
+        "MÉDICAMENTS À L'ORIGINE D'UNE HYPOTENSION ORTHOSTATIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-a-risque-lors-du-sevrage-tabagique",
+      "nom": "MÉDICAMENTS À RISQUE LORS DU SEVRAGE TABAGIQUE",
+      "membres": [
+        "clozapine",
+        "methadone",
+        "ropinirole",
+        "theophylline"
+      ],
+      "description": "",
+      "termes": [
+        "MÉDICAMENTS À RISQUE LORS DU SEVRAGE TABAGIQUE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-abaissant-la-pression-arterielle",
+      "nom": "MÉDICAMENTS ABAISSANT LA PRESSION ARTÉRIELLE",
+      "membres": [
+        "acebutolol",
+        "altizide",
+        "amiloride",
+        "amlodipine",
+        "atenolol",
+        "azilsartan",
+        "benazepril",
+        "bendroflumethiazide",
+        "betaxolol",
+        "bisoprolol",
+        "bumetanide",
+        "candesartan cilexetil",
+        "canrenoate de potassium",
+        "captopril",
+        "carteolol",
+        "carvedilol",
+        "celiprolol",
+        "chlortalidone",
+        "cicletanine",
+        "cilazapril",
+        "clévidipine",
+        "clonidine",
+        "clopamide",
+        "cyclothiazide",
+        "dihydralazine",
+        "diltiazem",
+        "doxazosine",
+        "enalapril",
+        "eplerenone",
+        "eprosartan",
+        "felodipine",
+        "fosinopril",
+        "furosemide",
+        "guanfacine",
+        "hydrochlorothiazide",
+        "indapamide",
+        "irbesartan",
+        "isradipine",
+        "labetalol",
+        "lacidipine",
+        "lercanidipine",
+        "levobunolol",
+        "lisinopril",
+        "losartan",
+        "manidipine",
+        "methyclothiazide",
+        "methyldopa",
+        "metoprolol",
+        "moexipril",
+        "moxonidine",
+        "nadolol",
+        "nebivolol",
+        "nicardipine",
+        "nifedipine",
+        "nimodipine",
+        "nitrendipine",
+        "olmesartan",
+        "perindopril tert-butylamine",
+        "pindolol",
+        "piretanide",
+        "prazosine",
+        "propranolol",
+        "quinapril",
+        "ramipril",
+        "rilmenidine",
+        "sotalol",
+        "spironolactone",
+        "tamsulosine",
+        "telmisartan",
+        "terazosine",
+        "tertatolol",
+        "timolol",
+        "trandolapril",
+        "triamterene",
+        "urapidil",
+        "valsartan",
+        "verapamil",
+        "zofenopril"
+      ],
+      "description": "",
+      "termes": [
+        "MÉDICAMENTS ABAISSANT LA PRESSION ARTÉRIELLE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-abaissant-le-seuil-epileptogene",
+      "nom": "MÉDICAMENTS ABAISSANT LE SEUIL ÉPILEPTOGÈNE",
+      "membres": [
+        "alimemazine",
+        "amitriptyline",
+        "amoxapine",
+        "bupropion",
+        "camphre",
+        "chloroquine",
+        "chlorpromazine",
+        "cineole",
+        "ciprofloxacine",
+        "citalopram",
+        "clomipramine",
+        "cyamemazine",
+        "dosulepine",
+        "doxepine",
+        "droperidol",
+        "enoxacine",
+        "escitalopram",
+        "eucalyptus",
+        "eugenol",
+        "fampridine",
+        "fluoxetine",
+        "fluphenazine",
+        "fluvoxamine",
+        "haloperidol",
+        "imipramine",
+        "levofloxacine",
+        "levomenthol",
+        "levomepromazine",
+        "lomefloxacine",
+        "maprotiline",
+        "mefloquine",
+        "menthe",
+        "menthol racemique",
+        "moxifloxacine",
+        "niaouli",
+        "norfloxacine",
+        "ofloxacine",
+        "oxomemazine",
+        "paroxetine",
+        "pefloxacine",
+        "penfluridol",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "promethazine",
+        "propericiazine",
+        "quetiapine",
+        "sertraline",
+        "tapentadol",
+        "terpine",
+        "terpineol",
+        "terpinol",
+        "thymol",
+        "tramadol",
+        "trimipramine",
+        "vortioxétine"
+      ],
+      "description": "L'utilisation conjointe de médicaments proconvulsivants, ou abaissant le seuil épileptogène, devra être soigneusement pesée, en raison de la sévérité du risque encouru. Ces médicaments sont représentés notamment par la plupart des antidépresseurs (imipraminiques, inhibiteurs sélectifs de la recapture de la sérotonine), les neuroleptiques (phénothiazines et butyrophénones), la méfloquine, la chloroquine, les fluoroquinolones, le bupropion, le tramadol.",
+      "termes": [
+        "MÉDICAMENTS ABAISSANT LE SEUIL ÉPILEPTOGÈNE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-atropiniques",
+      "nom": "MÉDICAMENTS ATROPINIQUES",
+      "membres": [
+        "alimemazine",
+        "amitriptyline",
+        "amoxapine",
+        "atropine",
+        "azelastine",
+        "biperidene",
+        "brompheniramine",
+        "chlorphenamine",
+        "chlorpromazine",
+        "clidinium",
+        "clomipramine",
+        "clozapine",
+        "cyamemazine",
+        "cyclopentolate",
+        "cyproheptadine",
+        "darifenacine",
+        "dexchlorpheniramine",
+        "di(acefylline) diphenhydramine",
+        "dimenhydrinate",
+        "diphenhydramine",
+        "disopyramide",
+        "dosulepine",
+        "doxepine",
+        "doxylamine",
+        "fesoterodine",
+        "flavoxate",
+        "flunarizine",
+        "flupentixol",
+        "fluphenazine",
+        "glycopyrronium",
+        "homatropine",
+        "hydroxyzine",
+        "imipramine",
+        "ipratropium",
+        "isothipendyl",
+        "levomepromazine",
+        "loxapine",
+        "maprotiline",
+        "méclozine",
+        "mepyramine",
+        "mequitazine",
+        "metopimazine",
+        "nefopam",
+        "oxomemazine",
+        "oxybutynine",
+        "pheniramine",
+        "phenyltoloxamine",
+        "pimethixene",
+        "pipotiazine",
+        "pizotifene",
+        "promethazine",
+        "propericiazine",
+        "quetiapine",
+        "quinidine",
+        "scopolamine",
+        "solifenacine",
+        "tolterodine",
+        "trihexyphenidyle",
+        "trimipramine",
+        "triprolidine",
+        "tropatepine",
+        "tropicamide",
+        "trospium",
+        "uméclidinium",
+        "zuclopenthixol"
+      ],
+      "description": "Il faut prendre en compte le fait que les substances atropiniques peuvent additionner leurs effets indésirables et entraîner plus facilement une rétention urinaire, une poussée aiguë de glaucome, une constipation, une sécheresse de la bouche, etc… Les divers médicaments atropiniques sont représentés par les antidépresseurs imipraminiques, la plupart des antihistaminiques H1 atropiniques, les antiparkinsoniens anticholinergiques, les antispasmodiques atropiniques, le disopyramide, les neuroleptiques phénothiaziniques ainsi que la clozapine.",
+      "termes": [
+        "MÉDICAMENTS ATROPINIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-methemoglobinisants",
+      "nom": "MÉDICAMENTS MÉTHÉMOGLOBINISANTS",
+      "membres": [
+        "acetylsulfafurazol",
+        "benzocaïne",
+        "dapsone",
+        "flutamide",
+        "metoclopramide",
+        "prilocaine",
+        "sodium (nitroprussiate de)",
+        "sulfadiazine",
+        "sulfadoxine",
+        "sulfafurazol",
+        "sulfaguanidine",
+        "sulfamethizol",
+        "sulfamethoxazole"
+      ],
+      "description": "",
+      "termes": [
+        "MÉDICAMENTS MÉTHÉMOGLOBINISANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-mixtes-adrenergiques-serotoninergiques",
+      "nom": "MÉDICAMENTS MIXTES ADRÉNERGIQUES-SÉROTONINERGIQUES",
+      "membres": [
+        "amitriptyline",
+        "clomipramine",
+        "duloxetine",
+        "imipramine",
+        "milnacipran",
+        "oxitriptan",
+        "venlafaxine"
+      ],
+      "description": "",
+      "termes": [
+        "MÉDICAMENTS MIXTES ADRÉNERGIQUES-SÉROTONINERGIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-nephrotoxiques",
+      "nom": "MÉDICAMENTS NÉPHROTOXIQUES",
+      "membres": [
+        "aciclovir",
+        "acide amidotrizoïque",
+        "acide clodronique",
+        "acide ioxaglique",
+        "acide ioxitalamique",
+        "adefovir",
+        "amikacine",
+        "amphotericine b",
+        "carboplatine",
+        "ciclosporine",
+        "cisplatine",
+        "colistine",
+        "foscarnet",
+        "ganciclovir",
+        "gentamicine",
+        "ifosfamide",
+        "iobitridol",
+        "iodixanol",
+        "iohexol",
+        "iomeprol",
+        "iopamidol",
+        "iopromide",
+        "ioversol",
+        "isepamicine",
+        "methotrexate",
+        "netilmicine",
+        "oxaliplatine",
+        "pentamidine",
+        "spectinomycine",
+        "streptomycine",
+        "streptozocine",
+        "tacrolimus",
+        "teicoplanine",
+        "tenofovir disoproxil",
+        "tobramycine",
+        "valaciclovir",
+        "valganciclovir",
+        "vancomycine"
+      ],
+      "description": "L'utilisation conjointe de médicaments ayant une toxicité rénale propre augmente le risque de néphrotoxicité. Si une telle association est nécessaire, il faut renforcer la surveillance biologique rénale. Les médicaments concernés sont représentés notamment par les produits de contraste iodés, les aminosides, les organoplatines, le méthotrexate à fortes doses, certains antiviraux (tels les \"ciclovirs\" ou le foscarnet), la pentamidine, la ciclosporine ou le tacrolimus.",
+      "termes": [
+        "MÉDICAMENTS NÉPHROTOXIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-ototoxiques",
+      "nom": "MÉDICAMENTS OTOTOXIQUES",
+      "membres": [
+        "amikacine",
+        "bumetanide",
+        "carboplatine",
+        "cisplatine",
+        "furosemide",
+        "gentamicine",
+        "isepamicine",
+        "netilmicine",
+        "oxaliplatine",
+        "piretanide",
+        "streptomycine",
+        "teicoplanine",
+        "tobramycine",
+        "vancomycine",
+        "vinblastine",
+        "vincristine",
+        "vindesine",
+        "vinflunine",
+        "vinorelbine"
+      ],
+      "description": "L'utilisation conjointe de médicaments ayant une ototoxicité augmente le risque d’atteinte cochléo-vestibulaire. Si une telle association est nécessaire, il convient de renforcer la surveillance de la fonction auditive. Les médicaments concernés sont, notamment, les glycopeptides tels que vancomycine et teicoplanine, les aminosides, les organoplatines et les diurétiques de l’anse.",
+      "termes": [
+        "MÉDICAMENTS OTOTOXIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "medicaments-sedatifs",
+      "nom": "MÉDICAMENTS SÉDATIFS",
+      "membres": [
+        "agomelatine",
+        "alfentanil",
+        "alimemazine",
+        "alizapride",
+        "alprazolam",
+        "amisulpride",
+        "amitriptyline",
+        "aripiprazole",
+        "avizafone",
+        "azelastine",
+        "baclofene",
+        "bromazepam",
+        "brompheniramine",
+        "buprenorphine",
+        "captodiame",
+        "cénobamate",
+        "chlordiazepoxide",
+        "chlorphenamine",
+        "chlorpromazine",
+        "clobazam",
+        "clonazepam",
+        "clonidine",
+        "clorazepate",
+        "clotiazepam",
+        "clozapine",
+        "codeine",
+        "cyamemazine",
+        "cyproheptadine",
+        "dapoxétine",
+        "dexchlorpheniramine",
+        "dexmédétomidine",
+        "dextromethorphane",
+        "di(acefylline) diphenhydramine",
+        "diazepam",
+        "dihydrocodeine",
+        "dimenhydrinate",
+        "diphenhydramine",
+        "doxepine",
+        "doxylamine",
+        "droperidol",
+        "eskétamine",
+        "estazolam",
+        "eszopiclone",
+        "ethylmorphine",
+        "etifoxine",
+        "fenspiride",
+        "fentanyl",
+        "flunarizine",
+        "flupentixol",
+        "fluphenazine",
+        "flurazepam",
+        "gabapentine",
+        "haloperidol",
+        "hydromorphone",
+        "hydroxyzine",
+        "isothipendyl",
+        "ketotifene",
+        "levomepromazine",
+        "loflazépate",
+        "loprazolam",
+        "lorazepam",
+        "lormetazepam",
+        "loxapine",
+        "maprotiline",
+        "méclozine",
+        "mepyramine",
+        "mequitazine",
+        "methadone",
+        "methyldopa",
+        "metoclopramide",
+        "metopimazine",
+        "mianserine",
+        "midazolam",
+        "mirtazapine",
+        "morphine",
+        "moxonidine",
+        "nalbuphine",
+        "naloxone",
+        "nefopam",
+        "nitrazepam",
+        "nordazepam",
+        "noscapine",
+        "olanzapine",
+        "oxazepam",
+        "oxetorone",
+        "oxomemazine",
+        "oxybate de sodium",
+        "oxycodone",
+        "paliperidone",
+        "penfluridol",
+        "pérampanel",
+        "pethidine",
+        "pheniramine",
+        "phenobarbital",
+        "phenyltoloxamine",
+        "pholcodine",
+        "pimethixene",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "pizotifene",
+        "prazepam",
+        "pregabaline",
+        "primidone",
+        "promethazine",
+        "propericiazine",
+        "quetiapine",
+        "remifentanil",
+        "rilmenidine",
+        "risperidone",
+        "ropinirole",
+        "rupatadine",
+        "sodium (oxybate de)",
+        "sufentanil",
+        "sulpiride",
+        "tapentadol",
+        "tetrabenazine",
+        "thalidomide",
+        "tiapride",
+        "tramadol",
+        "trimipramine",
+        "triprolidine",
+        "ziconotide",
+        "zolpidem",
+        "zopiclone",
+        "zuclopenthixol"
+      ],
+      "description": "Il faut prendre en compte le fait que de nombreux médicaments ou substances peuvent additionner leurs effets dépresseurs du système nerveux central et contribuer à diminuer la vigilance. Il s'agit des dérivés morphiniques (analgésiques, antitussifs et traitements de substitution), des neuroleptiques, des barbituriques, des benzodiazépines, des anxiolytiques autres que les benzodiazépines (par exemple, le méprobamate), des hypnotiques, des antidépresseurs sédatifs (amitriptyline, doxépine, miansérine, mirtazapine, trimipramine), des antihistaminiques H1 sédatifs, des antihypertenseurs centraux, du baclofène et du thalidomide.",
+      "termes": [
+        "MÉDICAMENTS SÉDATIFS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "mineralocorticoides",
+      "nom": "MINÉRALOCORTICOÏDES",
+      "membres": [
+        "desoxycortone",
+        "fludrocortisone"
+      ],
+      "description": "",
+      "termes": [
+        "MINÉRALOCORTICOÏDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "morphiniques",
+      "nom": "MORPHINIQUES",
+      "membres": [
+        "alfentanil",
+        "buprenorphine",
+        "codeine",
+        "dextromethorphane",
+        "dihydrocodeine",
+        "ethylmorphine",
+        "fentanyl",
+        "hydromorphone",
+        "methadone",
+        "morphine",
+        "nalbuphine",
+        "nalméfène",
+        "naloxone",
+        "naltrexone",
+        "noscapine",
+        "oxycodone",
+        "pethidine",
+        "pholcodine",
+        "remifentanil",
+        "sufentanil",
+        "tapentadol",
+        "tramadol"
+      ],
+      "description": "",
+      "termes": [
+        "MORPHINIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "morphiniques-agonistes-antagonistes",
+      "nom": "MORPHINIQUES AGONISTES-ANTAGONISTES",
+      "membres": [
+        "buprenorphine",
+        "nalbuphine"
+      ],
+      "description": "",
+      "termes": [
+        "MORPHINIQUES AGONISTES-ANTAGONISTES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "morphiniques-antagonistes-partiels",
+      "nom": "MORPHINIQUES ANTAGONISTES PARTIELS",
+      "membres": [
+        "nalméfène",
+        "naltrexone"
+      ],
+      "description": "",
+      "termes": [
+        "MORPHINIQUES ANTAGONISTES PARTIELS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "morphiniques-en-traitement-de-substitution",
+      "nom": "MORPHINIQUES EN TRAITEMENT DE SUBSTITUTION",
+      "membres": [
+        "buprenorphine",
+        "methadone"
+      ],
+      "description": "",
+      "termes": [
+        "MORPHINIQUES EN TRAITEMENT DE SUBSTITUTION"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "neuroleptiques",
+      "nom": "NEUROLEPTIQUES",
+      "membres": [
+        "alimemazine",
+        "alizapride",
+        "amisulpride",
+        "aripiprazole",
+        "carpipramine",
+        "chlorpromazine",
+        "clozapine",
+        "cyamemazine",
+        "droperidol",
+        "flupentixol",
+        "fluphenazine",
+        "haloperidol",
+        "levomepromazine",
+        "loxapine",
+        "metoclopramide",
+        "olanzapine",
+        "paliperidone",
+        "penfluridol",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "promethazine",
+        "propericiazine",
+        "quetiapine",
+        "risperidone",
+        "sulpiride",
+        "tiapride",
+        "zuclopenthixol"
+      ],
+      "description": "",
+      "termes": [
+        "NEUROLEPTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "neuroleptiques-antiemetiques",
+      "nom": "NEUROLEPTIQUES ANTIÉMÉTIQUES",
+      "membres": [
+        "alizapride",
+        "metoclopramide"
+      ],
+      "description": "",
+      "termes": [
+        "NEUROLEPTIQUES ANTIÉMÉTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "neuroleptiques-antipsychotiques-sauf-clozapine",
+      "nom": "NEUROLEPTIQUES ANTIPSYCHOTIQUES (SAUF CLOZAPINE)",
+      "membres": [
+        "amisulpride",
+        "aripiprazole",
+        "asenapine",
+        "chlorpromazine",
+        "cyamemazine",
+        "droperidol",
+        "flupentixol",
+        "fluphenazine",
+        "haloperidol",
+        "levomepromazine",
+        "loxapine",
+        "olanzapine",
+        "paliperidone",
+        "penfluridol",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "propericiazine",
+        "quetiapine",
+        "risperidone",
+        "sulpiride",
+        "tiapride",
+        "zuclopenthixol"
+      ],
+      "description": "",
+      "termes": [
+        "NEUROLEPTIQUES ANTIPSYCHOTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "neuroleptiques-susceptibles-de-donner-des-torsades-de-pointes",
+      "nom": "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+      "membres": [
+        "amisulpride",
+        "chlorpromazine",
+        "cyamemazine",
+        "droperidol",
+        "flupentixol",
+        "fluphenazine",
+        "haloperidol",
+        "levomepromazine",
+        "pimozide",
+        "pipamperone",
+        "pipotiazine",
+        "sulpiride",
+        "tiapride",
+        "zuclopenthixol"
+      ],
+      "description": "",
+      "termes": [
+        "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "organoplatines",
+      "nom": "ORGANOPLATINES",
+      "membres": [
+        "carboplatine",
+        "cisplatine",
+        "oxaliplatine"
+      ],
+      "description": "",
+      "termes": [
+        "ORGANOPLATINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "penems",
+      "nom": "PÉNEMS",
+      "membres": [
+        "ertapenem",
+        "imipenem",
+        "meropenem"
+      ],
+      "description": "",
+      "termes": [
+        "PÉNEMS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "penicillines",
+      "nom": "PÉNICILLINES",
+      "membres": [
+        "amoxicilline",
+        "ampicilline",
+        "benethamine-penicilline",
+        "benzylpenicilline",
+        "cloxacilline",
+        "flucloxacilline",
+        "oxacilline",
+        "phenoxymethylpenicilline",
+        "piperacilline",
+        "pivmécillinam",
+        "témocilline",
+        "ticarcilline"
+      ],
+      "description": "",
+      "termes": [
+        "PÉNICILLINES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "penicillines-a",
+      "nom": "PÉNICILLINES A",
+      "membres": [
+        "amoxicilline",
+        "ampicilline",
+        "ticarcilline"
+      ],
+      "description": "",
+      "termes": [
+        "PÉNICILLINES A"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "phenobarbital-et-par-extrapolation-primidone",
+      "nom": "PHÉNOBARBITAL (ET, PAR EXTRAPOLATION, PRIMIDONE)",
+      "membres": [
+        "phenobarbital",
+        "primidone"
+      ],
+      "description": "",
+      "termes": [
+        "PHÉNOBARBITAL"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "phenytoine-et-par-extrapolation-fosphenytoine",
+      "nom": "PHÉNYTOÏNE (ET, PAR EXTRAPOLATION, FOSPHÉNYTOÏNE)",
+      "membres": [
+        "fosphenytoine",
+        "phenytoine"
+      ],
+      "description": "",
+      "termes": [
+        "PHÉNYTOÏNE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "piperacilline-tazobactam",
+      "nom": "PIPÉRACILLINE/TAZOBACTAM",
+      "membres": [
+        "pipéracilline",
+        "tazobactam"
+      ],
+      "description": "",
+      "termes": [
+        "PIPÉRACILLINE/TAZOBACTAM"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "produits-de-contraste-iodes",
+      "nom": "PRODUITS DE CONTRASTE IODÉS",
+      "membres": [
+        "acide amidotrizoïque",
+        "acide ioxaglique",
+        "acide ioxitalamique",
+        "iobitridol",
+        "iodixanol",
+        "iohexol",
+        "iomeprol",
+        "iopamidol",
+        "iopromide",
+        "ioversol"
+      ],
+      "description": "",
+      "termes": [
+        "PRODUITS DE CONTRASTE IODÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "progestatifs-contraceptifs",
+      "nom": "PROGESTATIFS CONTRACEPTIFS",
+      "membres": [
+        "desogestrel",
+        "dienogest",
+        "drospirenone",
+        "etonogestrel",
+        "levonorgestrel",
+        "medroxyprogesterone",
+        "nomegestrol",
+        "norelgestromine",
+        "norethisterone",
+        "norgestimate"
+      ],
+      "description": "",
+      "termes": [
+        "PROGESTATIFS CONTRACEPTIFS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "progestatifs-non-contraceptifs-associes-ou-non-a-un-estrogene",
+      "nom": "PROGESTATIFS NON CONTRACEPTIFS, ASSOCIÉS OU NON À UN ESTROGÈNE",
+      "membres": [
+        "chlormadinone",
+        "dydrogesterone",
+        "hydroxyprogesterone",
+        "medrogestone",
+        "medroxyprogesterone",
+        "megestrol",
+        "nomegestrol",
+        "norethisterone",
+        "progesterone",
+        "promegestone"
+      ],
+      "description": "",
+      "termes": [
+        "PROGESTATIFS NON CONTRACEPTIFS, ASSOCIÉS OU NON À UN ESTROGÈNE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "resines-chelatrices",
+      "nom": "RÉSINES CHÉLATRICES",
+      "membres": [
+        "colesevelam",
+        "colestyramine",
+        "polystyrène sulfonate de calcium",
+        "polystyrène sulfonate de sodium",
+        "sevelamer"
+      ],
+      "description": "",
+      "termes": [
+        "RÉSINES CHÉLATRICES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "retinoides",
+      "nom": "RÉTINOÏDES",
+      "membres": [
+        "acitretine",
+        "alitretinoine",
+        "isotretinoine",
+        "trétinoïne"
+      ],
+      "description": "",
+      "termes": [
+        "RÉTINOÏDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "setrons",
+      "nom": "SÉTRONS",
+      "membres": [
+        "granisetron",
+        "ondansetron",
+        "palonosetron"
+      ],
+      "description": "",
+      "termes": [
+        "SÉTRONS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "spermicides",
+      "nom": "SPERMICIDES",
+      "membres": [
+        "benzalkonium",
+        "cetalkonium",
+        "nonoxynol 9"
+      ],
+      "description": "",
+      "termes": [
+        "SPERMICIDES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "substances-a-absorption-reduite-par-les-topiques-gastro-intestinaux-antiacides-et-adsorbants",
+      "nom": "SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS",
+      "membres": [
+        "acide acetylsalicylique",
+        "acide alendronique",
+        "acide clodronique",
+        "acide etidronique",
+        "acide ibandronique",
+        "acide oxidronique",
+        "acide pamidronique",
+        "acide risedronique",
+        "acide tiludronique",
+        "acide zoledronique",
+        "alimemazine",
+        "atenolol",
+        "betamethasone",
+        "bictégravir",
+        "budesonide",
+        "chlorpromazine",
+        "chlortetracycline",
+        "cimetidine",
+        "ciprofloxacine",
+        "clindamycine",
+        "cortisone",
+        "cyamemazine",
+        "demeclocycline",
+        "dexamethasone",
+        "digoxine",
+        "dolutégravir",
+        "doxycycline",
+        "elvitégravir",
+        "enoxacine",
+        "ethambutol",
+        "famotidine",
+        "fer",
+        "fexofenadine",
+        "fluor",
+        "fluphenazine",
+        "isoniazide",
+        "lansoprazole",
+        "lédipasvir",
+        "levofloxacine",
+        "levomepromazine",
+        "levothyroxine",
+        "lincomycine",
+        "liothyronine sodique",
+        "lomefloxacine",
+        "lymecycline",
+        "methylenecycline",
+        "methylprednisolone",
+        "metopimazine",
+        "metoprolol",
+        "minocycline",
+        "moxifloxacine",
+        "nizatidine",
+        "norfloxacine",
+        "ofloxacine",
+        "oxomemazine",
+        "oxytetracycline",
+        "pefloxacine",
+        "penicillamine",
+        "phosphore",
+        "piperazine",
+        "pipotiazine",
+        "prednisolone",
+        "prednisone",
+        "proguanil",
+        "promethazine",
+        "propericiazine",
+        "propranolol",
+        "raltégravir",
+        "ranitidine",
+        "rosuvastatine",
+        "roxadustat",
+        "sulpiride",
+        "tériflunomide",
+        "tetracycline",
+        "thyroxines",
+        "tigecycline",
+        "tiratricol",
+        "triamcinolone",
+        "ulipristal"
+      ],
+      "description": "",
+      "termes": [
+        "SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "substances-susceptibles-de-donner-des-torsades-de-pointes",
+      "nom": "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+      "membres": [
+        "amiodarone",
+        "amisulpride",
+        "arsenieux",
+        "chloroquine",
+        "chlorpromazine",
+        "citalopram",
+        "cocaine",
+        "crizotinib",
+        "cyamemazine",
+        "disopyramide",
+        "domperidone",
+        "dronedarone",
+        "droperidol",
+        "erythromycine",
+        "escitalopram",
+        "flupentixol",
+        "fluphenazine",
+        "halofantrine",
+        "haloperidol",
+        "hydroquinidine",
+        "hydroxychloroquine",
+        "hydroxyzine",
+        "levomepromazine",
+        "lumefantrine",
+        "mequitazine",
+        "methadone",
+        "moxifloxacine",
+        "pentamidine",
+        "pimozide",
+        "pipamperone",
+        "pipéraquine",
+        "pipotiazine",
+        "quinidine",
+        "sotalol",
+        "spiramycine",
+        "sulpiride",
+        "tiapride",
+        "toremifene",
+        "vandétanib",
+        "vincamine",
+        "zuclopenthixol"
+      ],
+      "description": "Ce trouble du rythme cardiaque grave peut être provoqué par un certain nombre de médicaments, antiarythmiques ou non. L'hypokaliémie (cf. médicaments hypokaliémiants) est un facteur favorisant, de même que la bradycardie (cf. médicaments bradycardisants) ou un allongement préexistant de l'intervalle QT, congénital ou acquis. Les médicaments à l’origine de cet effet indésirable sont notamment les antiarythmiques de classe Ia et III, et certains neuroleptiques. D'autres molécules n’appartenant pas à ces classes sont également en cause. Pour l’érythromycine et la vincamine, seules les formes administrées par voie intraveineuse sont concernées par cette interaction. L'utilisation d'un médicament torsadogène avec un autre médicament torsadogène est contre-indiquée en règle générale. Certains d’entre eux, en raison de leur caractère incontournable, font exception à la règle, en étant seulement déconseillés avec les autres torsadogènes. Il s’agit des antiparasitaires (chloroquine, halofantrine, luméfantrine, pentamidine), de l'arsénieux, de l'hydroxychloroquine, de la méthadone, du crizotinib, du cotrimoxazole et des neuroleptiques. A noter que le citalopram, l’escitalopram, la dompéridone, l'hydroxyzine et la pipéraquine ne suivent pas cet assouplissement, et sont contre-indiqués avec tous les torsadogènes, suite à un arbitrage européen.",
+      "termes": [
+        "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "substrats-a-risque-du-cyp3a4",
+      "nom": "SUBSTRATS À RISQUE DU CYP3A4",
+      "membres": [
+        "abémaciclib",
+        "alfentanil",
+        "apixaban",
+        "atorvastatine",
+        "axitinib",
+        "bortezomib",
+        "bosutinib",
+        "brigatinib",
+        "cabazitaxel",
+        "cabozantinib",
+        "céritinib",
+        "ciclosporine",
+        "cobimétinib",
+        "crizotinib",
+        "dabrafénib",
+        "dasatinib",
+        "dihydroergotamine",
+        "docetaxel",
+        "ergotamine",
+        "erlotinib",
+        "everolimus",
+        "gefitinib",
+        "halofantrine",
+        "ibrutinib",
+        "imatinib",
+        "irinotecan",
+        "lapatinib",
+        "lorlatinib",
+        "lumefantrine",
+        "midazolam",
+        "nilotinib",
+        "osimertinib",
+        "oxycodone",
+        "paclitaxel",
+        "palbociclib",
+        "pazopanib",
+        "pimozide",
+        "ponatinib",
+        "quetiapine",
+        "quinine",
+        "rivaroxaban",
+        "ruxolitinib",
+        "simvastatine",
+        "sirolimus",
+        "sorafenib",
+        "sufentanil",
+        "sunitinib",
+        "tacrolimus",
+        "temsirolimus",
+        "ticagrelor",
+        "vandétanib",
+        "vinblastine",
+        "vincristine",
+        "vindesine",
+        "vinflunine",
+        "vinorelbine"
+      ],
+      "description": "Ils sont principalement représentés par le rivaroxaban et l'apixaban, le ticagrélor, la simvastatine et l'atorvastatine, les immunosuppresseurs, le pimozide, la quétiapine, le midazolam, les inhibiteurs de tyrosine kinase métabolisés, les vinca-alcaloïdes cytotoxiques, les taxanes, l'ergotamine, certains opiacés (alfentanil, sufentanil, oxycodone), l'halofantrine et la luméfantrine, la quinine. Pour connaître les risques et les niveaux de contrainte de chacun de ces substrats avec les inhibiteurs puissants du CYP3A4, il convient de se reporter aux interactions spécifiques de chaque substrat.",
+      "termes": [
+        "SUBSTRATS À RISQUE DU CYP3A4"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "sulfamides-antibacteriens",
+      "nom": "SULFAMIDES ANTIBACTÉRIENS",
+      "membres": [
+        "sulfadiazine",
+        "sulfadoxine",
+        "sulfamethizol",
+        "sulfamethoxazole"
+      ],
+      "description": "",
+      "termes": [
+        "SULFAMIDES ANTIBACTÉRIENS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "sulfamides-hypoglycemiants",
+      "nom": "SULFAMIDES HYPOGLYCÉMIANTS",
+      "membres": [
+        "glibenclamide",
+        "gliclazide",
+        "glimepiride",
+        "glipizide"
+      ],
+      "description": "",
+      "termes": [
+        "SULFAMIDES HYPOGLYCÉMIANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "sympathomimetiques-alpha-voies-orale-et-ou-nasale",
+      "nom": "SYMPATHOMIMÉTIQUES ALPHA (VOIES ORALE ET/OU NASALE)",
+      "membres": [
+        "etilefrine",
+        "midodrine",
+        "naphazoline",
+        "oxymetazoline",
+        "phenylephrine",
+        "synephrine",
+        "tetryzoline",
+        "tuaminoheptane"
+      ],
+      "description": "",
+      "termes": [
+        "SYMPATHOMIMÉTIQUES ALPHA"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "sympathomimetiques-alpha-et-beta-voie-im-et-iv",
+      "nom": "SYMPATHOMIMÉTIQUES ALPHA ET BÊTA (VOIE IM ET IV)",
+      "membres": [
+        "adrenaline",
+        "dopamine",
+        "noradrenaline",
+        "norepinephrine"
+      ],
+      "description": "",
+      "termes": [
+        "SYMPATHOMIMÉTIQUES ALPHA ET BÊTA"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "sympathomimetiques-indirects",
+      "nom": "SYMPATHOMIMÉTIQUES INDIRECTS",
+      "membres": [
+        "bupropion",
+        "cafedrine",
+        "ephedrine",
+        "methylphenidate",
+        "pseudoephedrine",
+        "theodrenaline"
+      ],
+      "description": "",
+      "termes": [
+        "SYMPATHOMIMÉTIQUES INDIRECTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "theophylline-et-par-extrapolation-aminophylline",
+      "nom": "THÉOPHYLLINE (ET, PAR EXTRAPOLATION, AMINOPHYLLINE)",
+      "membres": [
+        "aminophylline",
+        "theophylline"
+      ],
+      "description": "",
+      "termes": [
+        "THÉOPHYLLINE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "thrombolytiques",
+      "nom": "THROMBOLYTIQUES",
+      "membres": [
+        "alteplase recombinante",
+        "reteplase",
+        "streptokinase",
+        "tenecteplase",
+        "urokinase"
+      ],
+      "description": "",
+      "termes": [
+        "THROMBOLYTIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "topiques-gastro-intestinaux-antiacides-et-adsorbants",
+      "nom": "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS",
+      "membres": [
+        "charbon active",
+        "charbon vegetal officinal",
+        "crospovidone",
+        "diosmectite",
+        "gel d'hydroxyde d'aluminium et de carbonate de magnesium codesseches",
+        "hydrotalcite",
+        "kaolin lourd",
+        "lanthane",
+        "magaldrate",
+        "magnesium (hydroxyde de)",
+        "magnesium (trisilicate de)",
+        "monmectite"
+      ],
+      "description": "Les topiques gastro-intestinaux, le charbon, le lanthane et les antiacides (sels d'aluminium, de calcium et de magnésium), associés ou non aux alginates, diminuent la résorption digestive de certains autres médicaments ingérés simultanément. Par mesure de précaution, il convient de prendre ces topiques ou antiacides à distance de tout autre médicament (plus de 2 heures, si possible).",
+      "termes": [
+        "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "torsadogenes-sauf-arsenieux-antiparasitaires-neuroleptiques-methadone",
+      "nom": "TORSADOGÈNES (SAUF ARSÉNIEUX, ANTIPARASITAIRES, NEUROLEPTIQUES, MÉTHADONE...)",
+      "membres": [
+        "amiodarone",
+        "citalopram",
+        "cocaine",
+        "disopyramide",
+        "domperidone",
+        "dronedarone",
+        "erythromycine",
+        "escitalopram",
+        "hydroquinidine",
+        "hydroxyzine",
+        "mequitazine",
+        "moxifloxacine",
+        "pipéraquine",
+        "quinidine",
+        "sotalol",
+        "spiramycine",
+        "toremifene",
+        "vandétanib",
+        "vincamine"
+      ],
+      "description": "",
+      "termes": [
+        "TORSADOGÈNES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "triptans",
+      "nom": "TRIPTANS",
+      "membres": [
+        "almotriptan",
+        "eletriptan",
+        "frovatriptan",
+        "naratriptan",
+        "rizatriptan",
+        "sumatriptan",
+        "zolmitriptan"
+      ],
+      "description": "",
+      "termes": [
+        "TRIPTANS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "triptans-metabolises-par-la-mao",
+      "nom": "TRIPTANS MÉTABOLISÉS PAR LA MAO",
+      "membres": [
+        "almotriptan",
+        "rizatriptan",
+        "sumatriptan",
+        "zolmitriptan"
+      ],
+      "description": "",
+      "termes": [
+        "TRIPTANS MÉTABOLISÉS PAR LA MAO"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "triptans-non-metabolises-par-la-mao",
+      "nom": "TRIPTANS NON MÉTABOLISÉS PAR LA MAO",
+      "membres": [
+        "eletriptan",
+        "frovatriptan",
+        "naratriptan"
+      ],
+      "description": "",
+      "termes": [
+        "TRIPTANS NON MÉTABOLISÉS PAR LA MAO"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "vaccins-vivants-attenues",
+      "nom": "VACCINS VIVANTS ATTÉNUÉS",
+      "membres": [
+        "bcg",
+        "rotavirus",
+        "virus de la fievre jaune",
+        "virus de la rougeole",
+        "virus des oreillons",
+        "virus rubeoleux",
+        "virus varicelle-zona",
+        "virus vivant atténué de la grippe"
+      ],
+      "description": "",
+      "termes": [
+        "VACCINS VIVANTS ATTÉNUÉS"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "valproique-acide-et-par-extrapolation-valpromide",
+      "nom": "VALPROÏQUE (ACIDE) ET, PAR EXTRAPOLATION, VALPROMIDE",
+      "membres": [
+        "acide valproique",
+        "valpromide"
+      ],
+      "description": "",
+      "termes": [
+        "VALPROÏQUE ET, PAR EXTRAPOLATION, VALPROMIDE",
+        "ACIDE"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "vinca-alcaloides-cytotoxiques",
+      "nom": "VINCA-ALCALOÏDES CYTOTOXIQUES",
+      "membres": [
+        "vinblastine",
+        "vincristine",
+        "vindesine",
+        "vinflunine",
+        "vinorelbine"
+      ],
+      "description": "",
+      "termes": [
+        "VINCA-ALCALOÏDES CYTOTOXIQUES"
+      ],
+      "abreviations": []
+    },
+    {
+      "id": "vitamine-d",
+      "nom": "VITAMINE D",
+      "membres": [
+        "alfacalcidol",
+        "calcitriol",
+        "cholecalciferol",
+        "ergocalciferol"
+      ],
+      "description": "",
+      "termes": [
+        "VITAMINE D"
+      ],
+      "abreviations": []
+    }
+  ]
+}

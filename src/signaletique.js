@@ -206,21 +206,17 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     detail: [forme, secabilite && `RCP 3 : « ${secabilite.phrase} »`].filter(Boolean).join(' — ') || null,
   });
 
-  // Excipients qui comptent au comptoir : les noms dans la bande, la déclaration
-  // citée en infobulle. Rien trouvé ne s'affiche pas : la case dirait « sans »
-  // pour tous les excipients non suivis.
-  const presents = excipients?.presents ?? [];
-  if (presents.length > 0) {
-    const montres = presents.slice(0, EXCIPIENTS_MONTRES).map((present) => present.court);
-    const reste = presents.length - montres.length;
+  // Excipients à effet notoire : ceux que le RCP déclare (rubrique 2), nommés
+  // comme l'annexe européenne, la déclaration citée en infobulle. Rien de
+  // déclaré ne s'affiche pas : la case dirait « aucun » sans l'avoir lu.
+  const declares = (excipients?.presents ?? []).filter((present) => present.source === 'notoire');
+  if (declares.length > 0) {
+    const montres = declares.slice(0, EXCIPIENTS_MONTRES).map((present) => present.court);
+    const reste = declares.length - montres.length;
     cases.push({
-      cle: 'excipients', picto: 'liste', libelle: 'Excipients à connaître',
+      cle: 'excipients', picto: 'liste', libelle: 'Excipients à effet notoire',
       valeur: reste > 0 ? `${montres.join(' · ')} +${reste}` : montres.join(' · '),
-      detail: presents.map((present) => {
-        const quantite = present.quantite ? ` (${present.quantite})` : '';
-        const source = present.source === 'notoire' ? 'déclaré à effet notoire' : 'liste des excipients';
-        return `${present.libelle}${quantite}, ${source}`;
-      }).join(' ; '),
+      detail: declares.map((present) => `${present.libelle}${present.quantite ? ` (${present.quantite})` : ''}`).join(' ; '),
     });
   }
 

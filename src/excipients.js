@@ -1,56 +1,67 @@
 /**
- * Excipients qui comptent au comptoir (intolérance, allergie, régime, enfant),
- * lus dans le RCP. Deux sources, deux rôles :
- *   - la rubrique 6.1 est la liste complète des excipients : c'est elle qui
- *     permet de dire « contient » et, lue, « sans » ;
- *   - la rubrique 2, à partir de « excipient(s) à effet notoire », donne la
- *     déclaration officielle, souvent avec la quantité : elle est citée.
+ * Excipients à effet notoire, lus dans le RCP. La liste est celle de l'annexe
+ * européenne (EMA/CHMP/302620/2017 Rev. 1), reprise telle quelle
+ * (data/excipients-ema/annexe.json) ; seuls les termes français qui servent à
+ * les chercher sont une traduction (data/excipients-ema/francais.json).
+ * Deux sources dans le RCP, deux rôles :
+ *   - la rubrique 2, à partir de « excipient(s) à effet notoire », est la
+ *     déclaration du RCP : c'est elle que la fiche affiche, citée ;
+ *   - la rubrique 6.1 est la liste complète des excipients : elle dit
+ *     « contient » et, lue, « sans », pour filtrer les alternatives.
  * Un RCP sans rubrique 6.1 découpée n'autorise aucune conclusion : « non lu ».
- * Le sodium n'est retenu que déclaré avec sa quantité (au moins 1 mmol, soit
- * 23 mg) : la 6.1 en cite partout à l'état de traces (croscarmellose sodique).
+ * Sodium et potassium, que la 6.1 cite partout à l'état de traces, ne sont
+ * retenus que déclarés avec une teneur d'au moins 1 mmol par dose (le seuil de
+ * l'annexe).
  *
  * Les motifs servent tels quels à Postgres (ARE) et à JavaScript, sur texte
  * minuscule sans accents ; un terme commence un mot.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { ROOT } from './config.js';
 import { deaccent } from './text.js';
 import { phrases } from './citations.js';
 
+const lireDonnees = (fichier) => JSON.parse(readFileSync(path.join(ROOT, 'data', 'excipients-ema', fichier), 'utf8'));
+
+/** L'annexe européenne, telle qu'extraite. */
+export const ANNEXE = lireDonnees('annexe.json');
+const FRANCAIS = lireDonnees('francais.json').excipients;
+
+/** « E 951 » de l'annexe → motif qui trouve « E 951 » comme « E951 » dans un RCP plié. */
+const motifNumero = (numero) => `e ?${numero.replace(/^E\s*/, '')}`;
+
 /**
- * `court` : la bande et les étiquettes ; `filtre` : proposé dans « sans … »
- * des alternatives. L'ordre est celui de l'affichage.
+ * Un excipient de l'annexe, avec ses termes français et ses numéros E.
+ * `filtre` : proposé dans « sans … » des alternatives quand l'annexe le dit
+ * notoire dès la moindre quantité (seuil « Zero ») pour une voie au moins.
  */
-export const EXCIPIENTS = [
-  { id: 'lactose', libelle: 'Lactose', court: 'lactose', termes: ['lactose'], filtre: true },
-  { id: 'gluten', libelle: 'Gluten (amidon de blé)', court: 'gluten', termes: ['amidon de ble', 'gluten'], filtre: true },
-  { id: 'saccharose', libelle: 'Saccharose', court: 'saccharose', termes: ['saccharose', 'sucrose'], filtre: true },
-  {
-    id: 'fructose', libelle: 'Fructose ou polyols (sorbitol, maltitol…)', court: 'fructose/sorbitol',
-    termes: ['fructose', 'sorbitol', 'maltitol', 'isomalt', 'e420', 'e953', 'e965'], filtre: true,
-  },
-  { id: 'aspartam', libelle: 'Aspartam (source de phénylalanine)', court: 'aspartam', termes: ['aspartam', 'e951'], filtre: true },
-  { id: 'alcool', libelle: 'Alcool (éthanol)', court: 'alcool', termes: ['ethanol', 'alcool ethylique'], filtre: true },
-  { id: 'arachide', libelle: 'Arachide', court: 'arachide', termes: ['arachide'], filtre: true },
-  { id: 'soja', libelle: 'Soja', court: 'soja', termes: ['soja'], filtre: true },
-  { id: 'gelatine', libelle: 'Gélatine (origine animale)', court: 'gélatine', termes: ['gelatine'], filtre: true },
-  {
-    id: 'parabens', libelle: 'Parahydroxybenzoates (parabens)', court: 'parabens',
-    termes: ['parahydroxybenzoate', 'e214', 'e215', 'e216', 'e217', 'e218', 'e219'], filtre: true,
-  },
-  {
-    id: 'azoiques', libelle: 'Colorants azoïques', court: 'colorant azoïque',
-    termes: ['tartrazine', 'jaune orange s', 'azorubine', 'carmoisine', 'ponceau 4r', 'rouge allura',
-      'noir brillant', 'e102', 'e110', 'e122', 'e124', 'e129', 'e151'],
-    filtre: true,
-  },
-  { id: 'sulfites', libelle: 'Sulfites', court: 'sulfites', termes: ['sulfite', 'bisulfite', 'metabisulfite', 'disulfite'], filtre: true },
-  { id: 'propylene', libelle: 'Propylène glycol', court: 'propylène glycol', termes: ['propylene glycol', 'propyleneglycol', 'e1520'], filtre: false },
-];
+const decrire = (entree) => {
+  const francais = FRANCAIS[entree.nom];
+  if (!francais) throw new Error(`excipient de l'annexe sans correspondance française : ${entree.nom}`);
+  return {
+    id: francais.id,
+    nom: entree.nom,
+    libelle: francais.libelle,
+    court: francais.court,
+    termes: [...(francais.termes ?? []), ...entree.numeros.map(motifNumero)],
+    voies: entree.lignes,
+    filtre: entree.lignes.some((ligne) => ligne.seuil === 'Zero'),
+    teneur: Boolean(francais.teneur),
+  };
+};
 
-/** Libellé du sodium déclaré, hors table : il ne se lit qu'avec sa quantité. */
-export const SODIUM = { id: 'sodium', libelle: 'Sodium', court: 'sodium' };
+const TOUS = ANNEXE.excipients.map(decrire);
 
-/** Seuil de déclaration du sodium : 1 mmol par dose, soit 23 mg. */
-const SODIUM_SEUIL_MG = 23;
+/** Excipients cherchés par leur nom ; l'ordre est celui de l'annexe. */
+export const EXCIPIENTS = TOUS.filter((excipient) => !excipient.teneur);
+
+/** Excipients lus par leur teneur déclarée : sodium et potassium, 1 mmol par dose. */
+const TENEURS = TOUS.filter((excipient) => excipient.teneur).map((excipient) => ({
+  ...excipient,
+  // Masse d'une mmole : 23 mg de sodium, 39 mg de potassium.
+  mgParMmol: excipient.id === 'sodium' ? 23 : 39,
+}));
 
 /** Motif d'un excipient, commun à Postgres et à JavaScript (texte minuscule sans accents). */
 export const motifExcipient = (excipient) => `(^|[^a-z0-9])(${excipient.termes.join('|')})`;
@@ -76,12 +87,12 @@ export function partieNotoire(texte) {
 const QUANTITE = /(\d+(?:[  ]\d{3})*(?:[,.]\d+)?)\s*(?:mg|g|µg|microgrammes?|mmol|ml)(?![a-z])(?:\s*\/\s*(?:\d+(?:[,.]\d+)?\s*)?[a-zà-ÿ]+)?/gi;
 
 /**
- * Teneur en sodium déclarée : « 456 mg de sodium », « sodium : 1,2 mmol ». Le
- * nombre vise le sodium lui-même : « 3 mg de benzoate de sodium » n'en est pas une.
+ * Teneur déclarée d'un ion : « 456 mg de sodium », « sodium : 1,2 mmol ». Le
+ * nombre vise l'ion lui-même : « 3 mg de benzoate de sodium » n'en est pas une.
  */
-const TENEUR_SODIUM = [
-  /(\d+(?:[  ]\d{3})*(?:[,.]\d+)?)\s*(mg|g|mmol)\s+(?:de\s+|d['’]\s*)?sodium/i,
-  /sodium\s*(?::|\()\s*(\d+(?:[  ]\d{3})*(?:[,.]\d+)?)\s*(mg|g|mmol)/i,
+const motifsTeneur = (ion) => [
+  new RegExp(`(\\d+(?:[  ]\\d{3})*(?:[,.]\\d+)?)\\s*(mg|g|mmol)\\s+(?:de\\s+|d['’]\\s*)?${ion}`, 'i'),
+  new RegExp(`${ion}\\s*(?::|\\()\\s*(\\d+(?:[  ]\\d{3})*(?:[,.]\\d+)?)\\s*(mg|g|mmol)`, 'i'),
 ];
 
 /**
@@ -92,27 +103,26 @@ export function quantite(phrase, regex) {
   const position = plier(phrase).search(regex);
   if (position < 0) return null;
   const trouvees = [...phrase.matchAll(QUANTITE)].map((qte) => ({ texte: qte[0].replace(/\s+/g, ' '), debut: qte.index, fin: qte.index + qte[0].length }));
-  const avant = trouvees.filter((qte) => qte.fin <= position + 1 && position - qte.fin <= 40).pop();
+  // Une quantité séparée du terme par « et », une virgule ou un point-virgule
+  // appartient à l'excipient précédent : « sorbitol (500 mg/ml) et benzoate (3 mg/ml) ».
+  const avant = trouvees
+    .filter((qte) => qte.fin <= position + 1 && position - qte.fin <= 40)
+    .filter((qte) => !/(\bet\b|[,;])/.test(phrase.slice(qte.fin, position)))
+    .pop();
   if (avant) return avant.texte;
   const apres = trouvees.find((qte) => qte.debut >= position && qte.debut - position <= 40);
   return apres?.texte ?? null;
 }
 
-/** Teneur en sodium d'une phrase, en milligrammes, et son libellé ; null sans teneur lisible. */
-function teneurSodium(phrase) {
-  const trouve = TENEUR_SODIUM.map((motif) => motif.exec(phrase)).find(Boolean);
+/** Teneur d'un ion dans une phrase, en milligrammes, et son libellé ; null sans teneur lisible. */
+function teneur(phrase, ion) {
+  const trouve = motifsTeneur(ion.id).map((motif) => motif.exec(phrase)).find(Boolean);
   if (!trouve) return null;
-  const [texte, nombre, unite] = trouve;
-  const mg = enMg(nombre, unite);
-  return mg === null ? null : { mg, texte: `${nombre} ${unite}`.replace(/\s+/g, ' '), brut: texte };
-}
-
-/** Valeur en milligrammes ; null si illisible. */
-function enMg(nombre, unite) {
+  const [, nombre, unite] = trouve;
   const valeur = Number(nombre.replace(/[  ]/g, '').replace(',', '.'));
   if (!Number.isFinite(valeur)) return null;
-  if (/^mmol$/i.test(unite)) return valeur * 23;
-  return /^g$/i.test(unite) ? valeur * 1000 : valeur;
+  const mg = /^mmol$/i.test(unite) ? valeur * ion.mgParMmol : /^g$/i.test(unite) ? valeur * 1000 : valeur;
+  return { mg, texte: `${nombre} ${unite}`.replace(/\s+/g, ' ') };
 }
 
 /**
@@ -140,13 +150,15 @@ export function lireExcipients(rubrique2, rubrique61) {
     });
   }
 
-  // Sodium : déclaré, chiffré, au-dessus du seuil, et pas « essentiellement sans sodium ».
-  for (const phrase of phrasesNotoire) {
-    if (/sans sodium/.test(plier(phrase))) continue;
-    const teneur = teneurSodium(phrase);
-    if (!teneur || teneur.mg < SODIUM_SEUIL_MG) continue;
-    presents.push({ ...SODIUM, source: 'notoire', quantite: teneur.texte, phrase });
-    break;
+  // Sodium, potassium : déclarés, chiffrés, au moins 1 mmol, et pas « essentiellement sans sodium ».
+  for (const ion of TENEURS) {
+    for (const phrase of phrasesNotoire) {
+      if (new RegExp(`sans ${ion.id}`).test(plier(phrase))) continue;
+      const lue = teneur(phrase, ion);
+      if (!lue || lue.mg < ion.mgParMmol) continue;
+      presents.push({ id: ion.id, libelle: ion.libelle, court: ion.court, source: 'notoire', quantite: lue.texte, phrase });
+      break;
+    }
   }
 
   return { lu: liste.trim() !== '', declares: notoire !== '', presents };
@@ -195,6 +207,46 @@ export async function excipientsDe(pool, cisListe) {
 
 const FILTRABLES = EXCIPIENTS.filter((excipient) => excipient.filtre);
 
+/**
+ * Voies de la BDPM (« orale », « cutanée », « sous-cutanée »…) → mots des voies
+ * de l'annexe (« Oral », « Topical », « Parenteral »…). Ce qui n'est ni oral,
+ * ni local, ni inhalé est une injection ou une voie extracorporelle : parentérale.
+ */
+const VOIES = [
+  [/^(orale|gastrique|gastro)/, ['oral']],
+  [/^(sublinguale|voie buccale|buccogingivale|gingivale|dentaire)/, ['oral', 'oromucosal']],
+  [/^(intraveineuse|intraarterielle|intracoronaire)/, ['parenteral', 'intravenous']],
+  [/^(cutanee|transdermique)/, ['cutaneous', 'topical']],
+  [/^ophtalmique/, ['ocular', 'topical']],
+  [/^(nasale|endosinusale)/, ['nasal', 'topical']],
+  [/^(inhalee|endotracheobronchique)/, ['inhalation']],
+  [/^rectale/, ['rectal']],
+  [/^vaginale/, ['vaginal']],
+  [/^(auriculaire|urethrale)/, ['topical']],
+  [/./, ['parenteral']],
+];
+
+/** Mots de voie de l'annexe pour les voies BDPM d'une spécialité (« orale;sublinguale »). */
+export function voiesAnnexe(voiesBdpm) {
+  const mots = new Set();
+  for (const voie of String(voiesBdpm ?? '').split(';').map((nom) => plier(nom).trim()).filter(Boolean)) {
+    for (const mot of VOIES.find(([motif]) => motif.test(voie))[1]) mots.add(mot);
+  }
+  return mots;
+}
+
+/**
+ * L'annexe dit-elle cet excipient notoire dès la moindre quantité (« Zero »)
+ * pour l'une de ces voies ? Sans voie connue, une seule ligne « Zero » suffit.
+ */
+export function notoirePour(excipient, mots) {
+  return excipient.voies.some((ligne) => {
+    if (ligne.seuil !== 'Zero') return false;
+    const voie = ligne.voie.toLowerCase();
+    return mots.size === 0 || /\ball\b/.test(voie) || [...mots].some((mot) => voie.includes(mot));
+  });
+}
+
 /** `?sans=lactose,gluten` → identifiants filtrables connus, dans l'ordre de la table. */
 export function lireSans(parametre) {
   const demandes = new Set([parametre].flat().join(',').split(',').map((id) => id.trim()));
@@ -225,17 +277,24 @@ export function cisDesAlternatives(categories) {
  * @param {Map<string, { lu: boolean, presents: Set<string> }>} profils  sortie de excipientsDe
  * @param {string[]} sans  sortie de lireSans
  * @param {Set<string>} [duProduit]  excipients du produit consulté, signalés dans les filtres
+ * @param {string} [voiesProduit]  voies BDPM du produit consulté : un filtre n'est proposé que
+ *   pour un excipient que l'annexe dit notoire par l'une d'elles ; de même, l'étiquette d'un
+ *   candidat ne nomme que ce qui est notoire par ses propres voies
  */
-export function filtrerAlternatives(categories, profils, sans, duProduit = new Set()) {
+export function filtrerAlternatives(categories, profils, sans, duProduit = new Set(), voiesProduit = '') {
   const profil = (item) => profils.get(String(item.id)) ?? { lu: false, presents: new Set() };
   const marquer = (item) => {
     const { lu, presents } = profil(item);
-    return { ...item, excipients: { lu, courts: FILTRABLES.filter((excipient) => presents.has(excipient.id)).map((excipient) => excipient.court) } };
+    const mots = voiesAnnexe(item.voies);
+    const notoires = FILTRABLES.filter((excipient) => presents.has(excipient.id) && notoirePour(excipient, mots));
+    return { ...item, excipients: { lu, courts: notoires.map((excipient) => excipient.court) } };
   };
   const ecarte = (item) => sans.some((id) => profil(item).presents.has(id));
 
   const candidats = cisDesAlternatives(categories).map((id) => profil({ id }));
+  const motsProduit = voiesAnnexe(voiesProduit);
   const filtres = FILTRABLES
+    .filter((excipient) => sans.includes(excipient.id) || notoirePour(excipient, motsProduit))
     .map((excipient) => ({
       id: excipient.id,
       court: excipient.court,

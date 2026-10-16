@@ -4,12 +4,12 @@
  * ce que celui de B dit de A. Les deux se lisent séparément parce qu'ils
  * divergent souvent : l'un nomme la substance, l'autre parle de sa classe.
  *
- * On cherche le nom de la substance (et ses noms courants), puis ses classes
- * telles que les RCP les nomment (« AINS », « anticoagulants oraux ») : la
- * table data/classes-interactions.json, relue, les rattache par code ATC ou
- * par liste. Chaque passage dit s'il a été trouvé par la substance ou par la
- * classe. Une classe absente de la table n'est pas cherchée : un silence ne
- * vaut jamais absence d'interaction, et la page le dit.
+ * On cherche le nom de la substance (et ses noms courants), puis les groupes
+ * du thésaurus de l'ANSM auxquels elle appartient (« anti-inflammatoires non
+ * stéroïdiens », « anticoagulants oraux ») : c'est l'ANSM qui dit qu'une
+ * substance fait partie d'un groupe (data/thesaurus-ansm/groupes.json, extrait
+ * tel quel du thésaurus). Chaque passage dit s'il a été trouvé par la substance
+ * ou par le groupe. Un silence ne vaut jamais absence d'interaction, et la page le dit.
  *
  * Le niveau est celui du thésaurus de l'ANSM, lu dans l'intitulé sous lequel
  * tombe le passage ; à défaut, dans le passage lui-même. Le passage est cité
@@ -129,35 +129,27 @@ export function motif(prefixes, entiers = []) {
 
 const lireDonnees = (...chemin) => JSON.parse(readFileSync(path.join(ROOT, 'data', ...chemin), 'utf8'));
 
-/** Classes telles que les RCP les nomment ; table versionnée, relue par un pharmacien. */
-export const CLASSES = lireDonnees('classes-interactions.json').classes;
+/** Groupes du thésaurus de l'ANSM, tels quels : nom, membres, formulations cherchées. */
+export const GROUPES = lireDonnees('thesaurus-ansm', 'groupes.json').groupes;
 
-/** Substances d'une liste de data/listes/ ; une liste absente n'inscrit personne. */
-function lireInscrits(liste) {
-  try {
-    return lireDonnees('listes', `${liste}.json`).inscriptions.map((inscription) => inscription.substance);
-  } catch {
-    return [];
-  }
-}
-const INSCRITS = new Map(CLASSES.filter((classe) => classe.liste).map((classe) => [classe.liste, lireInscrits(classe.liste)]));
+/** Racines d'un nom de substance, l'ordre de la langue rétabli (« sodium (bicarbonate de) »). */
+const racinesDe = (nom) => motsUtiles(remettreEnOrdre(nom)).map(racine);
 
 /**
- * Classes d'un médicament : par un code ATC qui commence par l'un des préfixes
- * de la classe (hors exclusions), ou par une substance inscrite sur sa liste.
+ * Groupes d'un médicament : ceux dont l'un des membres est l'une de ses
+ * substances (toutes les racines du membre, sel et acide mis à part :
+ * « acide valproïque » est le valproate de sodium, « candésartan cilexetil » le
+ * candésartan cilexetil).
  * @returns {{ id: string, nom: string, termes: string[] }[]}
  */
-export function classesDe(atc, substances, classes = CLASSES, inscrits = (liste) => INSCRITS.get(liste) ?? []) {
-  const racines = new Set(substances.flatMap(motsUtiles).map(racine));
-  return classes
-    .filter((classe) => {
-      const parAtc = atc.some((code) => (classe.atc ?? []).some((prefixe) => code.startsWith(prefixe))
-        && !(classe.exclure ?? []).some((prefixe) => code.startsWith(prefixe)));
-      const parListe = Boolean(classe.liste) && inscrits(classe.liste)
-        .some((inscrit) => motsUtiles(inscrit).map(racine).some((rac) => racines.has(rac)));
-      return parAtc || parListe;
-    })
-    .map(({ id, nom, termes: formulations }) => ({ id, nom, termes: formulations }));
+export function classesDe(substances, groupes = GROUPES) {
+  const racines = new Set(substances.flatMap(racinesDe));
+  return groupes
+    .filter((groupe) => groupe.membres.some((membre) => {
+      const siennes = racinesDe(membre);
+      return siennes.length > 0 && siennes.every((rac) => racines.has(rac));
+    }))
+    .map(({ id, nom, termes: formulations }) => ({ id, nom: phrase(nom), termes: formulations }));
 }
 
 // --------------------------------------------------- les passages de la 4.5
@@ -390,7 +382,7 @@ function specialiteSeule(row) {
     substances,
     termes: termes(substances),
     atc,
-    classes: classesDe(atc, substances),
+    classes: classesDe(substances),
     cis: [row.code_cis],
   };
 }
@@ -465,7 +457,7 @@ export function choisir(element, rows) {
     substances,
     termes: termes(substances),
     atc,
-    classes: classesDe(atc, substances),
+    classes: classesDe(substances),
     cis: retenues.map((row) => row.code_cis),
   };
 }

@@ -1,180 +1,140 @@
 {
   "titre": "Substances susceptibles de donner des torsades de pointes",
-  "amorce": {
-    "source": "ANSM — Thésaurus des interactions médicamenteuses",
-    "version": "15 septembre 2023, version finale : l'ANSM a cessé de le mettre à jour et renvoie aux RCP",
+  "source": {
+    "titre": "ANSM — Thésaurus des interactions médicamenteuses",
+    "version": "15 septembre 2023, version finale : l’ANSM a cessé de le mettre à jour et renvoie aux RCP",
+    "date": "15 septembre 2023",
     "url": "https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1",
     "fichier": "sources/ansm/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf",
-    "extraite_le": "2026-10-14"
+    "groupe": "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
   },
-  "relu_par": null,
-  "relu_le": null,
+  "extraite_le": "2026-10-15",
+  "note": "Copie exacte du groupe du thésaurus : ni ajout ni retrait. C’est l’ANSM qui dit qu’une substance en fait partie. Régénérée par scripts/extraire-thesaurus.js.",
   "inscriptions": [
     {
-      "substance": "amiodarone",
-      "origine": "amorce"
+      "substance": "amiodarone"
     },
     {
-      "substance": "amisulpride",
-      "origine": "amorce"
+      "substance": "amisulpride"
     },
     {
-      "substance": "arsenieux",
-      "origine": "amorce"
+      "substance": "arsenieux"
     },
     {
-      "substance": "chloroquine",
-      "origine": "amorce"
+      "substance": "chloroquine"
     },
     {
-      "substance": "chlorpromazine",
-      "origine": "amorce"
+      "substance": "chlorpromazine"
     },
     {
-      "substance": "citalopram",
-      "origine": "amorce"
+      "substance": "citalopram"
     },
     {
-      "substance": "cocaine",
-      "origine": "amorce"
+      "substance": "cocaine"
     },
     {
-      "substance": "crizotinib",
-      "origine": "amorce"
+      "substance": "crizotinib"
     },
     {
-      "substance": "cyamemazine",
-      "origine": "amorce"
+      "substance": "cyamemazine"
     },
     {
-      "substance": "disopyramide",
-      "origine": "amorce"
+      "substance": "disopyramide"
     },
     {
-      "substance": "domperidone",
-      "origine": "amorce"
+      "substance": "domperidone"
     },
     {
-      "substance": "dronedarone",
-      "origine": "amorce"
+      "substance": "dronedarone"
     },
     {
-      "substance": "droperidol",
-      "origine": "amorce"
+      "substance": "droperidol"
     },
     {
       "substance": "erythromycine",
-      "origine": "amorce",
-      "restriction": "voie intraveineuse seulement (thésaurus)"
+      "restriction": "Pour l’érythromycine et la vincamine, seules les formes administrées par voie intraveineuse sont concernées par cette interaction."
     },
     {
-      "substance": "escitalopram",
-      "origine": "amorce"
+      "substance": "escitalopram"
     },
     {
-      "substance": "flupentixol",
-      "origine": "amorce"
+      "substance": "flupentixol"
     },
     {
-      "substance": "fluphenazine",
-      "origine": "amorce"
+      "substance": "fluphenazine"
     },
     {
-      "substance": "halofantrine",
-      "origine": "amorce"
+      "substance": "halofantrine"
     },
     {
-      "substance": "haloperidol",
-      "origine": "amorce"
+      "substance": "haloperidol"
     },
     {
-      "substance": "hydroquinidine",
-      "origine": "amorce"
+      "substance": "hydroquinidine"
     },
     {
-      "substance": "hydroxychloroquine",
-      "origine": "amorce"
+      "substance": "hydroxychloroquine"
     },
     {
-      "substance": "hydroxyzine",
-      "origine": "amorce"
+      "substance": "hydroxyzine"
     },
     {
-      "substance": "levomepromazine",
-      "origine": "amorce"
+      "substance": "levomepromazine"
     },
     {
-      "substance": "lumefantrine",
-      "origine": "amorce"
+      "substance": "lumefantrine"
     },
     {
-      "substance": "mequitazine",
-      "origine": "amorce"
+      "substance": "mequitazine"
     },
     {
-      "substance": "methadone",
-      "origine": "amorce"
+      "substance": "methadone"
     },
     {
-      "substance": "moxifloxacine",
-      "origine": "amorce"
+      "substance": "moxifloxacine"
     },
     {
-      "substance": "pentamidine",
-      "origine": "amorce"
+      "substance": "pentamidine"
     },
     {
-      "substance": "pimozide",
-      "origine": "amorce"
+      "substance": "pimozide"
     },
     {
-      "substance": "pipamperone",
-      "origine": "amorce"
+      "substance": "pipamperone"
     },
     {
-      "substance": "piperaquine",
-      "origine": "amorce"
+      "substance": "piperaquine"
     },
     {
-      "substance": "pipotiazine",
-      "origine": "amorce"
+      "substance": "pipotiazine"
     },
     {
-      "substance": "quinidine",
-      "origine": "amorce"
+      "substance": "quinidine"
     },
     {
-      "substance": "sotalol",
-      "origine": "amorce"
+      "substance": "sotalol"
     },
     {
-      "substance": "spiramycine",
-      "origine": "amorce"
+      "substance": "spiramycine"
     },
     {
-      "substance": "sulpiride",
-      "origine": "amorce"
+      "substance": "sulpiride"
     },
     {
-      "substance": "tiapride",
-      "origine": "amorce"
+      "substance": "tiapride"
     },
     {
-      "substance": "toremifene",
-      "origine": "amorce"
+      "substance": "toremifene"
     },
     {
-      "substance": "vandetanib",
-      "origine": "amorce"
+      "substance": "vandetanib"
     },
     {
       "substance": "vincamine",
-      "origine": "amorce",
-      "restriction": "voie intraveineuse seulement (thésaurus)"
+      "restriction": "Pour l’érythromycine et la vincamine, seules les formes administrées par voie intraveineuse sont concernées par cette interaction."
     },
     {
-      "substance": "zuclopenthixol",
-      "origine": "amorce"
+      "substance": "zuclopenthixol"
     }
   ]
 }

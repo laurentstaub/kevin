@@ -1,11 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../../src/config.js';
 import {
-  CLASSES, classesDe, motif, extraire, regrouper, plier,
+  GROUPES, classesDe, motif, extraire, regrouper, plier,
 } from '../../src/interactions.js';
+import { lireGroupes, formulations, idGroupe } from '../../src/thesaurus-ansm.js';
 
 const classe = (termes) => new RegExp(motif([], termes));
 const trouve = (termes, texte) => classe(termes).test(plier(texte));
@@ -33,31 +34,27 @@ describe('termes de classe', () => {
   });
 });
 
-describe('classes d’un médicament', () => {
-  const noms = (liste) => liste.map((entree) => entree.id);
+describe('groupes du thésaurus d’un médicament', () => {
+  const ids = (substances) => classesDe(substances).map((groupe) => groupe.id);
 
-  it('par préfixe ATC', () => {
-    // Listes vides : seul le code ATC rattache (l'amiodarone est aussi torsadogène par sa liste).
-    const sansListe = (atc, substances) => noms(classesDe(atc, substances, undefined, () => []));
-    assert.deepEqual(sansListe(['M01AE01'], ['IBUPROFÈNE']), ['ains']);
-    assert.deepEqual(sansListe(['B01AA12'], ['FLUINDIONE']), ['avk']);
-    assert.deepEqual(sansListe(['C01BD01'], ['AMIODARONE']), ['antiarythmiques']);
+  it('par l’appartenance que donne l’ANSM, sel et acide mis à part', () => {
+    assert.ok(ids(['IBUPROFÈNE']).includes('anti-inflammatoires-non-steroidiens'));
+    assert.ok(ids(['FLUINDIONE']).includes('antivitamines-k'));
+    assert.ok(ids(['FLUINDIONE']).includes('anticoagulants-oraux'));
+    assert.ok(ids(['APIXABAN']).includes('anticoagulants-oraux'));
+    assert.ok(!ids(['APIXABAN']).includes('antivitamines-k'));
+    assert.ok(ids(['VALPROATE DE SODIUM']).includes('valproique-acide-et-par-extrapolation-valpromide'));
+    assert.ok(ids(["CHLORHYDRATE D'AMIODARONE"]).includes('substances-susceptibles-de-donner-des-torsades-de-pointes'));
   });
 
-  it('par la liste des torsadogènes, désormais remplie', () => {
-    assert.ok(noms(classesDe(['C01BD01'], ['AMIODARONE'])).includes('torsadogenes'));
-    assert.ok(noms(classesDe(['N06AB04'], ['CITALOPRAM'])).includes('torsadogenes'));
+  it('un membre en plusieurs mots les veut tous', () => {
+    const groupes = [{ id: 'g', nom: 'G', membres: ['candesartan cilexetil'], termes: ['G'] }];
+    assert.equal(classesDe(['CANDÉSARTAN CILEXETIL'], groupes).length, 1);
+    assert.equal(classesDe(['CILEXETIL'], groupes).length, 0);
   });
 
-  it('sauf exclusion : le lithium n’est pas un neuroleptique', () => {
-    assert.deepEqual(noms(classesDe(['N05AN01'], ['LITHIUM'])), []);
-    assert.deepEqual(noms(classesDe(['N05AH03'], ['OLANZAPINE'])), ['neuroleptiques']);
-  });
-
-  it('par inscription sur une liste', () => {
-    const inscrits = (liste) => (liste === 'torsadogenes' ? ['amiodarone'] : []);
-    assert.ok(noms(classesDe([], ["CHLORHYDRATE D'AMIODARONE"], CLASSES, inscrits)).includes('torsadogenes'));
-    assert.deepEqual(noms(classesDe([], ['FLUINDIONE'], CLASSES, inscrits)), []);
+  it('rien quand l’ANSM ne range la substance nulle part', () => {
+    assert.deepEqual(ids(['PARACÉTAMOL']).filter((id) => id.includes('anti-inflammatoires')), []);
   });
 });
 
@@ -88,21 +85,50 @@ describe('passages trouvés par la classe', () => {
   });
 });
 
-describe('table des classes', () => {
-  it('chaque classe a un identifiant unique, un nom, des termes et un rattachement', () => {
-    const ids = CLASSES.map((entree) => entree.id);
-    assert.equal(new Set(ids).size, ids.length);
-    for (const entree of CLASSES) {
-      assert.ok(entree.nom && entree.termes.length, entree.id);
-      assert.ok(entree.atc?.length || entree.liste, `${entree.id} : ni ATC ni liste`);
-      if (entree.liste) assert.ok(existsSync(path.join(ROOT, 'data', 'listes', `${entree.liste}.json`)), entree.liste);
-    }
+describe('groupes extraits du thésaurus', () => {
+  const thesaurus = [
+    'ABATACEPT',
+    '+ ANTI-TNF ALPHA',
+    '',
+    'ALCALINISANTS URINAIRES',
+    ' (acetazolamide, sodium (bicarbonate de), trometamol)',
+    '',
+    '+ QUINIDINE',
+    'SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET',
+    'ADSORBANTS',
+    ' (acide acetylsalicylique,',
+    ' digoxine)',
+    '+ TOPIQUES',
+    'ANTICHOLINESTÉRASIQUES',
+    ' (voir aussi "bradycardisants")',
+    '+ MEDICAMENTS ATROPINIQUES',
+  ].join('\n');
+
+  it('lit nom, membres et description, têtes sur deux lignes comprises', () => {
+    const groupes = lireGroupes(thesaurus);
+    assert.deepEqual(groupes.map((groupe) => [groupe.nom, groupe.membres]), [
+      ['ALCALINISANTS URINAIRES', ['acetazolamide', 'sodium (bicarbonate de)', 'trometamol']],
+      ['SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS', ['acide acetylsalicylique', 'digoxine']],
+    ]);
   });
 
-  it('aucun terme en double dans une classe', () => {
-    for (const entree of CLASSES) {
-      const cles = entree.termes.map((terme) => motif([], [terme]));
-      assert.equal(new Set(cles).size, cles.length, entree.id);
-    }
+  it('formulations : le nom sans ses précisions, l’autre nom de la parenthèse, les abréviations', () => {
+    assert.deepEqual(formulations('BÊTA-BLOQUANTS (SAUF ESMOLOL ET SOTALOL) (Y COMPRIS COLLYRES)'), ['BÊTA-BLOQUANTS']);
+    assert.deepEqual(formulations("INHIBITEURS DE L'HMG-COA RÉDUCTASE (STATINES)"), ["INHIBITEURS DE L'HMG-COA RÉDUCTASE", 'STATINES']);
+    assert.deepEqual(formulations('ANTIVITAMINES K', ['AVK']), ['ANTIVITAMINES K', 'AVK']);
+    assert.equal(idGroupe("ANTI-INFLAMMATOIRES NON STÉROÏDIENS"), 'anti-inflammatoires-non-steroidiens');
+  });
+
+  it('chaque groupe a un identifiant unique, des membres et des formulations', () => {
+    const ids = GROUPES.map((groupe) => groupe.id);
+    assert.equal(new Set(ids).size, ids.length);
+    for (const groupe of GROUPES) assert.ok(groupe.membres.length && groupe.termes.length, groupe.id);
+  });
+
+  it('la liste des torsadogènes est la copie exacte du groupe ANSM', () => {
+    const liste = JSON.parse(readFileSync(path.join(ROOT, 'data', 'listes', 'torsadogenes.json'), 'utf8'));
+    const groupe = GROUPES.find((entree) => entree.nom === liste.source.groupe);
+    assert.ok(groupe, liste.source.groupe);
+    assert.deepEqual(liste.inscriptions.map((inscription) => inscription.substance), groupe.membres.map((membre) => plier(membre)));
   });
 });

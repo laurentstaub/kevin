@@ -77,6 +77,7 @@ export function specialite(texte) {
  * (« corticoïdes à usage systémique »), jamais après « vitamine » (« vitamine A non associée »).
  */
 export function phrase(texte) {
-  const bas = dci(texte).replace(/(?<!vitamines?) A (?=\p{L}{3,})/gu, ' à ');
+  // « À » seul, que la règle des mots criés ne voit pas, est aussi la préposition.
+  const bas = dci(texte).replace(/(?<!vitamines?) [AÀ] (?=\p{L}{3,})/gu, ' à ');
   return bas.charAt(0).toUpperCase() + bas.slice(1);
 }

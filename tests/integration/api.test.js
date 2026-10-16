@@ -440,7 +440,8 @@ describe('API', { skip }, () => {
 
       // ASPIRINE UPSA ne nomme pas la fluindione, mais les anticoagulants oraux.
       assert.match(aspirine, /niveau-deconseillee/);
-      assert.match(aspirine, /Par la classe : Antivitamines K/);
+      // Le passage dit « Anticoagulants oraux » : le groupe ANSM de ce nom compte la fluindione.
+      assert.match(aspirine, /Par la classe : Anticoagulants oraux/);
       assert.match(aspirine, /href="\/product\/61111111#rcp-5"/);
 
       assert.match(previscan, /niveau-ci/);

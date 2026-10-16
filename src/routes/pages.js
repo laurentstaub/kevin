@@ -549,7 +549,7 @@ export function pageRoutes(pool) {
       });
       const parExcipient = profils
         ? filtrerAlternatives(alternatives.categories, profils, lireSans(req.query.sans ?? ''),
-          new Set((excipients?.presents ?? []).map((present) => present.id)))
+          new Set((excipients?.presents ?? []).map((present) => present.id)), product.voies_administration)
         : null;
 
       res.render('product', {

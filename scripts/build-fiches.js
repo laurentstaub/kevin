@@ -1,7 +1,8 @@
 /**
  * Calcule, pour chaque substance de chaque liste, la spécialité représentative et ses phrases de RCP.
  *   npm run build-fiches
- * Écrit data/fiches/<nom>.json (publié) et <nom>.candidats.md (ajouts proposés, jamais publiés).
+ * Écrit data/fiches/<nom>.json. Les listes sont la copie d'un groupe du thésaurus ANSM :
+ * aucune molécule n'y est proposée ni ajoutée ici (scripts/extraire-thesaurus.js).
  * Versionné plutôt qu'en base : `git diff data/fiches/` sert de relecture avant publication.
  */
 
@@ -10,10 +11,7 @@ import path from 'node:path';
 import { ROOT } from '../src/config.js';
 import { createPool } from '../src/db.js';
 import { listerFiches, DOSSIER_CALCULS } from '../src/fiches.js';
-import {
-  REQUETE_SUBSTANCE, motifSubstance, choisirCitations, dejaInscrite,
-} from '../src/fiches-calcul.js';
-import { chercherDansDocuments, MOLECULES_MAX } from '../src/recherche-texte.js';
+import { REQUETE_SUBSTANCE, motifSubstance, choisirCitations } from '../src/fiches-calcul.js';
 
 const pool = createPool({ statement_timeout: 0 });
 mkdirSync(DOSSIER_CALCULS, { recursive: true });
@@ -23,23 +21,6 @@ const lireListe = (nom) => {
   if (!existsSync(chemin)) throw new Error(`liste introuvable : data/listes/${nom}.json`);
   return JSON.parse(readFileSync(chemin, 'utf8'));
 };
-
-/** Molécules dont les rubriques mentionnent les termes, toutes pages confondues. */
-async function toutesLesTrouvailles(termes, rubriques) {
-  const vues = new Map();
-  for (const rubrique of rubriques) {
-    for (let decalage = 0; decalage < MOLECULES_MAX; decalage += 100) {
-      const recherche = await chercherDansDocuments(pool, termes.join(' '), { rubrique, limite: 100, decalage });
-      for (const resultat of recherche.resultats) {
-        const deja = vues.get(resultat.molecule);
-        if (deja) deja.rubriques.add(rubrique);
-        else vues.set(resultat.molecule, { ...resultat, rubriques: new Set([rubrique]) });
-      }
-      if (!recherche.suite) break;
-    }
-  }
-  return [...vues.values()];
-}
 
 let enErreur = 0;
 
@@ -71,43 +52,13 @@ try {
       slug: fiche.slug,
       calcule_le: new Date().toISOString().slice(0, 10),
       liste: {
-        titre: liste.titre, amorce: liste.amorce,
-        relu_par: liste.relu_par, relu_le: liste.relu_le,
+        // Copie d'un groupe du thésaurus : la source et sa date d'extraction, pas de relecture.
+        titre: liste.titre, source: liste.source, extraite_le: liste.extraite_le,
       },
       rubriques,
       termes,
       lignes,
     }, null, 2)}\n`);
-
-    // La recherche trouve des mentions, pas des affirmations (« aucun allongement du QT »
-    // remonte aussi) : les candidats sont à trancher à la lecture, jamais publiés.
-    if (termes.length) {
-      const trouvees = await toutesLesTrouvailles(termes, rubriques);
-      const candidats = trouvees
-        .filter((trouvee) => !trouvee.sansMolecule && !dejaInscrite(trouvee.molecule, liste.inscriptions))
-        .sort((a, b) => a.molecule.localeCompare(b.molecule, 'fr'));
-
-      const texte = [
-        `# Candidats — ${fiche.slug}`,
-        '',
-        `Molécules dont les rubriques ${rubriques.join(', ')} parlent de « ${termes.join(' ')} » sans être dans la liste \`${blocListe.argument}\`. **Jamais publié.**`,
-        '',
-        'La recherche trouve des mentions, pas des affirmations : lire la phrase avant d\'inscrire. Une négation (« aucun allongement… n\'a été observé ») ne justifie pas une inscription.',
-        '',
-        `${candidats.length} candidat(s), calculé le ${new Date().toISOString().slice(0, 10)}.`,
-        '',
-        ...candidats.flatMap((candidat) => [
-          `## ${candidat.molecule}`,
-          '',
-          `${candidat.specialites} spécialité(s) · rubriques ${[...candidat.rubriques].join(', ')} · [${candidat.denomination}](/product/${candidat.code_cis}#${candidat.ancre})`,
-          '',
-          `> ${String(candidat.extrait).replace(/<\/?mark>/g, '**')}`,
-          '',
-        ]),
-      ].join('\n');
-      writeFileSync(path.join(DOSSIER_CALCULS, `${fiche.slug}.candidats.md`), `${texte}\n`);
-      console.log(`  → ${candidats.length} candidat(s) à trancher : data/fiches/${fiche.slug}.candidats.md`);
-    }
 
     console.log(`  ✓ ${Math.round((Date.now() - depart) / 1000)} s`);
   }
