@@ -1,0 +1,971 @@
+{
+  "source": {
+    "titre": "Annex to the European Commission guideline on ‘Excipients in the labelling and package leaflet of medicinal products for human use’ (SANTE-2017-11668)",
+    "reference": "EMA/CHMP/302620/2017 Rev. 1",
+    "date": "22 novembre 2019",
+    "url": "https://www.ema.europa.eu/en/annex-european-commission-guideline-excipients-labelling-package-leaflet-medicinal-products-human",
+    "fichier": "sources/ema/annex-excipients-labelling-package-leaflet-sante-2017-11668-rev1_en.pdf"
+  },
+  "extrait_le": "2026-10-15",
+  "note": "Excipients à effet notoire de l’annexe européenne, repris tels quels. Généré par scripts/extraire-annexe-ema.js : ne pas modifier à la main.",
+  "excipients": [
+    {
+      "nom": "Aprotinin",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Arachis oil (peanut oil)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Aspartame (E 951)",
+      "numeros": [
+        "E 951"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Azo colouring agents",
+      "numeros": [
+        "E 102",
+        "E 110",
+        "E 122",
+        "E 123",
+        "E 124",
+        "E 151"
+      ],
+      "exemples": [
+        "Tartrazine (E 102)",
+        "Sunset yellow FCF (E 110)",
+        "Azorubine, carmoisine (E 122)",
+        "Amaranth (E 123)",
+        "Ponceau 4R, cochineal Red",
+        "A (E 124)",
+        "Brilliant black BN, black PN (E 151)"
+      ],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Balsam of Peru",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Benzalkonium chloride",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Ocular",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Nasal",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Inhalation",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Cutaneous",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oromucosal, rectal and vaginal",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Benzoic acid (E 210) and benzoates",
+      "numeros": [
+        "E 210",
+        "E 211",
+        "E 212"
+      ],
+      "exemples": [
+        "Sodium benzoate (E 211)",
+        "Potassium benzoate (E 212)"
+      ],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Benzyl alcohol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Bergamot oil (containing bergapten)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Boric acid (and borates)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "1 mg B/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "All",
+          "seuil": "3 mg B/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "All",
+          "seuil": "7 mg B/day",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Bronopol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Butylated hydroxyanisole (E 320)",
+      "numeros": [
+        "E 320"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Butylated hydroxytoluene (E 321)",
+      "numeros": [
+        "E 321"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Cetostearyl alcohol including Cetyl alcohol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Chlorocresol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical, parenteral",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Cyclodextrins",
+      "numeros": [
+        "E 459"
+      ],
+      "exemples": [
+        "Alfadex",
+        "Betadex (E 459)",
+        "γ-cyclodextrin",
+        "Sulfobutyl-ether-β-cyclodextrin (SBE-β-CD)",
+        "Hydroxypropyl betadex",
+        "Randomly methylated β-cyclodextrin (RM-β-CD)"
+      ],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "20 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral",
+          "seuil": "200 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Parenteral and use for > 2 weeks",
+          "seuil": "200 mg/kg/day",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Dimethyl sulphoxide",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Ethanol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral Parenteral Inhalation",
+          "seuil": "Zero",
+          "maj": "22/11/2019"
+        },
+        {
+          "voie": "Oral Parenteral dose Inhalation",
+          "seuil": "15 mg/kg",
+          "maj": "22/11/2019"
+        },
+        {
+          "voie": "Oral Parenteral dose Inhalation",
+          "seuil": "75 mg/kg",
+          "maj": "22/11/2019"
+        },
+        {
+          "voie": "Cutaneous",
+          "seuil": "Zero",
+          "maj": "22/11/2019"
+        }
+      ]
+    },
+    {
+      "nom": "Formaldehyde",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Fragrances containing allergens* (See appendix)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Fructose",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Intravenous (IV)",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral (other than IV)",
+          "seuil": "5 mg/kg/day",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Galactose",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "5g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Glucose",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "5g",
+          "maj": null
+        },
+        {
+          "voie": "Oral liquids, lozenges and chewable tablets",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Glycerol (E 422)",
+      "numeros": [
+        "E 422"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "10 g per dose",
+          "maj": null
+        },
+        {
+          "voie": "Rectal",
+          "seuil": "1g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Heparin (as an excipient)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Parenteral",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Invert sugar",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "5g",
+          "maj": null
+        },
+        {
+          "voie": "Oral liquids, lozenges and chewable tablets",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Lactitol (E 966)",
+      "numeros": [
+        "E 966"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "10 g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Lactose",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "5g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Latex Natural Rubber (latex)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Macrogolglycerol ricinoleate (castor oil polyoxyl) Macrogolglycerol hydroxystearate (castor oil polyoxyl hydrogenated)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Parenteral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Maltitol (E 965) Isomalt (E 953) (isomaltitol) Maltitol liquid (hydrogenated glucose syrup)",
+      "numeros": [
+        "E 965",
+        "E 953"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "10 g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Mannitol (E 421)",
+      "numeros": [
+        "E 421"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "10 g",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Organic mercury compounds",
+      "numeros": [],
+      "exemples": [
+        "Thiomersal",
+        "Phenylmercuric nitrate/acetate/borate"
+      ],
+      "lignes": [
+        {
+          "voie": "Ocular",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Parenteral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Parenteral",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Parahydroxybenzoates and their esters",
+      "numeros": [
+        "E 214",
+        "E 215",
+        "E 218",
+        "E 219"
+      ],
+      "exemples": [
+        "Ethyl p-hydroxybenzoate (E 214)",
+        "Sodium ethyl p-hydroxybenzoate (E 215)",
+        "Propyl p-hydroxybenzoate",
+        "Sodium propyl p-hydroxybenzoate",
+        "Methyl p-hydroxybenzoate (E 218)",
+        "Sodium methyl p-hydroxybenzoate (E 219)"
+      ],
+      "lignes": [
+        {
+          "voie": "Oral Ocular Topical",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Parenteral Inhalation",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Phenylalanine",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Phosphate buffers",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Ocular",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Potassium",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Parenteral mmol per dose",
+          "seuil": null,
+          "maj": null
+        },
+        {
+          "voie": "Oral, parenteral dose",
+          "seuil": "1 mmol",
+          "maj": null
+        },
+        {
+          "voie": "Intravenous (IV)",
+          "seuil": "30 mmol/l",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Propylene glycol (E 1520) and esters of propylene glycol",
+      "numeros": [
+        "E 1520"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "1 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "1 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "50 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "50 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "50 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "500 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Cutaneous",
+          "seuil": "50 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Cutaneous",
+          "seuil": "500 mg/kg/day",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Sesame oil",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Sodium",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral, parenteral per dose to sa",
+          "seuil": null,
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral per dose compo unit> the r sodiu",
+          "seuil": "1 mmol",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral ( maximum daily dose",
+          "seuil": "17 mmol",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Sodium laurilsulfate",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Cutaneous",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Sorbic acid (E 200) and salts",
+      "numeros": [
+        "E 200"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Sorbitol (E 420)",
+      "numeros": [
+        "E 420"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral, parenteral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Intravenous (IV)",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral, parenteral (other than IV)",
+          "seuil": "5 mg/kg/day",
+          "maj": "09/10/2017"
+        },
+        {
+          "voie": "Oral",
+          "seuil": "140 mg/kg/day",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Soya oil Hydrogenated soya oil",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "All",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Stearyl alcohol",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Sucrose",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": null
+        },
+        {
+          "voie": "Oral",
+          "seuil": "5g",
+          "maj": null
+        },
+        {
+          "voie": "Oral liquids, lozenges and chewable tablets",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Sulphites including metabisulphites",
+      "numeros": [
+        "E 220",
+        "E 221",
+        "E 222",
+        "E 223",
+        "E 224",
+        "E 228"
+      ],
+      "exemples": [
+        "Sulphur dioxide (E 220)",
+        "Sodium sulphite (E 221)",
+        "Sodium bisulphite (E 222)",
+        "Sodium metabisulphite (E 223)",
+        "Potassium metabisulphite (E 224)",
+        "Potassium bisulphite (E 228)"
+      ],
+      "lignes": [
+        {
+          "voie": "Oral Parenteral Inhalation",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Wheat starch (containing gluten)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "Zero",
+          "maj": "09/10/2017"
+        }
+      ]
+    },
+    {
+      "nom": "Wool fat (lanolin)",
+      "numeros": [],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Topical",
+          "seuil": "Zero",
+          "maj": null
+        }
+      ]
+    },
+    {
+      "nom": "Xylitol (E 967)",
+      "numeros": [
+        "E 967"
+      ],
+      "exemples": [],
+      "lignes": [
+        {
+          "voie": "Oral",
+          "seuil": "10 g",
+          "maj": null
+        }
+      ]
+    }
+  ]
+}
