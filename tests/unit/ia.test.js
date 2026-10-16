@@ -136,7 +136,10 @@ describe('routes, IA active', () => {
       .expect(200);
     assert.match(res.text, /interprétée par IA/);
     assert.match(res.text, /brut=1/);
-    assert.match(res.text, /class="jeton"[^>]*>tramadol/);
+    // Le nom mène aux spécialités de la molécule ; seule la croix retire le filtre.
+    assert.match(res.text, /class="jeton-nom" href="\/search\?q=tramadol"[^>]*>tramadol/);
+    assert.match(res.text, /class="jeton-croix" href="\/documents\?q=allaitement[^"]*"[^>]*>×/);
+    assert.doesNotMatch(res.text, /class="jeton-croix" href="[^"]*molecule=/);
   });
 
   // Vu en production : 6.1 (excipients) pour une question d'allaitement. La base factice

@@ -33,10 +33,14 @@ block content
         p.etat
           span.etat-requete= `« ${query} »`
           if etat.molecule
-            a.jeton(href=lien(etat, { molecule: null })
-              title="Chercher pour toutes les molécules")
-              | #{dci(etat.molecule)}
-              span.jeton-croix ×
+            //- Deux gestes distincts : le nom mène aux spécialités de la molécule ;
+            //- la croix retire le filtre et cherche dans toutes les molécules.
+            span.jeton.jeton-double
+              a.jeton-nom(href=lien({ mode: 'nom', requete: etat.molecule })
+                title=`Spécialités : ${dci(etat.molecule)}`)= dci(etat.molecule)
+              a.jeton-croix(href=lien(etat, { molecule: null })
+                title="Retirer ce filtre : chercher dans toutes les molécules"
+                aria-label=`Retirer le filtre ${dci(etat.molecule)}`) ×
           if rubrique
             //- Le jeton retire le filtre d'un clic.
             a.jeton(href=lien(etat, { rubrique: null })
