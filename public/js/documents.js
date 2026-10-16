@@ -350,7 +350,8 @@ function motifRequete(requete) {
   return new RegExp(`(?<![\\p{L}\\p{N}])(?:${alternatives.join('|')})\\p{L}{0,4}(?![\\p{L}\\p{N}])`, 'giu');
 }
 
-function surligner(racine, motif) {
+/** Enveloppe chaque occurrence du motif dans un <mark> de la classe donnée. */
+function surligner(racine, motif, classe = 'surligne') {
   const marcheur = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
   const noeuds = [];
   while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
@@ -365,7 +366,7 @@ function surligner(racine, motif) {
     for (const trouve of texte.matchAll(motif)) {
       fragment.append(texte.slice(debut, trouve.index));
       const marque = document.createElement('mark');
-      marque.className = 'surligne';
+      marque.className = classe;
       marque.textContent = trouve[0];
       fragment.append(marque);
       debut = trouve.index + trouve[0].length;
@@ -457,3 +458,131 @@ documents?.addEventListener('click', (evenement) => {
     if (!bloc.open) scrollBy(0, tete.getBoundingClientRect().top - haut);
   }, { once: true });
 });
+
+// ---------------------------------------------------------------------------
+// Filtre du document, en direct : un champ au-dessus du texte surligne ce
+// qu'on tape, déplie les rubriques qui le contiennent, replie les autres et
+// compte les occurrences. Ce que ⌘F ne fait pas dans un document replié.
+// Le formulaire reste caché tant que ce script ne l'a pas pris en charge.
+
+/**
+ * Motif littéral de la saisie, telle quelle : accents ignorés, un blanc vaut
+ * plusieurs. Pas de racine ni de pluriel, contrairement à `motifRequete` :
+ * on cherche ce qu'on tape. Null sous deux caractères.
+ */
+function motifLitteral(saisie) {
+  const propre = saisie.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+  if (propre.length < 2) return null;
+  const source = [...propre].map((lettre) => {
+    if (/\s/.test(lettre)) return '\\s+';
+    return ACCENTS[lettre] ?? lettre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }).join('').replace(/(\\s\+)+/g, '\\s+');
+  return new RegExp(source, 'giu');
+}
+
+/** Retire les marques du filtre et recolle les textes qu'elles avaient coupés. */
+function retirerMarques(racine) {
+  for (const marque of racine.querySelectorAll('mark.filtre')) marque.replaceWith(marque.textContent);
+  racine.normalize();
+}
+
+for (const filtre of documents?.querySelectorAll('.filtre-doc') ?? []) {
+  const article = document.getElementById(filtre.dataset.cible);
+  const champ = filtre.querySelector('.filtre-champ');
+  const compte = filtre.querySelector('.filtre-compte');
+  const boutons = [...filtre.querySelectorAll('.filtre-pas')];
+  const corps = article?.querySelector('.rubriques, .document-corps');
+  if (!corps || !champ || !compte) continue;
+  filtre.hidden = false;
+
+  let marques = [];
+  let courant = -1;
+  // Ouvertures des rubriques avant le filtre, pour les rendre quand il est levé.
+  let avant = null;
+
+  const rubriques = () => [...corps.querySelectorAll('details.rubrique')];
+
+  const compter = () => {
+    for (const bouton of boutons) bouton.disabled = marques.length === 0;
+    if (marques.length === 0) {
+      compte.textContent = motifLitteral(champ.value) ? 'Aucune occurrence' : '';
+      return;
+    }
+    const nb = marques.length;
+    const dans = new Set(marques.map((marque) => marque.closest('details.rubrique'))).size;
+    compte.textContent = [
+      courant >= 0 ? `${courant + 1} / ` : '',
+      `${nb} occurrence${nb > 1 ? 's' : ''}`,
+      dans > 1 ? ` · ${dans} rubriques` : '',
+    ].join('');
+  };
+
+  // Occurrence visée, cernée et centrée ; les bornes se rejoignent.
+  const aller = (indice, doux) => {
+    if (marques.length === 0) return;
+    marques[courant]?.classList.remove('filtre-actif');
+    courant = (indice + marques.length) % marques.length;
+    marques[courant].classList.add('filtre-actif');
+    marques[courant].scrollIntoView({ block: 'center', behavior: doux ? 'smooth' : 'auto' });
+    compter();
+  };
+
+  const appliquer = () => {
+    const motif = motifLitteral(champ.value);
+    retirerMarques(corps);
+    for (const badge of corps.querySelectorAll('.filtre-nb')) badge.remove();
+    marques = [];
+    courant = -1;
+
+    if (!motif) {
+      // Filtre levé : les rubriques retrouvent leur état.
+      if (avant) {
+        for (const [bloc, ouvert] of avant) bloc.open = ouvert;
+        avant = null;
+      }
+      compter();
+      return;
+    }
+
+    if (!avant) avant = new Map(rubriques().map((bloc) => [bloc, bloc.open]));
+    surligner(corps, motif, 'filtre');
+    marques = [...corps.querySelectorAll('mark.filtre')];
+
+    // Ouvertes si elles contiennent le mot, repliées sinon : la lecture se
+    // concentre ; le nombre se lit dans le titre, même rubrique repliée.
+    for (const bloc of rubriques()) {
+      const nb = bloc.querySelectorAll('mark.filtre').length;
+      bloc.open = nb > 0;
+      if (nb === 0) continue;
+      const badge = document.createElement('span');
+      badge.className = 'filtre-nb';
+      badge.textContent = String(nb);
+      bloc.querySelector(':scope > summary .lab')?.append(badge);
+    }
+
+    compter();
+    if (marques.length > 0) aller(0, false);
+  };
+
+  let attente = null;
+  champ.addEventListener('input', () => {
+    clearTimeout(attente);
+    attente = setTimeout(appliquer, 120);
+  });
+
+  // Entrée : occurrence suivante ; Maj + Entrée : précédente ; Échap : filtre levé.
+  filtre.addEventListener('submit', (evenement) => evenement.preventDefault());
+  champ.addEventListener('keydown', (evenement) => {
+    if (evenement.key === 'Enter') {
+      evenement.preventDefault();
+      aller(courant + (evenement.shiftKey ? -1 : 1), true);
+    } else if (evenement.key === 'Escape' && champ.value) {
+      evenement.preventDefault();
+      champ.value = '';
+      appliquer();
+    }
+  });
+  for (const bouton of boutons) {
+    bouton.addEventListener('click', () => aller(courant + Number(bouton.dataset.pas), true));
+  }
+}

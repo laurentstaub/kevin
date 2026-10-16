@@ -470,6 +470,25 @@ block content
                 if doc.manquantes && doc.manquantes.length > 0
                   span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
 
+              //- Filtre du document, en direct : surligne ce qu'on tape, déplie les
+              //- rubriques qui le contiennent, replie les autres, compte. Ce que ⌘F
+              //- ne fait pas dans un document replié. JavaScript seul : caché tant
+              //- que documents.js ne l'a pas pris en charge.
+              if (doc.rubriques && doc.rubriques.length > 0) || doc.html
+                form.filtre-doc(role="search" hidden data-cible=doc.anchor)
+                  label.sr-only(for=`filtre-${doc.anchor}`) Chercher dans ce document
+                  input.filtre-champ(
+                    id=`filtre-${doc.anchor}`
+                    type="search"
+                    placeholder="Chercher dans ce document"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  )
+                  span.filtre-compte(aria-live="polite")
+                  button.filtre-pas(type="button" data-pas="-1" disabled aria-label="Occurrence précédente" title="Précédente (Maj + Entrée)") ↑
+                  button.filtre-pas(type="button" data-pas="1" disabled aria-label="Occurrence suivante" title="Suivante (Entrée)") ↓
+
               if doc.emprunte
                 p.emprunt
                   strong Texte emprunté.

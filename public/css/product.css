@@ -1495,6 +1495,95 @@ a mark.surligne {
   color: var(--sur-surligne);
 }
 
+/* ---------- Filtre du document ---------- */
+
+/* Une ligne d'outil au-dessus du texte, dans sa colonne : champ, décompte,
+   deux pas. Caché sans JavaScript (`hidden` l'emporte sur le flex). */
+.filtre-doc:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: calc(66ch + var(--gouttiere));
+  margin: var(--sp-2) 0 0;
+}
+
+.filtre-champ {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  padding: 0.3em 0.6em;
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  background: var(--champ);
+  appearance: none;
+}
+
+.filtre-champ::placeholder {
+  color: var(--faint);
+}
+
+.filtre-champ:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.filtre-compte {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.filtre-pas {
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: var(--rule-width) solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  padding: 0.35em 0.5em;
+  cursor: pointer;
+}
+
+.filtre-pas:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.filtre-pas:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Occurrences du filtre : même stabilo que la requête ; la courante est cernée. */
+mark.filtre {
+  background: var(--surligne);
+  color: var(--sur-surligne);
+  padding: 0 0.1em;
+  border-radius: 2px;
+}
+
+mark.filtre a,
+a mark.filtre {
+  color: var(--sur-surligne);
+}
+
+mark.filtre.filtre-actif {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Nombre d'occurrences dans le titre de la rubrique, en petit et en gris. */
+.filtre-nb {
+  margin-left: 0.5em;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* Grand écran : triangle de dépliage suspendu dans la marge. La colonne des
    numéros ne loge plus que « 4.10 » : texte plus près du numéro, numéros
    alignés au fer. Sous 52rem, pas de marge où le suspendre. */

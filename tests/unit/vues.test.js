@@ -194,6 +194,19 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(un, /role="tab"/);
   });
 
+  // Un filtre par document, caché sans JavaScript (documents.js le révèle) ; aucun pour un PDF seul.
+  it('chaque document porte son filtre, caché tant que le script ne l’a pas pris', () => {
+    const doc = (type, html) => ({ type, anchor: `doc-${type}`, court: type, label: type, html, url: 'https://x' });
+    const html = rendre('product', produit({
+      hasDocuments: true,
+      documents: [doc('rcp', '<p>x</p>'), doc('notice', '<p>y</p>'), doc('rcp_notice', null)],
+    }));
+    const filtres = [...html.matchAll(/<form class="filtre-doc" role="search" hidden(?:="hidden")? data-cible="([^"]+)">/g)]
+      .map((correspondance) => correspondance[1]);
+    assert.deepEqual(filtres, ['doc-rcp', 'doc-notice']);
+    assert.match(html, /<input class="filtre-champ" id="filtre-doc-rcp" type="search"/);
+  });
+
   // Une ligne de valeurs, dans l'ordre ; libellé et détail en infobulle, l'aplat marque ce qui bloque.
   it('la bande signalétique rend ses cases dans l\'ordre, valeurs seules, picto et aplat', () => {
     const html = rendre('product', produit({
