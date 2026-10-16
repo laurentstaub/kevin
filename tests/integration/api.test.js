@@ -513,6 +513,21 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/documents?q=surdosage').expect(200);
       assert.match(res.text, /href="\/product\/61111111\?q=surdosage#rcp-4"/);
     });
+
+    /**
+     * L'expression exacte dans le seul surdosage (PREVISCAN, 4.9) ne passe pas
+     * devant une mention partielle dans les effets indésirables (ASPIRINE UPSA, 4.8) :
+     * le surdosage ne dit rien de l'usage normal.
+     */
+    it('classe une rubrique du comptoir devant le surdosage, même exact', async () => {
+      const res = await request(app).get('/documents?q=allongement%20QT').expect(200);
+      const molecules = [...res.text.matchAll(/class="trouvaille-molecule"[^>]*>([^<]+)</g)]
+        .map((correspondance) => correspondance[1]);
+      assert.ok(molecules.indexOf('acide acétylsalicylique') !== -1, `aspirine trouvée : ${molecules.join(', ')}`);
+      assert.ok(molecules.indexOf('fluindione') !== -1, `fluindione trouvée : ${molecules.join(', ')}`);
+      assert.ok(molecules.indexOf('acide acétylsalicylique') < molecules.indexOf('fluindione'),
+        `attendu l'aspirine (4.8) avant la fluindione (4.9) : ${molecules.join(', ')}`);
+    });
   });
 
   describe('transversal', () => {

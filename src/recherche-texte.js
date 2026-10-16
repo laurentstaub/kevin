@@ -325,7 +325,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               ts_rank_cd(${VECTEUR}, q.tq) AS score,
               CASE WHEN $4::text IS NULL THEN true
                    ELSE ${VECTEUR} @@ phraseto_tsquery('${LANGUE}', $4::text) END AS exact,
-              ${RANG} + ${TITRE} AS rang
+              ${RANG} + ${TITRE} AS rang,
+              -- Rubrique du comptoir (RCP, liste PRIORITE) : le surdosage (4.9),
+              -- les propriétés et la notice ne décident pas du classement.
+              ${RANG} < ${PRIORITE.length} AS clinique
        FROM docs.rcp_sections s, q
        WHERE ${VECTEUR} @@ q.tq
          -- Plusieurs concepts : rapprochés, pas dispersés dans la rubrique.
@@ -421,14 +424,22 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        ) x ON true
        GROUP BY t.code_cis
      ),
-     -- Le classement, sur toutes les rubriques : l'expression exacte d'abord,
-     -- puis la rubrique qui répond le mieux à la question du comptoir, puis le
-     -- score. Par molécule et non par rubrique : un plafond en rubriques
-     -- laissait une molécule à trois cents génériques occuper la place des autres.
+     -- Le classement, sur toutes les rubriques : les molécules trouvées dans
+     -- une rubrique du comptoir d'abord, puis l'expression exacte, puis la
+     -- rubrique qui répond le mieux à la question du comptoir, puis le score.
+     -- Exactitude et rubrique se lisent dans les rubriques du comptoir quand il
+     -- y en a : « allongement QT » mot pour mot dans le seul surdosage du
+     -- tamoxifène ne le place pas devant les mises en garde des autres.
+     -- Par molécule et non par rubrique : un plafond en rubriques laissait une
+     -- molécule à trois cents génériques occuper la place des autres.
      classement AS MATERIALIZED (
        SELECT m.signature, count(DISTINCT t.code_cis)::int AS specialites, max(t.score) AS score,
-              bool_or(t.exact) AS exact,
-              coalesce(min(t.rang) FILTER (WHERE t.exact), min(t.rang)) AS rang,
+              bool_or(t.clinique) AS clinique,
+              coalesce(bool_or(t.exact) FILTER (WHERE t.clinique), bool_or(t.exact)) AS exact,
+              coalesce(min(t.rang) FILTER (WHERE t.exact AND t.clinique),
+                       min(t.rang) FILTER (WHERE t.clinique),
+                       min(t.rang) FILTER (WHERE t.exact),
+                       min(t.rang)) AS rang,
               -- Nombre de substances : filtré sur un médicament, la molécule seule passe avant ses associations.
               array_length(string_to_array(m.signature, ' + '), 1) AS composants
        FROM tout t JOIN molecule m USING (code_cis)
@@ -438,7 +449,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      resume AS MATERIALIZED (
        SELECT * FROM classement
        ORDER BY CASE WHEN $5::text IS NULL THEN 0 ELSE composants END,
-                exact DESC, rang, score DESC, specialites DESC, signature
+                clinique DESC, exact DESC, rang, score DESC, specialites DESC, signature
        LIMIT ${MOLECULES_MAX}
      ),
      trouve AS (
@@ -568,7 +579,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      JOIN docs.rcp_sections bt
        ON bt.code_cis = b.code_cis AND bt.document_type = b.document_type AND bt.position = b.position, q
      ORDER BY CASE WHEN $5::text IS NULL THEN 0 ELSE r.composants END,
-              r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
+              r.clinique DESC, r.exact DESC, r.rang, r.score DESC, r.specialites DESC, b.code_cis
      LIMIT $2 OFFSET $3
      ) AS page, q`,
     // Une ligne de plus pour savoir s'il existe une page suivante.
