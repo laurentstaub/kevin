@@ -369,6 +369,18 @@ describe('rendu des gabarits', () => {
     assert.match(html, /class="ligne-dosages ligne-specialite"/);
     assert.match(html, /class="dosage-lien" href="\/product\/66297966\?q=QT#rcp-21"/);
     assert.match(html, /class="trouvaille-molecule" href="\/product\/66297967\?q=QT#rcp-12"/);
+    // Sans composition : la dénomination est le titre, pas de parenthèse en double.
+    assert.doesNotMatch(html, /trouvaille-specialite/);
+  });
+
+  // Une seule spécialité : nommée entre parenthèses, nom et dosage, forme en infobulle.
+  it('une molécule à spécialité unique nomme sa spécialité', () => {
+    const unique = {
+      ...TROUVAILLE, signature: 'toremifene', molecule: 'CITRATE DE TORÉMIFÈNE', specialites: 1, formes: [],
+      code_cis: '60000001', ancre: 'rcp-8', denomination: 'FARESTON 60 mg, comprimé',
+    };
+    const html = rendre('documents', { query: 'QT', rubrique: null, page: 1, documents: { ...RECHERCHE_PLEINE, resultats: [unique] } });
+    assert.match(html, /class="trouvaille-specialite" title="Fareston 60 mg, comprimé">\(Fareston 60 mg\)</);
   });
 
   // Sans filtre, la phrase se lit au survol du point.

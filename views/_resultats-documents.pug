@@ -75,12 +75,20 @@ mixin resultatsDocuments(recherche, requete, resume, colonnes, rubrique, etat, l
                   span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
             else
               span.trouvaille-tete
-                a.trouvaille-molecule(
-                  href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`
-                  title=dci(trouvaille.molecule)
-                )= dci(trouvaille.molecule)
-                if trouvaille.specialites > 1
-                  span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
+                span.trouvaille-noms
+                  span.trouvaille-ligne
+                    a.trouvaille-molecule(
+                      href=`/product/${trouvaille.code_cis}${q}#${trouvaille.ancre}`
+                      title=dci(trouvaille.molecule)
+                    )= dci(trouvaille.molecule)
+                    if trouvaille.specialites > 1
+                      span.trouvaille-reprise(title=`${trouvaille.specialites} spécialités`) #{trouvaille.specialites.toLocaleString('fr-FR')} spé.
+                  if trouvaille.specialites <= 1 && trouvaille.denomination && !trouvaille.sansMolecule
+                    //- Une seule spécialité : la nommer, sinon on ne sait pas où mène le lien.
+                    //- Sous la molécule, où elle a la place ; sans composition, le nom de
+                    //- la spécialité est déjà le titre. Nom et dosage, la forme en infobulle.
+                    span.trouvaille-specialite(title=specialite(trouvaille.denomination))
+                      | (#{specialite(trouvaille.denomination.split(/,\s/)[0])})
 
           //- Point plein : expression telle quelle ; creux : mots dispersés.
           //- La phrase paraît au survol (extraits.js) ; sans JavaScript, lien et `title`.

@@ -1083,6 +1083,19 @@ a.trouvaille-molecule {
 .trouvaille-details > summary::-webkit-details-marker { display: none; }
 
 .trouvaille-details > summary::before { flex: none; width: 1em; }
+
+/* Ligne sans accordéon : la place du triangle, vide, pour que les noms s'alignent.
+   Mêmes mesures que le triangle des repliables. */
+.cellule-molecule .trouvaille-tete::before {
+  content: '▸';
+  visibility: hidden;
+  flex: none;
+  width: 1em;
+  font-size: 1.25em;
+  line-height: 1;
+  margin-right: 0.3em;
+  font-family: var(--font-body);
+}
 .trouvaille-details > summary:hover { color: var(--ink); }
 
 .cellule-molecule .trouvaille-molecule {
@@ -1092,6 +1105,27 @@ a.trouvaille-molecule {
 }
 
 .cellule-molecule .trouvaille-reprise { flex: none; }
+
+/* Ligne sans accordéon : molécule, puis sa spécialité unique en dessous. */
+.cellule-molecule .trouvaille-noms {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cellule-molecule .trouvaille-ligne {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.cellule-molecule .trouvaille-specialite {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
 
 /* Repliée, la ligne des dosages est masquée. Sans :has(), elle reste visible. */
 .trouvaille:has(.trouvaille-details:not([open])) .ligne-dosages { display: none; }
