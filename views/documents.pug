@@ -7,10 +7,12 @@ include _dosages.pug
 //- Recherche plein texte, vue complète. Seule page à porter le filtre par rubrique.
 
 block content
-  //- La requête est dans le champ de la barre ; le titre dit où l'on est.
+  //- La requête est dans le champ de la barre ; le titre de la page dit où l'on
+  //- est. Pas de libellé à côté du champ : lu comme le mode de la saisie, il
+  //- promettait de rester dans les documents, alors qu'une nouvelle saisie
+  //- repart de la recherche par nom, comme partout.
   //- Question interprétée : le champ garde la question telle que tapée.
-  //- Une nouvelle saisie repart de la recherche par nom, comme partout.
-  +barreSituation('Dans les documents', etat.question || query)
+  +barreSituation(null, etat.question || query)
 
   main.corps
     header.doc-entete
