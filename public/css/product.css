@@ -1210,17 +1210,14 @@ span.onglet {
     padding-right: var(--sp-2);
   }
 
-  /* Repliée, la bande collante couvrirait un quart de l'écran : elle reste
-     sur une ligne, qui défile au doigt. */
   .signaletique-inner {
     padding-left: var(--sp-2);
     padding-right: var(--sp-2);
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
   }
 
-  /* Dénomination sur deux lignes possibles : elle défile, la bande colle sous la barre. */
+  /* Dénomination et bande défilent avec la page : repliée, la bande collante
+     couvrirait un quart de l'écran. Seule la barre reste collée ; les titres
+     de rubrique et les ancres se calent sous elle. */
   .titre-colle {
     position: static;
     padding-left: var(--sp-2);
@@ -1228,11 +1225,18 @@ span.onglet {
   }
 
   .signaletique {
-    top: var(--barre-h);
+    position: static;
   }
 
   .rubrique[open] > .rubrique-tete {
-    top: calc(var(--barre-h) + var(--signal-h) - 1px);
+    top: calc(var(--barre-h) - 1px);
+  }
+
+  .contenu > .bloc,
+  .rubrique-tete,
+  .charniere,
+  .document-corps .doc-heading {
+    scroll-margin-top: calc(var(--barre-h) + var(--sp-2));
   }
 
   .produit-titre {
