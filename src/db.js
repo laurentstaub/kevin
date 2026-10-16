@@ -3,16 +3,25 @@ import { config } from './config.js';
 
 const { Pool } = pg;
 
-export function createPool(overrides = {}) {
-  const { connectionString, statementTimeoutMs, ...rest } = config.db;
+/**
+ * Options du pool, à partir de la configuration : URL complète ou variables
+ * séparées, et TLS. Heroku Postgres présente un certificat que Node ne peut
+ * pas vérifier (chaîne propre à Heroku) : la connexion est chiffrée, le
+ * certificat n'est pas contrôlé — même choix que Dispomed.
+ */
+export function optionsPool(db = config.db) {
+  const { connectionString, statementTimeoutMs, ssl, max, ...rest } = db;
   const base = connectionString ? { connectionString } : rest;
-
-  const pool = new Pool({
+  return {
     ...base,
-    max: config.db.max,
+    max,
     statement_timeout: statementTimeoutMs,
-    ...overrides,
-  });
+    ssl: ssl ? { rejectUnauthorized: false } : false,
+  };
+}
+
+export function createPool(overrides = {}) {
+  const pool = new Pool({ ...optionsPool(), ...overrides });
 
   // Une erreur sur un client inactif ne doit jamais tuer le processus.
   pool.on('error', (err) => console.error('[db] client inactif en erreur:', err.message));

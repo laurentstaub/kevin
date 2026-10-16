@@ -33,6 +33,9 @@ export const config = {
     password: process.env.PGPASSWORD,
     max: int(process.env.PG_POOL_MAX, 10),
     statementTimeoutMs: int(process.env.PG_STATEMENT_TIMEOUT_MS, 5000),
+    // TLS vers la base : exigé par Heroku Postgres. Par défaut en production
+    // seulement ; PG_SSL=true ou false pour forcer.
+    ssl: process.env.PG_SSL ? process.env.PG_SSL !== 'false' : (process.env.NODE_ENV ?? 'development') === 'production',
   },
 
   search: {

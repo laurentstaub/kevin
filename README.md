@@ -33,6 +33,8 @@ Voir `.env.example` pour la liste complète.
 |---|---|---|
 | `DATABASE_URL` | Connexion complète (prioritaire) | — |
 | `PGUSER` / `PGHOST` / `PGDATABASE` / `PGPORT` | Connexion détaillée | `localhost:5432` |
+| `PG_SSL` | TLS vers la base (exigé par Heroku Postgres) | oui si `NODE_ENV=production` |
+| `PG_POOL_MAX` | Connexions du pool | `10` |
 | `PORT` | Port HTTP | `3000` |
 | `SEARCH_MIN_LENGTH` | Longueur minimale d'une recherche | `3` |
 | `SEARCH_LIMIT` | Résultats maximum **par famille** (dénomination, principe actif) | `60` |
@@ -68,6 +70,13 @@ Au démarrage, le serveur vérifie ces prérequis :
 - **Index trigrammes manquants** → simple avertissement : l'application
   fonctionne, elle est seulement lente.
 - **Tables BDPM manquantes** → arrêt immédiat.
+
+## Déploiement
+
+Application Node sans build, `npm start`, arrêt propre sur `SIGTERM` : elle
+tourne telle quelle sur un dyno. Le poids est dans la base (3,9 Go). La
+marche à suivre sur Heroku, avec la base partagée avec Dispomed, est dans
+[docs/deploiement-heroku.md](docs/deploiement-heroku.md).
 
 ## Routes
 
