@@ -431,7 +431,7 @@ describe('API', { skip }, () => {
   });
 
   describe('interactions', () => {
-    /** Champ de la fiche produit : le CIS en `m`, la saisie en `avec`. */
+    /** Champ de la rubrique 4.5 de la fiche : le CIS en `m`, la saisie en `avec`. */
     it('lit la rubrique 4.5 dans les deux sens, par la substance ou par la classe', async () => {
       const res = await request(app).get('/interactions?m=61111111&avec=previscan').expect(200);
       const [aspirine, previscan] = [...res.text.matchAll(/<div class="sens">[\s\S]*?<\/blockquote>/g)]
@@ -475,7 +475,7 @@ describe('API', { skip }, () => {
 
     it('revient à la fiche quand le champ est vide', async () => {
       const res = await request(app).get('/interactions?m=61111111&avec=').expect(302);
-      assert.equal(res.headers.location, '/product/61111111#interactions');
+      assert.equal(res.headers.location, '/product/61111111');
     });
   });
 

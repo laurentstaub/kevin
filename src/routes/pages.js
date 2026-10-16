@@ -274,7 +274,7 @@ export function pageRoutes(pool) {
     '/interactions',
     wrap(async (req, res) => {
       // `m` : un médicament par paramètre ; `avec` : la saisie du champ de la
-      // fiche produit, plusieurs noms séparés par des virgules ou des « + ».
+      // rubrique 4.5 de la fiche, plusieurs noms séparés par des virgules ou des « + ».
       // Sans séparateur (« kardegic previscan »), la reconnaissance de la
       // recherche coupe la saisie ; les noms courants passent en substance.
       // « aspirine upsa » reste la spécialité ; « aspirine » seule devient la substance.
@@ -290,9 +290,9 @@ export function pageRoutes(pool) {
         .map((nom) => nom.slice(0, 60).split(/\s+/).map(normaliser).filter(Boolean).join(' '))
         .filter(Boolean))].slice(0, MEDICAMENTS_MAX);
       if (elements.length < 2) {
-        // Depuis la fiche, champ vide ou illisible : retour à la fiche.
+        // Depuis la 4.5 de la fiche, champ vide ou illisible : retour à la fiche.
         const cis = elements.find((element) => /^\d{8}$/.test(element));
-        return res.redirect(cis ? `/product/${cis}#interactions` : '/');
+        return res.redirect(cis ? `/product/${cis}` : '/');
       }
 
       const resultat = await chercherInteractions(pool, elements);

@@ -25,6 +25,30 @@ block content
           span.num= entree.numero
           span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
         .rubrique-corps!= entree.html
+        //- Là où on lit les interactions : cette spécialité croisée avec un ou
+        //- plusieurs autres médicaments, lus dans la 4.5 des deux RCP (page
+        //- /interactions). Le CIS fait lire le RCP de cette spécialité précise,
+        //- pas celui de toute sa gamme. Même champ que la recherche ; search.js
+        //- ne s'accroche qu'au premier formulaire de la page, celui de la barre.
+        if entree.numero === '4.5'
+          form.croiser(method="GET" action="/interactions")
+            input(type="hidden" name="m" value=product.id)
+            label.croiser-libelle(for=`croiser-${entree.id}`) Interactions avec
+            .input-wrapper
+              input.search-input(
+                id=`croiser-${entree.id}`
+                type="search"
+                name="avec"
+                placeholder="un ou plusieurs médicaments"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                maxlength="200"
+              )
+              button.search-button(type="submit" aria-label="Chercher les interactions" title="Chercher les interactions")
+                svg(viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false")
+                  path(d="M20 5v6a3 3 0 0 1-3 3H5M9 10l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round")
 
   //- Sans titre : la dénomination elle-même colle sous la barre au défilement.
   +barreSituation()
@@ -277,29 +301,6 @@ block content
               | #{securite.total - securite.infos.length} plus ancienne#{securite.total - securite.infos.length > 1 ? 's' : ''} —
               |
               a(href=bdpm ? bdpm.url : '#' target="_blank" rel="noopener noreferrer") fiche BDPM
-
-      //- Interactions : cette spécialité contre un ou plusieurs autres médicaments,
-      //- lus dans la 4.5 des RCP (page /interactions). Le CIS fait lire le RCP de
-      //- cette spécialité précise, pas celui de toute sa gamme. Même champ que la
-      //- recherche ; search.js ne s'accroche qu'au premier formulaire de la page.
-      section.bloc.verifier#interactions
-        form.verifier-form(method="GET" action="/interactions")
-          input(type="hidden" name="m" value=product.id)
-          label.verifier-libelle(for="verifier-avec") Interactions avec
-          .input-wrapper
-            input.search-input#verifier-avec(
-              type="search"
-              name="avec"
-              placeholder="un ou plusieurs médicaments"
-              autocomplete="off"
-              autocapitalize="off"
-              spellcheck="false"
-              required
-              maxlength="200"
-            )
-            button.search-button(type="submit" aria-label="Vérifier les interactions" title="Vérifier les interactions")
-              svg(viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false")
-                path(d="M20 5v6a3 3 0 0 1-3 3H5M9 10l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round")
 
       //- Alternatives : les candidats classés par action au comptoir (substitution.js,
       //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la

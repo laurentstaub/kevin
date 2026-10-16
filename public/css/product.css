@@ -320,27 +320,6 @@ a.signal-valeur {
 
 .excipients-item.non-lu { font-style: italic; }
 
-/* Interactions : le libellé à la place du titre de bloc, le champ de la
-   recherche à sa suite, sur le même filet. */
-.verifier-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-1) var(--sp-2);
-  padding-bottom: var(--sp-1);
-  border-bottom: var(--rule-width) solid var(--rule-medium);
-}
-
-.verifier-libelle {
-  font-family: var(--font-head);
-  font-size: var(--fs-md);
-  white-space: nowrap;
-}
-
-.verifier-form .input-wrapper {
-  flex: 1 1 16rem;
-}
-
 /* Informations de sécurité ANSM : une ligne par information, date en tête,
    filets horizontaux comme les tableaux. */
 .infos-securite {
@@ -804,6 +783,34 @@ span.onglet {
 /* Pas de marge sous le dernier paragraphe : le blanc de fin appartient à la rubrique. */
 .rubrique-corps > :last-child {
   margin-bottom: 0;
+}
+
+/* Dans la 4.5, là où on lit les interactions : croiser cette spécialité avec
+   un autre médicament (page /interactions). Une ligne sous le texte, dans sa
+   colonne, en petit : un outil, pas un titre. */
+.croiser {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  max-width: calc(66ch + var(--gouttiere));
+  padding: var(--sp-2) 0 var(--sp-1) var(--gouttiere);
+}
+
+.croiser-libelle {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.croiser .input-wrapper {
+  flex: 1 1 14rem;
+  border-radius: var(--radius-control);
+}
+
+.croiser .search-input {
+  padding: 0.3em 0.6em;
+  font-size: var(--fs-sm);
 }
 
 /* Condition de délivrance : population avant le deux-points, discipline en

@@ -112,9 +112,10 @@ block content
     p.fiche-source
       | Chaque médicament est cherché par le nom de sa substance, puis par sa
       | classe telle que les RCP la nomment (« AINS », « anticoagulants oraux »).
-      | Les classes viennent d'une table rattachée aux codes ATC, en cours de
-      | relecture ; une classe qui n'y figure pas n'est pas cherchée. Une absence
-      | de mention n'est donc pas une absence d'interaction. Le RCP fait foi.
+      | Les classes sont les groupes du thésaurus des interactions de l'ANSM
+      | (septembre 2023), repris tels quels ; une classe qui n'y figure pas
+      | n'est pas cherchée. Une absence de mention n'est donc pas une absence
+      | d'interaction. Le RCP fait foi.
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)
