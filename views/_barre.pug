@@ -5,12 +5,11 @@
 //- @param {string} titre   ce qu'on est en train de lire, à droite ; vide sur la
 //-                         fiche, où la bande signalétique porte le nom du produit
 //- @param {string} valeur  la requête en cours, s'il y en a une
-//- @param {string} action  où resoumettre — la page courante
-mixin barreSituation(titre, valeur, action)
+mixin barreSituation(titre, valeur)
   header.barre
     .barre-inner
       a.retour(href="/") ← Accueil
-      +champRecherche(valeur || '', true, action)
+      +champRecherche(valeur || '', true)
       if titre
         span.barre-titre= titre
       +apparence

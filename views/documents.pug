@@ -9,7 +9,8 @@ include _dosages.pug
 block content
   //- La requête est dans le champ de la barre ; le titre dit où l'on est.
   //- Question interprétée : le champ garde la question telle que tapée.
-  +barreSituation('Dans les documents', etat.question || query, '/documents')
+  //- Une nouvelle saisie repart de la recherche par nom, comme partout.
+  +barreSituation('Dans les documents', etat.question || query)
 
   main.corps
     header.doc-entete

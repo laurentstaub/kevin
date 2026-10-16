@@ -132,6 +132,8 @@ describe('API', { skip }, () => {
       ['la fiche produit', '/product/61111114'],
       ['la page de classe', '/classe/N02'],
       ['l’accueil', '/'],
+      // Même destination depuis les documents : une saisie repart par nom.
+      ['la recherche dans les documents', '/documents?q=surdosage'],
     ]) {
       it(`est présent sur ${page}, avec de quoi l’autocompléter`, async () => {
         const res = await request(app).get(url).expect(200);

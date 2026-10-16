@@ -1,13 +1,14 @@
 //- Champ de recherche partagé : un seul balisage, car `public/js/search.js`
 //- s'accroche à ces classes et identifiants.
-//- Même invite partout : on cherche un nom, une molécule ou une expression des documents.
+//- Même invite partout, même destination : la recherche par nom (/search), qui
+//- montre aussi les documents et y mène d'un clic. Les documents seuls sont un
+//- choix explicite, jamais un mode que la barre garderait d'une page à l'autre.
 //-
 //- @param {string} valeur   ce que porte le champ au chargement
 //- @param {boolean} compact version d'en-tête, posée sur une ligne de navigation
-//- @param {string} action  où resoumettre : la page courante, pour ne pas changer de mode
-mixin champRecherche(valeur, compact, action)
+mixin champRecherche(valeur, compact)
   .search-wrapper(class=compact ? 'search-compacte' : null)
-    form.search-form(method="GET" action=action || "/search" role="search")
+    form.search-form(method="GET" action="/search" role="search")
       .input-wrapper
         input.search-input(
           type="search"

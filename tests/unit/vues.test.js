@@ -675,12 +675,14 @@ describe('rendu des gabarits', () => {
     assert.match(fin, /Les 200 molécules les mieux classées sont détaillées, sur 461\./);
   });
 
-  // Préremplie pour affiner, et dans le mode courant pour ne pas changer de question.
-  it('la barre porte la requête et resoumet au bon endroit', () => {
+  // Préremplie pour affiner ; une saisie repart par nom comme partout : « paracetamol »
+  // tapé ici donne les spécialités, pas le mot cherché dans tous les documents.
+  it('la barre porte la requête et resoumet à la recherche par nom', () => {
     const html = rendre('documents', {
       query: 'intervalle QT', rubrique: null, documents: RECHERCHE_PLEINE, page: 1,
     });
-    assert.match(html, /action="\/documents"/);
+    assert.match(html, /action="\/search"/);
+    assert.doesNotMatch(html, /action="\/documents"/);
     assert.match(html, /value="intervalle QT"/);
   });
 
