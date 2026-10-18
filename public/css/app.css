@@ -17,7 +17,8 @@
 .barre-inner {
   max-width: var(--colonne);
   margin: 0 auto;
-  min-height: var(--barre-h);
+  /* Une ligne ; pas --barre-h, mesurée sur cette ligne même. */
+  min-height: var(--barre-ligne);
   padding: var(--sp-1) var(--sp-4);
   display: flex;
   align-items: center;

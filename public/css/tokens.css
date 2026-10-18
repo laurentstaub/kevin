@@ -86,8 +86,11 @@
   --radius-control: 6px;
   --radius-surface: 10px;
   --rule-width: 1px;
-  /* Barre de situation : ancres et rail collant s'en écartent d'autant. */
-  --barre-h: 3.75rem;
+  /* Barre de situation : une ligne fait --barre-ligne ; ancres et rail collant
+     s'écartent de --barre-h, sa hauteur réelle, que documents.js mesure quand
+     la barre porte une seconde ligne (filtre du document). */
+  --barre-ligne: 3.75rem;
+  --barre-h: var(--barre-ligne);
   /* Une seule largeur, tout en dérive. Ligne à 87 signes (au-delà de 75),
      compensée par l'interligne ; filet et texte s'arrêtent au même endroit. */
   /* Colonne des numéros de rubrique : triangle de dépliage + « 4.10 »

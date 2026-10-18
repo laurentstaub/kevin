@@ -119,6 +119,29 @@ for (const bouton of document.querySelectorAll('.deplier')) {
 const barre = document.querySelector('.barre');
 const titreColle = document.querySelector('.titre-colle');
 
+// Filtre du document, dans la barre sous le champ de recherche : révélé avant
+// toute mesure, puisqu'il donne une seconde ligne à la barre.
+const filtre = documents ? barre?.querySelector('.filtre-doc') : null;
+if (filtre) filtre.hidden = false;
+
+// Hauteur réelle de la barre (sa ligne, sans son filet, que les éléments
+// collés dessous recouvrent) : titres collants et ancres s'en écartent
+// d'autant (--barre-h). Les fonctions de `suiviBarre` suivent ses changements.
+const ligneBarre = barre?.querySelector('.barre-inner');
+const suiviBarre = [];
+let hauteurBarre = 0;
+if (ligneBarre) {
+  const mesurerBarre = () => {
+    const hauteur = Math.ceil(ligneBarre.getBoundingClientRect().height);
+    if (!hauteur || hauteur === hauteurBarre) return;
+    hauteurBarre = hauteur;
+    document.documentElement.style.setProperty('--barre-h', `${hauteur}px`);
+    for (const suivre of suiviBarre) suivre(hauteur);
+  };
+  mesurerBarre();
+  if ('ResizeObserver' in window) new ResizeObserver(mesurerBarre).observe(ligneBarre);
+}
+
 // Bande repliée sur plusieurs lignes : sa hauteur réelle remplace celle d'une
 // ligne dans --signal-h, dont dépendent les titres collants et les ancres.
 const bande = document.querySelector('.signaletique-inner');
@@ -434,13 +457,19 @@ if (motif && documents) {
 
 // Dénomination collée : dès qu'elle touche la barre, elle prend fond et filet.
 // Observée 1 px sous la barre : collée, ce pixel passe dessous et le ratio chute.
-if (titreColle && barre && 'IntersectionObserver' in window
+if (titreColle && hauteurBarre && 'IntersectionObserver' in window
   && getComputedStyle(titreColle).position === 'sticky') {
-  const hauteurBarre = Math.ceil(barre.getBoundingClientRect().height);
-  titreColle.style.top = `${hauteurBarre - 1}px`;
-  new IntersectionObserver(([entree]) => {
-    titreColle.classList.toggle('colle', entree.intersectionRatio < 1);
-  }, { threshold: [1], rootMargin: `-${hauteurBarre}px 0px 0px 0px` }).observe(titreColle);
+  let observateur = null;
+  const suivre = (hauteur) => {
+    titreColle.style.top = `${hauteur}px`;
+    observateur?.disconnect();
+    observateur = new IntersectionObserver(([entree]) => {
+      titreColle.classList.toggle('colle', entree.intersectionRatio < 1);
+    }, { threshold: [1], rootMargin: `-${hauteur + 1}px 0px 0px 0px` });
+    observateur.observe(titreColle);
+  };
+  suivre(hauteurBarre);
+  suiviBarre.push(suivre);
 }
 
 // Titre de rubrique collé puis replié : la rubrique se referme au-dessus de
@@ -460,10 +489,11 @@ documents?.addEventListener('click', (evenement) => {
 });
 
 // ---------------------------------------------------------------------------
-// Filtre du document, en direct : un champ au-dessus du texte surligne ce
-// qu'on tape, déplie les rubriques qui le contiennent, replie les autres et
-// compte les occurrences. Ce que ⌘F ne fait pas dans un document replié.
-// Le formulaire reste caché tant que ce script ne l'a pas pris en charge.
+// Filtre du document, en direct : le champ sous la recherche, dans la barre,
+// surligne ce qu'on tape dans le document affiché (onglet actif), déplie les
+// rubriques qui le contiennent, replie les autres et compte les occurrences.
+// Ce que ⌘F ne fait pas dans un document replié. Changer d'onglet le reporte
+// sur le document affiché.
 
 /**
  * Motif littéral de la saisie, telle quelle : accents ignorés, un blanc vaut
@@ -486,18 +516,23 @@ function retirerMarques(racine) {
   racine.normalize();
 }
 
-for (const filtre of documents?.querySelectorAll('.filtre-doc') ?? []) {
-  const article = document.getElementById(filtre.dataset.cible);
+if (filtre) {
   const champ = filtre.querySelector('.filtre-champ');
   const compte = filtre.querySelector('.filtre-compte');
   const boutons = [...filtre.querySelectorAll('.filtre-pas')];
-  const corps = article?.querySelector('.rubriques, .document-corps');
-  if (!corps || !champ || !compte) continue;
-  filtre.hidden = false;
 
+  // Le document affiché : l'onglet actif, ou le seul document.
+  const corpsAffiche = () => {
+    const article = panneaux.find((panneau) => panneau && !panneau.hidden)
+      ?? documents.querySelector('.document');
+    return article?.querySelector('.rubriques, .document-corps') ?? null;
+  };
+
+  // Document filtré, ses marques, l'occurrence visée, et l'ouverture de ses
+  // rubriques avant le filtre, pour la rendre quand il est levé.
+  let corps = null;
   let marques = [];
   let courant = -1;
-  // Ouvertures des rubriques avant le filtre, pour les rendre quand il est levé.
   let avant = null;
 
   const rubriques = () => [...corps.querySelectorAll('details.rubrique')];
@@ -510,11 +545,11 @@ for (const filtre of documents?.querySelectorAll('.filtre-doc') ?? []) {
     }
     const nb = marques.length;
     const dans = new Set(marques.map((marque) => marque.closest('details.rubrique'))).size;
-    compte.textContent = [
-      courant >= 0 ? `${courant + 1} / ` : '',
-      `${nb} occurrence${nb > 1 ? 's' : ''}`,
-      dans > 1 ? ` · ${dans} rubriques` : '',
-    ].join('');
+    // « 1 / 71 », puis le détail, que le téléphone masque pour laisser le champ.
+    const detail = document.createElement('span');
+    detail.className = 'filtre-detail';
+    detail.textContent = ` occurrence${nb > 1 ? 's' : ''}${dans > 1 ? ` · ${dans} rubriques` : ''}`;
+    compte.replaceChildren(`${courant >= 0 ? `${courant + 1} / ` : ''}${nb}`, detail);
   };
 
   // Occurrence visée, cernée et centrée ; les bornes se rejoignent.
@@ -527,24 +562,30 @@ for (const filtre of documents?.querySelectorAll('.filtre-doc') ?? []) {
     compter();
   };
 
-  const appliquer = () => {
-    const motif = motifLitteral(champ.value);
-    retirerMarques(corps);
-    for (const badge of corps.querySelectorAll('.filtre-nb')) badge.remove();
+  // Retire le filtre du document filtré : marques, décomptes, ouvertures.
+  const lever = () => {
+    if (corps) {
+      retirerMarques(corps);
+      for (const badge of corps.querySelectorAll('.filtre-nb')) badge.remove();
+    }
+    if (avant) {
+      for (const [bloc, ouvert] of avant) bloc.open = ouvert;
+      avant = null;
+    }
     marques = [];
     courant = -1;
+  };
 
-    if (!motif) {
-      // Filtre levé : les rubriques retrouvent leur état.
-      if (avant) {
-        for (const [bloc, ouvert] of avant) bloc.open = ouvert;
-        avant = null;
-      }
+  const appliquer = () => {
+    lever();
+    corps = corpsAffiche();
+    const motif = motifLitteral(champ.value);
+    if (!motif || !corps) {
       compter();
       return;
     }
 
-    if (!avant) avant = new Map(rubriques().map((bloc) => [bloc, bloc.open]));
+    avant = new Map(rubriques().map((bloc) => [bloc, bloc.open]));
     surligner(corps, motif, 'filtre');
     marques = [...corps.querySelectorAll('mark.filtre')];
 
@@ -585,4 +626,12 @@ for (const filtre of documents?.querySelectorAll('.filtre-doc') ?? []) {
   for (const bouton of boutons) {
     bouton.addEventListener('click', () => aller(courant + Number(bouton.dataset.pas), true));
   }
+
+  // Autre onglet : le filtre passe au document affiché.
+  for (const onglet of onglets) {
+    onglet.addEventListener('click', () => {
+      if (champ.value) appliquer();
+    });
+  }
 }
+

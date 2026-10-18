@@ -1507,14 +1507,26 @@ a mark.surligne {
 
 /* ---------- Filtre du document ---------- */
 
-/* Une ligne d'outil au-dessus du texte, dans sa colonne : champ, décompte,
-   deux pas. Caché sans JavaScript (`hidden` l'emporte sur le flex). */
+/* Dans la barre, sous le champ de recherche et de la même largeur : champ,
+   décompte, deux pas. Caché sans JavaScript (`hidden` l'emporte sur le flex). */
+.barre-champs {
+  flex: 1 1 20rem;
+  max-width: 34rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.barre-champs .search-compacte {
+  flex: none;
+  max-width: none;
+}
+
 .filtre-doc:not([hidden]) {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-  max-width: calc(66ch + var(--gouttiere));
-  margin: var(--sp-2) 0 0;
 }
 
 .filtre-champ {
@@ -1565,6 +1577,15 @@ a mark.surligne {
 .filtre-pas:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* Téléphone : sans occurrence, les deux pas laissent toute la place au champ ;
+   avec, le décompte se réduit à « 1 / 71 ». */
+@media (max-width: 40rem) {
+  .filtre-pas:disabled,
+  .filtre-detail {
+    display: none;
+  }
 }
 
 /* Occurrences du filtre : même stabilo que la requête ; la courante est cernée. */

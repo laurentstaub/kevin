@@ -195,17 +195,22 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(un, /role="tab"/);
   });
 
-  // Un filtre par document, caché sans JavaScript (documents.js le révèle) ; aucun pour un PDF seul.
-  it('chaque document porte son filtre, caché tant que le script ne l’a pas pris', () => {
+  // Un filtre, dans la barre sous le champ de recherche, pour le document affiché ;
+  // caché sans JavaScript (documents.js le révèle) ; aucun quand il n'y a qu'un PDF.
+  it('la barre porte le filtre du document sous le champ de recherche', () => {
     const doc = (type, html) => ({ type, anchor: `doc-${type}`, court: type, label: type, html, url: 'https://x' });
     const html = rendre('product', produit({
       hasDocuments: true,
-      documents: [doc('rcp', '<p>x</p>'), doc('notice', '<p>y</p>'), doc('rcp_notice', null)],
+      documents: [doc('rcp', '<p>x</p>'), doc('notice', '<p>y</p>')],
     }));
-    const filtres = [...html.matchAll(/<form class="filtre-doc" role="search" hidden(?:="hidden")? data-cible="([^"]+)">/g)]
-      .map((correspondance) => correspondance[1]);
-    assert.deepEqual(filtres, ['doc-rcp', 'doc-notice']);
-    assert.match(html, /<input class="filtre-champ" id="filtre-doc-rcp" type="search"/);
+    const barre = html.match(/<header class="barre">[\s\S]*?<\/header>/)[0];
+    assert.match(barre, /<div class="barre-champs"><div class="search-wrapper search-compacte">[\s\S]*<form class="filtre-doc" role="search" hidden/);
+    assert.match(barre, /<input class="filtre-champ" id="filtre-doc" type="search"/);
+    assert.equal((html.match(/class="filtre-doc"/g) ?? []).length, 1);
+
+    const pdf = rendre('product', produit({ hasDocuments: true, documents: [doc('rcp_notice', null)] }));
+    assert.doesNotMatch(pdf, /filtre-doc/);
+    assert.doesNotMatch(pdf, /barre-champs/);
   });
 
   // Une ligne de valeurs, dans l'ordre ; libellé et détail en infobulle, l'aplat marque ce qui bloque.
