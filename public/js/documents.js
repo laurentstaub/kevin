@@ -611,7 +611,8 @@ if (filtre) {
     attente = setTimeout(appliquer, 120);
   });
 
-  // Entrée : occurrence suivante ; Maj + Entrée : précédente ; Échap : filtre levé.
+  // Entrée : occurrence suivante ; Maj + Entrée : précédente ; Échap : filtre
+  // levé, puis, champ vide, on quitte le champ (le clavier revient à la page).
   filtre.addEventListener('submit', (evenement) => evenement.preventDefault());
   champ.addEventListener('keydown', (evenement) => {
     if (evenement.key === 'Enter') {
@@ -621,8 +622,34 @@ if (filtre) {
       evenement.preventDefault();
       champ.value = '';
       appliquer();
+    } else if (evenement.key === 'Escape') {
+      champ.blur();
     }
   });
+
+  // Sans souris : le curseur attend dans le filtre dès l'arrivée. Sur ordinateur
+  // seulement : sur téléphone, le clavier couvrirait la moitié de l'écran. Sans
+  // défilement : une ancre (#rcp-8) ou un passage trouvé restent à l'écran.
+  // Arrivée sur une ancre : le navigateur y saute et rend le focus à la page,
+  // parfois après le chargement ; on le reprend dans la seconde qui suit, tant
+  // que personne n'a pris le clavier.
+  const ordinateur = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const libre = () => !document.activeElement?.matches('input, textarea, select, [contenteditable]');
+  const viser = () => {
+    if (libre()) champ.focus({ preventScroll: true });
+  };
+  if (ordinateur) {
+    viser();
+    if (location.hash) {
+      const apres = () => {
+        requestAnimationFrame(viser);
+        setTimeout(viser, 300);
+        setTimeout(viser, 1000);
+      };
+      if (document.readyState === 'complete') apres();
+      else addEventListener('load', apres, { once: true });
+    }
+  }
   for (const bouton of boutons) {
     bouton.addEventListener('click', () => aller(courant + Number(bouton.dataset.pas), true));
   }

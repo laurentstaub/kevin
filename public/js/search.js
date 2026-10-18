@@ -158,4 +158,15 @@ if (form && input && dropdown && list) {
   });
 
   form.addEventListener('submit', hide);
+
+  // « / » : la recherche, d'où qu'on soit sur la page, sans souris (convention
+  // du web). Pas quand on écrit déjà dans un champ, ni avec une touche de
+  // modification (⌘F, Ctrl+F restent la recherche du navigateur).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    e.preventDefault();
+    input.focus();
+    input.select();
+  });
 }

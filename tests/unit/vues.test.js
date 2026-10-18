@@ -206,6 +206,8 @@ describe('rendu des gabarits', () => {
     const barre = html.match(/<header class="barre">[\s\S]*?<\/header>/)[0];
     assert.match(barre, /<div class="barre-champs"><div class="search-wrapper search-compacte">[\s\S]*<form class="filtre-doc" role="search" hidden/);
     assert.match(barre, /<input class="filtre-champ" id="filtre-doc" type="search"/);
+    // Les touches se lisent au survol : sans souris, rien d'autre ne les dit.
+    assert.match(barre, /title="Entrée : occurrence suivante[^"]*Échap : effacer · \/ : chercher un autre médicament"/);
     assert.equal((html.match(/class="filtre-doc"/g) ?? []).length, 1);
 
     const pdf = rendre('product', produit({ hasDocuments: true, documents: [doc('rcp_notice', null)] }));
