@@ -495,19 +495,48 @@ documents?.addEventListener('click', (evenement) => {
 // Ce que ⌘F ne fait pas dans un document replié. Changer d'onglet le reporte
 // sur le document affiché.
 
+/** Saisie pliée : sans accents, en minuscules, un seul blanc. */
+const plierSaisie = (saisie) => saisie.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim().replace(/\s+/g, ' ');
+
+/** Source de motif d'un texte plié : accents ignorés, un blanc vaut plusieurs. */
+function sourceLitterale(plie) {
+  return [...plie].map((lettre) => {
+    if (/\s/.test(lettre)) return '\\s+';
+    return ACCENTS[lettre] ?? lettre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }).join('').replace(/(\\s\+)+/g, '\\s+');
+}
+
 /**
  * Motif littéral de la saisie, telle quelle : accents ignorés, un blanc vaut
  * plusieurs. Pas de racine ni de pluriel, contrairement à `motifRequete` :
  * on cherche ce qu'on tape. Null sous deux caractères.
  */
 function motifLitteral(saisie) {
-  const propre = saisie.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+  const propre = plierSaisie(saisie);
   if (propre.length < 2) return null;
-  const source = [...propre].map((lettre) => {
-    if (/\s/.test(lettre)) return '\\s+';
-    return ACCENTS[lettre] ?? lettre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }).join('').replace(/(\\s\+)+/g, '\\s+');
-  return new RegExp(source, 'giu');
+  return new RegExp(sourceLitterale(propre), 'giu');
+}
+
+/**
+ * Expressions du document pour un mot du comptoir pris en entier
+ * (« sécabilité » → « barre de cassure », « doses égales »…) ; vide sinon.
+ */
+function formesDuConcept(saisie, concepts) {
+  const propre = plierSaisie(saisie);
+  const concept = concepts.find((candidat) => candidat.mots.some((mot) => plierSaisie(mot) === propre));
+  return concept?.formes ?? [];
+}
+
+/** Ce qu'on tape, plus les expressions du concept, en mots entiers. */
+function motifFiltre(saisie, concepts) {
+  const base = motifLitteral(saisie);
+  const formes = formesDuConcept(saisie, concepts);
+  if (!base || formes.length === 0) return base;
+  // Les plus longues d'abord : « être divisés » avant « être divisé ».
+  const alternatives = [...new Set(formes.map(plierSaisie))]
+    .sort((a, b) => b.length - a.length)
+    .map(sourceLitterale);
+  return new RegExp(`${base.source}|(?<![\\p{L}\\p{N}])(?:${alternatives.join('|')})(?![\\p{L}\\p{N}])`, 'giu');
 }
 
 /** Retire les marques du filtre et recolle les textes qu'elles avaient coupés. */
@@ -520,6 +549,9 @@ if (filtre) {
   const champ = filtre.querySelector('.filtre-champ');
   const compte = filtre.querySelector('.filtre-compte');
   const boutons = [...filtre.querySelectorAll('.filtre-pas')];
+  const concepts = (() => {
+    try { return JSON.parse(filtre.dataset.concepts ?? '[]'); } catch { return []; }
+  })();
 
   // Le document affiché : l'onglet actif, ou le seul document.
   const corpsAffiche = () => {
@@ -543,6 +575,9 @@ if (filtre) {
       compte.textContent = motifLitteral(champ.value) ? 'Aucune occurrence' : '';
       return;
     }
+    // Concept élargi : l'infobulle dit ce qui est cherché en plus du mot tapé.
+    const formes = formesDuConcept(champ.value, concepts);
+    compte.title = formes.length > 0 ? `Cherche aussi : ${formes.join(', ')}` : '';
     const nb = marques.length;
     const dans = new Set(marques.map((marque) => marque.closest('details.rubrique'))).size;
     // « 1 / 71 », puis le détail, que le téléphone masque pour laisser le champ.
@@ -579,7 +614,7 @@ if (filtre) {
   const appliquer = () => {
     lever();
     corps = corpsAffiche();
-    const motif = motifLitteral(champ.value);
+    const motif = motifFiltre(champ.value, concepts);
     if (!motif || !corps) {
       compter();
       return;

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { lireCode } from '../../src/codes.js';
-import { lireSecabilite } from '../../src/galenique.js';
+import { lireSecabilite, secabiliteDeForme } from '../../src/galenique.js';
 import { lireInfo } from '../../src/securite.js';
 import { signaletique } from '../../src/signaletique.js';
 
@@ -45,10 +45,49 @@ describe('lireSecabilite', () => {
     );
   });
 
+  it('formulations rencontrées : pluriel, « parties égales », « peut-être », négations', () => {
+    assert.equal(lireSecabilite('Comprimé. Les comprimés peuvent être divisés en deux parties égales.').valeur, 'secable');
+    assert.equal(lireSecabilite('Comprimé blanc, rond. Le comprimé peut-être divisé en doses égales.').valeur, 'secable');
+    assert.equal(lireSecabilite('La barre de cassure n’est là que pour faciliter la prise du comprimé, elle ne le divise pas en deux-demi doses égales.').valeur, 'prise-seule');
+    assert.equal(lireSecabilite('Les comprimés pelliculés 10 mg et 20 mg ne sont pas sécables.').valeur, 'non-secable');
+  });
+
+  it('lit la consigne des rubriques 4.2 et 4.4, et dit d’où vient la phrase', () => {
+    const lu = lireSecabilite('Comprimé.', { '4.2': 'Voie orale. Les comprimés doivent être avalés entiers et ne doivent pas être divisés, mâchés ou écrasés.' });
+    assert.equal(lu.valeur, 'ne-pas-couper');
+    assert.equal(lu.rubrique, '4.2');
+    assert.match(lu.phrase, /^Les comprimés doivent/);
+    assert.equal(lireSecabilite(null, { '4.4': 'Ils ne doivent être ni mâchés, ni écrasés ni cassés avant ingestion.' }).valeur, 'ne-pas-couper');
+    assert.equal(lireSecabilite(null, { '4.2': 'Ne pas tenter de diviser le comprimé.' }).valeur, 'ne-pas-couper');
+    assert.equal(lireSecabilite(null, { '4.2': 'La barre de cassure n’est pas destinée à diviser le comprimé.' }).valeur, 'prise-seule');
+    assert.equal(lireSecabilite('Comprimé sécable.').rubrique, '3');
+  });
+
+  it('une dose divisée n’est pas un comprimé qu’on coupe', () => {
+    const consignes = {
+      '4.2': 'La posologie doit être divisée par deux chez l’insuffisant rénal. La dose ne doit pas être divisée en deux prises. '
+        + 'Un comprimé sécable à 100 mg est disponible.',
+    };
+    assert.equal(lireSecabilite('Comprimé.', consignes), null);
+  });
+
+  it('se tait sur une consigne qui contredit la rubrique 3', () => {
+    assert.equal(lireSecabilite('Comprimé sécable.', { '4.2': 'Le comprimé ne doit pas être cassé.' }), null);
+  });
+
   it('se tait sur une barre de cassure seule ou un RCP qui se contredit', () => {
     assert.equal(lireSecabilite('Comprimé jaune, rond et convexe, présentant une barre de cassure.'), null);
     assert.equal(lireSecabilite('50 mg : comprimés non sécables. 100 mg : comprimés sécables.'), null);
     assert.equal(lireSecabilite(null), null);
+  });
+});
+
+describe('secabiliteDeForme', () => {
+  it('lit la forme BDPM, sans citer de rubrique', () => {
+    assert.deepEqual(secabiliteDeForme('comprimé pelliculé sécable'), { valeur: 'secable', phrase: 'comprimé pelliculé sécable', rubrique: null });
+    assert.equal(secabiliteDeForme('comprimé quadrisécable').valeur, 'quadrisecable');
+    assert.equal(secabiliteDeForme('comprimé pelliculé'), null);
+    assert.equal(secabiliteDeForme(null), null);
   });
 });
 
@@ -68,12 +107,19 @@ describe('lireInfo', () => {
 
 describe('bande : sécabilité et triangle noir', () => {
   const produit = { forme_pharmaceutique: 'comprimé pelliculé', commercialise: true, cip_products: [], surveillance_renforcee: true };
-  const cases = signaletique(produit, { resume: [] }, null, null, false, null, 0, { valeur: 'secable', phrase: 'Comprimé sécable.' });
+  const cases = signaletique(produit, { resume: [] }, null, null, false, null, 0, { valeur: 'secable', phrase: 'Comprimé sécable.', rubrique: '3' });
 
   it('ajoute la sécabilité à la forme, la phrase en infobulle', () => {
     const forme = cases.find((cas) => cas.cle === 'forme');
     assert.match(forme.valeur, /· sécable$/);
-    assert.match(forme.detail, /« Comprimé sécable\. »/);
+    assert.match(forme.detail, /RCP 3 : « Comprimé sécable\. »/);
+  });
+
+  it('RCP muet : la forme BDPM dit « sécable », la bande le garde', () => {
+    const sansRcp = signaletique({ ...produit, forme_pharmaceutique: 'comprimé pelliculé sécable' }, { resume: [] }, null, null, false);
+    const forme = sansRcp.find((cas) => cas.cle === 'forme');
+    assert.equal(forme.valeur, 'comprimé · sécable');
+    assert.equal(forme.detail, 'comprimé pelliculé sécable');
   });
 
   it('affiche le triangle noir après la forme', () => {

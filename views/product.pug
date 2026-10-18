@@ -61,7 +61,7 @@ block content
   - const filtrable = (documents || []).some((doc) => (doc.rubriques && doc.rubriques.length > 0) || doc.html)
   if filtrable
     +barreSituation()
-      form.filtre-doc(role="search" hidden)
+      form.filtre-doc(role="search" hidden data-concepts=conceptsDocument)
         label.sr-only(for="filtre-doc") Chercher dans ce document
         input.filtre-champ#filtre-doc(
           type="search"

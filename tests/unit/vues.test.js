@@ -8,6 +8,7 @@ import { productLinks } from '../../src/links.js';
 import { lienAlternatives } from '../../src/excipients.js';
 import { lireEtat, lien } from '../../src/etat-recherche.js';
 import { dci, specialite, phrase } from '../../src/casse.js';
+import { CONCEPTS_DOCUMENT_JSON } from '../../src/concepts-document.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
 import { signaletique } from '../../src/signaletique.js';
 
@@ -29,7 +30,7 @@ const rendre = (vue, locals = {}) => {
   }, mode);
 
   return pug.renderFile(path.join(ROOT, 'views', `${vue}.pug`), {
-    v: 'test', lien, dci, specialite, phrase, colonnes: COLONNES, etat, ...locals,
+    v: 'test', lien, dci, specialite, phrase, conceptsDocument: CONCEPTS_DOCUMENT_JSON, colonnes: COLONNES, etat, ...locals,
   });
 };
 
@@ -209,6 +210,9 @@ describe('rendu des gabarits', () => {
     // Les touches se lisent au survol : sans souris, rien d'autre ne les dit.
     assert.match(barre, /title="Entrée : occurrence suivante[^"]*Échap : effacer · \/ : chercher un autre médicament"/);
     assert.equal((html.match(/class="filtre-doc"/g) ?? []).length, 1);
+    // Les concepts du comptoir partent avec le filtre : « sécabilité » cherche aussi « barre de cassure ».
+    const concepts = JSON.parse(barre.match(/data-concepts="([^"]*)"/)[1].replaceAll('&quot;', '"'));
+    assert.ok(concepts.some((concept) => concept.mots.includes('sécabilité') && concept.formes.includes('barre de cassure')));
 
     const pdf = rendre('product', produit({ hasDocuments: true, documents: [doc('rcp_notice', null)] }));
     assert.doesNotMatch(pdf, /filtre-doc/);

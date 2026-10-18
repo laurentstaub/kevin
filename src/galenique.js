@@ -1,45 +1,92 @@
 /**
- * Sécabilité d'un comprimé, lue dans la rubrique 3 du RCP (forme
- * pharmaceutique). La phrase source est rendue telle quelle : la bande n'en
- * affiche qu'un mot, l'infobulle cite. Rien n'est déduit d'une simple « barre
- * de cassure », qui peut ne servir qu'à faciliter la prise.
+ * Sécabilité d'un comprimé, lue au RCP : rubrique 3 (forme pharmaceutique),
+ * puis les consignes des rubriques 4.2 et 4.4 (« ne doit pas être divisé »).
+ * La phrase source est rendue telle quelle : la bande n'en affiche qu'un mot,
+ * l'infobulle cite. Rien n'est déduit d'une simple « barre de cassure », qui
+ * peut ne servir qu'à faciliter la prise.
  */
 import { deaccent } from './text.js';
 
+/** « doses égales », « demi-doses égales », « deux-demi doses égales ». */
+const EGALES = '(?:deux[ -])?(?:demi[ -]?)?doses egales';
 /** Barre de cassure qui ne divise pas en doses égales : à vérifier avant tout « sécable ». */
 const PRISE_SEULE = [
-  /ne (?:le |la |les )?divise(?:nt)? pas en (?:deux )?(?:demi-)?doses egales/,
-  /(?:et )?non (?:pas )?(?:pour |de )?(?:le |la )?diviser en (?:deux )?(?:demi-)?doses egales/,
+  new RegExp(`ne (?:le |la |les )?divise(?:nt)? pas en ${EGALES}`),
+  new RegExp(`(?:et )?non (?:pas )?(?:pour |de )?(?:le |la )?diviser en ${EGALES}`),
   /n'est pas destinee a (?:briser|casser|diviser|couper)/,
   /(?:seulement|uniquement) (?:a |de |pour )?faciliter la (?:prise|deglutition)/,
 ];
 const QUADRI = /quadrisecable/;
-const SECABLE = /(?<!non[ -])\bsecables?\b|peut etre (?:divise|coupe) en (?:deux )?(?:demi-)?doses egales/;
-const NON_SECABLE = /\bnon[ -]secables?\b/;
+/** Le mot, sauf nié : « non sécable », « ne sont pas sécables ». */
+const SECABLE_MOT = /(?<!non[ -])(?<!pas )\bsecables?\b/;
+// « peut être divisé en doses égales », « peuvent être divisés en deux parties égales », « peut-être » (sic).
+const DIVISIBLE = /peu[a-z]*[ -]etre (?:divise|coupe|casse)e?s? en (?:deux |quatre )?(?:(?:demi-?)?doses|quarts|parties egales|moities)/;
+const PAS_SECABLE = /\b(?:n'est|ne sont) pas secables?\b/;
+const NON_SECABLE = new RegExp(`\\bnon[ -]secables?\\b|${PAS_SECABLE.source}`);
+/**
+ * Consigne de ne pas couper : « ne doit pas être divisé », « ni mâchés, ni
+ * divisés », « Ne pas tenter de diviser le comprimé ». Pas une dose « divisée
+ * par deux » ni « divisée en deux prises ».
+ */
+const NE_PAS_COUPER = /(?:\bne (?:doi[a-z]*|peu[a-z]*|faut|pas)\b|\bni\b|\bsans (?:etre|les?|la)\b)[^.;:]{0,60}?\b(?:divis|coup|cass|bris)(?:e|es|ee|ees|er)\b(?! par| en (?:deux|2|trois|3|plusieurs) (?:prises|doses|administrations))/;
+/** Sujet d'une consigne qui porte sur la posologie, pas sur le comprimé. */
+const POSOLOGIE = /\b(?:posologies?|doses? (?:quotidienne|journaliere|totale|d'entretien|initiale)s?)\b/;
 
 /** Phrases d'un texte, sans couper sur les décimales. */
 const phrases = (texte) => texte.split(/(?<=[.!?])\s+(?=\S)/).map((phrase) => phrase.trim()).filter(Boolean);
+const plier = (phrase) => deaccent(phrase).toLowerCase().replaceAll('’', "'");
 
 /**
  * @param {string|null} texte  texte de la rubrique 3
- * @returns {{ valeur: 'secable'|'quadrisecable'|'prise-seule'|'non-secable', phrase: string }|null}
+ * @param {{ [numero: string]: string|null }} consignes  rubriques 4.2 et 4.4
+ * @returns {{ valeur: 'secable'|'quadrisecable'|'prise-seule'|'non-secable'|'ne-pas-couper', phrase: string, rubrique: string }|null}
  *   null quand le RCP ne dit rien, ou se contredit (plusieurs dosages dans un même RCP)
  */
-export function lireSecabilite(texte) {
-  if (!texte) return null;
-  const trouve = (motif) => phrases(texte).find((phrase) => motif.test(deaccent(phrase).toLowerCase().replaceAll('’', "'")));
+export function lireSecabilite(texte, consignes = {}) {
+  const sources = [['3', texte], ...Object.entries(consignes)].filter(([, contenu]) => contenu);
+  const trouve = (motif, numeros, garde = () => true) => {
+    for (const [rubrique, contenu] of sources) {
+      if (!numeros.includes(rubrique)) continue;
+      const phrase = phrases(contenu.replace(/\s+/g, ' ')).find((candidate) => {
+        const plie = plier(candidate);
+        return candidate.length <= 500 && motif.test(plie) && garde(plie);
+      });
+      if (phrase) return { phrase, rubrique };
+    }
+    return null;
+  };
+  const tout = sources.map(([rubrique]) => rubrique);
+  const avec = (valeur, lu) => ({ valeur, ...lu });
 
-  const priseSeule = PRISE_SEULE.map(trouve).find(Boolean);
-  if (priseSeule) return { valeur: 'prise-seule', phrase: priseSeule };
+  const priseSeule = PRISE_SEULE.map((motif) => trouve(motif, tout)).find(Boolean);
+  if (priseSeule) return avec('prise-seule', priseSeule);
 
-  const quadri = trouve(QUADRI);
-  const secable = trouve(SECABLE);
-  const non = trouve(NON_SECABLE);
+  const quadri = trouve(QUADRI, ['3']);
+  const secable = trouve(SECABLE_MOT, ['3']) ?? trouve(DIVISIBLE, ['3']);
+  const non = trouve(NON_SECABLE, ['3']);
+  const consignes4 = tout.filter((rubrique) => rubrique !== '3');
+  const consigne = trouve(NE_PAS_COUPER, consignes4, (plie) => !POSOLOGIE.test(plie)) ?? trouve(PAS_SECABLE, consignes4);
   // « 50 mg : non sécables … 100 mg : sécables » : la bande ne tranche pas.
-  if ((quadri || secable) && non) return null;
-  if (quadri) return { valeur: 'quadrisecable', phrase: quadri };
-  if (secable) return { valeur: 'secable', phrase: secable };
-  if (non) return { valeur: 'non-secable', phrase: non };
+  if ((quadri || secable) && (non || consigne)) return null;
+  if (quadri) return avec('quadrisecable', quadri);
+  if (secable) return avec('secable', secable);
+  // La consigne dit plus que la description : « ne pas couper » plutôt que « non sécable ».
+  if (consigne) return avec('ne-pas-couper', consigne);
+  if (non) return avec('non-secable', non);
+  // Rubrique 3 muette : une permission écrite en 4.2. Pas le mot seul, qui y
+  // nomme souvent une autre spécialité (« un comprimé sécable à 100 mg est disponible »).
+  const permis = trouve(DIVISIBLE, consignes4, (plie) => !POSOLOGIE.test(plie));
+  return permis ? avec('secable', permis) : null;
+}
+
+/**
+ * Sécabilité écrite dans la forme BDPM (« comprimé pelliculé sécable »), quand
+ * le RCP se tait ou manque. La bande abrège la forme et en retire ce mot.
+ */
+export function secabiliteDeForme(forme) {
+  const plie = plier(String(forme ?? ''));
+  if (/quadrisecable/.test(plie)) return { valeur: 'quadrisecable', phrase: forme, rubrique: null };
+  if (/(?<!non[ -])\bsecables?\b/.test(plie)) return { valeur: 'secable', phrase: forme, rubrique: null };
   return null;
 }
 
@@ -49,18 +96,20 @@ export const SECABILITE = {
   quadrisecable: 'quadrisécable',
   'prise-seule': 'barre de prise seule',
   'non-secable': 'non sécable',
+  'ne-pas-couper': 'ne pas couper',
 };
 
-/** Sécabilité d'une spécialité d'après sa rubrique 3 déjà découpée ; null si muette. */
+/** Sécabilité d'une spécialité d'après ses rubriques 3, 4.2 et 4.4 déjà découpées ; null si muettes. */
 export async function getSecabilite(pool, cis) {
   const { rows } = await pool.query(
-    `SELECT texte FROM docs.rcp_sections
-      WHERE code_cis = $1 AND numero = '3' AND document_type <> 'notice'
-      ORDER BY (document_type = 'rcp') DESC, position
-      LIMIT 1`,
+    `SELECT DISTINCT ON (numero) numero, texte
+     FROM docs.rcp_sections
+     WHERE code_cis = $1 AND numero IN ('3', '4.2', '4.4') AND document_type <> 'notice'
+     ORDER BY numero, (document_type = 'rcp') DESC, position`,
     [cis],
   );
-  return lireSecabilite(rows[0]?.texte ?? null);
+  const texte = (numero) => rows.find((row) => row.numero === numero)?.texte ?? null;
+  return lireSecabilite(texte('3'), { '4.2': texte('4.2'), '4.4': texte('4.4') });
 }
 
 // ------------------------------------------------------------ l'administration

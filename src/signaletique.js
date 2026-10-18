@@ -6,7 +6,7 @@
  * valeur (état condensé). `portee` 'bloque' marque ce qui empêche la
  * délivrance en officine.
  */
-import { SECABILITE } from './galenique.js';
+import { SECABILITE, secabiliteDeForme } from './galenique.js';
 
 const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimilé' };
 
@@ -81,7 +81,7 @@ const taux = (valeur) => {
  * @param {boolean} importation
  * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
  * @param {number} options         alternatives proposables (substitution.js)
- * @param {{ valeur: string, phrase: string }|null} secabilite  rubrique 3 du RCP (galenique.js)
+ * @param {{ valeur: string, phrase: string, rubrique: string }|null} secabilite  rubriques 3, 4.2 et 4.4 du RCP (galenique.js)
  * @param {{ lu: boolean, presents: object[] }|null} excipients  rubriques 2 et 6.1 du RCP (excipients.js)
  * @param {{ cle: string, libelle: string, phrase: string }[]} administration  rubriques 4.2 et 6.6 du RCP (galenique.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
@@ -203,12 +203,14 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
 
   // Forme abrégée ; le dosage est dans le titre, le libellé complet en infobulle.
   // Sécabilité lue au RCP : un mot dans la bande, la phrase citée en infobulle.
+  // RCP muet ou absent : la forme BDPM, que l'abréviation dépouille de « sécable ».
   const forme = product.forme_pharmaceutique ?? '';
-  const secable = secabilite ? SECABILITE[secabilite.valeur] : null;
+  const lue = secabilite ?? secabiliteDeForme(forme);
+  const secable = lue ? SECABILITE[lue.valeur] : null;
   cases.push({
     cle: 'forme', picto: pictoForme(forme), libelle: 'Forme',
     valeur: [abregerForme(forme), secable].filter(Boolean).join(' · '),
-    detail: [forme, secabilite && `RCP 3 : « ${secabilite.phrase} »`].filter(Boolean).join(' — ') || null,
+    detail: [forme, lue?.rubrique && `RCP ${lue.rubrique} : « ${lue.phrase} »`].filter(Boolean).join(' — ') || null,
   });
 
   // Administration : avaler entier, écraser, ouvrir, sonde, comme le RCP le dit

@@ -4,6 +4,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { ROOT, config } from './config.js';
 import { lien } from './etat-recherche.js';
 import { dci, specialite, phrase } from './casse.js';
+import { CONCEPTS_DOCUMENT_JSON } from './concepts-document.js';
 import { securityHeaders, cors, notFound, errorHandler } from './middleware.js';
 import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
@@ -49,6 +50,8 @@ export function createApp(pool) {
   app.locals.lien = lien;
   // Casse d'affichage des noms BDPM : DCI en bas de casse, spécialité en nom propre.
   Object.assign(app.locals, { dci, specialite, phrase });
+  // Mots du comptoir et expressions des RCP, pour le filtre du document.
+  app.locals.conceptsDocument = CONCEPTS_DOCUMENT_JSON;
 
   // Pas de cache en développement, sinon le navigateur ne redemande pas le fichier.
   app.use(express.static(publics, { maxAge: production ? '1h' : 0 }));
