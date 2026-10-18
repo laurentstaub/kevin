@@ -6,6 +6,13 @@ html(lang="fr")
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title= title || 'Demander à Kevin'
+    //- Référencement : description, adresse canonique, ou hors index (résultats).
+    if description
+      meta(name="description" content=description)
+    if noindex
+      meta(name="robots" content="noindex")
+    else if canonique
+      link(rel="canonical" href=canonique)
     //- Recherche depuis la barre d'adresse du navigateur.
     link(rel="search" type="application/opensearchdescription+xml" title="Kevin" href="/opensearch.xml")
     //- Apparence choisie, posée avant les styles : pas de page qui change de

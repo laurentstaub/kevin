@@ -49,15 +49,22 @@ block content
     .accueil-inner
       +champRecherche(query, false)
 
-      //- Exemples cliquables pour révéler la recherche plein texte sur la page de garde.
+      //- Exemples cliquables : une ligne, une fonction que le champ ne montre pas
+      //- chacun (texte des documents, interactions, excipients, question).
+      //- La question n'est proposée qu'avec l'IA, sans qui elle reste sans réponse.
       if !results
         p.accueil-exemple
-          | Cherchez aussi dans le texte des documents :
+          | Essayez :
           |
-          a(href=lien({ mode: 'documents', requete: 'allongement QT' })) allongement QT
-          |
+          a(href=lien({ mode: 'documents', requete: 'allongement QT' }) title="Chercher dans le texte des RCP et notices") allongement QT
           span.sep
-          a(href=lien({ mode: 'documents', requete: 'insuffisance hépatique sévère' })) insuffisance hépatique sévère
+          a(href="/interactions?m=kardegic&m=previscan" title="Interactions entre médicaments") Kardégic + Previscan
+          span.sep
+          //- Doliprane 1000 mg, comprimé : CIS stable de la BDPM.
+          a(href="/product/60234100?sans=lactose#alternatives" title="Alternatives sans un excipient") Doliprane sans lactose
+          if ia
+            span.sep
+            a(href=lien({ mode: 'nom', requete: 'couper le Lévothyrox ?' }) title="Question en langage courant") couper le Lévothyrox ?
 
   .recherche
     if notice

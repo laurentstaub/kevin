@@ -58,6 +58,10 @@ export const config = {
     delaiMs: int(process.env.IA_DELAI_MS, 8000),
   },
 
+  // Adresse publique du site (« https://kevin.exemple.fr ») : liens canoniques,
+  // sitemap, OpenSearch. Vide : déduite de la requête (développement).
+  publicUrl: (process.env.PUBLIC_URL ?? '').replace(/\/+$/, '') || null,
+
   // Origines autorisées pour le CORS. Vide = même origine uniquement.
   corsOrigins: list(process.env.CORS_ORIGINS),
 

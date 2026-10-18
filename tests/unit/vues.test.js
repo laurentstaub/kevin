@@ -431,6 +431,32 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
+  // Une ligne d'exemples, une fonction chacun ; la question seulement avec l'IA.
+  it('les exemples de l’accueil montrent interactions, excipients et question', () => {
+    const sans = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
+    assert.match(sans, /href="\/interactions\?m=kardegic&amp;m=previscan"/);
+    assert.match(sans, /href="\/product\/60234100\?sans=lactose#alternatives"/);
+    assert.doesNotMatch(sans, /Lévothyrox/);
+    const avec = rendre('search_page', { query: '', filter: 'all', results: null, classes: [], ia: true });
+    assert.match(avec, /href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F" title="Question en langage courant">couper le Lévothyrox \?<\/a>/);
+  });
+
+  // Référencement : description et canonique, ou hors index.
+  it('l’en-tête porte description, adresse canonique ou noindex', () => {
+    const page = rendre('search_page', {
+      query: '', filter: 'all', results: null, classes: [],
+      description: 'Les médicaments', canonique: 'https://kevin.test/',
+    });
+    assert.match(page, /<meta name="description" content="Les médicaments">/);
+    assert.match(page, /<link rel="canonical" href="https:\/\/kevin.test\/">/);
+    assert.doesNotMatch(page, /noindex/);
+    const resultats = rendre('search_page', {
+      query: '', filter: 'all', results: null, classes: [], noindex: true, canonique: 'https://kevin.test/search',
+    });
+    assert.match(resultats, /<meta name="robots" content="noindex">/);
+    assert.doesNotMatch(resultats, /rel="canonical"/);
+  });
+
   // Accueil : les molécules les plus fournies, sous les classes.
   it('l’accueil liste les molécules les plus fournies', () => {
     const html = rendre('search_page', {

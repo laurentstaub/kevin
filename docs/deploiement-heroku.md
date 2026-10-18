@@ -144,6 +144,13 @@ Dispomed pour que les deux et un script de maintenance tiennent dedans.
 heroku config:set NODE_ENV=production PG_POOL_MAX=5 PG_STATEMENT_TIMEOUT_MS=5000 -a dr-kevin
 ```
 
+L'adresse publique fixe les liens canoniques, le sitemap et la recherche
+depuis la barre d'adresse ; sans elle, elle est déduite de chaque requête :
+
+```bash
+heroku config:set PUBLIC_URL=https://<domaine> -a dr-kevin
+```
+
 L'interprétation des questions par IA est facultative ; sans clé, elle est
 inactive et tout le reste fonctionne :
 

@@ -548,6 +548,28 @@ describe('API', { skip }, () => {
       assert.match(res.text, /<Url type="text\/html" method="get" template="https:\/\/127\.0\.0\.1:\d+\/search\?q=\{searchTerms\}"\/>/);
     });
 
+    // Moteurs : fiches et classes indexées sous leur adresse canonique, résultats exclus.
+    it('référencement : robots.txt, sitemap, titre et description des fiches, résultats hors index', async () => {
+      const robotsTxt = await request(app).get('/robots.txt').expect(200);
+      assert.match(robotsTxt.text, /^Disallow: \/search$/m);
+      assert.match(robotsTxt.text, /^Sitemap: http:\/\/127\.0\.0\.1:\d+\/sitemap\.xml$/m);
+
+      const plan = await request(app).get('/sitemap.xml').expect(200);
+      assert.match(plan.headers['content-type'], /xml/);
+      assert.match(plan.text, /<loc>http:\/\/127\.0\.0\.1:\d+\/product\/61111111<\/loc>/);
+
+      const fiche = await request(app).get('/product/61111111?q=x').expect(200);
+      assert.match(fiche.text, /<title>[^<]+ · RCP, notice, délivrance · Demander à Kevin<\/title>/);
+      assert.match(fiche.text, /<meta name="description" content="[^"]+">/);
+      assert.match(fiche.text, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:\d+\/product\/61111111">/);
+
+      const resultats = await request(app).get('/search?q=doliprane').expect(200);
+      assert.match(resultats.text, /<meta name="robots" content="noindex">/);
+      assert.doesNotMatch(resultats.text, /rel="canonical"/);
+      const introuvable = await request(app).get('/product/99999999').expect(404);
+      assert.match(introuvable.text, /noindex/);
+    });
+
     it('expose un healthcheck', async () => {
       const res = await request(app).get('/api/health').expect(200);
       assert.equal(res.body.status, 'ok');

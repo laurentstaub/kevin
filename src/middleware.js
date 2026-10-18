@@ -48,6 +48,8 @@ const wantsJson = (req) =>
 export function notFound(req, res) {
   if (wantsJson(req)) return res.status(404).json({ error: 'Ressource introuvable' });
   return res.status(404).render('error', {
+    // Une page d'erreur n'a pas d'adresse canonique et n'entre pas dans l'index.
+    canonique: null, noindex: true,
     status: 404,
     message: 'Cette page n’existe pas.',
   });
@@ -64,5 +66,5 @@ export function errorHandler(err, req, res, next) {
     status >= 500 ? 'Une erreur est survenue.' : err.message || 'Requête invalide.';
 
   if (wantsJson(req)) return res.status(status).json({ error: message });
-  return res.status(status).render('error', { status, message });
+  return res.status(status).render('error', { canonique: null, noindex: true, status, message });
 }

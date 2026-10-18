@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { config } from '../config.js';
+import { dci, specialite, phrase } from '../casse.js';
 import { wrap } from '../middleware.js';
 import { parseQuery, isValidCis } from '../validate.js';
 import { lireEtat, titre, lien } from '../etat-recherche.js';
@@ -15,6 +16,9 @@ import {
 } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
 import { getComptoir } from '../comptoir.js';
+import {
+  origine, metaProduit, metaClasse, DESCRIPTION_ACCUEIL, NON_INDEXEES, robots, sitemap, cheminsIndexables,
+} from '../referencement.js';
 import {
   getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans, lienAlternatives,
 } from '../excipients.js';
@@ -70,6 +74,14 @@ export function lienInteractions(elements) {
 export function pageRoutes(pool) {
   const router = Router();
 
+  // Référencement : résultats et extraits hors index ; ailleurs, l'adresse
+  // canonique sans paramètres (« ?q= », « ?sans= » ne font pas d'autres pages).
+  router.use((req, res, next) => {
+    if (NON_INDEXEES.some((chemin) => req.path.startsWith(chemin))) res.locals.noindex = true;
+    else res.locals.canonique = `${origine(req)}${req.path}`;
+    next();
+  });
+
   /** Fiche ou chapeau non relu : visible en développement seulement. */
   const visible = (fiche) => config.env !== 'production' || publiee(fiche);
 
@@ -103,6 +115,8 @@ export function pageRoutes(pool) {
       res.render('search_page', {
         etat: lireEtat({}, 'nom'),
         title: titre(lireEtat({}, 'nom')),
+        description: DESCRIPTION_ACCUEIL,
+        ia: iaActive(),
         query: '', filter: 'all', results: null, classes, molecules, sansRail: true,
         colonnes: COLONNES,
       });
@@ -145,10 +159,13 @@ export function pageRoutes(pool) {
       const groupe = specialitesListe.map((sp) => groupeBiologique(sp.denomination)).find(Boolean);
       const substitution = groupe?.substituable ? { ...substitutionBiosimilaires(), substance: groupe.substance } : null;
 
+      const commercialisees = specialitesListe.filter((sp) => sp.commercialise);
       res.render('classe', {
+        ...metaClasse({ code, libelle: phrase(classe.label), molecule: feuille, specialites: commercialisees.length }),
+        canonique: `${origine(req)}/classe/${code}`,
         substitution,
         classe, feuille, molecules, railActif: code[0],
-        commercialisees: regrouperSpecialites(specialitesListe.filter((sp) => sp.commercialise)),
+        commercialisees: regrouperSpecialites(commercialisees),
         retirees: regrouperSpecialites(specialitesListe.filter((sp) => !sp.commercialise)),
         portrait: lirePortrait(portrait),
         chapeau: chapeau && visible(chapeau) ? chapeau : null,
@@ -210,19 +227,36 @@ export function pageRoutes(pool) {
 
   // Recherche depuis la barre d'adresse du navigateur (OpenSearch) : « kevin »
   // puis Tab, ou moteur ajouté. L'adresse doit être absolue ; derrière le
-  // proxy de Heroku, le protocole vient de X-Forwarded-Proto.
+  // proxy de Heroku, le protocole vient de X-Forwarded-Proto ; PUBLIC_URL prime.
   router.get('/opensearch.xml', (req, res) => {
-    const origine = `${req.get('x-forwarded-proto') ?? req.protocol}://${req.get('host')}`;
+    const base = origine(req);
     res.type('application/opensearchdescription+xml').set('Cache-Control', 'public, max-age=86400').send(
       '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">'
       + '<ShortName>Kevin</ShortName>'
       + '<Description>Médicaments de la BDPM : nom, principe actif, expression dans les RCP</Description>'
       + '<InputEncoding>UTF-8</InputEncoding>'
-      + `<Url type="text/html" method="get" template="${encodeURI(origine)}/search?q={searchTerms}"/>`
+      + `<Url type="text/html" method="get" template="${encodeURI(base)}/search?q={searchTerms}"/>`
       + '</OpenSearchDescription>',
     );
   });
+
+  router.get('/robots.txt', (req, res) => {
+    res.type('text/plain').set('Cache-Control', 'public, max-age=86400').send(robots(origine(req)));
+  });
+
+  // Une fois par jour au plus : la BDPM change une fois par mois.
+  let cheminsEnCache = null;
+  router.get(
+    '/sitemap.xml',
+    wrap(async (req, res) => {
+      if (!cheminsEnCache || Date.now() - cheminsEnCache.depuis > 86_400_000) {
+        const fiches = listerFiches().filter(publiee).map((fiche) => fiche.slug);
+        cheminsEnCache = { depuis: Date.now(), chemins: await cheminsIndexables(pool, fiches) };
+      }
+      res.type('application/xml').set('Cache-Control', 'public, max-age=86400').send(sitemap(origine(req), cheminsEnCache.chemins));
+    }),
+  );
 
   router.get(
     '/search',
@@ -593,11 +627,21 @@ export function pageRoutes(pool) {
       });
       const deglutition = mentions ? filtrerDeglutition(categoriesFiltrees, mentions, req.query.deglutition === '1') : null;
 
+      // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
+      const bande = signaletique(product, delivrance, genericGroup, importation,
+        resumerEvaluation(evaluation), optionsAlternatives, secabilite, administration, comptoir);
       res.render('product', {
+        // Titre et description pour les moteurs : le nom, puis ce que la bande dit.
+        ...metaProduit({
+          nom: specialite(product.denomination_medicament),
+          substances: product.active_ingredients ? dci(product.active_ingredients) : null,
+          titulaire: product.titulaires,
+          // Prix, avis HAS et alternatives tiennent mal en 160 caractères ; la
+          // liste, la forme et le comptoir répondent à « X grossesse », « X sécable ».
+          valeurs: bande.filter((cas) => !['prix', 'has', 'generique'].includes(cas.cle)).map((cas) => cas.valeur),
+        }),
         product,
-        // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
-        signaletique: signaletique(product, delivrance, genericGroup, importation,
-          resumerEvaluation(evaluation), optionsAlternatives, secabilite, administration, comptoir),
+        signaletique: bande,
         securite,
         optionsAlternatives,
         // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.
