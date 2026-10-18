@@ -2,9 +2,10 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
-  normaliserRubrique, marquer, MOLECULES_MAX, PAR_PAGE, APERCU, motsTrouves, composerProximite,
-  composerTitre,
+  normaliserRubrique, marquer, MOLECULES_MAX, PAR_PAGE, APERCU, MINIMUM_CIBLE, motsTrouves,
+  composerProximite, composerTitre,
 } from '../../src/recherche-texte.js';
+import { config } from '../../src/config.js';
 
 describe('normaliserRubrique', () => {
   it('accepte un numéro de rubrique, avec ou sans sous-niveau', () => {
@@ -34,6 +35,12 @@ describe('bornes', () => {
   it('rendent assez de lignes pour que la page vaille la peine', () => {
     assert.ok(PAR_PAGE >= 50, 'la vue complète remplit l’écran');
     assert.ok(APERCU >= 10 && APERCU < PAR_PAGE, 'l’aperçu en montre moins, pas cinq');
+  });
+
+  // « olanzapine QT » : la base reconnaît le médicament, il reste « QT », deux lettres.
+  it('laissent passer un terme de deux lettres dans les documents d’un médicament', () => {
+    assert.equal(MINIMUM_CIBLE, 2);
+    assert.ok(MINIMUM_CIBLE <= config.search.minLength);
   });
 });
 

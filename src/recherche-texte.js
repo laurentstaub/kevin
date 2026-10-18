@@ -31,6 +31,13 @@ export const PAR_PAGE = 50;
 export const APERCU = 12;
 
 /**
+ * Longueur minimale d'un terme cherché dans les documents d'un seul médicament :
+ * « QT », « IV », « AVC » y sont précis, et la recherche ne lit que ses RCP.
+ * Sur toute la base, le minimum reste celui de la configuration.
+ */
+export const MINIMUM_CIBLE = 2;
+
+/**
  * Rubriques qui ont leur colonne et leur onglet. Liste fixe pour que les
  * colonnes ne bougent pas d'une requête à l'autre ; le reste va dans « Autres ».
  */

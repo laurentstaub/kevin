@@ -519,6 +519,17 @@ describe('API', { skip }, () => {
      * devant une mention partielle dans les effets indésirables (ASPIRINE UPSA, 4.8) :
      * le surdosage ne dit rien de l'usage normal.
      */
+    /** « previscan QT » : la base garde le médicament, il reste « QT », deux lettres. */
+    it('cherche un terme de deux lettres dans les documents d’un médicament', async () => {
+      const cible = await request(app).get('/documents?q=QT&molecule=fluindione&question=previscan%20QT').expect(200);
+      assert.doesNotMatch(cible.text, /Saisissez au moins/);
+      assert.match(cible.text, /href="\/product\/61111120\?q=QT#rcp-2"/);
+
+      // Sur toute la base, le minimum habituel tient.
+      const partout = await request(app).get('/documents?q=QT').expect(200);
+      assert.match(partout.text, /Saisissez au moins 3 caractères/);
+    });
+
     it('classe une rubrique du comptoir devant le surdosage, même exact', async () => {
       const res = await request(app).get('/documents?q=allongement%20QT').expect(200);
       const molecules = [...res.text.matchAll(/class="trouvaille-molecule"[^>]*>([^<]+)</g)]

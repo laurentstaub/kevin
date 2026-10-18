@@ -35,7 +35,7 @@ import { signaletique } from '../signaletique.js';
 import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, motsTrouves,
-  APERCU, COLONNES, PAR_PAGE,
+  APERCU, COLONNES, PAR_PAGE, MINIMUM_CIBLE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
 import { productLinks } from '../links.js';
@@ -312,7 +312,11 @@ export function pageRoutes(pool) {
     '/documents',
     wrap(async (req, res) => {
       const etat = lireEtat(req.query, 'documents');
-      const query = parseQuery(req.query.q);
+      // Dans les documents d'un seul médicament, un terme de deux lettres
+      // (« olanzapine QT » → « QT ») est précis et la recherche reste petite.
+      // Sur toute la base, le minimum habituel évite de tout ramener.
+      const minimum = etat.molecule ? MINIMUM_CIBLE : config.search.minLength;
+      const query = parseQuery(req.query.q, { minLength: minimum });
       const { rubrique, page } = etat;
 
       if (!query.raw) return res.redirect('/');
@@ -361,7 +365,7 @@ export function pageRoutes(pool) {
         parPage: PAR_PAGE,
         panne,
         notice: query.tooShort
-          ? `Saisissez au moins ${config.search.minLength} caractères.`
+          ? `Saisissez au moins ${minimum} caractères.`
           : null,
       });
     }),
