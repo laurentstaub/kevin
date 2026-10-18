@@ -561,7 +561,8 @@ if (filtre) {
   };
 
   // Document filtré, ses marques, l'occurrence visée, et l'ouverture de ses
-  // rubriques avant le filtre, pour la rendre quand il est levé.
+  // rubriques avant le filtre, pour la rendre quand il est levé. La bande
+  // signalétique est filtrée avec lui : « sécable » s'y lit avant le RCP.
   let corps = null;
   let marques = [];
   let courant = -1;
@@ -579,11 +580,12 @@ if (filtre) {
     const formes = formesDuConcept(champ.value, concepts);
     compte.title = formes.length > 0 ? `Cherche aussi : ${formes.join(', ')}` : '';
     const nb = marques.length;
-    const dans = new Set(marques.map((marque) => marque.closest('details.rubrique'))).size;
+    const enBande = Boolean(bande?.contains(marques[0]));
+    const dans = new Set(marques.map((marque) => marque.closest('details.rubrique')).filter(Boolean)).size;
     // « 1 / 71 », puis le détail, que le téléphone masque pour laisser le champ.
     const detail = document.createElement('span');
     detail.className = 'filtre-detail';
-    detail.textContent = ` occurrence${nb > 1 ? 's' : ''}${dans > 1 ? ` · ${dans} rubriques` : ''}`;
+    detail.textContent = ` occurrence${nb > 1 ? 's' : ''}${dans > 1 ? ` · ${dans} rubriques` : ''}${enBande ? ' · bande' : ''}`;
     compte.replaceChildren(`${courant >= 0 ? `${courant + 1} / ` : ''}${nb}`, detail);
   };
 
@@ -592,13 +594,21 @@ if (filtre) {
     if (marques.length === 0) return;
     marques[courant]?.classList.remove('filtre-actif');
     courant = (indice + marques.length) % marques.length;
-    marques[courant].classList.add('filtre-actif');
-    marques[courant].scrollIntoView({ block: 'center', behavior: doux ? 'smooth' : 'auto' });
+    const marque = marques[courant];
+    marque.classList.add('filtre-actif');
+    // La bande, collante, est souvent déjà à l'écran : on ne quitte pas la lecture.
+    const cadre = marque.getBoundingClientRect();
+    if (bande?.contains(marque) && cadre.top >= 0 && cadre.bottom <= window.innerHeight) {
+      compter();
+      return;
+    }
+    marque.scrollIntoView({ block: 'center', behavior: doux ? 'smooth' : 'auto' });
     compter();
   };
 
   // Retire le filtre du document filtré : marques, décomptes, ouvertures.
   const lever = () => {
+    if (bande) retirerMarques(bande);
     if (corps) {
       retirerMarques(corps);
       for (const badge of corps.querySelectorAll('.filtre-nb')) badge.remove();
@@ -621,8 +631,9 @@ if (filtre) {
     }
 
     avant = new Map(rubriques().map((bloc) => [bloc, bloc.open]));
+    if (bande) surligner(bande, motif, 'filtre');
     surligner(corps, motif, 'filtre');
-    marques = [...corps.querySelectorAll('mark.filtre')];
+    marques = [...(bande?.querySelectorAll('mark.filtre') ?? []), ...corps.querySelectorAll('mark.filtre')];
 
     // Ouvertes si elles contiennent le mot, repliées sinon : la lecture se
     // concentre ; le nombre se lit dans le titre, même rubrique repliée.
