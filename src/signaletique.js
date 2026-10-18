@@ -14,8 +14,51 @@ const GENERIQUE = { 0: 'Princeps', 1: 'Générique', 2: 'Assimilé', 4: 'Assimil
 const ADMINISTRATION_MONTREES = 2;
 const INTERDITS = new Set(['ne-pas-ecraser', 'ne-pas-ouvrir', 'avaler-entier']);
 
-/** Excipients nommés dans la bande ; les autres sont comptés, tous sont en infobulle. */
-const EXCIPIENTS_MONTRES = 3;
+const REPAS = { 'a-jeun': 'à jeun', 'avant-repas': 'avant le repas', 'au-repas': 'pendant le repas' };
+const CONDUITE = { importante: 'influence importante', moderee: 'influence modérée' };
+const citer = (lu, phrase = lu.phrase) => `RCP ${lu.rubrique} : « ${phrase} »`;
+const ancre = (lu) => (lu.ancre ? `#${lu.ancre}` : null);
+
+/**
+ * Les questions du comptoir, ce qui contraint seulement : contre-indication
+ * pendant la grossesse ou l'allaitement, conduite d'influence modérée ou
+ * importante, prise liée aux repas, durée après ouverture. Le mot dans la
+ * bande, la phrase en infobulle, la valeur mène à la rubrique.
+ */
+function casesComptoir({ grossesse, conduite, repas, ouverture }) {
+  const cases = [];
+  if (grossesse) {
+    const { grossesse: enceinte, allaitement } = grossesse;
+    const valeur = enceinte?.periode
+      ? [`CI grossesse ${enceinte.periode}`, allaitement && 'allaitement'].filter(Boolean).join(' · ')
+      : `CI ${[enceinte && 'grossesse', allaitement && 'allaitement'].filter(Boolean).join(' · ')}`;
+    const phrases = [...new Set([enceinte?.phrase, allaitement?.phrase].filter(Boolean))];
+    cases.push({
+      cle: 'grossesse', picto: 'grossesse', libelle: 'Contre-indication', fort: true,
+      valeur, detail: phrases.map((phrase) => citer(grossesse, phrase)).join(' ; '), lien: ancre(grossesse),
+    });
+  }
+  if (conduite && CONDUITE[conduite.niveau]) {
+    cases.push({
+      cle: 'conduite', picto: 'voiture', libelle: 'Conduite',
+      valeur: `conduite : ${CONDUITE[conduite.niveau]}`, detail: citer(conduite), lien: ancre(conduite),
+    });
+  }
+  if (repas) {
+    cases.push({
+      cle: 'repas', picto: 'couverts', libelle: 'Prise et repas',
+      valeur: REPAS[repas.cle], detail: citer(repas), lien: ancre(repas),
+    });
+  }
+  if (ouverture) {
+    cases.push({
+      cle: 'ouverture', picto: 'horloge', libelle: `Après ${ouverture.apres}`,
+      valeur: `${ouverture.duree} après ${ouverture.apres}${ouverture.froid ? ' · réfrigérateur' : ''}`,
+      detail: citer(ouverture), lien: ancre(ouverture),
+    });
+  }
+  return cases;
+}
 
 /** Picto de la forme pharmaceutique, d'après son libellé BDPM. */
 export function pictoForme(forme) {
@@ -76,18 +119,17 @@ const taux = (valeur) => {
 /**
  * @param {object} product        sortie de getProduct (cip_products, forme, commercialise, type_generique)
  * @param {{ resume: Array<{cle, court, long, portee}> }} delivrance
- * @param {object|null} resumeAtc  feuille { code, label }
  * @param {string|null} groupe     libellé du groupe générique
  * @param {boolean} importation
  * @param {{ valeur, detail, avis }|null} evaluation  résumé HAS (has.js)
  * @param {number} options         alternatives proposables (substitution.js)
  * @param {{ valeur: string, phrase: string, rubrique: string }|null} secabilite  rubriques 3, 4.2 et 4.4 du RCP (galenique.js)
- * @param {{ lu: boolean, presents: object[] }|null} excipients  rubriques 2 et 6.1 du RCP (excipients.js)
  * @param {{ cle: string, libelle: string, phrase: string }[]} administration  rubriques 4.2 et 6.6 du RCP (galenique.js)
+ * @param {object|null} comptoir  grossesse, conduite, repas, après ouverture (comptoir.js)
  * @returns {Array<{ cle, picto, libelle, valeur, detail?, portee?, lien? }>}
  *   `libelle` et `detail` vont en infobulle : la bande n'affiche que les valeurs.
  */
-export function signaletique(product, delivrance, resumeAtc, groupe, importation, evaluation = null, options = 0, secabilite = null, excipients = null, administration = []) {
+export function signaletique(product, delivrance, groupe, importation, evaluation = null, options = 0, secabilite = null, administration = [], comptoir = null) {
   const cases = [];
   const mentions = delivrance?.resume ?? [];
   const par = (cle) => mentions.filter((mention) => mention.cle === cle);
@@ -211,6 +253,7 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     cle: 'forme', picto: pictoForme(forme), libelle: 'Forme',
     valeur: [abregerForme(forme), secable].filter(Boolean).join(' · '),
     detail: [forme, lue?.rubrique && `RCP ${lue.rubrique} : « ${lue.phrase} »`].filter(Boolean).join(' — ') || null,
+    lien: lue?.ancre ? `#${lue.ancre}` : null,
   });
 
   // Administration : avaler entier, écraser, ouvrir, sonde, comme le RCP le dit
@@ -231,19 +274,7 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
     });
   }
 
-  // Excipients à effet notoire : ceux que le RCP déclare (rubrique 2), nommés
-  // comme l'annexe européenne, la déclaration citée en infobulle. Rien de
-  // déclaré ne s'affiche pas : la case dirait « aucun » sans l'avoir lu.
-  const declares = (excipients?.presents ?? []).filter((present) => present.source === 'notoire');
-  if (declares.length > 0) {
-    const montres = declares.slice(0, EXCIPIENTS_MONTRES).map((present) => present.court);
-    const reste = declares.length - montres.length;
-    cases.push({
-      cle: 'excipients', picto: 'liste', libelle: 'Excipients à effet notoire',
-      valeur: reste > 0 ? `${montres.join(' · ')} +${reste}` : montres.join(' · '),
-      detail: declares.map((present) => `${present.libelle}${present.quantite ? ` (${present.quantite})` : ''}`).join(' ; '),
-    });
-  }
+  cases.push(...casesComptoir(comptoir ?? {}));
 
   // Triangle noir : surveillance supplémentaire, effets indésirables à déclarer.
   if (product.surveillance_renforcee) {
@@ -257,13 +288,6 @@ export function signaletique(product, delivrance, resumeAtc, groupe, importation
 
   if (product.commercialise === false) {
     cases.push({ cle: 'etat', picto: 'barre', libelle: 'État', valeur: 'Non commercialisé', portee: 'bloque' });
-  }
-
-  if (resumeAtc?.feuille?.code) {
-    cases.push({
-      cle: 'atc', picto: 'arbre', libelle: 'ATC',
-      valeur: resumeAtc.feuille.code, detail: resumeAtc.feuille.label, lien: `/classe/${resumeAtc.feuille.code}`,
-    });
   }
 
   return cases;

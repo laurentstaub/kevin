@@ -14,6 +14,7 @@ import {
   getSecabilite, getAdministration, administrationDe, filtrerDeglutition,
 } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
+import { getComptoir } from '../comptoir.js';
 import {
   getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans, lienAlternatives,
 } from '../excipients.js';
@@ -206,6 +207,22 @@ export function pageRoutes(pool) {
     // `question` posé : sans lui, /documents réorienterait vers lui-même, sans fin.
     return iaActive() && estQuestion(saisie) ? documents({}) : null;
   };
+
+  // Recherche depuis la barre d'adresse du navigateur (OpenSearch) : « kevin »
+  // puis Tab, ou moteur ajouté. L'adresse doit être absolue ; derrière le
+  // proxy de Heroku, le protocole vient de X-Forwarded-Proto.
+  router.get('/opensearch.xml', (req, res) => {
+    const origine = `${req.get('x-forwarded-proto') ?? req.protocol}://${req.get('host')}`;
+    res.type('application/opensearchdescription+xml').set('Cache-Control', 'public, max-age=86400').send(
+      '<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">'
+      + '<ShortName>Kevin</ShortName>'
+      + '<Description>Médicaments de la BDPM : nom, principe actif, expression dans les RCP</Description>'
+      + '<InputEncoding>UTF-8</InputEncoding>'
+      + `<Url type="text/html" method="get" template="${encodeURI(origine)}/search?q={searchTerms}"/>`
+      + '</OpenSearchDescription>',
+    );
+  });
 
   router.get(
     '/search',
@@ -430,7 +447,7 @@ export function pageRoutes(pool) {
 
       const [
         alternatives, variantes, bruts, decoupe, delivrance, remboursement, classeAtc, evaluation, trouves,
-        secabilite, securite, excipients, administration,
+        secabilite, securite, excipients, administration, comptoir,
       ] = await Promise.all([
         getAlternatives(pool, cis).catch((err) => {
           console.error('[substitution] alternatives indisponibles pour', cis, err.message);
@@ -497,6 +514,11 @@ export function pageRoutes(pool) {
         getAdministration(pool, cis).catch((err) => {
           console.error('[administration] indisponible pour', cis, err.message);
           return [];
+        }),
+        // Panne ou RCP muet : rien, la bande ne conclut pas.
+        getComptoir(pool, cis, product.forme_pharmaceutique).catch((err) => {
+          console.error('[comptoir] indisponible pour', cis, err.message);
+          return null;
         }),
       ]);
 
@@ -574,8 +596,8 @@ export function pageRoutes(pool) {
       res.render('product', {
         product,
         // Cases fixes sous le titre, condensées en seconde ligne de la barre au défilement.
-        signaletique: signaletique(product, delivrance, resumeAtc, genericGroup, importation,
-          resumerEvaluation(evaluation), optionsAlternatives, secabilite, excipients, administration),
+        signaletique: signaletique(product, delivrance, genericGroup, importation,
+          resumerEvaluation(evaluation), optionsAlternatives, secabilite, administration, comptoir),
         securite,
         optionsAlternatives,
         // Sous-classe ATC (5 caractères) des alternatives de classe : nommée et liée.

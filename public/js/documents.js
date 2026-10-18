@@ -708,3 +708,33 @@ if (filtre) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Citer : un passage copié dans un document emporte sa source (spécialité,
+// document, rubrique, date, lien vers la rubrique), pour le transmettre au
+// prescripteur tel quel. Hors d'un document, la copie reste celle du navigateur.
+
+document.addEventListener('copy', (evenement) => {
+  const selection = document.getSelection();
+  const texte = selection?.toString().replace(/\s+/g, ' ').trim();
+  if (!texte) return;
+  const element = (noeud) => (noeud?.nodeType === Node.ELEMENT_NODE ? noeud : noeud?.parentElement);
+  const article = element(selection.anchorNode)?.closest('article.document');
+  if (!article || element(selection.focusNode)?.closest('article.document') !== article) return;
+
+  const rubrique = element(selection.anchorNode).closest('details.rubrique');
+  const tete = rubrique?.querySelector(':scope > summary');
+  const intitule = tete
+    ? `rubrique ${tete.querySelector('.num')?.textContent.trim() ?? ''} ${tete.querySelector('.lab')?.textContent.trim() ?? ''}`.replace(/\s+/g, ' ').trim()
+    : null;
+  const date = [...article.querySelectorAll('.document-meta span')].find((span) => /^Mis à jour/.test(span.textContent))?.textContent.trim();
+  const source = [
+    document.querySelector('.produit-titre')?.textContent.trim(),
+    article.dataset.libelle,
+    intitule,
+    date && date.charAt(0).toLowerCase() + date.slice(1),
+  ].filter(Boolean).join(', ');
+  const lien = `${location.origin}${location.pathname}#${rubrique?.id ?? article.id}`;
+
+  evenement.clipboardData.setData('text/plain', `« ${texte} »\n— ${source}. ${lien}`);
+  evenement.preventDefault();
+});

@@ -102,14 +102,19 @@ export const SECABILITE = {
 /** Sécabilité d'une spécialité d'après ses rubriques 3, 4.2 et 4.4 déjà découpées ; null si muettes. */
 export async function getSecabilite(pool, cis) {
   const { rows } = await pool.query(
-    `SELECT DISTINCT ON (numero) numero, texte
+    `SELECT DISTINCT ON (numero) numero, texte, document_type, position
      FROM docs.rcp_sections
      WHERE code_cis = $1 AND numero IN ('3', '4.2', '4.4') AND document_type <> 'notice'
      ORDER BY numero, (document_type = 'rcp') DESC, position`,
     [cis],
   );
-  const texte = (numero) => rows.find((row) => row.numero === numero)?.texte ?? null;
-  return lireSecabilite(texte('3'), { '4.2': texte('4.2'), '4.4': texte('4.4') });
+  const rubrique = (numero) => rows.find((row) => row.numero === numero);
+  const texte = (numero) => rubrique(numero)?.texte ?? null;
+  const lu = lireSecabilite(texte('3'), { '4.2': texte('4.2'), '4.4': texte('4.4') });
+  if (!lu) return null;
+  // Ancre de la rubrique citée dans la fiche : la bande y mène.
+  const source = rubrique(lu.rubrique);
+  return { ...lu, ancre: source ? `${source.document_type}-${source.position}` : null };
 }
 
 // ------------------------------------------------------------ l'administration

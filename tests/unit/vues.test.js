@@ -214,6 +214,10 @@ describe('rendu des gabarits', () => {
     const concepts = JSON.parse(barre.match(/data-concepts="([^"]*)"/)[1].replaceAll('&quot;', '"'));
     assert.ok(concepts.some((concept) => concept.mots.includes('sécabilité') && concept.formes.includes('barre de cassure')));
 
+    // Citer : documents.js lit le libellé du document et la ligne de service le dit.
+    assert.match(html, /<article class="document" id="doc-rcp" data-type="rcp" data-libelle="rcp"/);
+    assert.match(html, /<span class="astuce-copie">Un passage copié emporte sa source<\/span>/);
+
     const pdf = rendre('product', produit({ hasDocuments: true, documents: [doc('rcp_notice', null)] }));
     assert.doesNotMatch(pdf, /filtre-doc/);
     assert.doesNotMatch(pdf, /barre-champs/);
@@ -225,7 +229,7 @@ describe('rendu des gabarits', () => {
       signaletique: [
         { cle: 'ordonnance', picto: 'cadenas', libelle: 'Ordonnance', valeur: 'Stupéfiant', detail: 'Stupéfiant', portee: 'bloque' },
         { cle: 'prix', picto: 'euro', libelle: 'Prise en charge', valeur: '65 % · 2,10 €' },
-        { cle: 'atc', picto: 'arbre', libelle: 'ATC', valeur: 'N02AA01', detail: 'morphine', lien: '/classe/N02AA01' },
+        { cle: 'generique', picto: 'generique', libelle: 'Générique', valeur: 'Générique · 12 options', lien: '#alternatives' },
       ],
     }));
     assert.match(html, /<section class="signaletique"/);
@@ -235,7 +239,7 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(html, /repere/);
     assert.match(html, /class="signal signal-bloque" title="Ordonnance — Stupéfiant" data-cle="ordonnance"><svg class="picto"/);
     assert.match(html, /title="Prise en charge" data-cle="prix">.*?<span class="signal-valeur">65 % · 2,10 €<\/span>/);
-    assert.match(html, /<a class="signal-valeur" href="\/classe\/N02AA01">N02AA01<\/a>/);
+    assert.match(html, /<a class="signal-valeur" href="#alternatives">Générique · 12 options<\/a>/);
     assert.doesNotMatch(html, /signal-libelle/);
     assert.ok(html.indexOf('data-cle="ordonnance"') < html.indexOf('data-cle="prix"'));
     assert.doesNotMatch(rendre('product', produit()), /signaletique/);
@@ -867,7 +871,7 @@ describe('fiche produit — condition complétée', () => {
     const html = rendre('product', produit({ delivrance }));
     assert.match(html, /Condition absente de la BDPM, complétée le 13\/10\/2026 : Ses équivalentes sont en liste I\./);
     // L'en-tête du bloc ne répète plus les conditions : la bande les porte, origine comprise.
-    const bande = signaletique({ id: '1', denomination_medicament: 'X' }, delivrance, null, null, null);
+    const bande = signaletique({ id: '1', denomination_medicament: 'X' }, delivrance, null, null);
     assert.match(bande.find((signal) => signal.cle === 'ordonnance').detail, /complété, absent de la BDPM : Ses équivalentes/);
   });
 });

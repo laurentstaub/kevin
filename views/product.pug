@@ -479,6 +479,7 @@ block content
             article.document(
               id=doc.anchor
               data-type=doc.type
+              data-libelle=doc.label
               role=(documents.length > 1 ? 'tabpanel' : null)
               aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
               hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
@@ -493,6 +494,8 @@ block content
                   a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
                 if doc.rubriques && doc.rubriques.length > 0
                   button.deplier(type="button" data-cible=doc.anchor) Tout déplier
+                //- Sans bouton : copier un passage y joint sa source (documents.js).
+                span.astuce-copie Un passage copié emporte sa source
                 if doc.manquantes && doc.manquantes.length > 0
                   span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
 

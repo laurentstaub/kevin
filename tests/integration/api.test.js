@@ -404,14 +404,11 @@ describe('API', { skip }, () => {
 
   describe('excipients', () => {
     /** Rubrique 2 (déclaration à effet notoire) et 6.1 (liste complète) du RCP. */
-    it('signale dans la bande les excipients à effet notoire, sodium compris', async () => {
+    // Les excipients se cherchent (filtre du document, alternatives « sans ») : pas de case.
+    it('ne les affiche pas dans la bande', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
-      assert.match(res.text, /data-cle="excipients">[\s\S]*?<span class="signal-valeur">aspartam · sodium<\/span>/);
-    });
-
-    it('ne dit rien quand la liste des excipients n’en contient aucun', async () => {
-      const res = await request(app).get('/product/61111114').expect(200);
       assert.doesNotMatch(res.text, /data-cle="excipients"/);
+      assert.doesNotMatch(res.text, /data-cle="atc"/);
     });
 
     it('propose « sans lactose » dans les alternatives, et masque ce qui en contient', async () => {
@@ -542,6 +539,15 @@ describe('API', { skip }, () => {
   });
 
   describe('transversal', () => {
+    // Barre d'adresse : le navigateur découvre le moteur par le lien de l'en-tête.
+    it('décrit la recherche pour la barre d’adresse (OpenSearch)', async () => {
+      const accueil = await request(app).get('/').expect(200);
+      assert.match(accueil.text, /<link rel="search" type="application\/opensearchdescription\+xml" title="Kevin" href="\/opensearch.xml">/);
+      const res = await request(app).get('/opensearch.xml').set('X-Forwarded-Proto', 'https').expect(200);
+      assert.match(res.headers['content-type'], /opensearchdescription\+xml/);
+      assert.match(res.text, /<Url type="text\/html" method="get" template="https:\/\/127\.0\.0\.1:\d+\/search\?q=\{searchTerms\}"\/>/);
+    });
+
     it('expose un healthcheck', async () => {
       const res = await request(app).get('/api/health').expect(200);
       assert.equal(res.body.status, 'ok');

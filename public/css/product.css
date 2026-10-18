@@ -496,6 +496,13 @@ td.forme {
   max-width: none;
 }
 
+/* Sur écran tactile, on copie rarement : l'astuce y serait du bruit. */
+@media (hover: none) {
+  .astuce-copie {
+    display: none;
+  }
+}
+
 /* Filets posés en CSS, indépendamment des éléments présents. */
 .document-meta > * + *::before {
   content: '|';

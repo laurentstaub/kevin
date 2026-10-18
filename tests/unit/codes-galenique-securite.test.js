@@ -107,7 +107,7 @@ describe('lireInfo', () => {
 
 describe('bande : sécabilité et triangle noir', () => {
   const produit = { forme_pharmaceutique: 'comprimé pelliculé', commercialise: true, cip_products: [], surveillance_renforcee: true };
-  const cases = signaletique(produit, { resume: [] }, null, null, false, null, 0, { valeur: 'secable', phrase: 'Comprimé sécable.', rubrique: '3' });
+  const cases = signaletique(produit, { resume: [] }, null, false, null, 0, { valeur: 'secable', phrase: 'Comprimé sécable.', rubrique: '3' });
 
   it('ajoute la sécabilité à la forme, la phrase en infobulle', () => {
     const forme = cases.find((cas) => cas.cle === 'forme');
@@ -116,7 +116,7 @@ describe('bande : sécabilité et triangle noir', () => {
   });
 
   it('RCP muet : la forme BDPM dit « sécable », la bande le garde', () => {
-    const sansRcp = signaletique({ ...produit, forme_pharmaceutique: 'comprimé pelliculé sécable' }, { resume: [] }, null, null, false);
+    const sansRcp = signaletique({ ...produit, forme_pharmaceutique: 'comprimé pelliculé sécable' }, { resume: [] }, null, false);
     const forme = sansRcp.find((cas) => cas.cle === 'forme');
     assert.equal(forme.valeur, 'comprimé · sécable');
     assert.equal(forme.detail, 'comprimé pelliculé sécable');
