@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib';
 import { config } from './config.js';
 
 /** En-têtes de sécurité, écrits à la main pour rester lisibles et sans dépendance. */
@@ -22,6 +23,45 @@ export function securityHeaders(req, res, next) {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  next();
+}
+
+/**
+ * En production, derrière le routeur Heroku (qui termine le TLS et le dit dans
+ * X-Forwarded-Proto) : HTTP redirigé vers HTTPS, puis HSTS.
+ */
+export function https(req, res, next) {
+  if (config.env !== 'production') return next();
+  if (req.get('x-forwarded-proto') === 'http') {
+    return res.redirect(301, `${config.publicUrl ?? `https://${req.get('host')}`}${req.originalUrl}`);
+  }
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  next();
+}
+
+/** Types compressés : pages, données, XML ; pas les images. */
+const COMPRESSIBLE = /^(?:text\/|application\/(?:json|xml|[a-z+.-]*\+xml))/;
+
+/**
+ * Pages compressées en gzip : le routeur Heroku ne compresse pas, et une fiche
+ * pèse 100 à 600 Ko de HTML (une recherche dans les documents, jusqu'à 1 Mo).
+ * Seules les réponses de res.send (gabarits, JSON, XML) passent ici ; les
+ * fichiers statiques, empreintés et mis en cache, partent tels quels.
+ */
+export function compresser(req, res, next) {
+  const envoyer = res.send.bind(res);
+  res.send = (corps) => {
+    const texte = typeof corps === 'string' || Buffer.isBuffer(corps);
+    // res.send fixe text/html pour une chaîne sans type : le dire avant d'envoyer des octets.
+    if (typeof corps === 'string' && !res.get('Content-Type')) res.type('html');
+    if (texte && corps.length >= 1024 && !res.get('Content-Encoding')
+      && COMPRESSIBLE.test(res.get('Content-Type') ?? '') && /\bgzip\b/.test(req.get('accept-encoding') ?? '')) {
+      res.vary('Accept-Encoding');
+      res.set('Content-Encoding', 'gzip');
+      return envoyer(gzipSync(corps));
+    }
+    return envoyer(corps);
+  };
   next();
 }
 

@@ -52,17 +52,24 @@ BEGIN
   END IF;
 END $$;
 
-ALTER TABLE docs.rcp_sections
-  ADD COLUMN IF NOT EXISTS vecteur tsvector
-  GENERATED ALWAYS AS (
-    setweight(to_tsvector('french_nu', libelle), 'A') || to_tsvector('french_nu', texte)
-  ) STORED;
-
-CREATE INDEX IF NOT EXISTS idx_sections_vecteur
-  ON docs.rcp_sections USING gin (vecteur);
-
--- Anciens index GIN, remplacés par idx_sections_vecteur.
-DROP INDEX IF EXISTS docs.idx_sections_fts_nu;
-DROP INDEX IF EXISTS docs.idx_sections_texte_fts;
+-- Table absente (base partagée, avant chargement) : la configuration seule.
+-- Restaurée depuis une archive, la table arrive avec sa colonne et son index.
+DO $$
+BEGIN
+  IF to_regclass('docs.rcp_sections') IS NULL THEN
+    RAISE NOTICE 'docs.rcp_sections absente : colonne vecteur et index reportés';
+    RETURN;
+  END IF;
+  ALTER TABLE docs.rcp_sections
+    ADD COLUMN IF NOT EXISTS vecteur tsvector
+    GENERATED ALWAYS AS (
+      setweight(to_tsvector('french_nu', libelle), 'A') || to_tsvector('french_nu', texte)
+    ) STORED;
+  CREATE INDEX IF NOT EXISTS idx_sections_vecteur
+    ON docs.rcp_sections USING gin (vecteur);
+  -- Anciens index GIN, remplacés par idx_sections_vecteur.
+  DROP INDEX IF EXISTS docs.idx_sections_fts_nu;
+  DROP INDEX IF EXISTS docs.idx_sections_texte_fts;
+END $$;
 
 -- Le filtre par rubrique utilise l'index sur `numero` (sections.sql).

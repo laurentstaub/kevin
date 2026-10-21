@@ -5,7 +5,7 @@ import { ROOT, config } from './config.js';
 import { lien } from './etat-recherche.js';
 import { dci, specialite, phrase } from './casse.js';
 import { CONCEPTS_DOCUMENT_JSON } from './concepts-document.js';
-import { securityHeaders, cors, notFound, errorHandler } from './middleware.js';
+import { https, securityHeaders, compresser, cors, notFound, errorHandler } from './middleware.js';
 import { pageRoutes } from './routes/pages.js';
 import { apiRoutes } from './routes/api.js';
 
@@ -40,7 +40,9 @@ export function createApp(pool) {
   app.set('view engine', 'pug');
   app.set('views', path.join(ROOT, 'views'));
 
+  app.use(https);
   app.use(securityHeaders);
+  app.use(compresser);
   app.use(cors);
   app.use(express.json({ limit: '64kb' }));
   const publics = path.join(ROOT, 'public');
