@@ -28,12 +28,17 @@ export function securityHeaders(req, res, next) {
 
 /**
  * En production, derrière le routeur Heroku (qui termine le TLS et le dit dans
- * X-Forwarded-Proto) : HTTP redirigé vers HTTPS, puis HSTS.
+ * X-Forwarded-Proto) : HTTP redirigé vers HTTPS, puis HSTS. PUBLIC_URL posée,
+ * l'adresse de secours (dr-kevin.herokuapp.com) y est redirigée aussi : une
+ * seule adresse pour les moteurs et les favoris.
  */
 export function https(req, res, next) {
   if (config.env !== 'production') return next();
-  if (req.get('x-forwarded-proto') === 'http') {
-    return res.redirect(301, `${config.publicUrl ?? `https://${req.get('host')}`}${req.originalUrl}`);
+  const protocole = req.get('x-forwarded-proto')?.split(',')[0].trim();
+  const hote = req.get('host');
+  const publique = config.publicUrl ? new URL(config.publicUrl) : null;
+  if (protocole === 'http' || (publique && hote !== publique.host)) {
+    return res.redirect(301, `${publique?.origin ?? `https://${hote}`}${req.originalUrl}`);
   }
   res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   next();

@@ -107,8 +107,10 @@ $P/pg_restore -l /tmp/kevin_dbpm.dump | grep -v 'FK CONSTRAINT' > /tmp/kevin_dbp
 $P/pg_restore --no-owner --no-privileges -L /tmp/kevin_dbpm.list -d "$DATABASE_URL" /tmp/kevin_dbpm.dump
 ```
 
+L'archive crée le schéma `docs` ; `--clean --if-exists` ne fait rien la première fois et permet de rejouer la commande après un transfert interrompu :
+
 ```bash
-$P/pg_restore --no-owner --no-privileges -d "$DATABASE_URL" /tmp/kevin_docs.dump
+$P/pg_restore --no-owner --no-privileges --clean --if-exists -d "$DATABASE_URL" /tmp/kevin_docs.dump
 ```
 
 La colonne `vecteur` est générée : elle n'est pas dans l'archive et se recalcule au chargement, grâce à `french_nu` posée à l'étape 3. L'index GIN se construit ensuite.
@@ -135,7 +137,7 @@ npm run diagnostic
 heroku config:set NODE_ENV=production PG_POOL_MAX=5 PG_STATEMENT_TIMEOUT_MS=5000 -a dr-kevin
 ```
 
-L'adresse publique fixe les liens canoniques, le sitemap, la recherche depuis la barre d'adresse et la redirection HTTPS. Sans elle, l'adresse est déduite de chaque requête :
+L'adresse publique fixe les liens canoniques, le sitemap, la recherche depuis la barre d'adresse et la redirection HTTPS ; `dr-kevin.herokuapp.com` y est redirigé. Sans elle, l'adresse est déduite de chaque requête, en-tête `Host` compris :
 
 ```bash
 heroku config:set PUBLIC_URL=https://<domaine> -a dr-kevin

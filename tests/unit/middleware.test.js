@@ -53,10 +53,14 @@ describe('HTTPS en production', () => {
     assert.match(servi.headers['strict-transport-security'], /max-age=31536000/);
   });
 
-  it('redirige vers l’adresse publique quand elle est fixée', async () => {
+  it('redirige vers l’adresse publique quand elle est fixée, depuis HTTP ou un autre hôte', async () => {
     Object.assign(config, { env: 'production', publicUrl: 'https://kevin.exemple.fr' });
-    const res = await request(app()).get('/court').set('X-Forwarded-Proto', 'http').expect(301);
-    assert.equal(res.headers.location, 'https://kevin.exemple.fr/court');
+    const http = await request(app()).get('/court').set('X-Forwarded-Proto', 'http').expect(301);
+    assert.equal(http.headers.location, 'https://kevin.exemple.fr/court');
+    const secours = await request(app()).get('/court?q=a').set('Host', 'dr-kevin.herokuapp.com').set('X-Forwarded-Proto', 'https').expect(301);
+    assert.equal(secours.headers.location, 'https://kevin.exemple.fr/court?q=a');
+    const servi = await request(app()).get('/court').set('Host', 'kevin.exemple.fr').set('X-Forwarded-Proto', 'https').expect(200);
+    assert.equal(servi.headers.location, undefined);
   });
 
   it('ne fait rien hors production', async () => {

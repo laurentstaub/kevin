@@ -1,22 +1,22 @@
 /**
  * Banc d'essai du découpage des RCP et notices, sur cas construits et documents réels. Lecture seule.
- *   node test_RCP_info.mjs                      # cas construits seulement
- *   node test_RCP_info.mjs --base               # + mesure sur la base
- *   node test_RCP_info.mjs --dump <fichier.sql> # + mesure sur un dump pg_dump
- *   node test_RCP_info.mjs --bilan              # + ce qui est déjà en base
- *   node test_RCP_info.mjs --cis 60002283       # inspecter un document précis
+ *   node scripts/banc-decoupage.mjs                      # cas construits seulement
+ *   node scripts/banc-decoupage.mjs --base               # + mesure sur la base
+ *   node scripts/banc-decoupage.mjs --dump <fichier.sql> # + mesure sur un dump pg_dump
+ *   node scripts/banc-decoupage.mjs --bilan              # + ce qui est déjà en base
+ *   node scripts/banc-decoupage.mjs --cis 60002283       # inspecter un document précis
  */
 
 import { createReadStream } from 'node:fs';
 import { createInterface } from 'node:readline';
-import { outline } from './src/outline.js';
-import { splitDocument } from './src/split.js';
-import { sanitizeDocument } from './src/sanitize.js';
-import { socle, rubriqueNotice } from './src/rcp-plan.js';
+import { outline } from '../src/outline.js';
+import { splitDocument } from '../src/split.js';
+import { sanitizeDocument } from '../src/sanitize.js';
+import { socle, rubriqueNotice } from '../src/rcp-plan.js';
 import {
   pages, retirerHabillage, decouperAnnexes, versHtml, pdfEnDocuments,
   separerRepetitions, choisirBloc,
-} from './src/pdf.js';
+} from '../src/pdf.js';
 
 const args = process.argv.slice(2);
 const opt = (nom) => {
