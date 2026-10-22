@@ -210,7 +210,10 @@ export function pageRoutes(pool) {
       return null;
     });
     if (reconnu?.reste) {
-      const criteres = await interpreter(reconnu.reste);
+      // La question entière, pas son reste : « couper le Lévothyrox ? » privé du
+      // nom laisse « couper le », deux mots sans point d'interrogation, qui ne
+      // passeraient plus pour une question. La molécule reste celle de la base.
+      const criteres = await interpreter(saisie);
       return criteres
         ? documents({ requete: criteres.mots, rubrique: criteres.rubrique, molecule: reconnu.molecule, ia: '1' })
         : documents({ requete: reconnu.reste, molecule: reconnu.molecule });

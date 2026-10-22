@@ -162,3 +162,38 @@ describe('routes, IA active', () => {
     await request(app).get(`/search?q=${encodeURIComponent(QUESTION)}`).expect(200);
   });
 });
+
+// « couper le Lévothyrox ? » : le nom reconnu par la base, il ne restait que
+// « couper le », deux mots sans point d'interrogation, jamais envoyés à l'IA.
+describe('question qui nomme un médicament', () => {
+  const poolLevothyrox = {
+    query: async (sql, params) => (sql.includes('FROM unnest($1::text[]) AS mot')
+      ? { rows: params[0].map((mot) => ({ mot, substances: 0, marque: mot === 'levothyrox' })) }
+      : { rows: [] }),
+    connect: async () => ({ query: async () => ({ rows: [] }), release() {} }),
+    end: async () => {},
+    on() {},
+  };
+  const avant = { ...config.ia };
+  const app = createApp(poolLevothyrox);
+  const QUESTION = 'couper le Lévothyrox ?';
+
+  beforeEach(async () => {
+    Object.assign(config.ia, { fournisseur: 'mistral', cleMistral: 'test', modele: 'test' });
+    oublierInterpretations();
+    await interpreterQuestion(QUESTION, {
+      appeler: async () => ({ molecule: 'lévothyrox', rubrique: '3', mots: 'divisé' }),
+    });
+  });
+  after(() => Object.assign(config.ia, avant));
+
+  it('envoie la question entière à l’IA, la molécule reste celle de la base', async () => {
+    const res = await request(app).get(`/search?q=${encodeURIComponent(QUESTION)}`).expect(302);
+    const url = new URL(res.headers.location, 'http://x');
+    assert.equal(url.pathname, '/documents');
+    assert.equal(url.searchParams.get('q'), 'divisé');
+    assert.equal(url.searchParams.get('rubrique'), '3');
+    assert.equal(url.searchParams.get('molecule'), 'levothyrox');
+    assert.equal(url.searchParams.get('ia'), '1');
+  });
+});

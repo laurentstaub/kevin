@@ -11,6 +11,7 @@ import { canonique } from './synonymes.js';
 
 /** Rubriques du RCP proposées au modèle, et seules acceptées en retour. */
 export const RUBRIQUES_IA = {
+  '3': 'Forme pharmaceutique',
   '4.1': 'Indications thérapeutiques',
   '4.2': 'Posologie et mode d\'administration',
   '4.3': 'Contre-indications',
@@ -58,6 +59,9 @@ ${Object.entries(RUBRIQUES_IA).map(([numero, libelle]) => `  ${numero} ${libelle
   dose, rein ou foie → 4.2 ; interdit → 4.3 ; prudence → 4.4 ; effet gênant → 4.8 ;
   trop pris → 4.9. Les rubriques 5 et 6 seulement pour la pharmacologie, les
   excipients ou la conservation. null si aucune ne s'impose.
+  Deux gestes distincts, à ne pas confondre :
+  couper, casser, diviser un comprimé (sécabilité) → rubrique 3, mots « divisé » ;
+  écraser un comprimé, ouvrir une gélule → rubrique 4.2, mots « écraser ».
 - mots : une seule expression de 1 à 4 mots, celle qui figure textuellement dans un RCP
   (vocabulaire médical français), sans la molécule. Jamais de liste ni de virgule :
   tous les mots doivent être présents dans la même rubrique pour qu'elle soit trouvée.
