@@ -87,14 +87,43 @@
   max-width: var(--measure);
 }
 
-/* Exemples de requêtes plein texte, volontairement sans nom de médicament. */
-.accueil-exemple {
+/* Notice du site : une ligne repliée qui nomme les fonctions, dépliée un
+   exemple et une phrase par fonction. */
+.notice-site {
   font-size: var(--fs-sm);
   color: var(--muted);
   margin: var(--sp-2) 0 0;
 }
 
-.accueil-exemple a {
+.notice-site > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.notice-site > summary::-webkit-details-marker { display: none; }
+.notice-site > summary:hover { color: var(--ink); }
+
+/* Ouverte, la liste dit la même chose : le résumé se réduit à son titre. */
+.notice-site[open] .notice-genres { display: none; }
+
+.notice-liste {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: var(--sp-2) 0 0;
+}
+
+.notice-liste dt { color: var(--muted); }
+
+.notice-liste dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.6em;
+}
+
+.notice-liste a {
   color: var(--lien);
   text-decoration: underline;
   text-decoration-thickness: var(--trait);
@@ -102,10 +131,11 @@
   text-underline-offset: 3px;
 }
 
-.accueil-exemple .sep::before {
-  content: "·";
-  margin: 0 0.5em;
-  color: var(--faint);
+.notice-explication { font-size: var(--fs-xs); color: var(--faint); }
+
+@media (max-width: 600px) {
+  .notice-liste { grid-template-columns: 1fr; row-gap: 0; }
+  .notice-liste dd { margin-bottom: var(--sp-1); }
 }
 
 .accueil .input-wrapper {
@@ -1472,6 +1502,7 @@ a.point:focus-visible {
 .charniere .num::before,
 .formes-plus::before,
 .molecules-plus::before,
+.notice-site > summary::before,
 .trouvaille-details > summary::before {
   content: '▸';
   display: inline-block;
@@ -1490,6 +1521,7 @@ a.point:focus-visible {
 .charniere.ouverte .num::before,
 details[open] > .formes-plus::before,
 details[open] > .molecules-plus::before,
+.notice-site[open] > summary::before,
 .trouvaille-details[open] > summary::before {
   transform: rotate(90deg);
 }
@@ -1503,6 +1535,7 @@ details[open] > .molecules-plus::before,
   .charniere .num::before,
   .formes-plus::before,
   .molecules-plus::before,
+  .notice-site > summary::before,
   .trouvaille-details > summary::before { transition: none; }
 }
 

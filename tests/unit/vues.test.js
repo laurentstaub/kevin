@@ -431,14 +431,19 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
-  // Une ligne d'exemples, une fonction chacun ; la question seulement avec l'IA.
-  it('les exemples de l’accueil montrent interactions, excipients et question', () => {
+  // Notice repliée : le résumé nomme les fonctions, la liste donne un exemple de chacune ;
+  // la question seulement avec l'IA.
+  it('la notice de l’accueil montre textes, interactions, excipients, boîte et question', () => {
     const sans = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
-    assert.match(sans, /href="\/interactions\?m=kardegic&amp;m=previscan"/);
-    assert.match(sans, /href="\/product\/60234100\?sans=lactose#alternatives"/);
-    assert.doesNotMatch(sans, /Lévothyrox/);
+    assert.match(sans, /<details class="notice-site"><summary>Notice<span class="notice-genres"> · chercher un passage des RCP · une interaction · une alternative · une boîte<\/span>/);
+    assert.match(sans, /<dt>Une interaction<\/dt><dd><a href="\/interactions\?m=kardegic&amp;m=previscan">/);
+    assert.match(sans, /<dt>Une alternative<\/dt><dd><a href="\/product\/60234100\?sans=lactose#alternatives">/);
+    assert.match(sans, /<dt>Un passage des RCP<\/dt><dd><a href="\/documents\?q=allongement\+QT">/);
+    assert.match(sans, /<dt>Une boîte<\/dt><dd><a href="\/search\?q=3400935955838">/);
+    assert.doesNotMatch(sans, /Lévothyrox|une question/);
     const avec = rendre('search_page', { query: '', filter: 'all', results: null, classes: [], ia: true });
-    assert.match(avec, /href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F" title="Question en langage courant">couper le Lévothyrox \?<\/a>/);
+    assert.match(avec, /· une boîte · une question<\/span>/);
+    assert.match(avec, /<dt>Une question<\/dt><dd><a href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F">couper le Lévothyrox \?<\/a>/);
   });
 
   // Référencement : description et canonique, ou hors index.
@@ -491,14 +496,14 @@ describe('rendu des gabarits', () => {
     assert.match(classe, /class="rail"/);
   });
 
-  it('l’exemple disparaît une fois la recherche faite', () => {
+  it('la notice disparaît une fois la recherche faite', () => {
     const html = rendre('search_page', {
       query: 'aspirine',
       filter: 'all',
       results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
       documents: RECHERCHE_VIDE,
     });
-    assert.doesNotMatch(html, /accueil-exemple/);
+    assert.doesNotMatch(html, /notice-site/);
   });
 
   // Pas de barre de situation sur cette page : le titre du bandeau est le seul retour.
