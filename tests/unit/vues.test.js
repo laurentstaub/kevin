@@ -431,19 +431,20 @@ describe('rendu des gabarits', () => {
     assert.match(html, /href="\/documents\?q=allongement\+QT"/);
   });
 
-  // Notice repliée : le résumé nomme les fonctions, la liste donne un exemple de chacune ;
+  // Mode d'emploi replié : le résumé nomme les cas, la liste donne un exemple de chacun ;
   // la question seulement avec l'IA.
-  it('la notice de l’accueil montre textes, interactions, excipients, boîte et question', () => {
+  it('le mode d’emploi de l’accueil décline nom, textes, interactions, excipients, boîte et question', () => {
     const sans = rendre('search_page', { query: '', filter: 'all', results: null, classes: [] });
-    assert.match(sans, /<details class="notice-site"><summary>Notice<span class="notice-genres"> · chercher un passage des RCP · une interaction · une alternative · une boîte<\/span>/);
-    assert.match(sans, /<dt>Une interaction<\/dt><dd><a href="\/interactions\?m=kardegic&amp;m=previscan">/);
-    assert.match(sans, /<dt>Une alternative<\/dt><dd><a href="\/product\/60234100\?sans=lactose#alternatives">/);
-    assert.match(sans, /<dt>Un passage des RCP<\/dt><dd><a href="\/documents\?q=allongement\+QT">/);
-    assert.match(sans, /<dt>Une boîte<\/dt><dd><a href="\/search\?q=3400935955838">/);
+    assert.match(sans, /<details class="notice-site"><summary><span class="notice-titre">Comment utiliser la barre de recherche\u202f\?<\/span><span class="notice-genres"> · un nom, un passage des RCP, une interaction, une alternative, une boîte<\/span>/);
+    assert.match(sans, /<dt>Un nom, une molécule<\/dt><dd><a class="notice-essai" href="\/search\?q=amoxicilline">/);
+    assert.match(sans, /<dt>Une interaction<\/dt><dd><a class="notice-essai" href="\/interactions\?m=kardegic&amp;m=previscan">/);
+    assert.match(sans, /<dt>Une alternative<\/dt><dd><a class="notice-essai" href="\/product\/60234100\?sans=lactose#alternatives">/);
+    assert.match(sans, /<dt>Un passage des RCP<\/dt><dd><a class="notice-essai" href="\/documents\?q=allongement\+QT">/);
+    assert.match(sans, /<dt>Une boîte<\/dt><dd><a class="notice-essai" href="\/search\?q=3400935955838">/);
     assert.doesNotMatch(sans, /Lévothyrox|une question/);
     const avec = rendre('search_page', { query: '', filter: 'all', results: null, classes: [], ia: true });
-    assert.match(avec, /· une boîte · une question à Kevin<\/span>/);
-    assert.match(avec, /<dt>Une question à Kevin<\/dt><dd><a href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F">couper le Lévothyrox \?<\/a>/);
+    assert.match(avec, /, une boîte, une question<\/span>/);
+    assert.match(avec, /<dt>Une question à Kevin<\/dt><dd><a class="notice-essai" href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F">couper le Lévothyrox \?<\/a>/);
   });
 
   // Référencement : description et canonique, ou hors index.

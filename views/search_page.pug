@@ -49,40 +49,45 @@ block content
     .accueil-inner
       +champRecherche(query, false)
 
-      //- Notice du site, repliée : sa ligne de résumé nomme ce que le champ sait
-      //- faire et que son libellé ne dit pas ; dépliée, un exemple cliquable et
-      //- une phrase par fonction. La question n'est proposée qu'avec l'IA, sans
-      //- qui elle reste sans réponse.
+      //- Mode d'emploi de la barre, replié : sa ligne de résumé nomme ce que le
+      //- champ sait chercher et que son libellé ne dit pas ; déplié, une ligne
+      //- par cas, avec un exemple cliquable, présenté comme une saisie, et une
+      //- phrase. La question n'est proposée qu'avec l'IA, sans qui elle reste
+      //- sans réponse.
       if !results
         - const genres = ['un passage des RCP', 'une interaction', 'une alternative', 'une boîte']
-        - if (ia) genres.push('une question à Kevin')
+        - if (ia) genres.push('une question')
         details.notice-site
           summary
-            | Notice
-            span.notice-genres= ` · chercher ${genres.join(' · ')}`
+            span.notice-titre Comment utiliser la barre de recherche ?
+            span.notice-genres= ` · un nom, ${genres.join(', ')}`
           dl.notice-liste
+            dt Un nom, une molécule
+            dd
+              a.notice-essai(href=lien({ mode: 'nom', requete: 'amoxicilline' })) amoxicilline
+              span.notice-explication dénomination ou principe actif ; les spécialités, puis la fiche
             dt Un passage des RCP
             dd
-              a(href=lien({ mode: 'documents', requete: 'allongement QT' })) allongement QT
+              a.notice-essai(href=lien({ mode: 'documents', requete: 'allongement QT' })) allongement QT
               span.notice-explication l'expression dans le texte des RCP et notices, rubrique par rubrique
             dt Une interaction
             dd
-              a(href="/interactions?m=kardegic&m=previscan") Kardégic + Previscan
+              a.notice-essai(href="/interactions?m=kardegic&m=previscan") Kardégic + Previscan
               span.notice-explication deux noms ou plus : ce que la rubrique 4.5 de chaque RCP dit de l'autre
             dt Une alternative
             dd
               //- Doliprane 1000 mg, comprimé : CIS stable de la BDPM.
-              a(href="/product/60234100?sans=lactose#alternatives") Doliprane sans lactose
+              a.notice-essai(href="/product/60234100?sans=lactose#alternatives") Doliprane sans lactose
               span.notice-explication génériques et équivalents, sans un excipient à effet notoire
             dt Une boîte
             dd
               //- CIP 13 d'une plaquette de Doliprane 1000 mg : la fiche s'ouvre directement.
-              a(href="/search?q=3400935955838") 3400935955838
+              a.notice-essai(href="/search?q=3400935955838") 3400935955838
               span.notice-explication code CIP ou Datamatrix lu à la douchette : la fiche directement
             if ia
               dt Une question à Kevin
               dd
-                a(href=lien({ mode: 'nom', requete: 'couper le Lévothyrox ?' })) couper le Lévothyrox ?
+                a.notice-essai(href=lien({ mode: 'nom', requete: 'couper le Lévothyrox ?' })) couper le Lévothyrox ?
                 span.notice-explication en langage courant : Kevin, l'IA, la traduit en recherche ; la réponse est citée des RCP
 
   .recherche

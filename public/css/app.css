@@ -87,13 +87,20 @@
   max-width: var(--measure);
 }
 
-/* Notice du site : une ligne repliée qui nomme les fonctions, dépliée un
-   exemple et une phrase par fonction. */
+/* Mode d'emploi de la barre, sous le champ. Repliée, une simple ligne qui
+   nomme ce que la barre sait chercher ; dépliée, une boîte posée sur un gris
+   léger, sans filet, une ligne par cas : l'exemple présenté comme une saisie
+   (champ blanc, coins ronds) qu'on peut cliquer, puis une phrase. */
 .notice-site {
   font-size: var(--fs-sm);
   color: var(--muted);
   margin: var(--sp-2) 0 0;
+  padding: 0.6rem var(--sp-2);
+  border-radius: var(--radius-surface);
 }
+
+/* Gris translucide : l'encre à 5 %, juste pour poser la boîte, clair ou sombre. */
+.notice-site[open] { background: color-mix(in srgb, var(--ink) 5%, transparent); }
 
 .notice-site > summary {
   cursor: pointer;
@@ -101,41 +108,69 @@
 }
 
 .notice-site > summary::-webkit-details-marker { display: none; }
-.notice-site > summary:hover { color: var(--ink); }
+.notice-site > summary:hover .notice-titre { color: var(--accent); }
+
+.notice-titre {
+  color: var(--ink);
+  font-weight: 500;
+}
 
 /* Ouverte, la liste dit la même chose : le résumé se réduit à son titre. */
 .notice-site[open] .notice-genres { display: none; }
 
+/* Trois colonnes alignées : le cas, l'exemple, la phrase. */
 .notice-liste {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: var(--sp-1) var(--sp-3);
-  margin: var(--sp-2) 0 0;
+  grid-template-columns: max-content max-content 1fr;
+  gap: 0.55rem var(--sp-2);
+  align-items: baseline;
+  margin: 0.6rem 0 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--rule);
 }
 
 .notice-liste dt { color: var(--muted); }
 
+/* Le dd s'efface : l'exemple et la phrase prennent chacun leur colonne. */
 .notice-liste dd {
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 0.6em;
+  display: contents;
 }
 
-.notice-liste a {
-  color: var(--lien);
-  text-decoration: underline;
-  text-decoration-thickness: var(--trait);
-  text-decoration-color: var(--trait-couleur);
-  text-underline-offset: 3px;
+/* L'exemple, dessiné comme ce qu'on taperait dans le champ. */
+.notice-essai {
+  display: inline-block;
+  padding: 0.1em 0.6em;
+  background: var(--bg);
+  border: 1px solid var(--rule-medium);
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
 }
+
+.notice-essai::after {
+  content: ' ↵';
+  color: var(--faint);
+  font-size: 0.85em;
+}
+
+.notice-essai:hover,
+.notice-essai:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.notice-essai:hover::after,
+.notice-essai:focus-visible::after { color: var(--accent); }
 
 .notice-explication { font-size: var(--fs-xs); color: var(--faint); }
 
 @media (max-width: 600px) {
-  .notice-liste { grid-template-columns: 1fr; row-gap: 0; }
-  .notice-liste dd { margin-bottom: var(--sp-1); }
+  .notice-liste { grid-template-columns: 1fr; row-gap: 0.15rem; }
+  .notice-liste dt { margin-top: 0.4rem; }
+  .notice-essai { justify-self: start; }
 }
 
 .accueil .input-wrapper {
