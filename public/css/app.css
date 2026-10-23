@@ -1116,7 +1116,29 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 
 /* « Comprimé. · ne mentionne pas » : la mention suit le texte sur la même ligne. */
 .lecture-entiere { grid-template-columns: max-content 1fr; }
-.lecture-entiere .lecture-nom { grid-column: 1 / -1; }
+.lecture-entiere .lecture-tete { grid-column: 1 / -1; }
+
+.lecture-autres { color: var(--faint); font-size: var(--fs-sm); }
+.lecture-compte { margin: var(--sp-2) 0 0; color: var(--faint); font-size: var(--fs-sm); }
+
+/* La rubrique entière, repliée sous son passage. */
+.lecture-complet > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.lecture-complet > summary:hover { color: var(--accent); }
+
+.lecture-html {
+  margin-top: var(--sp-1);
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--rule);
+  overflow-x: auto;
+}
+
+.lecture-html table { border-collapse: collapse; font-size: var(--fs-sm); }
+.lecture-html td, .lecture-html th { border: 1px solid var(--rule); padding: 0.2em 0.5em; vertical-align: top; }
 
 .trouvailles .trouvaille td,
 .trouvailles .trouvaille th {

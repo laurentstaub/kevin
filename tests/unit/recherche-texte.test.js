@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
   normaliserRubrique, marquer, MOLECULES_MAX, PAR_PAGE, APERCU, MINIMUM_CIBLE, motsTrouves,
-  composerProximite, composerTitre, lireRubrique, LECTURE_FORMES_MAX,
+  composerProximite, composerTitre, lireRubrique, LECTURE_VARIANTES_MAX,
 } from '../../src/recherche-texte.js';
 import { config } from '../../src/config.js';
 
@@ -312,33 +312,53 @@ describe('saisies venues de l’URL', () => {
 });
 
 describe('lireRubrique', () => {
-  // La base rend une ligne par forme ; `nombre` compte toutes les formes retenues.
+  // La base rend une ligne par rédaction, avec les décomptes de toute la lecture.
   const pool = (lignes) => ({ query: async () => ({ rows: lignes }) });
   const ligne = (champs) => ({
-    code_cis: '60000000', denomination: 'X 10 mg, comprimé', commercialise: true, nombre: 1, a_rcp: true,
-    document_type: 'rcp', position: 3, libelle: 'Forme pharmaceutique', texte: 'Comprimé.', trouve: false, passage: null,
+    code_cis: '60000000', denomination: 'X 10 mg, comprimé', cle: 'abc', nombre: 1, noms: ['X 10 mg, comprimé'],
+    document_type: 'rcp', position: 3, libelle: 'Forme pharmaceutique', texte: 'Comprimé.', html: '<p>Comprimé.</p>',
+    specialites: 1, redactions: 1, trouve: false, passage: null,
     ...champs,
   });
   const lire = (lignes, requete = 'sécable') => lireRubrique(pool(lignes), { molecule: 'x 10', rubrique: '3', requete });
+  const long = 'Lorem ipsum dolor. '.repeat(60);
 
-  it('dit le statut de chaque forme : trouvé, entier, muet, vide, absent, sans RCP', async () => {
-    const formes = await lire([
-      ligne({ trouve: true, passage: 'Comprimé \u27e6sécable\u27e7.' }),
+  it('dit le statut de chaque rédaction : trouvé, entier, muet, vide, absent, sans RCP', async () => {
+    const { lignes } = await lire([
+      ligne({ trouve: true, entier: 'Comprimé \u27e6sécable\u27e7.', passage: 'Comprimé \u27e6sécable\u27e7.', texte: 'Comprimé sécable.' }),
       ligne({}),
-      ligne({ texte: 'Lorem ipsum. '.repeat(60) }),
+      ligne({ texte: long }),
       ligne({ texte: '  ' }),
-      ligne({ document_type: null, position: null, texte: null }),
-      ligne({ a_rcp: false, document_type: null, texte: null }),
-    ].map((forme) => ({ ...forme, nombre: 6 })));
-    assert.deepEqual(formes.map((forme) => forme.statut), ['trouve', 'entiere', 'muette', 'vide', 'absente', 'sans-rcp']);
-    assert.equal(formes[0].html, 'Comprimé <mark>sécable</mark>.');
-    assert.equal(formes[1].html, 'Comprimé.');
-    assert.equal(formes[0].ancre, 'rcp-3');
-    assert.equal(formes[4].ancre, null);
+      ligne({ cle: 'absente', document_type: null, position: null, texte: null }),
+      ligne({ cle: 'sans-rcp', document_type: null, texte: null }),
+    ]);
+    assert.deepEqual(lignes.map((forme) => forme.statut), ['trouve', 'entiere', 'muette', 'vide', 'absente', 'sans-rcp']);
+    assert.equal(lignes[0].html, 'Comprimé <mark>sécable</mark>.');
+    assert.equal(lignes[1].html, 'Comprimé.');
+    assert.equal(lignes[0].ancre, 'rcp-3');
+    assert.equal(lignes[4].ancre, null);
   });
 
-  it('rend la main au-delà de LECTURE_FORMES_MAX formes, ou sans filtre, rubrique ou requête', async () => {
-    assert.equal(await lire([ligne({ nombre: LECTURE_FORMES_MAX + 1 })]), null);
+  it('un texte long garde la rubrique entière à déplier, trouvé ou non', async () => {
+    const { lignes } = await lire([
+      ligne({ texte: long, html: '<table><tr><td>3000 mg par jour</td></tr></table>', trouve: true, passage: 'Lorem \u27e6ipsum\u27e7.' }),
+      ligne({ texte: long, html: '<p>long</p>' }),
+    ]);
+    assert.equal(lignes[0].statut, 'trouve');
+    assert.match(lignes[0].complet, /3000 mg par jour/);
+    assert.equal(lignes[1].statut, 'muette');
+    assert.equal(lignes[1].complet, '<p>long</p>');
+  });
+
+  it('regroupe : les autres spécialités de la même rédaction, les décomptes', async () => {
+    const lecture = await lire([ligne({ nombre: 3, noms: ['A', 'B', 'C'], specialites: 40, redactions: 9 })]);
+    assert.deepEqual(lecture.lignes[0].autres, ['B', 'C']);
+    assert.equal(lecture.specialites, 40);
+    assert.equal(lecture.redactions, 9);
+    assert.ok(LECTURE_VARIANTES_MAX >= 3);
+  });
+
+  it('rend la main sans spécialité, filtre, rubrique ou requête', async () => {
     assert.equal(await lire([]), null);
     assert.equal(await lireRubrique(pool([ligne({})]), { molecule: '', rubrique: '3', requete: 'x' }), null);
     assert.equal(await lireRubrique(pool([ligne({})]), { molecule: 'x', rubrique: 'abc', requete: 'x' }), null);

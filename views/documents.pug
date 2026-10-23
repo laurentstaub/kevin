@@ -79,18 +79,24 @@ block content
     else if notice
       p.vide= notice
     else if lecture
-      //- Produit nommé : sa rubrique, forme par forme, citée telle quelle. Le
-      //- silence se dit : « ne mentionne pas », rubrique vide ou absente.
-      - const fiche = (forme) => `/product/${forme.cis}?q=${encodeURIComponent(query)}${forme.ancre ? `#${forme.ancre}` : ''}`
+      //- Une rubrique lue pour le médicament, rédaction par rédaction, citée
+      //- telle quelle. Le silence se dit : « ne mentionne pas », vide, absente.
+      - const fiche = (ligne) => `/product/${ligne.cis}?q=${encodeURIComponent(query)}${ligne.ancre ? `#${ligne.ancre}` : ''}`
+      if lecture.redactions > lecture.lignes.length
+        p.lecture-compte #{lecture.specialites} spécialités, #{lecture.redactions} rédactions de la rubrique #{rubrique} : les #{lecture.lignes.length} plus répandues.
       ul.lecture
-        each forme in lecture
-          li.lecture-forme(class=`lecture-${forme.statut}`)
-            a.lecture-nom(href=fiche(forme) title=forme.ancre ? 'Ouvrir la rubrique dans la fiche' : 'Ouvrir la fiche')= specialite(forme.denomination)
-            case forme.statut
+        each ligne in lecture.lignes
+          li.lecture-forme(class=`lecture-${ligne.statut}`)
+            span.lecture-tete
+              a.lecture-nom(href=fiche(ligne) title=ligne.ancre ? 'Ouvrir la rubrique dans la fiche' : 'Ouvrir la fiche')= specialite(ligne.denomination)
+              if ligne.autres.length
+                span.lecture-autres(title=ligne.autres.map(specialite).join(' · ') + (ligne.nombre > ligne.autres.length + 1 ? ' …' : ''))
+                  |  et #{ligne.nombre - 1} autre#{ligne.nombre > 2 ? 's' : ''}
+            case ligne.statut
               when 'trouve'
-                span.lecture-texte!= forme.html
+                span.lecture-texte!= ligne.html
               when 'entiere'
-                span.lecture-texte!= forme.html
+                span.lecture-texte!= ligne.html
                 span.lecture-etat  · ne mentionne pas « #{query} »
               when 'muette'
                 span.lecture-etat Rubrique #{rubrique} : ne mentionne pas « #{query} »
@@ -100,6 +106,12 @@ block content
                 span.lecture-etat Rubrique absente
               default
                 span.lecture-etat RCP absent
+            //- Texte long : la réponse n'est pas toujours la phrase qui porte le mot
+            //- (« 3000 mg par jour » est dans un tableau) ; la rubrique entière, à déplier.
+            if ligne.complet
+              details.lecture-complet
+                summary Toute la rubrique #{rubrique}
+                .lecture-html!= ligne.complet
     else if documents.resultats.length === 0
       p.vide
         | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}#{etat.molecule ? ` pour « ${etat.molecule} »` : ''}.

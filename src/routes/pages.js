@@ -16,6 +16,10 @@ import {
 } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
 import { getComptoir } from '../comptoir.js';
+import { rubriqueDuComptoir, motDuComptoir } from '../concepts-document.js';
+
+/** Formes dites au comptoir, qui précisent le médicament plutôt que la question. */
+const FORMES_COMPTOIR = new Set(['lp', 'comprime', 'comprimes', 'gelule', 'gelules', 'sirop', 'buvable', 'injectable', 'effervescent', 'suppositoire', 'suppositoires', 'collyre', 'creme', 'pommade', 'sachet', 'sachets', 'patch']);
 import {
   MARQUE, origine, metaProduit, metaClasse, DESCRIPTION_ACCUEIL, NON_INDEXEES, robots, sitemap, cheminsIndexables,
 } from '../referencement.js';
@@ -189,6 +193,38 @@ export function pageRoutes(pool) {
     }),
   );
 
+  /**
+   * La spécialité qu'un nom désigne d'abord (« doliprane » → Doliprane 1000 mg,
+   * comprimé) : commercialisée, dénomination qui commence par le nom, la plus courte.
+   */
+  const specialiteDeReference = async (nom) => {
+    const { rows } = await pool.query(
+      `SELECT code_cis FROM dbpm.cis_bdpm
+       WHERE public.f_unaccent(lower(denomination_medicament)) LIKE $1 || '%'
+       ORDER BY (etat_commercialisation ILIKE 'commercialis%') DESC, length(denomination_medicament), denomination_medicament
+       LIMIT 1`,
+      [String(nom).trim()],
+    );
+    return rows[0]?.code_cis ?? null;
+  };
+
+  /**
+   * Médicament et mots, sans l'IA (« oxycodone LP écraser ») : la forme
+   * rejoint le filtre du médicament, le mot du comptoir devient la requête,
+   * et sa rubrique la rubrique lue.
+   */
+  const sansIa = (reconnu) => {
+    const mots = reconnu.reste.split(/\s+/).filter(Boolean);
+    const formes = mots.filter((mot) => FORMES_COMPTOIR.has(normaliser(mot)));
+    const reste = mots.filter((mot) => !formes.includes(mot)).join(' ') || reconnu.reste;
+    const rubrique = rubriqueDuComptoir(reste);
+    return {
+      requete: (rubrique && motDuComptoir(reste)) || reste,
+      molecule: [reconnu.molecule, ...formes.map(normaliser)].join(' '),
+      rubrique,
+    };
+  };
+
   /** L'IA traduit une question en critères ; null si elle est absente ou échoue. */
   const interpreter = async (texte) => {
     if (!iaActive() || !estQuestion(texte)) return null;
@@ -225,14 +261,25 @@ export function pageRoutes(pool) {
       console.error('[recherche] reconnaissance indisponible :', err.message);
       return null;
     });
+    // « Doliprane sans lactose » : les alternatives de la spécialité, filtrées.
+    const sansExcipient = /^sans\s+(\S+)$/.exec(reconnu?.reste ?? '');
+    const sans = sansExcipient ? lireSans(normaliser(sansExcipient[1]).replace(/s$/, '')) : [];
+    if (sans.length) {
+      const cis = await specialiteDeReference(reconnu.molecule).catch(() => null);
+      if (cis) return { url: `/product/${cis}${lienAlternatives(sans, false)}` };
+    }
     if (reconnu?.reste) {
       // La question entière, pas son reste : « couper le Lévothyrox ? » privé du
       // nom laisse « couper le », deux mots sans point d'interrogation, qui ne
       // passeraient plus pour une question. La molécule reste celle de la base.
       const criteres = await interpreter(saisie);
+      // La rubrique de l'IA, sinon celle des mots du comptoir : la page lit alors
+      // cette rubrique pour chaque forme du médicament.
       return criteres
-        ? documents({ requete: criteres.mots, rubrique: criteres.rubrique, molecule: reconnu.molecule, ia: '1' })
-        : documents({ requete: reconnu.reste, molecule: reconnu.molecule });
+        ? documents({
+          requete: criteres.mots, rubrique: criteres.rubrique ?? rubriqueDuComptoir(saisie), molecule: reconnu.molecule, ia: '1',
+        })
+        : documents(sansIa(reconnu));
     }
     if (reconnu) return null;
     const criteres = await interpreter(saisie);
@@ -413,9 +460,9 @@ export function pageRoutes(pool) {
       // Recherche ciblée (médicament, question, rubrique) : la molécule et ses phrases.
       // Transversale (« QT ») : une ligne par molécule, les rubriques en colonnes.
       const ciblee = Boolean(etat.molecule || etat.question || rubrique);
-      // Produit nommé et rubrique : la rubrique de chacune de ses formes, que la
-      // requête y figure ou non (« Comprimé. », « Rubrique vide »).
-      const lire = etat.molecule && rubrique && !query.tooShort && page === 1;
+      // Médicament et rubrique : la rubrique de ses spécialités, rédaction par
+      // rédaction, que la requête y figure ou non (« Comprimé. », « Rubrique vide »).
+      const lire = Boolean(etat.molecule && rubrique && !query.tooShort && page === 1);
       const [documents, lecture] = await Promise.all([
         query.tooShort
           ? vide

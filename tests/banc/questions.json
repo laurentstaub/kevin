@@ -1,0 +1,388 @@
+{
+ "note": "Banc des questions du comptoir (docs/banc-questions.md) : chaque question est tapée dans la barre, les redirections suivies ; la page finale doit être du bon type (documents, interactions, alternatives) et contenir le fragment attendu, comparé sans accents ni casse. Les fragments sont relevés dans les RCP de la base (23 octobre 2026). Lancer : npm run banc.",
+ "questions": [
+  {
+   "n": 1,
+   "theme": "grossesse",
+   "question": "tramadol allaitement ?",
+   "page": "documents",
+   "attendu": "excrete dans le lait maternel"
+  },
+  {
+   "n": 2,
+   "theme": "grossesse",
+   "question": "Kardégic grossesse",
+   "page": "documents",
+   "attendu": "inferieures ou egales a 100 mg par jour"
+  },
+  {
+   "n": 3,
+   "theme": "grossesse",
+   "question": "ibuprofène enceinte 6 mois ?",
+   "page": "documents",
+   "attendu": "24 semaines d"
+  },
+  {
+   "n": 4,
+   "theme": "grossesse",
+   "question": "Doliprane pendant la grossesse ?",
+   "page": "documents",
+   "attendu": "n'ont pas mis en evidence d'effet teratogene"
+  },
+  {
+   "n": 5,
+   "theme": "grossesse",
+   "question": "isotrétinoïne et contraception",
+   "page": "documents",
+   "attendu": "programme de prevention de la grossesse"
+  },
+  {
+   "n": 6,
+   "theme": "grossesse",
+   "question": "méthotrexate allaitement",
+   "page": "documents",
+   "attendu": "contre-indique durant l'allaitement"
+  },
+  {
+   "n": 7,
+   "theme": "grossesse",
+   "question": "Coversyl et grossesse",
+   "page": "documents",
+   "attendu": "trimestres de la grossesse"
+  },
+  {
+   "n": 8,
+   "theme": "interactions",
+   "question": "Kardégic + Previscan",
+   "page": "interactions",
+   "attendu": "contre-indiquee"
+  },
+  {
+   "n": 9,
+   "theme": "interactions",
+   "question": "clarithromycine simvastatine",
+   "page": "interactions",
+   "attendu": "contre-indiquee"
+  },
+  {
+   "n": 10,
+   "theme": "interactions",
+   "question": "tramadol sertraline",
+   "page": "interactions",
+   "attendu": "a prendre en compte"
+  },
+  {
+   "n": 11,
+   "theme": "interactions",
+   "question": "millepertuis ciclosporine",
+   "page": "interactions",
+   "attendu": "contre-indiquee"
+  },
+  {
+   "n": 12,
+   "theme": "interactions",
+   "question": "Kardégic et ibuprofène, risque ?",
+   "page": "interactions"
+  },
+  {
+   "n": 13,
+   "theme": "posologie",
+   "question": "poso macrogol",
+   "page": "documents",
+   "attendu": "1 a 2 sachets par jour"
+  },
+  {
+   "n": 14,
+   "theme": "posologie",
+   "question": "dose max paracétamol adulte",
+   "page": "documents",
+   "attendu": "3000 mg par jour"
+  },
+  {
+   "n": 15,
+   "theme": "posologie",
+   "question": "amoxicilline enfant 20 kg posologie",
+   "page": "documents",
+   "attendu": "mg/kg/jour"
+  },
+  {
+   "n": 16,
+   "theme": "posologie",
+   "question": "méthotrexate une fois par semaine ?",
+   "page": "documents",
+   "attendu": "une fois par semaine"
+  },
+  {
+   "n": 17,
+   "theme": "posologie",
+   "question": "Lévothyrox à jeun ?",
+   "page": "documents",
+   "attendu": "le matin a jeun"
+  },
+  {
+   "n": 18,
+   "theme": "posologie",
+   "question": "Doliprane 1000 combien par jour",
+   "page": "documents",
+   "attendu": "3000 mg par jour"
+  },
+  {
+   "n": 19,
+   "theme": "rein-foie",
+   "question": "metformine insuffisance rénale",
+   "page": "documents",
+   "attendu": "la metformine est contre-indiquee"
+  },
+  {
+   "n": 20,
+   "theme": "rein-foie",
+   "question": "Xarelto insuffisance rénale",
+   "page": "documents",
+   "attendu": "clairance de la creatinine"
+  },
+  {
+   "n": 21,
+   "theme": "rein-foie",
+   "question": "paracétamol insuffisance hépatique",
+   "page": "documents",
+   "attendu": "3000 mg par jour"
+  },
+  {
+   "n": 22,
+   "theme": "rein-foie",
+   "question": "allopurinol et rein",
+   "page": "documents",
+   "attendu": "insuffisance renale"
+  },
+  {
+   "n": 23,
+   "theme": "galenique",
+   "question": "Sécabilité du doliprane 1000 mg en comprimés ?",
+   "page": "documents",
+   "attendu": "ne mentionne pas"
+  },
+  {
+   "n": 24,
+   "theme": "galenique",
+   "question": "Lévothyrox sécable ?",
+   "page": "documents",
+   "attendu": "comprime secable"
+  },
+  {
+   "n": 25,
+   "theme": "galenique",
+   "question": "couper le Coversyl 5 ?",
+   "page": "documents",
+   "attendu": "pellicule secable"
+  },
+  {
+   "n": 26,
+   "theme": "galenique",
+   "question": "Xeloda couper",
+   "page": "documents",
+   "attendu": "ne doivent pas etre ecrases ni coupes"
+  },
+  {
+   "n": 27,
+   "theme": "galenique",
+   "question": "peut-on écraser le Seroplex ?",
+   "page": "documents",
+   "attendu": "ne mentionne pas"
+  },
+  {
+   "n": 28,
+   "theme": "galenique",
+   "question": "Inexium sonde gastrique",
+   "page": "documents",
+   "attendu": "administres par sonde gastrique"
+  },
+  {
+   "n": 29,
+   "theme": "galenique",
+   "question": "oxycodone LP écraser",
+   "page": "documents",
+   "attendu": "avale entier"
+  },
+  {
+   "n": 30,
+   "theme": "galenique",
+   "question": "Mopral ouvrir la gélule",
+   "page": "documents",
+   "attendu": "ouvrir les gelules"
+  },
+  {
+   "n": 31,
+   "theme": "conduite",
+   "question": "Lévothyrox conduite",
+   "page": "documents",
+   "attendu": "sans objet"
+  },
+  {
+   "n": 32,
+   "theme": "conduite",
+   "question": "méthadone conduire",
+   "page": "documents",
+   "attendu": "influence majeure"
+  },
+  {
+   "n": 33,
+   "theme": "conduite",
+   "question": "zolpidem et voiture le lendemain",
+   "page": "documents",
+   "attendu": "somnolence"
+  },
+  {
+   "n": 34,
+   "theme": "conservation",
+   "question": "Lantus après ouverture",
+   "page": "documents",
+   "attendu": "4 semaines"
+  },
+  {
+   "n": 35,
+   "theme": "conservation",
+   "question": "Clamoxyl sirop reconstitué combien de temps",
+   "page": "documents",
+   "attendu": "14 jours"
+  },
+  {
+   "n": 36,
+   "theme": "conservation",
+   "question": "Xalatan après ouverture",
+   "page": "documents",
+   "attendu": "4 semaines"
+  },
+  {
+   "n": 37,
+   "theme": "conservation",
+   "question": "Lantus au frigo ?",
+   "page": "documents",
+   "attendu": "refrigerateur"
+  },
+  {
+   "n": 38,
+   "theme": "surdosage",
+   "question": "surdosage paracétamol que faire",
+   "page": "documents",
+   "attendu": "acetylcysteine"
+  },
+  {
+   "n": 39,
+   "theme": "surdosage",
+   "question": "surdosage Previscan",
+   "page": "documents",
+   "attendu": "vitamine k"
+  },
+  {
+   "n": 40,
+   "theme": "excipients",
+   "question": "Xarelto lactose ?",
+   "page": "documents",
+   "attendu": "lactose monohydrate"
+  },
+  {
+   "n": 41,
+   "theme": "excipients",
+   "question": "Doliprane sans lactose",
+   "page": "alternatives"
+  },
+  {
+   "n": 42,
+   "theme": "excipients",
+   "question": "Spasfon gluten",
+   "page": "documents",
+   "attendu": "amidon de ble"
+  },
+  {
+   "n": 43,
+   "theme": "effets-indesirables",
+   "question": "effets indésirables prégabaline",
+   "page": "documents",
+   "attendu": "somnolence"
+  },
+  {
+   "n": 44,
+   "theme": "effets-indesirables",
+   "question": "amiodarone thyroïde",
+   "page": "documents",
+   "attendu": "thyroid"
+  },
+  {
+   "n": 45,
+   "theme": "effets-indesirables",
+   "question": "dompéridone QT",
+   "page": "documents",
+   "attendu": "allongement de l"
+  },
+  {
+   "n": 46,
+   "theme": "contre-indications",
+   "question": "Kardégic ulcère contre-indiqué ?",
+   "page": "documents",
+   "attendu": "ulcere gastroduodenal en evolution"
+  },
+  {
+   "n": 47,
+   "theme": "contre-indications",
+   "question": "colchicine contre-indications",
+   "page": "documents",
+   "attendu": "macrolide"
+  },
+  {
+   "n": 48,
+   "theme": "contre-indications",
+   "question": "codéine enfant moins de 12 ans",
+   "page": "documents",
+   "attendu": "moins de 12 ans"
+  },
+  {
+   "n": 49,
+   "theme": "abreviations",
+   "question": "CI ibuprofène",
+   "page": "documents",
+   "attendu": "contre-indique"
+  },
+  {
+   "n": 50,
+   "theme": "abreviations",
+   "question": "EI amiodarone",
+   "page": "documents",
+   "attendu": "effets indesirables"
+  },
+  {
+   "n": 51,
+   "theme": "abreviations",
+   "question": "zolpidem délai d’action",
+   "page": "documents",
+   "attendu": "concentration plasmatique maximale"
+  },
+  {
+   "n": 52,
+   "theme": "interactions",
+   "question": "atorvastatine millepertuis interactions",
+   "page": "interactions",
+   "attendu": "aucune entree pour ce couple"
+  },
+  {
+   "n": 53,
+   "theme": "interactions",
+   "question": "atorvastatine pamplemousse",
+   "page": "interactions",
+   "attendu": "a prendre en compte"
+  },
+  {
+   "n": 54,
+   "theme": "interactions",
+   "question": "simvastatine millepertuis",
+   "page": "interactions",
+   "attendu": "deconseillee"
+  },
+  {
+   "n": 55,
+   "theme": "interactions",
+   "question": "metformine alcool",
+   "page": "interactions",
+   "attendu": "deconseillee"
+  }
+ ]
+}

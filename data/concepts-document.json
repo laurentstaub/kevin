@@ -1,5 +1,5 @@
 {
-  "_": "Concepts du comptoir, deux usages. « mots » : ce qu'on tape ; « formes » : ce que le filtre du document surligne (formes exactes, mots entiers) ; « recherche » : ce que la recherche dans les documents cherche en plus, au plus huit termes, les formes fléchies étant ramenées par le radical français. Une aide à la recherche, pas une donnée : rien n'est affiché qui ne soit dans le document. Le thésaurus (data/thesaurus.json) prime quand il connaît le terme.",
+  "_": "Concepts du comptoir, deux usages. « mots » : ce qu'on tape ; « formes » : ce que le filtre du document surligne (formes exactes, mots entiers) ; « recherche » : ce que la recherche dans les documents cherche en plus, au plus huit termes, les formes fléchies étant ramenées par le radical français. Une aide à la recherche, pas une donnée : rien n'est affiché qui ne soit dans le document. Le thésaurus (data/thesaurus.json) prime quand il connaît le terme. « rubrique » : la rubrique du RCP où la question se lit, quand une seule s'impose.",
   "concepts": [
     {
       "mots": [
@@ -95,7 +95,8 @@
         "avaler entier",
         "écrasé",
         "mâché"
-      ]
+      ],
+      "rubrique": "4.2"
     },
     {
       "mots": [
@@ -118,7 +119,8 @@
         "ouverte",
         "contenu de la gélule",
         "saupoudrer"
-      ]
+      ],
+      "rubrique": "4.2"
     },
     {
       "mots": [
@@ -139,7 +141,8 @@
         "nasogastrique",
         "gastrostomie",
         "entérale"
-      ]
+      ],
+      "rubrique": "4.2"
     },
     {
       "mots": [
@@ -160,7 +163,8 @@
         "enceinte",
         "femmes en âge de procréer",
         "tératogène"
-      ]
+      ],
+      "rubrique": "4.6"
     },
     {
       "mots": [
@@ -176,7 +180,8 @@
         "allaitement",
         "allaiter",
         "lait maternel"
-      ]
+      ],
+      "rubrique": "4.6"
     },
     {
       "mots": [
@@ -198,7 +203,8 @@
         "conduire",
         "utiliser des machines",
         "aptitude à conduire"
-      ]
+      ],
+      "rubrique": "4.7"
     },
     {
       "mots": [
@@ -252,7 +258,8 @@
         "congeler",
         "température",
         "conservation"
-      ]
+      ],
+      "rubrique": "6.4"
     },
     {
       "mots": [
@@ -297,7 +304,8 @@
         "hémodialyse",
         "dialyse",
         "rénal"
-      ]
+      ],
+      "rubrique": "4.2"
     },
     {
       "mots": [
@@ -318,7 +326,8 @@
         "hépatotoxicité",
         "Child-Pugh",
         "hépatique"
-      ]
+      ],
+      "rubrique": "4.2"
     },
     {
       "mots": [
@@ -371,7 +380,126 @@
         "oublié",
         "dose manquée",
         "omis"
-      ]
+      ],
+      "rubrique": "4.2"
+    },
+    {
+      "mots": [
+        "surdosage",
+        "intoxication",
+        "overdose"
+      ],
+      "formes": [
+        "surdosage",
+        "intoxication"
+      ],
+      "recherche": [
+        "surdosage",
+        "intoxication"
+      ],
+      "rubrique": "4.9"
+    },
+    {
+      "mots": [
+        "contre-indication",
+        "contre-indications",
+        "contre-indiqué",
+        "contre-indiquée",
+        "CI"
+      ],
+      "formes": [
+        "contre-indiqué",
+        "contre-indiquée",
+        "contre-indiqués",
+        "contre-indication",
+        "contre-indications"
+      ],
+      "recherche": [
+        "contre-indiqué",
+        "contre-indication"
+      ],
+      "rubrique": "4.3"
+    },
+    {
+      "mots": [
+        "effets indésirables",
+        "effet indésirable",
+        "effets secondaires",
+        "effet secondaire",
+        "EI"
+      ],
+      "formes": [
+        "effets indésirables",
+        "effet indésirable"
+      ],
+      "recherche": [
+        "effets indésirables",
+        "effet indésirable"
+      ],
+      "rubrique": "4.8"
+    },
+    {
+      "mots": [
+        "posologie",
+        "poso",
+        "dose",
+        "dose max",
+        "dose maximale",
+        "combien par jour"
+      ],
+      "formes": [
+        "posologie",
+        "dose maximale",
+        "par jour"
+      ],
+      "recherche": [
+        "posologie",
+        "dose"
+      ],
+      "rubrique": "4.2"
+    },
+    {
+      "mots": [
+        "après ouverture",
+        "ouverture",
+        "reconstitué",
+        "reconstitution",
+        "se conserve",
+        "combien de temps"
+      ],
+      "formes": [
+        "après ouverture",
+        "première ouverture",
+        "après reconstitution",
+        "reconstituée"
+      ],
+      "recherche": [
+        "après ouverture",
+        "première ouverture",
+        "après reconstitution",
+        "reconstituée"
+      ],
+      "rubrique": "6.3"
+    },
+    {
+      "mots": [
+        "délai d'action",
+        "délai",
+        "agit",
+        "pour agir"
+      ],
+      "formes": [
+        "concentration plasmatique maximale",
+        "pic plasmatique",
+        "Tmax"
+      ],
+      "recherche": [
+        "concentration plasmatique maximale",
+        "pic plasmatique",
+        "Tmax",
+        "délai d'action"
+      ],
+      "rubrique": "5.2"
     }
   ]
 }

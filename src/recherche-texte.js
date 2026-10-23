@@ -273,7 +273,8 @@ export async function motsTrouves(pool, cis, requete) {
  * Spécialités d'un filtre « médicament », en CTE `cis_molecule` : chaque mot
  * du filtre figure dans une substance active ou dans la dénomination (« acide
  * folique », « paracetamol codeine »). Un dosage (« doliprane 300 ») : nombre
- * entier de la dénomination, 100 n'est pas 1000.
+ * entier de la dénomination, 100 n'est pas 1000. Une forme au pluriel ou dite
+ * au comptoir (« comprimés », « sirop ») trouve la dénomination de la BDPM.
  * @param {string} param - le paramètre SQL qui porte le filtre (« $5 »)
  */
 function cisMoleculeSql(param) {
@@ -282,7 +283,9 @@ function cisMoleculeSql(param) {
        WHERE (SELECT bool_and(CASE WHEN mot ~ '^[0-9]+(,[0-9]+)?$'
                 THEN m.denomination_medicament ~ ('(^|[^0-9,])' || mot || '($|[^0-9,])')
                 ELSE
-                public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
+                -- « comprimés » trouve « comprimé » ; « sirop » trouve aussi les formes buvables.
+                public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || regexp_replace(mot, '(.{4})s$', '\\1') || '%'
+                OR (mot = 'sirop' AND public.f_unaccent(lower(m.denomination_medicament)) LIKE '%buvable%')
                 OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
                            WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
                              AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%')
@@ -292,22 +295,26 @@ function cisMoleculeSql(param) {
      )`;
 }
 
-/** Formes au-delà desquelles un produit n'est plus « nommé » : la recherche habituelle reprend. */
-export const LECTURE_FORMES_MAX = 6;
-/** Texte cité entier, sans le mot cherché : au-delà, une ligne dit qu'il n'en parle pas. */
+/** Rédactions différentes d'une même rubrique montrées au plus : les plus répandues. */
+export const LECTURE_VARIANTES_MAX = 4;
+/** Texte cité entier : au-delà, le passage qui porte la requête, puis la rubrique entière repliée. */
 const LECTURE_ENTIERE_MAX = 600;
 
 /**
- * Une rubrique lue pour chaque forme d'un produit nommé (« Doliprane 1000
- * comprimé », rubrique 3), que la requête y figure ou non : le silence du RCP
- * est une réponse. Le texte est cité tel quel ; rien n'est déduit.
+ * Une rubrique lue pour un médicament (« Doliprane 1000 comprimé », rubrique 3 ;
+ * « paracétamol », rubrique 4.9), que la requête y figure ou non : le silence du
+ * RCP est une réponse, et la réponse n'est pas toujours la phrase qui contient
+ * le mot (« 3000 mg par jour » est dans le tableau de la 4.2). Les spécialités
+ * dont la rubrique a le même texte sont regroupées : une ligne par rédaction,
+ * la forme nommée d'abord, puis les plus répandues. Rien n'est déduit.
  *
  * Statuts : `trouve` (passage, termes marqués), `entiere` (texte court cité
  * entier), `muette` (texte long sans la requête), `vide`, `absente` (le RCP
- * n'a pas cette rubrique), `sans-rcp` (aucun RCP découpé).
+ * n'a pas cette rubrique), `sans-rcp` (aucun RCP découpé). Un texte long porte
+ * aussi `complet` : la rubrique entière, en HTML, à déplier.
  *
- * @returns {Promise<object[]|null>} null : produit trop large (plus de
- *   LECTURE_FORMES_MAX formes commercialisées), filtre ou rubrique absents.
+ * @returns {Promise<{ lignes: object[], specialites: number, redactions: number }|null>}
+ *   null : filtre, rubrique ou requête absents, ou aucune spécialité.
  */
 export async function lireRubrique(pool, { molecule, rubrique, requete }) {
   const numero = normaliserRubrique(rubrique);
@@ -323,52 +330,86 @@ export async function lireRubrique(pool, { molecule, rubrique, requete }) {
      ${cisMoleculeSql('$2')},
      formes AS (
        SELECT m.code_cis, m.denomination_medicament AS denomination,
-              m.etat_commercialisation ILIKE 'commercialis%' AS commercialise
+              m.etat_commercialisation ILIKE 'commercialis%' AS commercialise,
+              (SELECT count(DISTINCT c.code_substance) FROM dbpm.cis_compo_bdpm c
+               WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA') AS substances,
+              -- Le nom tapé en tête de la dénomination : « paracetamol » → les PARACÉTAMOL d'abord.
+              public.f_unaccent(lower(m.denomination_medicament)) LIKE split_part($2::text, ' ', 1) || '%' AS nommee
        FROM dbpm.cis_bdpm m WHERE m.code_cis IN (SELECT code_cis FROM cis_molecule)
      ),
-     -- Commercialisées seulement, sauf s'il n'y en a aucune.
-     retenues AS (
+     -- Commercialisées seulement, sauf s'il n'y en a aucune ; le moins de
+     -- substances possible : « paracétamol » n'est pas Lamaline (paracétamol,
+     -- opium, caféine), « Codoliprane » reste une association.
+     commercialisees AS (
        SELECT * FROM formes
        WHERE commercialise OR NOT EXISTS (SELECT 1 FROM formes WHERE commercialise)
+     ),
+     retenues AS (
+       SELECT * FROM commercialisees WHERE substances = (SELECT min(substances) FROM commercialisees)
+     ),
+     lues AS (
+       SELECT f.code_cis, f.denomination, f.commercialise, f.nommee,
+              r.document_type, r.position, r.libelle, r.texte, r.html, r.vecteur,
+              CASE
+                WHEN r.texte IS NOT NULL THEN md5(regexp_replace(r.texte, '\\s+', ' ', 'g'))
+                WHEN EXISTS (SELECT 1 FROM docs.rcp_sections d
+                             WHERE d.code_cis = f.code_cis AND d.document_type <> 'notice') THEN 'absente'
+                ELSE 'sans-rcp'
+              END AS cle
+       FROM retenues f
+       LEFT JOIN LATERAL (
+         SELECT s.document_type, s.position, s.libelle, s.texte, s.html, s.vecteur
+         FROM docs.rcp_sections s
+         WHERE s.code_cis = f.code_cis AND s.document_type <> 'notice'
+           AND (s.numero = $1 OR s.numero LIKE $1 || '.%')
+         ORDER BY (s.document_type = 'rcp') DESC, (s.numero = $1) DESC, s.position
+         LIMIT 1
+       ) r ON true
+     ),
+     redactions AS (
+       SELECT cle, count(*)::int AS nombre, bool_or(nommee) AS nommee, min(length(denomination)) AS court,
+              (array_agg(denomination ORDER BY nommee DESC, length(denomination), denomination))[1:12] AS noms
+       FROM lues GROUP BY cle
+     ),
+     -- Une spécialité par rédaction : la plus proche du nom tapé, puis la plus courte.
+     choisies AS (
+       SELECT DISTINCT ON (l.cle) l.*, r.nombre, r.noms, r.court, r.nommee AS redaction_nommee
+       FROM lues l JOIN redactions r USING (cle)
+       ORDER BY l.cle, l.nommee DESC, length(l.denomination), l.denomination
      )
-     SELECT f.code_cis, f.denomination, f.commercialise,
-            (SELECT count(*) FROM retenues)::int AS nombre,
-            EXISTS (SELECT 1 FROM docs.rcp_sections d
-                    WHERE d.code_cis = f.code_cis AND d.document_type <> 'notice') AS a_rcp,
-            r.document_type, r.position, r.libelle, r.texte,
-            r.vecteur @@ q.tq AS trouve,
-            CASE WHEN r.vecteur @@ q.tq THEN ${phraseSql('r.texte', 'q.tq', '$3')} END AS passage
-     FROM retenues f
-     CROSS JOIN q
-     LEFT JOIN LATERAL (
-       SELECT s.document_type, s.position, s.libelle, s.texte, s.vecteur
-       FROM docs.rcp_sections s
-       WHERE s.code_cis = f.code_cis AND s.document_type <> 'notice'
-         AND (s.numero = $1 OR s.numero LIKE $1 || '.%')
-       ORDER BY (s.document_type = 'rcp') DESC, (s.numero = $1) DESC, s.position
-       LIMIT 1
-     ) r ON true
-     -- La forme tapée d'abord : la dénomination la plus courte est la plus proche
-     -- du filtre (« comprimé » avant « comprimé effervescent sécable »).
-     ORDER BY length(f.denomination), f.denomination
-     LIMIT ${LECTURE_FORMES_MAX + 1}`,
+     SELECT c.code_cis, c.denomination, c.cle, c.nombre, c.noms, c.document_type, c.position,
+            c.libelle, c.texte, c.html,
+            (SELECT count(*) FROM lues)::int AS specialites,
+            (SELECT count(*) FROM redactions)::int AS redactions,
+            c.vecteur @@ q.tq AS trouve,
+            CASE WHEN c.vecteur @@ q.tq THEN ${phraseSql('c.texte', 'q.tq', '$3')} END AS passage,
+            -- Texte court : cité entier, termes marqués partout.
+            CASE WHEN c.vecteur @@ q.tq AND length(c.texte) <= ${LECTURE_ENTIERE_MAX}
+                 THEN ts_headline('${LANGUE}', regexp_replace(c.texte, '\\s+', ' ', 'g'), q.tq, 'HighlightAll=true, ${MARQUES}') END AS entier
+     FROM choisies c CROSS JOIN q
+     -- La forme nommée d'abord (la plus courte des dénominations qui commencent
+     -- par le nom tapé), puis les plus répandues.
+     ORDER BY (c.redaction_nommee AND c.court = (SELECT min(court) FROM redactions WHERE nommee)) DESC,
+              c.redaction_nommee DESC, c.nombre DESC, c.court
+     LIMIT ${LECTURE_VARIANTES_MAX}`,
     [numero, filtre, expressionExacte(saisie), ...tq.params],
   );
-  if (rows.length === 0 || rows[0].nombre > LECTURE_FORMES_MAX) return null;
+  if (rows.length === 0) return null;
 
-  return rows.map((row) => {
+  const lignes = rows.map((row) => {
     const texte = String(row.texte ?? '').replace(/\s+/g, ' ').trim();
     const base = {
-      cis: row.code_cis, denomination: row.denomination, commercialise: row.commercialise,
+      cis: row.code_cis, denomination: row.denomination, autres: row.noms.slice(1), nombre: row.nombre,
       ancre: row.document_type ? `${row.document_type}-${row.position}` : null, libelle: row.libelle ?? null,
     };
-    if (!row.a_rcp) return { ...base, statut: 'sans-rcp' };
-    if (!row.document_type) return { ...base, statut: 'absente' };
+    if (row.cle === 'sans-rcp') return { ...base, statut: 'sans-rcp' };
+    if (row.cle === 'absente') return { ...base, statut: 'absente' };
     if (!/[\p{L}\p{N}]/u.test(texte)) return { ...base, statut: 'vide' };
-    if (row.trouve) return { ...base, statut: 'trouve', html: marquer(row.passage) };
-    if (texte.length <= LECTURE_ENTIERE_MAX) return { ...base, statut: 'entiere', html: marquer(texte) };
-    return { ...base, statut: 'muette' };
+    const court = texte.length <= LECTURE_ENTIERE_MAX;
+    if (court) return { ...base, statut: row.trouve ? 'trouve' : 'entiere', html: marquer(row.trouve ? row.entier : texte), entier: true };
+    return { ...base, statut: row.trouve ? 'trouve' : 'muette', html: row.trouve ? marquer(row.passage) : null, complet: row.html };
   });
+  return { lignes, specialites: rows[0].specialites, redactions: rows[0].redactions };
 }
 
 /**

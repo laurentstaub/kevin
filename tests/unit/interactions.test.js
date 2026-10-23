@@ -117,7 +117,8 @@ describe('médicaments', () => {
 describe('plusieurs médicaments dans une saisie', () => {
   const CONNUS = {
     substances: { warfarine: 1, sertraline: 1, tramadol: 1, 'acide acetylsalicylique': 1, 'acide folique': 1, avec: 3 },
-    marques: new Set(['kardegic', 'previscan', 'doliprane']),
+    // « rein » : REIN CORTEX BOIRON existe, mais au comptoir c'est un organe.
+    marques: new Set(['kardegic', 'previscan', 'doliprane', 'rein']),
   };
   const pool = {
     query: async (sql, params) => ({
@@ -139,6 +140,15 @@ describe('plusieurs médicaments dans une saisie', () => {
     assert.deepEqual(await reconnaitreMedicaments(pool, 'sertraline alcool'), ['sertraline', 'ethanol']);
     // « jus » seul n'est pas une partie : le reste est du texte.
     assert.equal(await reconnaitreMedicaments(pool, 'tramadol jus'), null);
+  });
+
+  it('une question sur l’association elle-même reste une interaction', async () => {
+    assert.deepEqual(await reconnaitreMedicaments(pool, 'Kardegic et warfarine, risque ?'), ['kardegic', 'warfarine']);
+    assert.deepEqual(await reconnaitreMedicaments(pool, 'peut-on prendre tramadol et sertraline ensemble ?'), ['tramadol', 'sertraline']);
+  });
+
+  it('un mot du comptoir n’est jamais un médicament', async () => {
+    assert.equal(await reconnaitreMedicaments(pool, 'kardegic rein'), null);
   });
 
   it('laisse le reste à la reconnaissance d’un seul médicament', async () => {

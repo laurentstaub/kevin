@@ -9,6 +9,7 @@
 import { deaccent } from './text.js';
 import { substituer } from './synonymes.js';
 import { MOTS_HORS_RCP } from './interactions.js';
+import { CONCEPTS_DOCUMENT } from './concepts-document.js';
 
 /** Au-delà, le mot est un composant générique (« sodium », « chlorhydrate »), pas une molécule. */
 const SUBSTANCES_MAX = 40;
@@ -144,7 +145,14 @@ async function dosagesConnus(pool, molecule, nombres) {
 const sansElision = (mot) => mot.replace(/^(?:[ldjmnstc]|qu)['’](?=\S)/, '');
 
 /** Mot qui peut désigner un médicament : un mot plus court reste du texte. */
-const eligible = (mot) => mot.length >= LONGUEUR_MIN && /^[a-z]/.test(mot);
+/**
+ * Mots du comptoir (« rein », « foie », « soleil ») : des sujets de question,
+ * jamais des médicaments, même quand l'homéopathie a un « REIN CORTEX BOIRON ».
+ */
+const MOTS_COMPTOIR = new Set(CONCEPTS_DOCUMENT.flatMap(({ mots }) => mots)
+  .map((mot) => deaccent(mot).toLowerCase()).filter((mot) => !/\s/.test(mot)));
+
+const eligible = (mot) => mot.length >= LONGUEUR_MIN && /^[a-z]/.test(mot) && !MOTS_COMPTOIR.has(mot);
 
 /**
  * Noms courants remplacés par leur substance (« aspirine allaitement » →
@@ -296,11 +304,24 @@ export async function reconnaitreMedicaments(pool, saisie) {
   // Une partie sans RCP du thésaurus (« jus de pamplemousse », « alcool ») compte
   // comme un médicament ; ses mots de liaison ne sont pas du texte.
   const horsRcp = autres.filter((mot) => MOTS_HORS_RCP.includes(mot));
-  const reste = autres.filter((mot) => !MOTS_HORS_RCP.includes(mot) && !(horsRcp.length && AUTOUR_HORS_RCP.has(mot)));
+  const reste = autres.filter((mot) => !MOTS_HORS_RCP.includes(mot) && !(horsRcp.length && AUTOUR_HORS_RCP.has(mot))
+    && !QUESTION_INTERACTION.has(mot));
   const medicaments = [...new Set([...repere.molecule, ...horsRcp])];
   if (medicaments.length < 2) return null;
   return reste.length === 0 ? medicaments : null;
 }
+
+/**
+ * Mots d'une question sur l'association elle-même (« Kardégic et ibuprofène,
+ * risque ? », « peut-on les prendre ensemble ») : ils ne font pas un sujet à
+ * chercher dans les documents.
+ */
+const QUESTION_INTERACTION = new Set([
+  'risque', 'risques', 'danger', 'dangers', 'dangereux', 'dangereuse', 'ensemble', 'compatible', 'compatibles',
+  'prendre', 'peut', 'on', 'les', 'est', 'ce', 'il', 'y', 'a', 'possible', 'probleme', 'problemes', 'grave',
+  // Mots normalisés, traits d'union retirés : « peut-on » → « peuton ».
+  'peuton', 'estce', 'fautil', 'peutil', 'peuventils',
+]);
 
 /** Mots qui accompagnent une partie sans RCP : « jus de pamplemousse », « boisson alcoolisée ». */
 const AUTOUR_HORS_RCP = new Set(['jus', 'de', 'du', 'fruit', 'fruits', 'boisson', 'boissons']);
