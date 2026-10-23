@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   chercherDansDocuments, extraitDeRubrique, rechercheAbsente, composerTsquery, expressionExacte,
   normaliserRubrique, marquer, MOLECULES_MAX, PAR_PAGE, APERCU, MINIMUM_CIBLE, motsTrouves,
-  composerProximite, composerTitre,
+  composerProximite, composerTitre, lireRubrique, LECTURE_FORMES_MAX,
 } from '../../src/recherche-texte.js';
 import { config } from '../../src/config.js';
 
@@ -308,5 +308,40 @@ describe('saisies venues de l’URL', () => {
     const pool = { query: async (_sql, params) => { vus.push(params); return { rows: [] }; } };
     await chercherDansDocuments(pool, 'allaitement', { molecule: '%' });
     assert.equal(vus[0][4], '\\%');
+  });
+});
+
+describe('lireRubrique', () => {
+  // La base rend une ligne par forme ; `nombre` compte toutes les formes retenues.
+  const pool = (lignes) => ({ query: async () => ({ rows: lignes }) });
+  const ligne = (champs) => ({
+    code_cis: '60000000', denomination: 'X 10 mg, comprimé', commercialise: true, nombre: 1, a_rcp: true,
+    document_type: 'rcp', position: 3, libelle: 'Forme pharmaceutique', texte: 'Comprimé.', trouve: false, passage: null,
+    ...champs,
+  });
+  const lire = (lignes, requete = 'sécable') => lireRubrique(pool(lignes), { molecule: 'x 10', rubrique: '3', requete });
+
+  it('dit le statut de chaque forme : trouvé, entier, muet, vide, absent, sans RCP', async () => {
+    const formes = await lire([
+      ligne({ trouve: true, passage: 'Comprimé \u27e6sécable\u27e7.' }),
+      ligne({}),
+      ligne({ texte: 'Lorem ipsum. '.repeat(60) }),
+      ligne({ texte: '  ' }),
+      ligne({ document_type: null, position: null, texte: null }),
+      ligne({ a_rcp: false, document_type: null, texte: null }),
+    ].map((forme) => ({ ...forme, nombre: 6 })));
+    assert.deepEqual(formes.map((forme) => forme.statut), ['trouve', 'entiere', 'muette', 'vide', 'absente', 'sans-rcp']);
+    assert.equal(formes[0].html, 'Comprimé <mark>sécable</mark>.');
+    assert.equal(formes[1].html, 'Comprimé.');
+    assert.equal(formes[0].ancre, 'rcp-3');
+    assert.equal(formes[4].ancre, null);
+  });
+
+  it('rend la main au-delà de LECTURE_FORMES_MAX formes, ou sans filtre, rubrique ou requête', async () => {
+    assert.equal(await lire([ligne({ nombre: LECTURE_FORMES_MAX + 1 })]), null);
+    assert.equal(await lire([]), null);
+    assert.equal(await lireRubrique(pool([ligne({})]), { molecule: '', rubrique: '3', requete: 'x' }), null);
+    assert.equal(await lireRubrique(pool([ligne({})]), { molecule: 'x', rubrique: 'abc', requete: 'x' }), null);
+    assert.equal(await lireRubrique(pool([ligne({})]), { molecule: 'x', rubrique: '3', requete: ' ' }), null);
   });
 });

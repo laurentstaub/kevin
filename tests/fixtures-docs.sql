@@ -43,6 +43,9 @@ VALUES
   ('61111114', 'rcp', 1, '6.1', 'Liste des excipients', 2, true,
    '<p>Amidon de maïs prégélatinisé, povidone, stéarate de magnésium.</p>',
    'Amidon de maïs prégélatinisé, povidone, stéarate de magnésium.', 'bdpm_html'),
+  -- Rubrique présente mais vide : la lecture d'un produit nommé le dit (« Rubrique vide »).
+  ('61111114', 'rcp', 2, '4.7', 'Effets sur l''aptitude à conduire des véhicules et à utiliser des machines', 2, true,
+   '<p></p>', ' ', 'bdpm_html'),
 
   ('61111115', 'rcp', 1, '2', 'COMPOSITION QUALITATIVE ET QUANTITATIVE', 1, true,
    '<p>Paracétamol 1000 mg pour un comprimé pelliculé.</p><p>Excipient à effet notoire : lactose (45 mg par comprimé).</p><p>Pour la liste complète des excipients, voir rubrique 6.1.</p>',

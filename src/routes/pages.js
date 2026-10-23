@@ -40,7 +40,7 @@ import {
 import { signaletique } from '../signaletique.js';
 import { getEvaluation, resumerEvaluation } from '../has.js';
 import {
-  chercherDansDocuments, extraitDeRubrique, rechercheAbsente, motsTrouves,
+  chercherDansDocuments, lireRubrique, extraitDeRubrique, rechercheAbsente, motsTrouves,
   APERCU, COLONNES, PAR_PAGE, MINIMUM_CIBLE,
 } from '../recherche-texte.js';
 import { estImportation, referenceNationale } from '../imports.js';
@@ -413,17 +413,28 @@ export function pageRoutes(pool) {
       // Recherche ciblée (médicament, question, rubrique) : la molécule et ses phrases.
       // Transversale (« QT ») : une ligne par molécule, les rubriques en colonnes.
       const ciblee = Boolean(etat.molecule || etat.question || rubrique);
-      const documents = query.tooShort
-        ? vide
-        : await chercher(ciblee)
-          .catch((err) => {
+      // Produit nommé et rubrique : la rubrique de chacune de ses formes, que la
+      // requête y figure ou non (« Comprimé. », « Rubrique vide »).
+      const lire = etat.molecule && rubrique && !query.tooShort && page === 1;
+      const [documents, lecture] = await Promise.all([
+        query.tooShort
+          ? vide
+          : chercher(ciblee).catch((err) => {
             panne = messagePanne(err);
             return vide;
-          });
+          }),
+        lire
+          ? lireRubrique(pool, { molecule: etat.molecule, rubrique, requete: query.raw }).catch((err) => {
+            console.error('[documents] lecture de rubrique indisponible :', err.message);
+            return null;
+          })
+          : null,
+      ]);
 
       // Rubrique choisie par l'IA et vide : elle s'est trompée de rubrique, pas de
-      // question. Même recherche sur tout le document, URL honnête.
-      if (etat.ia && rubrique && !panne && documents.total === 0 && documents.resultats.length === 0) {
+      // question. Même recherche sur tout le document, URL honnête. Sauf produit
+      // nommé : sa rubrique lue, même muette, répond.
+      if (etat.ia && rubrique && !lecture && !panne && documents.total === 0 && documents.resultats.length === 0) {
         return res.redirect(lien(etat, { rubrique: null }));
       }
 
@@ -435,6 +446,7 @@ export function pageRoutes(pool) {
         rubrique,
         ciblee,
         documents,
+        lecture,
         page,
         colonnes: COLONNES,
         parPage: PAR_PAGE,

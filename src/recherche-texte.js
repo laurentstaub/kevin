@@ -270,6 +270,108 @@ export async function motsTrouves(pool, cis, requete) {
 }
 
 /**
+ * Spécialités d'un filtre « médicament », en CTE `cis_molecule` : chaque mot
+ * du filtre figure dans une substance active ou dans la dénomination (« acide
+ * folique », « paracetamol codeine »). Un dosage (« doliprane 300 ») : nombre
+ * entier de la dénomination, 100 n'est pas 1000.
+ * @param {string} param - le paramètre SQL qui porte le filtre (« $5 »)
+ */
+function cisMoleculeSql(param) {
+  return `cis_molecule AS MATERIALIZED (
+       SELECT m.code_cis FROM dbpm.cis_bdpm m
+       WHERE (SELECT bool_and(CASE WHEN mot ~ '^[0-9]+(,[0-9]+)?$'
+                THEN m.denomination_medicament ~ ('(^|[^0-9,])' || mot || '($|[^0-9,])')
+                ELSE
+                public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
+                OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
+                           WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
+                             AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%')
+                END)
+              FROM unnest(string_to_array(public.f_unaccent(lower(${param}::text)), ' ')) AS mot
+              WHERE mot <> '')
+     )`;
+}
+
+/** Formes au-delà desquelles un produit n'est plus « nommé » : la recherche habituelle reprend. */
+export const LECTURE_FORMES_MAX = 6;
+/** Texte cité entier, sans le mot cherché : au-delà, une ligne dit qu'il n'en parle pas. */
+const LECTURE_ENTIERE_MAX = 600;
+
+/**
+ * Une rubrique lue pour chaque forme d'un produit nommé (« Doliprane 1000
+ * comprimé », rubrique 3), que la requête y figure ou non : le silence du RCP
+ * est une réponse. Le texte est cité tel quel ; rien n'est déduit.
+ *
+ * Statuts : `trouve` (passage, termes marqués), `entiere` (texte court cité
+ * entier), `muette` (texte long sans la requête), `vide`, `absente` (le RCP
+ * n'a pas cette rubrique), `sans-rcp` (aucun RCP découpé).
+ *
+ * @returns {Promise<object[]|null>} null : produit trop large (plus de
+ *   LECTURE_FORMES_MAX formes commercialisées), filtre ou rubrique absents.
+ */
+export async function lireRubrique(pool, { molecule, rubrique, requete }) {
+  const numero = normaliserRubrique(rubrique);
+  const filtre = echapperLike(String(molecule ?? '').trim().slice(0, 80));
+  const saisie = String(requete ?? '').trim();
+  if (!numero || !filtre || !saisie) return null;
+
+  const { atomes } = elargir(saisie);
+  // Trois paramètres fixes (rubrique, molécule, expression exacte), puis les atomes.
+  const tq = composerTsquery(atomes, 4);
+  const { rows } = await pool.query(
+    `WITH q AS (SELECT ${tq.sql} AS tq),
+     ${cisMoleculeSql('$2')},
+     formes AS (
+       SELECT m.code_cis, m.denomination_medicament AS denomination,
+              m.etat_commercialisation ILIKE 'commercialis%' AS commercialise
+       FROM dbpm.cis_bdpm m WHERE m.code_cis IN (SELECT code_cis FROM cis_molecule)
+     ),
+     -- Commercialisées seulement, sauf s'il n'y en a aucune.
+     retenues AS (
+       SELECT * FROM formes
+       WHERE commercialise OR NOT EXISTS (SELECT 1 FROM formes WHERE commercialise)
+     )
+     SELECT f.code_cis, f.denomination, f.commercialise,
+            (SELECT count(*) FROM retenues)::int AS nombre,
+            EXISTS (SELECT 1 FROM docs.rcp_sections d
+                    WHERE d.code_cis = f.code_cis AND d.document_type <> 'notice') AS a_rcp,
+            r.document_type, r.position, r.libelle, r.texte,
+            r.vecteur @@ q.tq AS trouve,
+            CASE WHEN r.vecteur @@ q.tq THEN ${phraseSql('r.texte', 'q.tq', '$3')} END AS passage
+     FROM retenues f
+     CROSS JOIN q
+     LEFT JOIN LATERAL (
+       SELECT s.document_type, s.position, s.libelle, s.texte, s.vecteur
+       FROM docs.rcp_sections s
+       WHERE s.code_cis = f.code_cis AND s.document_type <> 'notice'
+         AND (s.numero = $1 OR s.numero LIKE $1 || '.%')
+       ORDER BY (s.document_type = 'rcp') DESC, (s.numero = $1) DESC, s.position
+       LIMIT 1
+     ) r ON true
+     -- La forme tapée d'abord : la dénomination la plus courte est la plus proche
+     -- du filtre (« comprimé » avant « comprimé effervescent sécable »).
+     ORDER BY length(f.denomination), f.denomination
+     LIMIT ${LECTURE_FORMES_MAX + 1}`,
+    [numero, filtre, expressionExacte(saisie), ...tq.params],
+  );
+  if (rows.length === 0 || rows[0].nombre > LECTURE_FORMES_MAX) return null;
+
+  return rows.map((row) => {
+    const texte = String(row.texte ?? '').replace(/\s+/g, ' ').trim();
+    const base = {
+      cis: row.code_cis, denomination: row.denomination, commercialise: row.commercialise,
+      ancre: row.document_type ? `${row.document_type}-${row.position}` : null, libelle: row.libelle ?? null,
+    };
+    if (!row.a_rcp) return { ...base, statut: 'sans-rcp' };
+    if (!row.document_type) return { ...base, statut: 'absente' };
+    if (!/[\p{L}\p{N}]/u.test(texte)) return { ...base, statut: 'vide' };
+    if (row.trouve) return { ...base, statut: 'trouve', html: marquer(row.passage) };
+    if (texte.length <= LECTURE_ENTIERE_MAX) return { ...base, statut: 'entiere', html: marquer(texte) };
+    return { ...base, statut: 'muette' };
+  });
+}
+
+/**
  * Rubriques dont le texte répond à la requête, regroupées par molécule.
  *
  * @param {import('pg').Pool} pool
@@ -308,22 +410,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
 
   const { rows } = await pool.query(
     `WITH q AS (SELECT ${tq.sql} AS tq, ${composerTitre(tq.concepts)} AS titre${proche ? `, ${proche} AS proche` : ''}),
-     ${molecule ? `-- Médicament : chaque mot du filtre figure dans une substance active ou
-     -- dans la dénomination (« acide folique », « paracetamol codeine »).
-     -- Un dosage (« doliprane 300 ») : nombre entier de la dénomination, 100 n'est pas 1000.
-     cis_molecule AS MATERIALIZED (
-       SELECT m.code_cis FROM dbpm.cis_bdpm m
-       WHERE (SELECT bool_and(CASE WHEN mot ~ '^[0-9]+(,[0-9]+)?$'
-                THEN m.denomination_medicament ~ ('(^|[^0-9,])' || mot || '($|[^0-9,])')
-                ELSE
-                public.f_unaccent(lower(m.denomination_medicament)) LIKE '%' || mot || '%'
-                OR EXISTS (SELECT 1 FROM dbpm.cis_compo_bdpm c
-                           WHERE c.code_cis = m.code_cis AND c.nature_composant = 'SA'
-                             AND public.f_unaccent(lower(c.denomination_substance)) LIKE '%' || mot || '%')
-                END)
-              FROM unnest(string_to_array(public.f_unaccent(lower($5::text)), ' ')) AS mot
-              WHERE mot <> '')
-     ),` : ''}
+     ${molecule ? `${cisMoleculeSql('$5')},` : ''}
      tout AS MATERIALIZED (
        -- Toutes les rubriques trouvées, notées pour le classement. Sans le
        -- texte, qui faisait dépasser le délai : il est rejoint par sa clé

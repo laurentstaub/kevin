@@ -538,6 +538,50 @@ describe('API', { skip }, () => {
     });
   });
 
+  // Question sur un produit nommé : sa rubrique forme par forme, le silence dit.
+  describe('lecture d’une rubrique', () => {
+    const lire = (requete, rubrique) => request(app)
+      .get(`/documents?q=${encodeURIComponent(requete)}&molecule=doliprane&rubrique=${rubrique}&question=x&ia=1`)
+      .expect(200);
+    // Par spécialité : l'ordre (dénomination la plus courte d'abord) n'est pas l'objet du test.
+    const forme = (html, cis) => {
+      const bloc = [...html.matchAll(/<li class="lecture-forme lecture-([a-z-]+)">.*?<\/li>/gs)]
+        .find(([texte]) => texte.includes(`/product/${cis}?`));
+      return bloc ? { bloc: bloc[0], statut: bloc[1] } : null;
+    };
+
+    it('cite un texte court entier et dit qu’il ne mentionne pas la requête ; RCP absent pour une forme sans document', async () => {
+      const res = await lire('lactose', '6.1');
+      const comprime = forme(res.text, '61111114');
+      const gelule = forme(res.text, '61111119');
+      assert.equal(comprime.statut, 'entiere');
+      assert.match(comprime.bloc, /Doliprane 1000 mg, comprimé.*Amidon de maïs prégélatinisé.*ne mentionne pas « lactose »/s);
+      assert.match(comprime.bloc, /href="\/product\/61111114\?q=lactose#rcp-1"/);
+      assert.equal(gelule.statut, 'sans-rcp');
+      assert.match(gelule.bloc, /RCP absent/);
+    });
+
+    it('surligne la requête quand elle y figure', async () => {
+      const comprime = forme((await lire('povidone', '6.1')).text, '61111114');
+      assert.equal(comprime.statut, 'trouve');
+      assert.match(comprime.bloc, /<mark>povidone<\/mark>/);
+    });
+
+    it('dit « Rubrique vide » et « Rubrique absente », sans réorienter vers tout le document', async () => {
+      const vide = forme((await lire('conduire', '4.7')).text, '61111114');
+      assert.equal(vide.statut, 'vide');
+      assert.match(vide.bloc, /Rubrique vide/);
+      const absente = forme((await lire('sécable', '3')).text, '61111114');
+      assert.equal(absente.statut, 'absente');
+      assert.match(absente.bloc, /Rubrique absente/);
+    });
+
+    it('sans rubrique, la recherche habituelle', async () => {
+      const res = await request(app).get('/documents?q=povidone&molecule=doliprane&question=x').expect(200);
+      assert.doesNotMatch(res.text, /class="lecture"/);
+    });
+  });
+
   describe('transversal', () => {
     // Barre d'adresse : le navigateur découvre le moteur par le lien de l'en-tête.
     it('décrit la recherche pour la barre d’adresse (OpenSearch)', async () => {

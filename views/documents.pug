@@ -78,6 +78,28 @@ block content
       p.vide= panne
     else if notice
       p.vide= notice
+    else if lecture
+      //- Produit nommé : sa rubrique, forme par forme, citée telle quelle. Le
+      //- silence se dit : « ne mentionne pas », rubrique vide ou absente.
+      - const fiche = (forme) => `/product/${forme.cis}?q=${encodeURIComponent(query)}${forme.ancre ? `#${forme.ancre}` : ''}`
+      ul.lecture
+        each forme in lecture
+          li.lecture-forme(class=`lecture-${forme.statut}`)
+            a.lecture-nom(href=fiche(forme) title=forme.ancre ? 'Ouvrir la rubrique dans la fiche' : 'Ouvrir la fiche')= specialite(forme.denomination)
+            case forme.statut
+              when 'trouve'
+                span.lecture-texte!= forme.html
+              when 'entiere'
+                span.lecture-texte!= forme.html
+                span.lecture-etat  · ne mentionne pas « #{query} »
+              when 'muette'
+                span.lecture-etat Rubrique #{rubrique} : ne mentionne pas « #{query} »
+              when 'vide'
+                span.lecture-etat Rubrique vide
+              when 'absente'
+                span.lecture-etat Rubrique absente
+              default
+                span.lecture-etat RCP absent
     else if documents.resultats.length === 0
       p.vide
         | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}#{etat.molecule ? ` pour « ${etat.molecule} »` : ''}.
