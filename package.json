@@ -1,7 +1,7 @@
 {
-  "name": "dr-kevin",
+  "name": "medipile",
   "version": "2.0.0",
-  "description": "Recherche BDPM — spécialités, principes actifs, groupes génériques et documents officiels",
+  "description": "Médipile — recherche dans la BDPM : spécialités, principes actifs, groupes génériques et documents officiels ; Kevin interprète les questions en langage courant",
   "type": "module",
   "main": "server.js",
   "engines": {

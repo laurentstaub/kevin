@@ -1641,3 +1641,16 @@ mark.filtre.filtre-actif {
     right: 100%;
   }
 }
+
+/* Signaler une erreur : sous le texte de la rubrique, discret, à droite. */
+.signaler {
+  display: block;
+  width: fit-content;
+  margin: var(--sp-1) 0 var(--sp-2) auto;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+  text-decoration: none;
+}
+
+.signaler:hover { color: var(--accent); text-decoration: underline; }

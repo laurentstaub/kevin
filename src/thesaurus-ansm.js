@@ -2,7 +2,7 @@
  * Groupes du thésaurus des interactions médicamenteuses de l'ANSM (version
  * finale du 15 septembre 2023), repris tels quels : le nom du groupe, ses
  * membres, sa description. C'est l'ANSM qui dit qu'une substance appartient à
- * un groupe, jamais Dr Kevin. Module pur : il lit le texte de `pdftotext -layout`.
+ * un groupe, jamais Médipile. Module pur : il lit le texte de `pdftotext -layout`.
  *
  * Un groupe s'écrit, dans le thésaurus, en capitales à la marge, suivi d'une
  * description éventuelle puis de la liste de ses membres entre parenthèses,

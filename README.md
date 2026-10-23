@@ -1,9 +1,13 @@
-# Demander à Kevin
+# Médipile
 
 Moteur de recherche sur la **BDPM** (base de données publique des médicaments) :
 spécialités, principes actifs, groupes génériques, présentations CIP et documents
 officiels (RCP, notice) — avec une recherche instantanée et un classement par
 pertinence que le site officiel ne propose pas.
+
+**Kevin** est le moteur de question : une question en langage courant
+(« couper le Lévothyrox ? ») est traduite en recherche par une IA, et la réponse
+reste le texte officiel cité.
 
 Le suivi des ruptures d'approvisionnement est traité par un projet dédié
 ([app.antheosdata.com](https://app.antheosdata.com)) ; chaque fiche produit pointe vers lui.

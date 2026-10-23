@@ -17,14 +17,15 @@ import {
 import { getInfosSecurite } from '../securite.js';
 import { getComptoir } from '../comptoir.js';
 import {
-  origine, metaProduit, metaClasse, DESCRIPTION_ACCUEIL, NON_INDEXEES, robots, sitemap, cheminsIndexables,
+  MARQUE, origine, metaProduit, metaClasse, DESCRIPTION_ACCUEIL, NON_INDEXEES, robots, sitemap, cheminsIndexables,
 } from '../referencement.js';
 import {
   getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans, lienAlternatives,
 } from '../excipients.js';
 import {
-  lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES,
+  lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES, DOSSIER_PAGES,
 } from '../fiches.js';
+import { lienSignalement } from '../signalement.js';
 import { regrouperSpecialites } from '../specialites.js';
 import { groupeBiologique, substitutionBiosimilaires } from '../biosimilaires.js';
 import { searchMedications } from '../search.js';
@@ -84,6 +85,21 @@ export function pageRoutes(pool) {
 
   /** Fiche ou chapeau non relu : visible en développement seulement. */
   const visible = (fiche) => config.env !== 'production' || publiee(fiche);
+
+  /** Pages du site : adresse → fichier de pages/. Même règle de publication que les fiches. */
+  const PAGES = { '/pourquoi': 'pourquoi-medipile', '/mentions-legales': 'mentions-legales' };
+
+  // Pied de page : les pages publiées (toutes en développement) et le contact.
+  router.use((req, res, next) => {
+    res.locals.pied = {
+      pages: Object.entries(PAGES)
+        .map(([adresse, slug]) => ({ adresse, page: lireFiche(slug, DOSSIER_PAGES) }))
+        .filter(({ page }) => page && visible(page))
+        .map(({ adresse, page }) => ({ adresse, titre: page.meta.titre ?? page.slug })),
+      contact: config.contact,
+    };
+    next();
+  });
 
   /**
    * Rail présent sur toutes les pages (résultat mis en cache par getClassesPrincipales).
@@ -236,7 +252,7 @@ export function pageRoutes(pool) {
     res.type('application/opensearchdescription+xml').set('Cache-Control', 'public, max-age=86400').send(
       '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">'
-      + '<ShortName>Kevin</ShortName>'
+      + `<ShortName>${MARQUE}</ShortName>`
       + '<Description>Médicaments de la BDPM : nom, principe actif, expression dans les RCP</Description>'
       + '<InputEncoding>UTF-8</InputEncoding>'
       + `<Url type="text/html" method="get" template="${encodeURI(base)}/search?q={searchTerms}"/>`
@@ -255,7 +271,12 @@ export function pageRoutes(pool) {
     wrap(async (req, res) => {
       if (!cheminsEnCache || Date.now() - cheminsEnCache.depuis > 86_400_000) {
         const fiches = listerFiches().filter(publiee).map((fiche) => fiche.slug);
-        cheminsEnCache = { depuis: Date.now(), chemins: await cheminsIndexables(pool, fiches) };
+        // Pages du site publiées : « Pourquoi Médipile » est une page qu'on cherche.
+        const pages = Object.entries(PAGES)
+          .filter(([, slug]) => publiee(lireFiche(slug, DOSSIER_PAGES)))
+          .map(([adresse]) => adresse);
+        const chemins = await cheminsIndexables(pool, fiches);
+        cheminsEnCache = { depuis: Date.now(), chemins: [chemins[0], ...pages, ...chemins.slice(1)] };
       }
       res.type('application/xml').set('Cache-Control', 'public, max-age=86400').send(sitemap(origine(req), cheminsEnCache.chemins));
     }),
@@ -352,7 +373,7 @@ export function pageRoutes(pool) {
       const resultat = await chercherInteractions(pool, elements);
       const noms = resultat.medicaments.map((med) => med.libelle);
       return res.render('interactions', {
-        title: `${noms.join(' × ') || 'Interactions'} · Interactions · Demander à Kevin`,
+        title: `${noms.join(' × ') || 'Interactions'} · Interactions · ${MARQUE}`,
         // Les noms affichés, pas les codes : la barre se resoumet telle quelle.
         saisie: noms.join(' + ') || elements.join(' '),
         resultat,
@@ -425,13 +446,30 @@ export function pageRoutes(pool) {
     }),
   );
 
+  for (const [adresse, slug] of Object.entries(PAGES)) {
+    router.get(
+      adresse,
+      wrap(async (req, res, next) => {
+        const page = lireFiche(slug, DOSSIER_PAGES);
+        if (!page || !visible(page)) return next();
+        return res.render('fiche', {
+          title: `${page.meta.titre ?? slug} · ${MARQUE}`,
+          fiche: page,
+          calcul: null,
+          brouillon: !publiee(page),
+          aCompleter: page.aCompleter,
+        });
+      }),
+    );
+  }
+
   /** Fiches thématiques. Non relue : brouillon en développement, absente en production. */
 
   router.get(
     '/fiches',
     wrap(async (req, res) => {
       const fiches = listerFiches().filter(visible);
-      res.render('fiches', { title: 'Fiches · Demander à Kevin', fiches });
+      res.render('fiches', { title: `Fiches · ${MARQUE}`, fiches });
     }),
   );
 
@@ -441,7 +479,7 @@ export function pageRoutes(pool) {
       const fiche = lireFiche(req.params.slug);
       if (!fiche || !visible(fiche)) return next();
       return res.render('fiche', {
-        title: `${fiche.meta.titre ?? fiche.slug} · Demander à Kevin`,
+        title: `${fiche.meta.titre ?? fiche.slug} · ${MARQUE}`,
         fiche,
         calcul: lireCalcul(fiche.slug),
         brouillon: !publiee(fiche),
@@ -634,6 +672,15 @@ export function pageRoutes(pool) {
       const bande = signaletique(product, delivrance, genericGroup, importation,
         resumerEvaluation(evaluation), optionsAlternatives, secabilite, administration, comptoir);
       res.render('product', {
+        // Un courriel préparé par rubrique : spécialité, document, numéro, adresse.
+        signaler: (entree) => lienSignalement({
+          cis,
+          denomination: product.denomination_medicament,
+          type: entree.id.slice(0, entree.id.lastIndexOf('-')),
+          numero: entree.numero,
+          libelle: entree.libelle?.trim(),
+          adresse: `${origine(req)}/product/${cis}#${entree.id}`,
+        }),
         // Titre et description pour les moteurs : le nom, puis ce que la bande dit.
         ...metaProduit({
           nom: specialite(product.denomination_medicament),

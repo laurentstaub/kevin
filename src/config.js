@@ -58,7 +58,10 @@ export const config = {
     delaiMs: int(process.env.IA_DELAI_MS, 8000),
   },
 
-  // Adresse publique du site (« https://kevin.exemple.fr ») : liens canoniques,
+  // Adresse qui reçoit les signalements d'erreur et les contacts (liens mailto).
+  contact: process.env.CONTACT_EMAIL ?? 'contact@medipile.fr',
+
+  // Adresse publique du site (« https://medipile.fr ») : liens canoniques,
   // sitemap, OpenSearch. Vide : déduite de la requête (développement).
   publicUrl: (process.env.PUBLIC_URL ?? '').replace(/\/+$/, '') || null,
 

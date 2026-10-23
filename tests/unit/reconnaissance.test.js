@@ -183,7 +183,7 @@ describe('routes : médicament reconnu', () => {
       .get('/documents?q=allaitement&molecule=paracetamol&question=paracetamol+allaitement')
       .expect(200);
     assert.match(res.text, /reconnu comme médicament/);
-    assert.doesNotMatch(res.text, /interprétée par IA/);
+    assert.doesNotMatch(res.text, /interprétée par Kevin/);
     assert.match(res.text, /brut=1/);
   });
 

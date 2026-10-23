@@ -5,7 +5,7 @@
  */
 import { config } from './config.js';
 
-export const MARQUE = 'Demander à Kevin';
+export const MARQUE = 'Médipile';
 
 /** Origine publique : PUBLIC_URL, sinon celle de la requête (derrière Heroku, X-Forwarded-Proto). */
 export function origine(req) {

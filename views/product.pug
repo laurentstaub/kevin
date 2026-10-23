@@ -27,6 +27,8 @@ block content
           span.num= entree.numero
           span(class=entree.canonical || entree.libelle !== entree.libelle.toUpperCase() ? 'lab' : 'lab lab-brut')= entree.libelle.trim()
         .rubrique-corps!= entree.html
+        if signaler
+          a.signaler(href=signaler(entree)) Signaler une erreur
         //- Là où on lit les interactions : cette spécialité croisée avec un ou
         //- plusieurs autres médicaments, lus dans la 4.5 des deux RCP (page
         //- /interactions). Le CIS fait lire le RCP de cette spécialité précise,

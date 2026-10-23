@@ -442,8 +442,8 @@ describe('rendu des gabarits', () => {
     assert.match(sans, /<dt>Une boîte<\/dt><dd><a href="\/search\?q=3400935955838">/);
     assert.doesNotMatch(sans, /Lévothyrox|une question/);
     const avec = rendre('search_page', { query: '', filter: 'all', results: null, classes: [], ia: true });
-    assert.match(avec, /· une boîte · une question<\/span>/);
-    assert.match(avec, /<dt>Une question<\/dt><dd><a href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F">couper le Lévothyrox \?<\/a>/);
+    assert.match(avec, /· une boîte · une question à Kevin<\/span>/);
+    assert.match(avec, /<dt>Une question à Kevin<\/dt><dd><a href="\/search\?q=couper\+le\+L%C3%A9vothyrox\+%3F">couper le Lévothyrox \?<\/a>/);
   });
 
   // Référencement : description et canonique, ou hors index.
@@ -514,7 +514,7 @@ describe('rendu des gabarits', () => {
       results: { brandMatches: [], activeIngredientMatches: [], total: 0 },
       documents: RECHERCHE_VIDE,
     });
-    assert.match(html, /<a class="titre-lien" href="\/">Dr Kevin<\/a>/);
+    assert.match(html, /<a class="titre-lien" href="\/">Médipile<\/a>/);
   });
 
   it('mais la page de garde ne se lie pas à elle-même', () => {

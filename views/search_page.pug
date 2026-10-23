@@ -41,9 +41,9 @@ block content
       //- sauf sur la page nue, où il reste du texte.
       h1.titre-site
         if results
-          a.titre-lien(href="/") Dr Kevin
+          a.titre-lien(href="/") Médipile
         else
-          | Dr Kevin
+          | Médipile
       p.accueil-champ Base de données publique des médicaments
   .accueil-colle
     .accueil-inner
@@ -55,7 +55,7 @@ block content
       //- qui elle reste sans réponse.
       if !results
         - const genres = ['un passage des RCP', 'une interaction', 'une alternative', 'une boîte']
-        - if (ia) genres.push('une question')
+        - if (ia) genres.push('une question à Kevin')
         details.notice-site
           summary
             | Notice
@@ -80,10 +80,10 @@ block content
               a(href="/search?q=3400935955838") 3400935955838
               span.notice-explication code CIP ou Datamatrix lu à la douchette : la fiche directement
             if ia
-              dt Une question
+              dt Une question à Kevin
               dd
                 a(href=lien({ mode: 'nom', requete: 'couper le Lévothyrox ?' })) couper le Lévothyrox ?
-                span.notice-explication en langage courant ; la réponse est citée des RCP
+                span.notice-explication en langage courant : Kevin, l'IA, la traduit en recherche ; la réponse est citée des RCP
 
   .recherche
     if notice

@@ -67,8 +67,8 @@ describe('lien', () => {
 describe('titre', () => {
   // Distingue les onglets de plusieurs recherches.
   it('porte la requête et sa restriction', () => {
-    assert.equal(titre(DOCS), '« CYP 3A4 » — rubrique 4.5 · Demander à Kevin');
-    assert.equal(titre(lireEtat({ q: 'aspirine' }, 'nom')), '« aspirine » · Demander à Kevin');
-    assert.equal(titre(lireEtat({}, 'nom')), 'Demander à Kevin');
+    assert.equal(titre(DOCS), '« CYP 3A4 » — rubrique 4.5 · Médipile');
+    assert.equal(titre(lireEtat({ q: 'aspirine' }, 'nom')), '« aspirine » · Médipile');
+    assert.equal(titre(lireEtat({}, 'nom')), 'Médipile');
   });
 });

@@ -1,4 +1,4 @@
-# Dr Kevin — guide de design
+# Médipile — guide de design
 
 Ce document dit ce qui est décidé et pourquoi. Les valeurs vivent dans
 `public/css/tokens.css` ; ce qui suit explique de quel raisonnement elles
@@ -170,7 +170,7 @@ chasse fixe, les maillons en capitales de style, jamais dans la donnée.
 ## 6. Écarts avec le socle Antheos
 
 Le skill `web-antheos` reste la référence pour les sites et tableaux de bord.
-Dr Kevin s'en écarte sur deux points, et il vaut mieux les écrire que les
+Médipile s'en écarte sur deux points, et il vaut mieux les écrire que les
 découvrir en relisant du CSS :
 
 1. **Les rayons sont autorisés**, selon la règle du §3. Le socle les interdit.

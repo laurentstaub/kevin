@@ -15,14 +15,14 @@ describe('référencement', () => {
       nom: 'Coversyl 5 mg, comprimé pelliculé sécable', substances: 'périndopril', titulaire: 'SERVIER',
       valeurs: ['Liste I', '65 %', 'CI grossesse 2e et 3e trimestres'],
     });
-    assert.equal(meta.title, 'Coversyl 5 mg, comprimé pelliculé sécable · RCP, notice, délivrance · Demander à Kevin');
+    assert.equal(meta.title, 'Coversyl 5 mg, comprimé pelliculé sécable · RCP, notice, délivrance · Médipile');
     assert.match(meta.description, /^Coversyl 5 mg, comprimé pelliculé sécable \(périndopril, SERVIER\)\. Liste I · 65 % · CI grossesse/);
     assert.ok(meta.description.length <= 160);
   });
 
   it('classe : molécule à la feuille, classe au-dessus', () => {
     assert.match(metaClasse({ code: 'N06AB05', libelle: 'Paroxétine', molecule: true, specialites: 12 }).description, /12 spécialités commercialisées/);
-    assert.equal(metaClasse({ code: 'N06A', libelle: 'Antidépresseurs', molecule: false }).title, 'Antidépresseurs (N06A) · classe ATC · Demander à Kevin');
+    assert.equal(metaClasse({ code: 'N06A', libelle: 'Antidépresseurs', molecule: false }).title, 'Antidépresseurs (N06A) · classe ATC · Médipile');
   });
 
   it('robots.txt : résultats exclus, sitemap annoncé', () => {

@@ -134,7 +134,7 @@ describe('routes, IA active', () => {
     const res = await request(app)
       .get(`/documents?q=allaitement&molecule=tramadol&ia=1&question=${encodeURIComponent(QUESTION)}`)
       .expect(200);
-    assert.match(res.text, /interprétée par IA/);
+    assert.match(res.text, /interprétée par Kevin/);
     assert.match(res.text, /brut=1/);
     // Le nom mène aux spécialités de la molécule ; seule la croix retire le filtre.
     assert.match(res.text, /class="jeton-nom" href="\/search\?q=tramadol"[^>]*>tramadol/);

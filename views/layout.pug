@@ -5,7 +5,7 @@ html(lang="fr")
   head
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title= title || 'Demander à Kevin'
+    title= title || 'Médipile'
     //- Référencement : description, adresse canonique, ou hors index (résultats).
     if description
       meta(name="description" content=description)
@@ -14,7 +14,7 @@ html(lang="fr")
     else if canonique
       link(rel="canonical" href=canonique)
     //- Recherche depuis la barre d'adresse du navigateur.
-    link(rel="search" type="application/opensearchdescription+xml" title="Kevin" href="/opensearch.xml")
+    link(rel="search" type="application/opensearchdescription+xml" title="Médipile" href="/opensearch.xml")
     //- Apparence choisie, posée avant les styles : pas de page qui change de
     //- couleur au chargement. Fichier externe : la politique de sécurité
     //- (script-src 'self') refusait le script en ligne, et le choix mémorisé
@@ -29,5 +29,14 @@ html(lang="fr")
     if !sansRail
       +rail(rail, railActif, sections, documents)
     block content
+    //- Qui est derrière le site, et où écrire : une ligne, sur toutes les pages.
+    if pied
+      footer.pied
+        span Médipile
+        each lien in pied.pages
+          span.sep
+          a(href=lien.adresse)= lien.titre
+        span.sep
+        a(href=`mailto:${pied.contact}`)= pied.contact
     script(src=`/js/theme.js?v=${v}` defer)
     block scripts

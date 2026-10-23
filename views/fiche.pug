@@ -16,7 +16,10 @@ block content
       //- Développement seulement : en production, une fiche non relue n'a pas d'adresse.
       p.brouillon
         strong Brouillon
-        |  — non relu, non publié. Dater « relu: » dans l'en-tête pour publier.
+        if aCompleter
+          |  — des champs restent « à compléter » : la page ne se publie pas avant.
+        else
+          |  — non relu, non publié. Dater « relu: » dans l'en-tête pour publier.
 
     header.fiche-entete
       h1.fiche-titre= fiche.meta.titre || fiche.slug

@@ -1552,3 +1552,20 @@ details[open] > .molecules-plus::before,
   .theme { right: var(--sp-2); }
   .theme-libelle { display: none; }
 }
+
+/* Pied de page : une ligne, qui est derrière le site et où écrire. */
+.pied {
+  max-width: var(--colonne);
+  margin: var(--sp-6) auto 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-4);
+  border-top: var(--rule-width) solid var(--rule);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.pied a { color: var(--muted); }
+.pied a:hover { color: var(--accent); }
+
+/* Le séparateur commun (tokens.css) est un filet presque invisible : ici un point lisible. */
+.pied .sep { color: var(--faint); margin: 0 0.5em; }
+.pied .sep::before { content: "·"; }

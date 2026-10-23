@@ -15,13 +15,18 @@ export const DOSSIER_FICHES = path.join(ROOT, 'fiches');
 export const DOSSIER_CALCULS = path.join(ROOT, 'data', 'fiches');
 /** Les chapeaux des pages de classe : `fiches/classes/m01a.md` pour M01A. */
 export const DOSSIER_CLASSES = path.join(DOSSIER_FICHES, 'classes');
+/** Les pages du site (« Pourquoi Médipile », mentions légales) : même format, même règle. */
+export const DOSSIER_PAGES = path.join(ROOT, 'pages');
+
+/** Champ laissé à remplir (« [à compléter : SIREN] ») : la page ne se publie pas. */
+const A_COMPLETER = /\[à compléter\b/i;
 
 const echapper = (texte) => String(texte)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
-/** Un lien n'est accepté que vers le web ou le site lui-même. */
-const lienSur = (url) => /^(https?:\/\/|\/)/.test(url);
+/** Un lien n'est accepté que vers le web, le site lui-même ou une adresse de courriel. */
+const lienSur = (url) => /^(https?:\/\/|\/|mailto:)/.test(url);
 
 function enLigne(texte) {
   return echapper(texte)
@@ -108,7 +113,7 @@ export function lireFiche(slug, dossier = DOSSIER_FICHES) {
   const chemin = path.join(dossier, `${slug}.md`);
   if (!existsSync(chemin)) return null;
   const { meta, corps } = lireEnTete(readFileSync(chemin, 'utf8'));
-  return { slug, meta, blocs: decouper(corps) };
+  return { slug, meta, blocs: decouper(corps), aCompleter: A_COMPLETER.test(corps) };
 }
 
 export function listerFiches(dossier = DOSSIER_FICHES) {
@@ -119,8 +124,11 @@ export function listerFiches(dossier = DOSSIER_FICHES) {
     .filter(Boolean);
 }
 
-/** Publiée seulement si relue ; sinon visible en développement uniquement. */
-export const publiee = (fiche) => Boolean(fiche?.meta?.relu);
+/**
+ * Publiée seulement si relue et complète ; sinon visible en développement
+ * uniquement. Des mentions légales datées mais sans SIREN ne sortent pas.
+ */
+export const publiee = (fiche) => Boolean(fiche?.meta?.relu) && !fiche.aCompleter;
 
 /** Le calcul de la fiche, écrit par build-fiches et versionné. */
 export function lireCalcul(slug, dossier = DOSSIER_CALCULS) {

@@ -6,6 +6,7 @@
 
 import { parseQuery, parseFilter } from './validate.js';
 import { normaliserRubrique } from './recherche-texte.js';
+import { MARQUE } from './referencement.js';
 
 /**
  * Modes (encodés par la page) et paramètres que chacun porte. Changer de mode
@@ -78,10 +79,10 @@ export function lien(etat, changements = {}) {
 
 /** Titre de la page (historique, onglets, favoris), déduit de l'état. */
 export function titre(etat) {
-  if (etat.question) return `« ${etat.question} » · Demander à Kevin`;
-  if (!etat.requete) return 'Demander à Kevin';
+  if (etat.question) return `« ${etat.question} » · ${MARQUE}`;
+  if (!etat.requete) return MARQUE;
   const restriction = etat.mode === 'documents' && etat.rubrique
     ? ` — rubrique ${etat.rubrique}`
     : '';
-  return `« ${etat.requete} »${restriction} · Demander à Kevin`;
+  return `« ${etat.requete} »${restriction} · ${MARQUE}`;
 }
