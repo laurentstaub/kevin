@@ -80,10 +80,17 @@ block content
       p.vide= notice
     else if documents.resultats.length === 0
       p.vide
-        | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}.
+        | Aucune rubrique ne contient « #{query} »#{rubrique ? ` dans la rubrique ${rubrique}` : ''}#{etat.molecule ? ` pour « ${etat.molecule} »` : ''}.
         if rubrique
           |  
           a(href=lien(etat, { rubrique: null })) Chercher dans toutes les rubriques
+        //- Médicament filtré et rien : ses fiches (la bande y lit sécabilité,
+        //- administration, grossesse…), ou la même recherche sans le filtre.
+        else if etat.molecule
+          |  
+          a(href=lien({ mode: 'nom', requete: etat.molecule })) Voir ses spécialités
+          |  · 
+          a(href=lien(etat, { molecule: null })) Chercher dans tous les médicaments
     else
       +resultatsDocuments(documents, query, false, colonnes, rubrique, etat, lien, ciblee)
 

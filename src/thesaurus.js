@@ -1,7 +1,9 @@
 /**
- * Élargit une requête par un thésaurus de termes équivalents (« QT » → « torsade de pointes »).
- * Côté requête et non dictionnaire Postgres : inaccessible sur Heroku, et tout
- * ajout imposerait de réindexer (280 s de verrou).
+ * Élargit une requête par un thésaurus de termes équivalents (« QT » → « torsade de pointes »),
+ * puis par les concepts du comptoir (« sécabilité » → « sécable », « barre de cassure »,
+ * « divisé » : data/concepts-document.json, clé « recherche »), que le thésaurus,
+ * plus strict, ne connaît pas. Côté requête et non dictionnaire Postgres :
+ * inaccessible sur Heroku, et tout ajout imposerait de réindexer (280 s de verrou).
  * Rend des atomes (listes d'alternatives) : « OR » de websearch_to_tsquery a la mauvaise précédence.
  * data/thesaurus.json est versionné et relu par un pharmacien.
  */
@@ -21,6 +23,28 @@ const cle = (texte) => deaccent(String(texte)).toLowerCase().replace(/[\s'’\-�
 
 function charger(chemin = path.join(ROOT, 'data', 'thesaurus.json')) {
   const { groupes } = JSON.parse(readFileSync(chemin, 'utf8'));
+  return indexer(groupes);
+}
+
+/**
+ * Concepts du comptoir : chaque mot qu'on tape (« frigo ») mène aux termes
+ * cherchés (« réfrigérateur », « au froid »…), sans y entrer lui-même : « froid »
+ * seul ramènerait les sensations de froid de la rubrique 4.8.
+ */
+function chargerConcepts(chemin = path.join(ROOT, 'data', 'concepts-document.json')) {
+  const { concepts } = JSON.parse(readFileSync(chemin, 'utf8'));
+  const parCle = new Map();
+  for (const { mots, recherche } of concepts) {
+    const termes = (recherche ?? []).map((terme) => String(terme).trim()).filter(Boolean);
+    if (termes.length === 0) continue;
+    for (const terme of [...mots, ...termes]) {
+      if (!parCle.has(cle(terme))) parCle.set(cle(terme), termes);
+    }
+  }
+  return parCle;
+}
+
+function indexer(groupes) {
   const parCle = new Map();
   for (const groupe of groupes) {
     const membres = groupe.map((terme) => String(terme).trim()).filter(Boolean);
@@ -34,7 +58,11 @@ function charger(chemin = path.join(ROOT, 'data', 'thesaurus.json')) {
 }
 
 let INDEX = null;
+let CONCEPTS = null;
 const index = () => (INDEX ??= charger());
+const concepts = () => (CONCEPTS ??= chargerConcepts());
+/** Le thésaurus d'abord, strict ; sinon le concept du comptoir. */
+const groupeDe = (candidat) => index().get(cle(candidat)) ?? concepts().get(cle(candidat));
 
 /** Tests : recharger depuis un autre fichier, ou vider. */
 export function chargerThesaurus(chemin) {
@@ -67,12 +95,14 @@ export function elargir(requete) {
     let trouve = null;
     for (let taille = Math.min(MOTS_MAX, mots.length - i); taille >= 1 && !trouve; taille -= 1) {
       const candidat = mots.slice(i, i + taille).join(' ');
-      const groupe = index().get(cle(candidat));
+      const groupe = groupeDe(candidat);
       if (groupe) trouve = { n: taille, candidat, groupe };
     }
 
     if (trouve) {
-      const alternatives = [...new Set(trouve.groupe)].slice(0, ALTERNATIVES_MAX);
+      // Le terme tapé reste cherché, même absent du groupe (concept : « rein »).
+      const alternatives = [...new Set(trouve.groupe.some((terme) => cle(terme) === cle(trouve.candidat))
+        ? trouve.groupe : [trouve.candidat, ...trouve.groupe])].slice(0, ALTERNATIVES_MAX);
       atomes.push(alternatives.map(citer));
       elargissements.push({
         terme: trouve.candidat,

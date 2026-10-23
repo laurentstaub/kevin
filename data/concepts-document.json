@@ -1,61 +1,377 @@
 {
-  "_": "Filtre du document : le mot du comptoir (mots) cherche aussi les expressions des RCP et notices (formes), qui le disent autrement. Une aide à la recherche, pas une donnée : rien n'est affiché qui ne soit dans le document. Mots comparés sans accent ni casse, à la saisie entière ; formes en mots entiers.",
+  "_": "Concepts du comptoir, deux usages. « mots » : ce qu'on tape ; « formes » : ce que le filtre du document surligne (formes exactes, mots entiers) ; « recherche » : ce que la recherche dans les documents cherche en plus, au plus huit termes, les formes fléchies étant ramenées par le radical français. Une aide à la recherche, pas une donnée : rien n'est affiché qui ne soit dans le document. Le thésaurus (data/thesaurus.json) prime quand il connaît le terme.",
   "concepts": [
     {
-      "mots": ["sécabilité", "sécable", "couper", "casser", "diviser", "demi-dose", "demi comprimé", "barre de cassure"],
-      "formes": ["sécabilité", "sécable", "sécables", "quadrisécable", "quadrisécables", "barre de cassure", "barre de sécabilité", "doses égales", "demi-doses", "demi-dose", "parties égales", "être divisé", "être divisés", "être coupé", "être coupés", "être cassé", "être cassés", "ni divisé", "ni divisés", "ni coupé", "ni coupés", "ni cassé", "ni cassés", "ou divisés", "ou coupés", "ou cassés", "diviser le comprimé", "couper le comprimé", "couper les comprimés", "casser le comprimé"]
+      "mots": [
+        "sécabilité",
+        "sécable",
+        "couper",
+        "casser",
+        "diviser",
+        "demi-dose",
+        "demi comprimé",
+        "barre de cassure"
+      ],
+      "formes": [
+        "sécabilité",
+        "sécable",
+        "sécables",
+        "quadrisécable",
+        "quadrisécables",
+        "barre de cassure",
+        "barre de sécabilité",
+        "doses égales",
+        "demi-doses",
+        "demi-dose",
+        "parties égales",
+        "être divisé",
+        "être divisés",
+        "être coupé",
+        "être coupés",
+        "être cassé",
+        "être cassés",
+        "ni divisé",
+        "ni divisés",
+        "ni coupé",
+        "ni coupés",
+        "ni cassé",
+        "ni cassés",
+        "ou divisés",
+        "ou coupés",
+        "ou cassés",
+        "diviser le comprimé",
+        "couper le comprimé",
+        "couper les comprimés",
+        "casser le comprimé"
+      ],
+      "recherche": [
+        "sécabilité",
+        "sécable",
+        "quadrisécable",
+        "barre de cassure",
+        "doses égales",
+        "divisé",
+        "couper",
+        "casser"
+      ]
     },
     {
-      "mots": ["écraser", "écrasement", "écrasable", "broyer", "piler", "croquer", "mâcher", "avaler entier"],
-      "formes": ["écraser", "écrasé", "écrasés", "écrasée", "écrasées", "broyer", "broyé", "broyés", "croquer", "croqué", "croqués", "mâcher", "mâché", "mâchés", "avalé entier", "avalés entiers", "avalé en entier", "avalés en entier", "avaler en entier"]
+      "mots": [
+        "écraser",
+        "écrasement",
+        "écrasable",
+        "broyer",
+        "piler",
+        "croquer",
+        "mâcher",
+        "avaler entier"
+      ],
+      "formes": [
+        "écraser",
+        "écrasé",
+        "écrasés",
+        "écrasée",
+        "écrasées",
+        "broyer",
+        "broyé",
+        "broyés",
+        "croquer",
+        "croqué",
+        "croqués",
+        "mâcher",
+        "mâché",
+        "mâchés",
+        "avalé entier",
+        "avalés entiers",
+        "avalé en entier",
+        "avalés en entier",
+        "avaler en entier"
+      ],
+      "recherche": [
+        "écraser",
+        "broyer",
+        "croquer",
+        "mâcher",
+        "avaler entier",
+        "écrasé",
+        "mâché"
+      ]
     },
     {
-      "mots": ["ouvrir", "ouvrir la gélule", "gélule ouverte", "ouvrable"],
-      "formes": ["ouvrir", "ouverte", "ouvertes", "contenu de la gélule", "contenu des gélules", "saupoudrer", "saupoudré"]
+      "mots": [
+        "ouvrir",
+        "ouvrir la gélule",
+        "gélule ouverte",
+        "ouvrable"
+      ],
+      "formes": [
+        "ouvrir",
+        "ouverte",
+        "ouvertes",
+        "contenu de la gélule",
+        "contenu des gélules",
+        "saupoudrer",
+        "saupoudré"
+      ],
+      "recherche": [
+        "ouvrir",
+        "ouverte",
+        "contenu de la gélule",
+        "saupoudrer"
+      ]
     },
     {
-      "mots": ["sonde", "sonde gastrique", "sonde nasogastrique", "gastrostomie"],
-      "formes": ["sonde", "sondes", "nasogastrique", "gastrostomie", "entérale"]
+      "mots": [
+        "sonde",
+        "sonde gastrique",
+        "sonde nasogastrique",
+        "gastrostomie"
+      ],
+      "formes": [
+        "sonde",
+        "sondes",
+        "nasogastrique",
+        "gastrostomie",
+        "entérale"
+      ],
+      "recherche": [
+        "sonde",
+        "nasogastrique",
+        "gastrostomie",
+        "entérale"
+      ]
     },
     {
-      "mots": ["enceinte", "femme enceinte", "grossesse"],
-      "formes": ["grossesse", "enceinte", "enceintes", "femmes en âge de procréer", "tératogène", "tératogènes"]
+      "mots": [
+        "enceinte",
+        "femme enceinte",
+        "grossesse"
+      ],
+      "formes": [
+        "grossesse",
+        "enceinte",
+        "enceintes",
+        "femmes en âge de procréer",
+        "tératogène",
+        "tératogènes"
+      ],
+      "recherche": [
+        "grossesse",
+        "enceinte",
+        "femmes en âge de procréer",
+        "tératogène"
+      ]
     },
     {
-      "mots": ["allaiter", "allaitement"],
-      "formes": ["allaitement", "allaiter", "lait maternel"]
+      "mots": [
+        "allaiter",
+        "allaitement"
+      ],
+      "formes": [
+        "allaitement",
+        "allaiter",
+        "lait maternel"
+      ],
+      "recherche": [
+        "allaitement",
+        "allaiter",
+        "lait maternel"
+      ]
     },
     {
-      "mots": ["voiture", "conduire", "conduite", "volant"],
-      "formes": ["conduite de véhicules", "conduire des véhicules", "aptitude à conduire", "conduire", "utiliser des machines", "utilisation de machines"]
+      "mots": [
+        "voiture",
+        "conduire",
+        "conduite",
+        "volant"
+      ],
+      "formes": [
+        "conduite de véhicules",
+        "conduire des véhicules",
+        "aptitude à conduire",
+        "conduire",
+        "utiliser des machines",
+        "utilisation de machines"
+      ],
+      "recherche": [
+        "conduite de véhicules",
+        "conduire",
+        "utiliser des machines",
+        "aptitude à conduire"
+      ]
     },
     {
-      "mots": ["soleil", "solaire", "uv", "photosensibilité", "photosensibilisation", "bronzage"],
-      "formes": ["soleil", "solaire", "solaires", "UV", "ultraviolets", "photosensibilité", "photosensibilisation", "photosensibilisant", "phototoxicité"]
+      "mots": [
+        "soleil",
+        "solaire",
+        "uv",
+        "photosensibilité",
+        "photosensibilisation",
+        "bronzage"
+      ],
+      "formes": [
+        "soleil",
+        "solaire",
+        "solaires",
+        "UV",
+        "ultraviolets",
+        "photosensibilité",
+        "photosensibilisation",
+        "photosensibilisant",
+        "phototoxicité"
+      ],
+      "recherche": [
+        "soleil",
+        "solaire",
+        "UV",
+        "ultraviolets",
+        "photosensibilité",
+        "photosensibilisation",
+        "phototoxicité"
+      ]
     },
     {
-      "mots": ["frigo", "frigidaire", "réfrigérateur", "froid", "conservation"],
-      "formes": ["réfrigérateur", "au froid", "congeler", "congélateur", "température", "conservation"]
+      "mots": [
+        "frigo",
+        "frigidaire",
+        "réfrigérateur",
+        "froid",
+        "conservation"
+      ],
+      "formes": [
+        "réfrigérateur",
+        "au froid",
+        "congeler",
+        "congélateur",
+        "température",
+        "conservation"
+      ],
+      "recherche": [
+        "réfrigérateur",
+        "au froid",
+        "congeler",
+        "température",
+        "conservation"
+      ]
     },
     {
-      "mots": ["dopage", "antidopage", "sport", "sportif"],
-      "formes": ["dopage", "antidopage", "sportif", "sportifs"]
+      "mots": [
+        "dopage",
+        "antidopage",
+        "sport",
+        "sportif"
+      ],
+      "formes": [
+        "dopage",
+        "antidopage",
+        "sportif",
+        "sportifs"
+      ],
+      "recherche": [
+        "dopage",
+        "antidopage",
+        "sportif"
+      ]
     },
     {
-      "mots": ["rein", "reins", "rénal", "rénale", "dialyse"],
-      "formes": ["insuffisance rénale", "insuffisants rénaux", "insuffisant rénal", "fonction rénale", "clairance de la créatinine", "hémodialyse", "dialyse"]
+      "mots": [
+        "rein",
+        "reins",
+        "rénal",
+        "rénale",
+        "dialyse"
+      ],
+      "formes": [
+        "insuffisance rénale",
+        "insuffisants rénaux",
+        "insuffisant rénal",
+        "fonction rénale",
+        "clairance de la créatinine",
+        "hémodialyse",
+        "dialyse"
+      ],
+      "recherche": [
+        "insuffisance rénale",
+        "fonction rénale",
+        "clairance de la créatinine",
+        "hémodialyse",
+        "dialyse",
+        "rénal"
+      ]
     },
     {
-      "mots": ["foie", "hépatique"],
-      "formes": ["insuffisance hépatique", "insuffisants hépatiques", "insuffisant hépatique", "fonction hépatique", "hépatotoxicité", "Child-Pugh"]
+      "mots": [
+        "foie",
+        "hépatique"
+      ],
+      "formes": [
+        "insuffisance hépatique",
+        "insuffisants hépatiques",
+        "insuffisant hépatique",
+        "fonction hépatique",
+        "hépatotoxicité",
+        "Child-Pugh"
+      ],
+      "recherche": [
+        "insuffisance hépatique",
+        "fonction hépatique",
+        "hépatotoxicité",
+        "Child-Pugh",
+        "hépatique"
+      ]
     },
     {
-      "mots": ["enfant", "enfants", "pédiatrie", "pédiatrique", "bébé", "nourrisson"],
-      "formes": ["population pédiatrique", "enfant", "enfants", "nourrisson", "nourrissons", "nouveau-né", "nouveau-nés", "adolescent", "adolescents"]
+      "mots": [
+        "enfant",
+        "enfants",
+        "pédiatrie",
+        "pédiatrique",
+        "bébé",
+        "nourrisson"
+      ],
+      "formes": [
+        "population pédiatrique",
+        "enfant",
+        "enfants",
+        "nourrisson",
+        "nourrissons",
+        "nouveau-né",
+        "nouveau-nés",
+        "adolescent",
+        "adolescents"
+      ],
+      "recherche": [
+        "population pédiatrique",
+        "enfant",
+        "nourrisson",
+        "nouveau-né",
+        "adolescent",
+        "pédiatrique"
+      ]
     },
     {
-      "mots": ["oubli", "oublié", "dose oubliée", "oubli de dose"],
-      "formes": ["oubli", "oublié", "oubliée", "oubliées", "dose manquée", "doses manquées", "omis", "omise"]
+      "mots": [
+        "oubli",
+        "oublié",
+        "dose oubliée",
+        "oubli de dose"
+      ],
+      "formes": [
+        "oubli",
+        "oublié",
+        "oubliée",
+        "oubliées",
+        "dose manquée",
+        "doses manquées",
+        "omis",
+        "omise"
+      ],
+      "recherche": [
+        "oubli",
+        "oublié",
+        "dose manquée",
+        "omis"
+      ]
     }
   ]
 }

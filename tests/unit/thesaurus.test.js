@@ -49,6 +49,23 @@ describe('elargir', () => {
     assert.ok(e.vers.includes('cytochrome 3A4'));
   });
 
+  // Concepts du comptoir (data/concepts-document.json) : après le thésaurus, plus strict.
+  it('élargit un concept du comptoir aux termes des RCP, le mot tapé compris', () => {
+    const { atomes, elargissements } = elargir('divisé');
+    assert.ok(atomes[0].includes('sécable') && atomes[0].includes('"barre de cassure"') && atomes[0].includes('divisé'));
+    assert.ok(elargissements[0].vers.includes('sécable'));
+    assert.ok(!elargissements[0].vers.includes('divisé'));
+    // Le mot du comptoir mène aux termes des RCP ; « froid » n'y entre que si on le tape.
+    assert.ok(elargir('frigo').atomes[0].includes('réfrigérateur'));
+    assert.ok(!elargir('frigo').atomes[0].includes('froid'));
+    assert.equal(elargir('rein').atomes[0][0], 'rein');
+  });
+
+  // Abréviation du comptoir : « poso » ne partage pas le radical de « posologie » (« poso » ≠ « posolog »).
+  it('« poso » cherche « posologie », le titre de la rubrique 4.2', () => {
+    assert.deepEqual(alternatives('poso'), ['posologie', 'poso']);
+  });
+
   it('rend vide pour une saisie vide', () => {
     assert.deepEqual(elargir(''), { atomes: [], elargissements: [] });
     assert.deepEqual(elargir(null), { atomes: [], elargissements: [] });

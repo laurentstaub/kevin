@@ -1,6 +1,7 @@
 {
   "note": "Groupes de termes équivalents pour la recherche plein texte. Chaque groupe est une liste ; le premier terme est celui qu'on affiche. Un mot saisi qui figure dans un groupe cherche tous les termes du groupe. Règle d'admission : équivalents stricts et variantes d'écriture seulement — pas de termes voisins. « insuffisance rénale » et « clairance de la créatinine » sont liés, ils ne sont pas synonymes. Un sigle n'entre que s'il est sans ambiguïté au comptoir : « EP » et « NET » ont été écartés. À relire par un pharmacien à chaque ajout.",
   "groupes": [
+    ["posologie", "poso"],
     ["QT", "intervalle QT", "allongement du QT", "allongement de l'intervalle QT", "torsade de pointes", "torsades de pointes"],
     ["CYP3A4", "CYP 3A4", "cytochrome 3A4", "CYP450 3A4", "isoenzyme 3A4"],
     ["CYP2D6", "CYP 2D6", "cytochrome 2D6"],

@@ -463,6 +463,17 @@ describe('rendu des gabarits', () => {
     assert.doesNotMatch(resultats, /rel="canonical"/);
   });
 
+  // Documents d'un médicament, rien trouvé : ses fiches, ou la recherche sans le filtre.
+  it('sans résultat pour un médicament, la page mène à ses spécialités', () => {
+    const html = rendre('documents', {
+      query: 'divisé', rubrique: null, documents: RECHERCHE_VIDE,
+      etat: lireEtat({ q: 'divisé', molecule: 'doliprane 1000', question: 'Sécabilité du doliprane 1000 ?', ia: '1' }, 'documents'),
+    });
+    assert.match(html, /Aucune rubrique ne contient « divisé » pour « doliprane 1000 »\./);
+    assert.match(html, /<a href="\/search\?q=doliprane\+1000">Voir ses spécialités<\/a>/);
+    assert.match(html, /<a href="\/documents\?q=divis%C3%A9&amp;question=[^"]*&amp;ia=1">Chercher dans tous les médicaments<\/a>/);
+  });
+
   // Accueil : les molécules les plus fournies, sous les classes.
   it('l’accueil liste les molécules les plus fournies', () => {
     const html = rendre('search_page', {

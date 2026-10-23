@@ -60,7 +60,7 @@ ${Object.entries(RUBRIQUES_IA).map(([numero, libelle]) => `  ${numero} ${libelle
   trop pris → 4.9. Les rubriques 5 et 6 seulement pour la pharmacologie, les
   excipients ou la conservation. null si aucune ne s'impose.
   Deux gestes distincts, à ne pas confondre :
-  couper, casser, diviser un comprimé (sécabilité) → rubrique 3, mots « divisé » ;
+  couper, casser, diviser un comprimé (sécabilité) → rubrique 3, mots « sécable » ;
   écraser un comprimé, ouvrir une gélule → rubrique 4.2, mots « écraser ».
 - mots : une seule expression de 1 à 4 mots, celle qui figure textuellement dans un RCP
   (vocabulaire médical français), sans la molécule. Jamais de liste ni de virgule :
