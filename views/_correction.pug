@@ -1,0 +1,8 @@
+//- Faute de frappe corrigée (« poso macogol » → « poso macrogol ») : annoncée,
+//- et la saisie d'origine proposée telle quelle. Jamais une correction muette.
+mixin correction(corrige, actuelle)
+  if corrige
+    p.correction
+      | Recherche corrigée : « #{actuelle} » au lieu de « #{corrige} ».
+      |
+      a(href=lien({ mode: 'nom', requete: corrige, brut: '1' })) Chercher « #{corrige} » tel quel

@@ -17,6 +17,7 @@ import {
 import { getInfosSecurite } from '../securite.js';
 import { getComptoir } from '../comptoir.js';
 import { rubriqueDuComptoir, motDuComptoir } from '../concepts-document.js';
+import { corriger } from '../correction.js';
 
 /** Formes dites au comptoir, qui précisent le médicament plutôt que la question. */
 const FORMES_COMPTOIR = new Set(['lp', 'comprime', 'comprimes', 'gelule', 'gelules', 'sirop', 'buvable', 'injectable', 'effervescent', 'suppositoire', 'suppositoires', 'collyre', 'creme', 'pommade', 'sachet', 'sachets', 'patch']);
@@ -72,8 +73,10 @@ function messagePanne(err) {
 }
 
 /** Adresse de la page Interactions : un paramètre `m` par médicament, dans l'ordre de la saisie. */
-export function lienInteractions(elements) {
-  return `/interactions?${new URLSearchParams(elements.map((nom) => ['m', nom]))}`;
+export function lienInteractions(elements, corrige = null) {
+  const params = new URLSearchParams(elements.map((nom) => ['m', nom]));
+  if (corrige) params.set('corrige', corrige);
+  return `/interactions?${params}`;
 }
 
 export function pageRoutes(pool) {
@@ -225,6 +228,21 @@ export function pageRoutes(pool) {
     };
   };
 
+  /**
+   * Faute de frappe (« poso macogol ») : la même recherche, corrigée, avec la
+   * saisie d'origine dans l'URL pour l'annoncer et la proposer telle quelle.
+   * Jamais deux fois, jamais pour une saisie « tel quel ».
+   * @returns {Promise<string|null>} l'adresse corrigée
+   */
+  const corrigerSaisie = async (etat, saisie) => {
+    if (etat.brut || etat.corrige || etat.molecule || etat.question) return null;
+    const correction = await corriger(pool, saisie).catch((err) => {
+      console.error('[correction] indisponible :', err.message);
+      return null;
+    });
+    return correction ? lien({ ...etat, requete: correction.texte }, { corrige: saisie }) : null;
+  };
+
   /** L'IA traduit une question en critères ; null si elle est absente ou échoue. */
   const interpreter = async (texte) => {
     if (!iaActive() || !estQuestion(texte)) return null;
@@ -253,7 +271,7 @@ export function pageRoutes(pool) {
       return null;
     });
     if (plusieurs && !(await estAssociation(pool, plusieurs).catch(() => true))) {
-      return { url: lienInteractions(plusieurs) };
+      return { url: lienInteractions(plusieurs, etat.corrige) };
     }
 
     const documents = (changements) => ({ url: lien({ ...etat, mode: 'documents' }, { question: saisie, ...changements }) });
@@ -350,6 +368,11 @@ export function pageRoutes(pool) {
         if (cis) return res.redirect(`/product/${cis}`);
       }
 
+      if (!query.tooShort) {
+        const corrigee = await corrigerSaisie(etat, query.raw);
+        if (corrigee) return res.redirect(corrigee);
+      }
+
       // Médicament reconnu ou question interprétée → les documents, par redirection.
       if (!etat.brut && !query.tooShort) {
         const sens = await orienter(etat, query.raw);
@@ -424,6 +447,7 @@ export function pageRoutes(pool) {
         // Les noms affichés, pas les codes : la barre se resoumet telle quelle.
         saisie: noms.join(' + ') || elements.join(' '),
         resultat,
+        corrige: String(req.query.corrige ?? '').slice(0, 200) || null,
         sansRail: true,
       });
     }),
@@ -448,6 +472,8 @@ export function pageRoutes(pool) {
       // cas, redirection vers la recherche explicite (URL partageable, filtres
       // retirables) ; `question` présent : déjà fait, jamais deux fois.
       if (!etat.molecule && !etat.question && !etat.brut && !query.tooShort) {
+        const corrigee = await corrigerSaisie(etat, query.raw);
+        if (corrigee) return res.redirect(corrigee);
         const sens = await orienter(etat, query.raw);
         if (sens) return res.redirect(sens.url);
       }

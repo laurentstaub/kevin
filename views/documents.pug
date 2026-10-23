@@ -3,6 +3,7 @@ include _barre.pug
 include _recherche.pug
 include _resultats-documents.pug
 include _dosages.pug
+include _correction.pug
 
 //- Recherche plein texte, vue complète. Seule page à porter le filtre par rubrique.
 
@@ -20,6 +21,8 @@ block content
       p.page-meta
         | Recherche du texte des résumés des caractéristiques et des notices,
         |  rubrique par rubrique.
+
+      +correction(etat.corrige, etat.question || query)
 
       //- Saisie réorientée : par l'IA (annoncée, AI Act art. 50) ou par la base ; refusable.
       if etat.question

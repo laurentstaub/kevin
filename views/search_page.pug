@@ -2,6 +2,7 @@ extends layout.pug
 include _recherche.pug
 include _resultats-documents.pug
 include _dosages.pug
+include _correction.pug
 
 //- Une ligne par produit (racine de marque), pas par code CIS, avec le nombre
 //- de présentations et d'importations regroupées.
@@ -91,6 +92,8 @@ block content
                 span.notice-explication en langage courant : Kevin, l'IA, la traduit en recherche ; la réponse est citée des RCP
 
   .recherche
+    if etat
+      +correction(etat.corrige, query)
     if notice
       p.notice= notice
 

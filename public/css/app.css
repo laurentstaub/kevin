@@ -1084,6 +1084,15 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 /* Filet sur la ligne, pas sur le tbody : les moteurs le doublent en bordures fusionnées. */
 /* `.trouvailles` en tête pour l'emporter sur tokens.css, qui retire le filet
    de la dernière ligne de chaque tbody (ici, une molécule par tbody). */
+/* Faute de frappe corrigée : une ligne, la saisie d'origine en lien. */
+.correction {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.correction a { color: var(--lien); }
+
 /* Rubrique d'un produit nommé, forme par forme : le nom, puis le texte cité
    ou ce qu'en dit le RCP (« Rubrique vide »), en gris. */
 .lecture {

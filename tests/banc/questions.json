@@ -383,6 +383,41 @@
    "question": "metformine alcool",
    "page": "interactions",
    "attendu": "deconseillee"
+  },
+  {
+   "n": 56,
+   "theme": "fautes-de-frappe",
+   "question": "poso macogol",
+   "page": "documents",
+   "attendu": "1 a 2 sachets par jour"
+  },
+  {
+   "n": 57,
+   "theme": "fautes-de-frappe",
+   "question": "doliprnae",
+   "page": "search",
+   "attendu": "Doliprane 1000 mg"
+  },
+  {
+   "n": 58,
+   "theme": "fautes-de-frappe",
+   "question": "paracetamol alaitement",
+   "page": "documents",
+   "attendu": "lait maternel"
+  },
+  {
+   "n": 59,
+   "theme": "fautes-de-frappe",
+   "question": "kardegic previscna",
+   "page": "interactions",
+   "attendu": "contre-indiquee"
+  },
+  {
+   "n": 60,
+   "theme": "fautes-de-frappe",
+   "question": "amoxiciline grossesse",
+   "page": "documents",
+   "attendu": "grossesse"
   }
  ]
 }

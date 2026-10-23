@@ -1,6 +1,7 @@
 extends layout.pug
 include _barre.pug
 include _recherche.pug
+include _correction.pug
 
 //- Interactions entre les médicaments d'une saisie : pour chaque paire, ce que
 //- la rubrique 4.5 de chaque RCP dit de l'autre, cité tel quel. Deux colonnes,
@@ -68,6 +69,7 @@ block content
       p.fiche-meta
         span Thésaurus de l'ANSM, puis rubrique 4.5 des RCP, cités tels quels
         span Recherche par substance, puis par classe
+    +correction(corrige, saisie)
 
     ul.medicaments
       each m in resultat.medicaments

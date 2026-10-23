@@ -13,8 +13,8 @@ import { MARQUE } from './referencement.js';
  * abandonne volontairement les paramètres que le mode d'arrivée ne connaît pas.
  */
 export const MODES = {
-  nom: { chemin: '/search', porte: ['filtre'] },
-  documents: { chemin: '/documents', porte: ['rubrique', 'page', 'molecule', 'question', 'ia', 'brut'] },
+  nom: { chemin: '/search', porte: ['filtre', 'corrige', 'brut'] },
+  documents: { chemin: '/documents', porte: ['rubrique', 'page', 'molecule', 'question', 'ia', 'brut', 'corrige'] },
 };
 
 /** Valeurs par défaut, omises de l'URL. */
@@ -25,6 +25,8 @@ const CLE_URL = {
   filtre: 'filter', rubrique: 'rubrique', page: 'page',
   // Saisie réorientée : médicament reconnu, saisie d'origine, par l'IA ou non, refus (« tel quel »).
   molecule: 'molecule', question: 'question', ia: 'ia', brut: 'brut',
+  // Saisie d'origine d'une faute de frappe corrigée (« poso macogol »).
+  corrige: 'corrige',
 };
 
 /** Texte libre d'URL, borné ; vide → null (omis). */
@@ -50,6 +52,7 @@ export function lireEtat(query = {}, mode = 'nom') {
     question: borne(query.question, 300),
     ia: query.ia === '1' ? '1' : null,
     brut: query.brut === '1' ? '1' : null,
+    corrige: borne(query.corrige, 200),
   };
 }
 

@@ -2,7 +2,7 @@
 
 Cinquante-cinq questions telles qu'on les tape au comptoir, avec la page attendue. Chaque réponse attendue est une phrase **relevée dans la base locale le 23 octobre 2026**, dans le RCP de la spécialité de référence ; rien n'est de mémoire. Le banc notera la page affichée : la bonne spécialité (ou ses formes), la bonne rubrique, et la phrase présente.
 
-Les questions sont dans `tests/banc/questions.json` ; `npm run banc` les joue contre la base réelle (IA comprise si elle est configurée) et note chaque page. Le 23 octobre : 36/55 avant corrections, 55/55 après. Une réponse peut se trouver dans la rubrique entière, repliée sous son passage.
+Les questions sont dans `tests/banc/questions.json` ; `npm run banc` les joue contre la base réelle (IA comprise si elle est configurée) et note chaque page. Le 23 octobre : 36/55 avant corrections, 55/55 après ; puis cinq fautes de frappe, 0/5 avant correction, 5/5 après (60/60). Une réponse peut se trouver dans la rubrique entière, repliée sous son passage.
 
 **Statuts possibles** : *phrase* (passage surligné), *entière* (texte court cité), *ne mentionne pas* (le RCP se tait : c'est la réponse attendue), *interactions* (page des interactions, niveau le plus fort).
 
@@ -120,6 +120,16 @@ Les questions sont dans `tests/banc/questions.json` ; `npm run banc` les joue co
 | 49 | CI ibuprofène | Advil 200 mg | 4.3 | la rubrique 4.3 |
 | 50 | EI amiodarone | Cordarone 200 mg | 4.8 | la rubrique 4.8 |
 | 51 | zolpidem délai d'action | Stilnox 10 mg | 5.2 | « … concentration plasmatique maximale atteinte en 0,5 à 3 heures. » |
+
+## Fautes de frappe
+
+| # | Question | Attendu |
+|---|---|---|
+| 56 | poso macogol | corrigée en « poso macrogol », 4.2 du macrogol |
+| 57 | doliprnae | corrigée en « doliprane », la liste des Doliprane |
+| 58 | paracetamol alaitement | corrigée en « paracetamol allaitement », 4.6 |
+| 59 | kardegic previscna | corrigée en « kardegic previscan », interactions |
+| 60 | amoxiciline grossesse | corrigée en « amoxicilline grossesse » (deux RCP écrivent « amoxiciline ») |
 
 ## À trancher à la relecture
 

@@ -539,6 +539,23 @@ describe('API', { skip }, () => {
     });
   });
 
+  // Faute de frappe : corrigée, annoncée, refusable.
+  describe('fautes de frappe', () => {
+    it('corrige un nom inconnu, garde la saisie d’origine dans l’adresse', async () => {
+      const res = await request(app).get('/search?q=dolipranne').expect(302);
+      assert.equal(res.headers.location, '/search?q=doliprane&corrige=dolipranne');
+      const page = await request(app).get(res.headers.location).expect(200);
+      assert.match(page.text, /Recherche corrigée : « doliprane » au lieu de « dolipranne »\./);
+      assert.match(page.text, /href="\/search\?q=dolipranne&amp;brut=1">Chercher « dolipranne » tel quel/);
+    });
+
+    it('« tel quel » ne corrige pas, une saisie juste non plus', async () => {
+      await request(app).get('/search?q=dolipranne&brut=1').expect(200);
+      const juste = await request(app).get('/search?q=doliprane').expect(200);
+      assert.doesNotMatch(juste.text, /Recherche corrigée/);
+    });
+  });
+
   // Question sur un produit nommé : sa rubrique forme par forme, le silence dit.
   describe('lecture d’une rubrique', () => {
     const lire = (requete, rubrique) => request(app)
