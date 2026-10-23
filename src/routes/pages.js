@@ -320,6 +320,7 @@ export function pageRoutes(pool) {
       + `<ShortName>${MARQUE}</ShortName>`
       + '<Description>Médicaments de la BDPM : nom, principe actif, expression dans les RCP</Description>'
       + '<InputEncoding>UTF-8</InputEncoding>'
+      + `<Image height="16" width="16" type="image/x-icon">${encodeURI(base)}/favicon.ico</Image>`
       + `<Url type="text/html" method="get" template="${encodeURI(base)}/search?q={searchTerms}"/>`
       + '</OpenSearchDescription>',
     );

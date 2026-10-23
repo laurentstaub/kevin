@@ -62,6 +62,21 @@ describe('routes des pages et pied de page', () => {
   });
 });
 
+describe('icône du site', () => {
+  const app = createApp(poolVide);
+
+  it('est déclarée dans l’en-tête et servie dans les trois formats', async () => {
+    const page = await request(app).get('/mentions-legales').expect(200);
+    assert.match(page.text, /<link rel="icon" href="\/favicon\.ico" sizes="32x32">/);
+    assert.match(page.text, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
+    assert.match(page.text, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png">/);
+    for (const [chemin, type] of [['/favicon.svg', /image\/svg\+xml/], ['/favicon.ico', /icon/], ['/apple-touch-icon.png', /image\/png/]]) {
+      const res = await request(app).get(chemin).expect(200);
+      assert.match(res.headers['content-type'], type, chemin);
+    }
+  });
+});
+
 describe('signaler une erreur', () => {
   it('prépare un courriel qui situe la rubrique', () => {
     const lien = lienSignalement({

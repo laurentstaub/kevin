@@ -13,6 +13,10 @@ html(lang="fr")
       meta(name="robots" content="noindex")
     else if canonique
       link(rel="canonical" href=canonique)
+    //- Icône : SVG pour les navigateurs récents, .ico pour les autres, PNG pour l'écran d'accueil iOS.
+    link(rel="icon" href="/favicon.ico" sizes="32x32")
+    link(rel="icon" href="/favicon.svg" type="image/svg+xml")
+    link(rel="apple-touch-icon" href="/apple-touch-icon.png")
     //- Recherche depuis la barre d'adresse du navigateur.
     link(rel="search" type="application/opensearchdescription+xml" title="Médipile" href="/opensearch.xml")
     //- Apparence choisie, posée avant les styles : pas de page qui change de

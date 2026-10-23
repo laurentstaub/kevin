@@ -608,6 +608,7 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/opensearch.xml').set('X-Forwarded-Proto', 'https').expect(200);
       assert.match(res.headers['content-type'], /opensearchdescription\+xml/);
       assert.match(res.text, /<Url type="text\/html" method="get" template="https:\/\/127\.0\.0\.1:\d+\/search\?q=\{searchTerms\}"\/>/);
+      assert.match(res.text, /<Image height="16" width="16" type="image\/x-icon">https:\/\/127\.0\.0\.1:\d+\/favicon\.ico<\/Image>/);
     });
 
     // Moteurs : fiches et classes indexées sous leur adresse canonique, résultats exclus.
