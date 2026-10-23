@@ -7,6 +7,7 @@
  *   npm run banc              # tableau et score
  *   npm run banc -- 12 41     # seulement ces questions
  *   npm run banc -- --strict  # code de sortie 1 au premier échec (CI)
+ *   npm run banc -- --url https://medipile.fr  # contre un site en ligne, temps compris
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -18,7 +19,8 @@ import { deaccent } from '../src/text.js';
 const { questions } = JSON.parse(readFileSync(path.join(ROOT, 'tests', 'banc', 'questions.json'), 'utf8'));
 const args = process.argv.slice(2);
 const strict = args.includes('--strict');
-const choisies = args.filter((arg) => /^\d+$/.test(arg)).map(Number);
+const distante = args.includes('--url') ? args[args.indexOf('--url') + 1]?.replace(/\/+$/, '') : null;
+const choisies = args.filter((arg) => /^\d+$/.test(arg) && arg !== distante).map(Number);
 const aJouer = choisies.length ? questions.filter((question) => choisies.includes(question.n)) : questions;
 
 const ENTITES = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ' };
@@ -34,9 +36,10 @@ function typeDe(url) {
   return url.pathname.split('/')[1] || 'accueil';
 }
 
-const pool = createPool();
-const serveur = createApp(pool).listen(0);
-const base = `http://127.0.0.1:${serveur.address().port}`;
+// En ligne : le site tel quel. Sinon, l'application lancée ici contre la base locale.
+const pool = distante ? null : createPool();
+const serveur = distante ? null : createApp(pool).listen(0);
+const base = distante ?? `http://127.0.0.1:${serveur.address().port}`;
 
 const resultats = [];
 for (const cas of aJouer) {
@@ -53,11 +56,11 @@ for (const cas of aJouer) {
     adresse: `${url.pathname}${url.search}`.replace(/&question=[^&]*/, ''),
   });
 }
-serveur.close();
-await pool.end();
+serveur?.close();
+await pool?.end();
 
 for (const res of resultats) {
-  const ligne = `${res.ok ? '✓' : '✗'} ${String(res.n).padStart(2)} ${res.question.padEnd(48)}`;
+  const ligne = `${res.ok ? '✓' : '✗'} ${String(res.n).padStart(2)} ${res.question.padEnd(48)} ${String(res.ms).padStart(5)} ms`;
   console.log(res.ok ? ligne : `${ligne} ${res.raison.padEnd(16)} ${decodeURIComponent(res.adresse).slice(0, 90)}`);
 }
 const reussies = resultats.filter((res) => res.ok).length;
@@ -66,5 +69,7 @@ for (const res of resultats) {
   const [ok, total] = parTheme.get(res.theme) ?? [0, 0];
   parTheme.set(res.theme, [ok + Number(res.ok), total + 1]);
 }
+const durees = resultats.map((res) => res.ms).sort((d1, d2) => d1 - d2);
 console.log(`\n${reussies}/${resultats.length} réussies · ${[...parTheme].map(([theme, [ok, total]]) => `${theme} ${ok}/${total}`).join(' · ')}`);
+console.log(`temps : médiane ${durees[Math.floor(durees.length / 2)]} ms · max ${durees.at(-1)} ms (${base})`);
 if (strict && reussies < resultats.length) process.exitCode = 1;

@@ -53,20 +53,42 @@ heroku pg:psql -a dispomed -c "select to_regclass('dbpm.cis_documents'), to_regc
 
 ## 1. Agrandir la base
 
-Changement de plan sur place, données conservées, en quelques minutes :
+**Fait le 23 octobre 2026** : essential-0 → essential-1, données conservées. Le changement **coupe la base** pendant sa migration : de 21h38 à 21h42, toute connexion était refusée (« role … is not permitted to log in ») et Dispomed renvoyait des erreurs 500. À refaire (essential-2, standard-0) : en heure creuse, Dispomed en maintenance.
+
+```bash
+heroku maintenance:on -a dispomed
+```
 
 ```bash
 heroku addons:upgrade postgresql-fitted-75952 heroku-postgresql:essential-1 -a dispomed
 ```
 
-## 2. Créer l'application et lui attacher la base
+Attendre `Plan: essential-1` et `plan change: succeeded` (relancer la commande) :
 
 ```bash
-heroku create dr-kevin --region eu
+heroku pg:info -a dispomed
 ```
 
 ```bash
-heroku addons:attach postgresql-fitted-75952 -a dr-kevin
+heroku maintenance:off -a dispomed
+```
+
+## 2. Créer l'application et lui attacher la base
+
+```bash
+heroku create medipile --region eu
+```
+
+```bash
+heroku addons:attach postgresql-fitted-75952 -a medipile
+```
+
+Une seule fois : chaque commande ajoute un alias de plus (`HEROKU_POSTGRESQL_…`) à la même base.
+
+Sans ses tables, Médipile s'arrête au démarrage : le garder à zéro jusqu'à la fin de l'étape 4.
+
+```bash
+heroku ps:scale web=0 -a medipile
 ```
 
 ## 3. Prérequis
@@ -74,7 +96,7 @@ heroku addons:attach postgresql-fitted-75952 -a dr-kevin
 Les scripts tournent depuis le poste, contre la base Heroku. `PG_SSL` force le TLS :
 
 ```bash
-export DATABASE_URL="$(heroku config:get DATABASE_URL -a dr-kevin)" PG_SSL=true
+export DATABASE_URL="$(heroku config:get DATABASE_URL -a medipile)" PG_SSL=true
 ```
 
 ```bash
@@ -134,19 +156,19 @@ npm run diagnostic
 ## 5. Variables de l'application
 
 ```bash
-heroku config:set NODE_ENV=production PG_POOL_MAX=5 PG_STATEMENT_TIMEOUT_MS=5000 -a dr-kevin
+heroku config:set NODE_ENV=production PG_POOL_MAX=5 PG_STATEMENT_TIMEOUT_MS=5000 -a medipile
 ```
 
-L'adresse publique fixe les liens canoniques, le sitemap, la recherche depuis la barre d'adresse et la redirection HTTPS ; `dr-kevin.herokuapp.com` y est redirigé. Sans elle, l'adresse est déduite de chaque requête, en-tête `Host` compris :
+L'adresse publique fixe les liens canoniques, le sitemap, la recherche depuis la barre d'adresse et la redirection HTTPS ; `medipile-36a03b1184cf.herokuapp.com` y est redirigé. Sans elle, l'adresse est déduite de chaque requête, en-tête `Host` compris :
 
 ```bash
-heroku config:set PUBLIC_URL=https://<domaine> -a dr-kevin
+heroku config:set PUBLIC_URL=https://<domaine> -a medipile
 ```
 
 L'interprétation des questions par IA est facultative ; sans clé, elle est inactive et tout le reste fonctionne :
 
 ```bash
-heroku config:set MISTRAL_API_KEY=… IA_MODELE=mistral-small-latest -a dr-kevin
+heroku config:set MISTRAL_API_KEY=… IA_MODELE=mistral-small-latest -a medipile
 ```
 
 Côté Dispomed, le lien vers les fiches de Kevin :
@@ -160,21 +182,23 @@ heroku config:set KEVIN_URL=https://<domaine> -a dispomed
 Pas de `Procfile` : Heroku lance `npm start`, avec Node 26 (`engines` du `package.json`).
 
 ```bash
-heroku git:remote -a dr-kevin -r heroku
+heroku git:remote -a medipile -r heroku
 ```
 
 ```bash
 git push heroku main
 ```
 
+Le dyno est Basic par défaut (toujours allumé). Une fois les tables chargées :
+
 ```bash
-heroku ps:type basic -a dr-kevin
+heroku ps:scale web=1 -a medipile
 ```
 
 Contrôles :
 
-- `heroku logs --tail -a dr-kevin` montre le démarrage en `production`.
-- `https://<app>.herokuapp.com/api/health` répond `ok`.
+- `heroku logs --tail -a medipile` montre le démarrage en `production`.
+- `https://medipile-36a03b1184cf.herokuapp.com/api/health` répond `ok`.
 - Une adresse en `http://` est redirigée en `https://`.
 - Quelques recherches réelles : un nom, une molécule, une expression dans les documents, deux médicaments pour les interactions.
 - Une recherche dans les documents sur un mot courant (« grossesse ») : voir « Ce qui peut gêner ».
@@ -198,6 +222,7 @@ La procédure a été jouée en entier sur une base locale jetable :
 
 ## Ce qui peut gêner
 
+- **Mise en ligne du 23 octobre 2026** : chargement en 5 minutes (les trois tables `dbpm` en 1 min 15, `docs` en 3 min), base à 2,7 Go. Une seule erreur, sans effet : la séquence `cis_compo_bdpm_id_seq` existait déjà, laissée par un ancien déploiement de Dispomed. Banc contre la production : 60/60, médiane 428 ms. Les recherches les plus lourdes dans les documents (« grossesse », « insuffisance hépatique sévère » en 4.3) prennent 2,2 à 2,5 s, sous la limite de 5 s : l'essential-1 suffit pour l'instant.
 - **Recherche dans les documents sur un mot courant.**
   - En local, « grossesse » lit 490 000 pages du cache, dont 80 000 du disque (630 Mo) ; « insuffisance hépatique sévère » en rubrique 4.3 a pris 4,7 s à froid, puis 1,2 s.
   - Une base Essential partage sa mémoire : la table de 3,7 Go n'y tiendra pas en cache, et ces recherches risquent de dépasser le `statement_timeout` de 5 s.
