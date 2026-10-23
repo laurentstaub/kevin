@@ -7,6 +7,8 @@
  * résumé retient le dernier avis et dit quand ses valeurs divergent.
  */
 
+import { lienWeb } from './sanitize.js';
+
 const ROMAIN = /^(?:I{1,3}|IV|V)$/;
 
 /**
@@ -73,7 +75,7 @@ export function regrouperAvis(lignes) {
     const cle = `${ligne.code_dossier_has}|${date?.toISOString() ?? ''}`;
     if (!avis.has(cle)) {
       avis.set(cle, {
-        dossier: ligne.code_dossier_has, date, motif: ligne.motif_evaluation, lien: ligne.lien ?? null, smr: [], asmr: [],
+        dossier: ligne.code_dossier_has, date, motif: ligne.motif_evaluation, lien: lienWeb(ligne.lien), smr: [], asmr: [],
       });
     }
     avis.get(cle)[ligne.nature].push({

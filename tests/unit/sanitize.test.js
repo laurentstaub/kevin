@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { sanitizeDocument, safeDocumentUrl } from '../../src/sanitize.js';
+import { sanitizeDocument, safeDocumentUrl, lienWeb } from '../../src/sanitize.js';
 
 describe('sanitizeDocument', () => {
   it('supprime les balises script', () => {
@@ -138,5 +138,15 @@ describe('ancres sans href', () => {
   it('n’avale pas ce qui suit l’ancre', () => {
     const rendu = sanitizeDocument('<p><a name="x">Nom</a> puis <a href="https://a.fr">lien</a></p>');
     assert.match(rendu, /^<p>Nom puis <a href/);
+  });
+});
+
+describe('lienWeb', () => {
+  it('garde http et https, écarte les autres schémas et le relatif', () => {
+    assert.equal(lienWeb('https://www.has-sante.fr/jcms/c_1'), 'https://www.has-sante.fr/jcms/c_1');
+    assert.equal(lienWeb(' http://ameli.fr/a '), 'http://ameli.fr/a');
+    for (const brut of ['javascript:alert(1)', 'JavaScript:alert(1)', 'data:text/html,x', '/relatif', 'pas une url', '', null, undefined]) {
+      assert.equal(lienWeb(brut), null, String(brut));
+    }
   });
 });

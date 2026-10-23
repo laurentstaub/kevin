@@ -83,6 +83,22 @@ export function sanitizeDocument(html) {
 }
 
 /**
+ * Lien sortant tiré d'une donnée (BDPM, fichier de référence) : absolu, en
+ * http ou https, sinon null. Écarte `javascript:` et `data:` avant le href.
+ *
+ * @returns {string|null}
+ */
+export function lienWeb(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(String(value).trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Valide une URL de document officiel avant redirection. Les file_path relatifs
  * sont résolus contre DOCUMENT_BASE_URL, puis filtrés par la liste blanche d'hôtes.
  *

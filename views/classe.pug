@@ -140,10 +140,15 @@ block content
         p.substitution-source
           | Conditions propres à la molécule :
           |
-          a(href=substitution.url_arrete target="_blank" rel="noopener noreferrer") arrêté du #{new Date(substitution.arrete_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-          |  ·
-          |
-          a(href=substitution.url_conditions target="_blank" rel="noopener noreferrer") règles de dispensation (ameli)
+          - const arrete = `arrêté du ${new Date(substitution.arrete_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+          if substitution.url_arrete
+            a(href=substitution.url_arrete target="_blank" rel="noopener noreferrer")= arrete
+          else
+            = arrete
+          if substitution.url_conditions
+            |  ·
+            |
+            a(href=substitution.url_conditions target="_blank" rel="noopener noreferrer") règles de dispensation (ameli)
 
     if feuille
       - const nombre = (groupesFormes) => groupesFormes.reduce((total, groupeForme) => total + groupeForme.total, 0)

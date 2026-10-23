@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './config.js';
+import { lienWeb } from './sanitize.js';
 import { deaccent } from './text.js';
 
 const normal = (texte) => deaccent(String(texte ?? '')).toUpperCase().trim();
@@ -68,4 +69,12 @@ export function groupeBiologique(denomination) {
   return null;
 }
 
-export const substitutionBiosimilaires = () => lire().substitution;
+/** Texte de l'arrêté et liens sortants, ceux-ci réduits à http et https. */
+export const substitutionBiosimilaires = () => {
+  const substitution = lire().substitution;
+  return substitution && {
+    ...substitution,
+    url_arrete: lienWeb(substitution.url_arrete),
+    url_conditions: lienWeb(substitution.url_conditions),
+  };
+};

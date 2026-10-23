@@ -82,3 +82,12 @@ describe('resumerEvaluation — panne', () => {
     assert.equal(resumerEvaluation([]).valeur, 'Pas d’avis HAS');
   });
 });
+
+describe('regrouperAvis — lien de l’avis', () => {
+  it('ne garde que les liens http ou https', () => {
+    const avec = (lien) => regrouperAvis([{ ...ligne('smr', 'CT-1', '2026-01-01', 'Important'), lien }])[0].lien;
+    assert.equal(avec('https://www.has-sante.fr/jcms/c_1'), 'https://www.has-sante.fr/jcms/c_1');
+    assert.equal(avec('javascript:alert(1)'), null);
+    assert.equal(avec(null), null);
+  });
+});

@@ -855,6 +855,10 @@ describe('page de classe', () => {
     assert.match(html, /Substituable en officine/);
     assert.match(html, /arrêté du 10 avril 2026/);
     assert.doesNotMatch(page({}), /Substituable en officine/);
+    // Lien écarté par lienWeb : l'arrêté reste nommé, sans lien.
+    const sansLien = page({ substitution: { arrete_le: '2026-04-10', url_arrete: null, url_conditions: null } });
+    assert.match(sansLien, /arrêté du 10 avril 2026/);
+    assert.doesNotMatch(sansLien, /<a[^>]*>arrêté du|ameli/);
   });
 
   it('se rend sans portrait ni chapeau', () => {

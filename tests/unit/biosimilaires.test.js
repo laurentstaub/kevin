@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { statutBiologique, groupeBiologique } from '../../src/biosimilaires.js';
+import { statutBiologique, groupeBiologique, substitutionBiosimilaires } from '../../src/biosimilaires.js';
 import { regrouperSpecialites } from '../../src/specialites.js';
 
 describe('biosimilaires', () => {
@@ -30,5 +30,13 @@ describe('biosimilaires', () => {
       { substance: 'énoxaparine', substituable: true, role: 'biosimilaire' });
     assert.equal(groupeBiologique('TRUXIMA 500 mg, solution').substituable, false);
     assert.equal(groupeBiologique('DOLIPRANE 1000 mg'), null);
+  });
+});
+
+describe('substitutionBiosimilaires', () => {
+  it('rend les liens de l’arrêté et d’ameli en https', () => {
+    const substitution = substitutionBiosimilaires();
+    assert.match(substitution.url_arrete, /^https:\/\/www\.legifrance\.gouv\.fr\//);
+    assert.match(substitution.url_conditions, /^https:\/\/www\.ameli\.fr\//);
   });
 });
