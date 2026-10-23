@@ -6,7 +6,7 @@ import { ROOT } from '../../src/config.js';
 import {
   GROUPES, classesDe, motif, extraire, regrouper, plier,
 } from '../../src/interactions.js';
-import { lireGroupes, formulations, idGroupe } from '../../src/thesaurus-ansm.js';
+import { lireGroupes, lireCouples, niveauxAnsm, formulations, idGroupe } from '../../src/thesaurus-ansm.js';
 
 const classe = (termes) => new RegExp(motif([], termes));
 const trouve = (termes, texte) => classe(termes).test(plier(texte));
@@ -130,5 +130,47 @@ describe('groupes extraits du thésaurus', () => {
     const groupe = GROUPES.find((entree) => entree.nom === liste.source.groupe);
     assert.ok(groupe, liste.source.groupe);
     assert.deepEqual(liste.inscriptions.map((inscription) => inscription.substance), groupe.membres.map((membre) => plier(membre)));
+  });
+});
+
+describe('couples du thésaurus', () => {
+  // Mise en page de `pdftotext -layout` : mécanisme à gauche, niveau puis conduite à droite.
+  const texte = [
+    'ALCOOL (BOISSON OU EXCIPIENT)',
+    '+ METFORMINE',
+    "                    Risque majoré d'acidose lactique lors d'intoxication alcoolique         Association DECONSEILLEE",
+    '                    aiguë.                                                                  Eviter la prise de boissons alcoolisées',
+    '                                                                                            et de médicaments contenant de l’alcool.',
+    '                                                                                  12',
+    'OMBITASVIR + PARITAPRÉVIR',
+    '+ SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET',
+    '  ADSORBANTS',
+    '                    Diminution de l\'absorption de ces substances.                          ASDEC - PE',
+    '                                                                                            Précaution d\'emploi: à distance.',
+  ].join('\n');
+
+  it('lit tête, autre terme, niveau, mécanisme et conduite ; têtes avec « + » et noms sur deux lignes', () => {
+    const [alcool, topiques] = lireCouples(texte);
+    assert.deepEqual(alcool, {
+      de: 'ALCOOL (BOISSON OU EXCIPIENT)', avec: 'METFORMINE', niveau: 'Association DECONSEILLEE', niveaux: ['deconseillee'],
+      mecanisme: "Risque majoré d'acidose lactique lors d'intoxication alcoolique aiguë.",
+      conduite: 'Eviter la prise de boissons alcoolisées et de médicaments contenant de l’alcool.',
+    });
+    assert.equal(topiques.de, 'OMBITASVIR + PARITAPRÉVIR');
+    assert.equal(topiques.avec, 'SUBSTANCES À ABSORPTION RÉDUITE PAR LES TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS');
+    assert.deepEqual(topiques.niveaux, ['deconseillee', 'pe']);
+  });
+
+  it('niveaux : intitulés écrits en toutes lettres ou en sigles', () => {
+    assert.deepEqual(niveauxAnsm('CONTRE-INDICATION'), ['ci']);
+    assert.deepEqual(niveauxAnsm('CI - ASDEC - APEC'), ['ci', 'deconseillee', 'apec']);
+    assert.deepEqual(niveauxAnsm("Précaution d'emploi"), ['pe']);
+    assert.deepEqual(niveauxAnsm('A prendre en compte'), ['apec']);
+  });
+
+  it('le fichier extrait compte tous les couples, chacun avec un niveau', () => {
+    const { couples } = JSON.parse(readFileSync(path.join(ROOT, 'data', 'thesaurus-ansm', 'couples.json'), 'utf8'));
+    assert.ok(couples.length >= 3200);
+    assert.ok(couples.every((couple) => couple.niveaux.length > 0 && couple.mecanisme), 'niveau et mécanisme partout');
   });
 });

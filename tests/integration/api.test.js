@@ -434,8 +434,9 @@ describe('API', { skip }, () => {
       const [aspirine, previscan] = [...res.text.matchAll(/<div class="sens">[\s\S]*?<\/blockquote>/g)]
         .map((correspondance) => correspondance[0]);
 
-      // Le niveau de la paire est le plus grave des deux sens.
-      assert.match(res.text, /<h2 class="paire-titre">[^<]*<span class="niveau niveau-ci">Contre-indiquée</);
+      // Le titre porte le niveau du thésaurus de l'ANSM, composé, cité en entier.
+      assert.match(res.text, /<h2 class="paire-titre">[^<]*<span class="niveau niveau-ci">Contre-indiquée · Déconseillée · À prendre en compte<\/span><span class="niveau-part">selon le thésaurus de l'ANSM/);
+      assert.match(res.text, /<blockquote class="citation citation-ansm">.*Acide acétylsalicylique \+ Anticoagulants oraux/s);
 
       // ASPIRINE UPSA ne nomme pas la fluindione, mais les anticoagulants oraux.
       assert.match(aspirine, /niveau-deconseillee/);

@@ -104,3 +104,98 @@ export function formulations(nom, abreviations = []) {
   }
   return [...new Set([...termes, ...abreviations])];
 }
+
+// ---------------------------------------------------------------- les couples
+
+/** Niveaux du thésaurus, tels qu'il les écrit, du plus grave au moins grave. */
+const NIVEAUX_ANSM = [
+  ['ci', /^(?:CONTRE-INDICATION|CI)$/i],
+  ['deconseillee', /^(?:ASSOCIATIONS? D[ÉE]CONSEILL[ÉE]ES?|ASDEC)$/i],
+  ['pe', /^(?:PR[ÉE]CAUTIONS? D'EMPLOI|PE)$/i],
+  ['apec', /^(?:[AÀ] PRENDRE EN COMPTE|APEC)$/i],
+];
+
+/** Codes d'un intitulé de niveau : « CI - ASDEC - APEC », « Association DECONSEILLEE ». */
+export function niveauxAnsm(intitule) {
+  return String(intitule ?? '').replace(/’/g, "'").split(/\s+-\s+/)
+    .map((morceau) => NIVEAUX_ANSM.find(([, motif]) => motif.test(morceau.trim()))?.[0])
+    .filter(Boolean);
+}
+
+/** Ligne de service : numéro de page seul, saut de page. */
+const SERVICE = /^\s*\d{1,3}\s*$/;
+
+/** Tête d'un couple : celle des groupes, plus les associations (« OMBITASVIR + PARITAPRÉVIR »). */
+const TETE_COUPLE = /^[A-ZÀ-ÖØ-Ý0-9][A-ZÀ-ÖØ-Ý0-9 '’\-(),./&+]*$/;
+const estTeteCouple = (ligne) => TETE_COUPLE.test(ligne.trimEnd()) && ligne.trim().length > 2;
+/** Suite d'un nom « + … » trop long, en capitales, légèrement en retrait. */
+const SUITE_NOM = /^ {1,4}[A-ZÀ-ÖØ-Ý0-9][A-ZÀ-ÖØ-Ý0-9 '’\-(),./&]*$/;
+
+/**
+ * Couples du thésaurus : sous une tête (substance ou groupe), chaque « + AUTRE »
+ * avec, en deux colonnes, le mécanisme (gauche) et le niveau suivi de la
+ * conduite à tenir (droite). Le texte est rendu tel quel, lignes recollées.
+ *
+ * @param {string} texte  sortie de `pdftotext -layout`
+ * @returns {{ de: string, avec: string, niveau: string, niveaux: string[], mecanisme: string, conduite: string }[]}
+ */
+export function lireCouples(texte) {
+  const lignes = String(texte ?? '').replace(/\f/g, '').split('\n');
+  const couples = [];
+  const premiere = lignes.findIndex((ligne) => ligne.startsWith('+'));
+  let tete = null;
+
+  for (let i = Math.max(0, premiere - 1); i < lignes.length; i += 1) {
+    const ligne = lignes[i];
+    if (estTeteCouple(ligne) && !ligne.startsWith('+')) {
+      // Tête sur une ou plusieurs lignes.
+      tete = estTeteCouple(lignes[i - 1] ?? '') && !lignes[i - 1].startsWith('+') && tete ? `${tete} ${ligne.trim()}` : ligne.trim();
+      continue;
+    }
+    if (!ligne.startsWith('+') || !tete) continue;
+
+    let avec = ligne.slice(1).trim();
+    let j = i + 1;
+    while (j < lignes.length && SUITE_NOM.test(lignes[j])) {
+      avec = `${avec} ${lignes[j].trim()}`;
+      j += 1;
+    }
+    const corps = [];
+    for (; j < lignes.length; j += 1) {
+      const suite = lignes[j];
+      if (suite.startsWith('+') || (estTeteCouple(suite) && !/^\s/.test(suite)) || /^\s*Voir aussi/.test(suite)) break;
+      if (!SERVICE.test(suite)) corps.push(suite);
+    }
+
+    // Colonne de droite : là où commence le niveau, sur la première ligne non vide.
+    const premiereLigne = corps.find((suite) => suite.trim());
+    const repere = premiereLigne?.match(/^(.*\S)\s{3,}(\S.*)$/);
+    const colonne = repere ? repere[1].length + (premiereLigne.length - repere[1].length - repere[2].length) : null;
+    const gauche = [];
+    const droite = [];
+    for (const suite of corps) {
+      if (!suite.trim()) continue;
+      if (colonne === null) { gauche.push(suite.trim()); continue; }
+      const indent = suite.search(/\S/);
+      if (indent >= colonne - 4) { droite.push(suite.trim()); continue; }
+      const dernierBlanc = suite.lastIndexOf('  ', colonne + 2);
+      if (suite.length > colonne - 2 && dernierBlanc > indent) {
+        const debutDroite = suite.slice(dernierBlanc).search(/\S/) + dernierBlanc;
+        if (debutDroite >= colonne - 4) {
+          gauche.push(suite.slice(0, debutDroite).trim());
+          droite.push(suite.slice(debutDroite).trim());
+          continue;
+        }
+      }
+      gauche.push(suite.trim());
+    }
+
+    const recoller = (morceaux) => morceaux.join(' ').replace(/(\p{L})- (\p{Ll})/gu, '$1$2').replace(/\s+/g, ' ').trim();
+    const [niveau = '', ...conduite] = droite;
+    couples.push({
+      de: tete, avec, niveau: niveau.trim(), niveaux: niveauxAnsm(niveau),
+      mecanisme: recoller(gauche), conduite: recoller(conduite),
+    });
+  }
+  return couples;
+}

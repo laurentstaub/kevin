@@ -8,6 +8,7 @@
 
 import { deaccent } from './text.js';
 import { substituer } from './synonymes.js';
+import { MOTS_HORS_RCP } from './interactions.js';
 
 /** Au-delà, le mot est un composant générique (« sodium », « chlorhydrate »), pas une molécule. */
 const SUBSTANCES_MAX = 40;
@@ -288,11 +289,18 @@ export async function reconnaitreMedicaments(pool, saisie) {
     .filter((mot) => !LIAISONS.has(normaliser(mot))).join(' ');
   const repere = await reperer(pool, sansLiaisons);
   if (!repere) return null;
-  const medicaments = [...new Set(repere.molecule)];
-  if (medicaments.length < 2) return null;
   const autres = repere.originaux
     .filter((_, i) => !repere.pris[i])
     .map(normaliser)
     .filter((mot) => mot && !NOMBRE.test(mot) && motDeTexte(mot));
-  return autres.length === 0 ? medicaments : null;
+  // Une partie sans RCP du thésaurus (« jus de pamplemousse », « alcool ») compte
+  // comme un médicament ; ses mots de liaison ne sont pas du texte.
+  const horsRcp = autres.filter((mot) => MOTS_HORS_RCP.includes(mot));
+  const reste = autres.filter((mot) => !MOTS_HORS_RCP.includes(mot) && !(horsRcp.length && AUTOUR_HORS_RCP.has(mot)));
+  const medicaments = [...new Set([...repere.molecule, ...horsRcp])];
+  if (medicaments.length < 2) return null;
+  return reste.length === 0 ? medicaments : null;
 }
+
+/** Mots qui accompagnent une partie sans RCP : « jus de pamplemousse », « boisson alcoolisée ». */
+const AUTOUR_HORS_RCP = new Set(['jus', 'de', 'du', 'fruit', 'fruits', 'boisson', 'boissons']);

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   plier, racine, motsUtiles, termes, motif, passages, extraire, regrouper, choisir, communes,
   memesClasses, ressemblance, fusionnerVoisins, uneParRacine, estCis, sens, niveauProse, remettreEnOrdre,
+  couplesEntre, designe, partieHorsRcp, classesDe,
 } from '../../src/interactions.js';
 import { reconnaitreMedicaments } from '../../src/reconnaissance.js';
 import { lienInteractions } from '../../src/routes/pages.js';
@@ -131,6 +132,15 @@ describe('plusieurs médicaments dans une saisie', () => {
     assert.deepEqual(await reconnaitreMedicaments(pool, 'doliprane+kardegic 75 mg'), ['doliprane', 'kardegic']);
   });
 
+  // Thésaurus : le pamplemousse et l'alcool sont des parties sans RCP.
+  it('compte le pamplemousse et l’alcool comme parties, « jus de » compris', async () => {
+    assert.deepEqual(await reconnaitreMedicaments(pool, 'tramadol pamplemousse'), ['tramadol', 'pamplemousse']);
+    assert.deepEqual(await reconnaitreMedicaments(pool, 'warfarine jus de pamplemousse interactions'), ['warfarine', 'pamplemousse']);
+    assert.deepEqual(await reconnaitreMedicaments(pool, 'sertraline alcool'), ['sertraline', 'ethanol']);
+    // « jus » seul n'est pas une partie : le reste est du texte.
+    assert.equal(await reconnaitreMedicaments(pool, 'tramadol jus'), null);
+  });
+
   it('laisse le reste à la reconnaissance d’un seul médicament', async () => {
     assert.equal(await reconnaitreMedicaments(pool, 'doliprane 1000'), null);
     assert.equal(await reconnaitreMedicaments(pool, 'acide folique'), null);
@@ -230,5 +240,39 @@ describe('noms de substance', () => {
     assert.equal(remettreEnOrdre('CLOPIDOGREL (HYDROGÉNOSULFATE DE)'), 'HYDROGÉNOSULFATE DE CLOPIDOGREL');
     assert.equal(remettreEnOrdre("AMIODARONE (CHLORHYDRATE D')"), "CHLORHYDRATE D'AMIODARONE");
     assert.equal(remettreEnOrdre('PARACÉTAMOL'), 'PARACÉTAMOL');
+  });
+});
+
+describe('thésaurus de l’ANSM entre deux médicaments', () => {
+  const med = (substances) => ({ substances, classes: classesDe(substances) });
+  const resume = (a, b) => couplesEntre(a, b).map((couple) => `${couple.de} + ${couple.avec} : ${couple.libelleNiveau}`);
+
+  it('trouve le couple par la substance, dans un sens ou dans l’autre, une seule fois', () => {
+    assert.deepEqual(resume(med(['SIMVASTATINE']), med(['MILLEPERTUIS (EXTRAIT DE)'])), ['MILLEPERTUIS + SIMVASTATINE : Déconseillée']);
+    assert.deepEqual(resume(med(['MILLEPERTUIS (EXTRAIT DE)']), med(['SIMVASTATINE'])), ['MILLEPERTUIS + SIMVASTATINE : Déconseillée']);
+  });
+
+  it('trouve le couple par le groupe, niveau composé gardé en entier', () => {
+    const lignes = resume(med(['ACÉTYLSALICYLATE DE DL-LYSINE']), med(['FLUINDIONE']));
+    assert.equal(lignes[0], 'ACIDE ACETYLSALICYLIQUE + ANTICOAGULANTS ORAUX : Contre-indiquée · Déconseillée · À prendre en compte');
+  });
+
+  it('se tait quand l’ANSM n’a pas classé le couple', () => {
+    assert.deepEqual(resume(med(['ATORVASTATINE CALCIQUE TRIHYDRATÉE']), med(['MILLEPERTUIS (EXTRAIT DE)'])), []);
+  });
+
+  it('pamplemousse et alcool : parties sans RCP, désignées par leur tête', () => {
+    const pamplemousse = partieHorsRcp('jus de pamplemousse');
+    assert.equal(pamplemousse.type, 'hors-rcp');
+    assert.equal(pamplemousse.libelle, 'Pamplemousse (jus et fruit)');
+    assert.deepEqual(pamplemousse.termes, ['pamplemousse']);
+    assert.deepEqual(resume(med(['ATORVASTATINE CALCIQUE']), pamplemousse), ['ATORVASTATINE + PAMPLEMOUSSE (JUS ET FRUIT) : À prendre en compte']);
+    assert.equal(partieHorsRcp('ethanol').tete, 'ALCOOL (BOISSON OU EXCIPIENT)');
+    assert.equal(partieHorsRcp('doliprane'), null);
+  });
+
+  it('une substance ne désigne pas un nom dont elle n’a qu’une partie', () => {
+    assert.equal(designe('OMBITASVIR + PARITAPRÉVIR', med(['OMBITASVIR'])), false);
+    assert.equal(designe('THÉOPHYLLINE (ET, PAR EXTRAPOLATION, AMINOPHYLLINE)', med(['THÉOPHYLLINE'])), true);
   });
 });

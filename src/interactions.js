@@ -14,6 +14,11 @@
  * Le niveau est celui du thésaurus de l'ANSM, lu dans l'intitulé sous lequel
  * tombe le passage ; à défaut, dans le passage lui-même. Le passage est cité
  * tel quel, jamais reformulé.
+ *
+ * Au-dessus des RCP, le thésaurus lui-même (data/thesaurus-ansm/couples.json,
+ * version finale de septembre 2023) : le couple tel que l'ANSM l'écrit, son
+ * niveau, son mécanisme et sa conduite à tenir. Il couvre aussi ce qui n'a
+ * pas de RCP : le pamplemousse, l'alcool.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -134,6 +139,97 @@ export const GROUPES = lireDonnees('thesaurus-ansm', 'groupes.json').groupes;
 
 /** Racines d'un nom de substance, l'ordre de la langue rétabli (« sodium (bicarbonate de) »). */
 const racinesDe = (nom) => motsUtiles(remettreEnOrdre(nom)).map(racine);
+
+// ------------------------------------------------------------ le thésaurus
+
+/** Couples du thésaurus de l'ANSM, tels quels. */
+export const COUPLES = lireDonnees('thesaurus-ansm', 'couples.json').couples;
+const IDS_GROUPES = new Set(GROUPES.map((groupe) => idGroupe(groupe.nom)));
+
+/** Identifiant d'un nom du thésaurus, sans accents ni ponctuation (même règle que les groupes). */
+function idGroupe(nom) {
+  return deaccent(nom).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Parties sans RCP que le thésaurus traite comme des substances : le mot qui
+ * les désigne, la tête de l'entrée telle qu'écrite. Une tête absente du
+ * thésaurus fait échouer le chargement.
+ */
+const HORS_RCP = {
+  pamplemousse: 'PAMPLEMOUSSE (JUS ET FRUIT)',
+  alcool: 'ALCOOL (BOISSON OU EXCIPIENT)',
+  // « alcool » passe en « éthanol » par la table des noms courants.
+  ethanol: 'ALCOOL (BOISSON OU EXCIPIENT)',
+};
+const TETES = new Set(COUPLES.map((couple) => couple.de));
+for (const tete of Object.values(HORS_RCP)) {
+  if (!TETES.has(tete)) throw new Error(`thésaurus : tête introuvable, ${tete}`);
+}
+
+/** Mots qui désignent une partie sans RCP (« pamplemousse », « alcool »). */
+export const MOTS_HORS_RCP = Object.keys(HORS_RCP);
+
+/** Une partie sans RCP (« jus de pamplemousse », « alcool ») ; null pour un médicament. */
+export function partieHorsRcp(element) {
+  const mots = plier(element).split(/[^a-z0-9]+/).filter(Boolean);
+  const cle = mots.find((mot) => HORS_RCP[mot]);
+  if (!cle) return null;
+  const tete = HORS_RCP[cle];
+  return {
+    element,
+    // « PAMPLEMOUSSE (JUS ET FRUIT) » → « Pamplemousse (jus et fruit) ».
+    libelle: phrase(tete),
+    type: 'hors-rcp',
+    tete,
+    substances: [],
+    // Ce que les RCP des autres en disent : « jus de pamplemousse », « alcool ».
+    termes: motsUtiles(tete.replace(/\([^()]*\)/g, ' ')).map(racine),
+    atc: [],
+    classes: [],
+    cis: [],
+  };
+}
+
+/**
+ * Un nom du thésaurus désigne-t-il ce médicament ? Un groupe, s'il en est
+ * membre (« AUTRES AINS » : le groupe, quand les deux en sont) ; une substance
+ * ou une association, si toutes ses racines sont parmi les siennes ; une
+ * partie sans RCP, par sa tête exacte.
+ */
+export function designe(nom, med) {
+  if (med.tete) return nom === med.tete;
+  const groupe = idGroupe(nom.replace(/^AUTRES\s+/, '').replace(/\s*\(AUTRES\)$/, ''));
+  if (IDS_GROUPES.has(groupe)) return (med.classes ?? []).some((classe) => classe.id === groupe);
+  const siennes = new Set((med.substances ?? []).flatMap(racinesDe));
+  // « THÉOPHYLLINE (ET, PAR EXTRAPOLATION, AMINOPHYLLINE) » : le nom, sans sa précision.
+  const parties = nom.replace(/\([^()]*\)/g, ' ').split(/\s\+\s/);
+  const racines = parties.flatMap((partie) => motsUtiles(partie).map(racine));
+  return racines.length > 0 && racines.every((rac) => siennes.has(rac));
+}
+
+/**
+ * Couples du thésaurus entre deux médicaments, dans un sens ou dans l'autre,
+ * le plus grave d'abord. Le thésaurus écrit souvent le couple deux fois (sous
+ * chaque tête) : une seule fois ici.
+ * @returns {{ de: string, avec: string, niveau: string, niveaux: string[], libelleNiveau: string, mecanisme: string, conduite: string }[]}
+ */
+export function couplesEntre(a, b, couples = COUPLES) {
+  const vus = new Set();
+  return couples
+    .filter((couple) => (designe(couple.de, a) && designe(couple.avec, b)) || (designe(couple.de, b) && designe(couple.avec, a)))
+    .filter((couple) => {
+      const cle = `${couple.niveau}|${plier(couple.mecanisme)}`;
+      if (vus.has(cle)) return false;
+      vus.add(cle);
+      return true;
+    })
+    .map((couple) => ({
+      ...couple,
+      libelleNiveau: couple.niveaux.map((niveau) => NIVEAUX[niveau]).join(' · '),
+    }))
+    .sort((c1, c2) => rang(c1.niveaux[0]) - rang(c2.niveaux[0]));
+}
 
 /**
  * Groupes d'un médicament : ceux dont l'un des membres est l'une de ses
@@ -480,6 +576,8 @@ export async function sens(pool, a, b) {
   const base = {
     de: a.libelle,
     sur: b.libelle,
+    // Partie sans RCP (pamplemousse, alcool) : rien à lire dans ce sens.
+    horsRcp: a.type === 'hors-rcp',
     cherche: b.type === 'substance' ? b.libelle : b.substances.map(dci).join(', ') || b.libelle,
     classes: classes.map((classe) => classe.nom),
   };
@@ -572,7 +670,9 @@ async function libellesAtc(pool, codes) {
  */
 export async function chercherInteractions(pool, elements) {
   const retenus = elements.slice(0, MEDICAMENTS_MAX);
-  const resolus = await Promise.all(retenus.map((element) => memoriser(`m:${element}`, () => resoudre(pool, element))));
+  // Une partie sans RCP d'abord : « alcool » trouverait sinon les antiseptiques à l'éthanol.
+  const resolus = await Promise.all(retenus.map((element) => memoriser(`m:${element}`,
+    async () => partieHorsRcp(element) ?? resoudre(pool, element))));
   const medicaments = resolus.filter(Boolean);
   const inconnus = retenus.filter((_, i) => !resolus[i]);
 
@@ -588,18 +688,25 @@ export async function chercherInteractions(pool, elements) {
   const paires = couples.map(([a, b], rangCouple) => {
     const [ab, ba] = lus[rangCouple];
     const source = rang(ab.niveau) <= rang(ba.niveau) ? ab : ba;
-    const { niveau } = source;
+    // Le thésaurus d'abord : son niveau fait le titre ; à défaut, celui des RCP.
+    const ansm = couplesEntre(a, b);
+    const niveauAnsm = ansm[0]?.niveaux[0] ?? null;
+    const niveau = niveauAnsm ?? source.niveau;
     return {
-      a, b, sens: [ab, ba], niveau, libelleNiveau: NIVEAUX[niveau] ?? null,
+      a, b, sens: [ab, ba], ansm, niveau,
+      // Niveau composé du thésaurus (« CI · Déconseillée · À prendre en compte ») : en entier,
+      // car il dépend de la dose ou de l'indication, que la conduite à tenir précise.
+      libelleNiveau: niveauAnsm ? ansm[0].libelleNiveau : (NIVEAUX[niveau] ?? null),
+      niveauSource: niveauAnsm ? 'ansm' : (niveau ? 'rcp' : null),
       // Niveau porté par une minorité des RCP lus : la page le précise.
-      minorite: niveau && source.auNiveau * 2 < source.citant
+      minorite: !niveauAnsm && niveau && source.auNiveau * 2 < source.citant
         ? { de: source.de, nb: source.auNiveau, sur: source.citant } : null,
       communes: communes(a, b).map(dci),
       memeClasse: classes[rangCouple].map((code) => ({ code, libelle: libelles.get(code) ?? code })),
       cite: ab.citant + ba.citant > 0,
     };
   });
-  const signal = (paire) => Number(paire.cite || paire.memeClasse.length > 0 || paire.communes.length > 0);
+  const signal = (paire) => Number(paire.ansm.length > 0 || paire.cite || paire.memeClasse.length > 0 || paire.communes.length > 0);
   paires.sort((p1, p2) => rang(p1.niveau) - rang(p2.niveau) || signal(p2) - signal(p1));
   return { medicaments, inconnus, paires };
 }

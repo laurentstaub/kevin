@@ -474,6 +474,28 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<a href="\/documents\?q=divis%C3%A9&amp;question=[^"]*&amp;ia=1">Chercher dans tous les médicaments<\/a>/);
   });
 
+  // Interactions : le thésaurus au-dessus des deux colonnes, son silence dit aussi.
+  it('la page d’interactions cite le thésaurus de l’ANSM, ou dit qu’il se tait', () => {
+    const sensVide = { de: 'A', sur: 'B', rcp: 0, citant: 0, passages: [], autres: 0, horsRcp: false };
+    const paire = (ansm) => ({
+      a: { libelle: 'Atorvastatine' }, b: { libelle: 'Pamplemousse (jus et fruit)' }, ansm,
+      niveau: ansm.length ? 'apec' : null, libelleNiveau: ansm.length ? 'À prendre en compte' : null,
+      niveauSource: ansm.length ? 'ansm' : null, communes: [], memeClasse: [], cite: false,
+      sens: [sensVide, { ...sensVide, horsRcp: true }],
+    });
+    const couple = {
+      de: 'ATORVASTATINE', avec: 'PAMPLEMOUSSE (JUS ET FRUIT)', niveaux: ['apec'], libelleNiveau: 'À prendre en compte',
+      mecanisme: 'Augmentation des concentrations plasmatiques de l’hypolipémiant.', conduite: '',
+    };
+    const resultat = (ansm) => ({ medicaments: [], inconnus: [], paires: [paire(ansm)] });
+    const avec = rendre('interactions', { saisie: 'atorvastatine pamplemousse', resultat: resultat([couple]) });
+    assert.match(avec, /<span class="niveau-part">selon le thésaurus de l'ANSM<\/span>/);
+    assert.match(avec, /<blockquote class="citation citation-ansm">.*Atorvastatine \+ Pamplemousse \(jus et fruit\).*Augmentation des concentrations/s);
+    assert.match(avec, /Pas de RCP : ce n'est pas un médicament\./);
+    const sans = rendre('interactions', { saisie: 'x', resultat: resultat([]) });
+    assert.match(sans, /Thésaurus de l'ANSM \(septembre 2023\) : aucune entrée pour ce couple\./);
+  });
+
   // Accueil : les molécules les plus fournies, sous les classes.
   it('l’accueil liste les molécules les plus fournies', () => {
     const html = rendre('search_page', {

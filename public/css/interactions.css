@@ -128,3 +128,21 @@
 .citation .par-classe { color: var(--muted); font-style: italic; }
 
 .medicament-classes { font-size: var(--fs-xs); color: var(--faint); }
+
+/* Le thésaurus de l'ANSM, au-dessus des deux colonnes des RCP : sur toute
+   la largeur, posé sur un gris léger pour se lire comme la référence. */
+.ansm {
+  margin: 0 0 var(--sp-3);
+}
+
+.citation-ansm {
+  max-width: var(--measure);
+  padding: 0.6rem var(--sp-2);
+  border-radius: var(--radius-surface);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+.citation-ansm + .citation-ansm { margin-top: var(--sp-1); }
+.citation-ansm .conduite { margin-top: 0.3em; color: var(--muted); }
+.citation-ansm footer { margin-top: 0.4em; font-size: var(--fs-xs); color: var(--faint); }
+.ansm > .manque { margin: 0; font-size: var(--fs-sm); color: var(--faint); }

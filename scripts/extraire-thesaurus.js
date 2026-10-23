@@ -1,7 +1,8 @@
 /**
  * Extrait du thésaurus ANSM (PDF conservé dans sources/ansm/) les groupes de
- * substances, tels quels, dans data/thesaurus-ansm/groupes.json, et régénère
- * les listes qui en sont la copie (data/listes/torsadogenes.json).
+ * substances, tels quels, dans data/thesaurus-ansm/groupes.json, les couples
+ * avec leur niveau dans data/thesaurus-ansm/couples.json, et régénère les
+ * listes qui en sont la copie (data/listes/torsadogenes.json).
  *
  *   npm run extraire-thesaurus
  *
@@ -12,7 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../src/config.js';
-import { lireGroupes, idGroupe, formulations } from '../src/thesaurus-ansm.js';
+import { lireGroupes, lireCouples, idGroupe, formulations } from '../src/thesaurus-ansm.js';
 import { deaccent } from '../src/text.js';
 
 const SOURCE = {
@@ -66,6 +67,19 @@ const sortie = {
 mkdirSync(path.join(ROOT, 'data', 'thesaurus-ansm'), { recursive: true });
 writeFileSync(path.join(ROOT, 'data', 'thesaurus-ansm', 'groupes.json'), `${JSON.stringify(sortie, null, 2)}\n`);
 console.log(`${sortie.groupes.length} groupes → data/thesaurus-ansm/groupes.json`);
+
+// Couples : la tête, l'autre terme, le niveau tel qu'écrit, le mécanisme et la conduite à tenir.
+const couples = lireCouples(texte);
+if (couples.length < 3000) throw new Error(`${couples.length} couples seulement : la mise en page du PDF a changé ?`);
+const sansNiveau = couples.filter((couple) => couple.niveaux.length === 0);
+if (sansNiveau.length) throw new Error(`niveau illisible : ${sansNiveau.map((couple) => `${couple.de} + ${couple.avec}`).join(' ; ')}`);
+writeFileSync(path.join(ROOT, 'data', 'thesaurus-ansm', 'couples.json'), `${JSON.stringify({
+  source: SOURCE,
+  extrait_le: sortie.extrait_le,
+  note: 'Couples du thésaurus, repris tels quels : « de » est la tête de l’entrée (substance, association ou groupe), « avec » le terme précédé de « + », « niveau » l’intitulé tel qu’écrit (« ASDEC - PE »), « niveaux » ses codes, « mecanisme » la colonne de gauche, « conduite » la suite de la colonne de droite. Fichier généré par scripts/extraire-thesaurus.js : ne pas modifier à la main.',
+  couples,
+}, null, 1)}\n`);
+console.log(`${couples.length} couples → data/thesaurus-ansm/couples.json`);
 
 // Listes copiées d'un groupe : membres tels quels, restriction citée de la description.
 const plier = (mot) => deaccent(mot).toLowerCase();
