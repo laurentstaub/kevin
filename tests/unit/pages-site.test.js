@@ -14,12 +14,15 @@ const poolVide = {
 };
 
 describe('pages du site', () => {
-  it('« Pourquoi Médipile » est signée, mentions légales à compléter', () => {
+  it('« Pourquoi Médipile » est signée, pas encore relue ; les mentions légales sont complètes et publiées', () => {
     const pourquoi = lireFiche('pourquoi-medipile', DOSSIER_PAGES);
     assert.equal(pourquoi.meta.titre, 'Pourquoi Médipile');
     assert.match(pourquoi.meta.auteur, /docteur en pharmacie/);
+    assert.equal(publiee(pourquoi), false);
     const mentions = lireFiche('mentions-legales', DOSSIER_PAGES);
-    assert.equal(mentions.aCompleter, true);
+    assert.equal(mentions.aCompleter, false);
+    assert.equal(publiee(mentions), true);
+    assert.match(JSON.stringify(mentions.blocs), /RCS de Paris sous le numéro 948 306 865/);
   });
 
   it('une page datée mais « à compléter » ne se publie pas', () => {
@@ -37,22 +40,24 @@ describe('routes des pages et pied de page', () => {
 
   it('en développement : brouillon visible, lié depuis le pied', async () => {
     config.env = 'development';
-    const res = await request(app).get('/mentions-legales').expect(200);
+    const res = await request(app).get('/pourquoi').expect(200);
     assert.match(res.text, /class="brouillon"/);
-    assert.match(res.text, /à compléter/);
-    assert.match(res.text, /<footer class="pied">.*href="\/pourquoi">Pourquoi Médipile<\/a>/s);
+    assert.match(res.text, /<footer class="pied">.*href="\/mentions-legales">Mentions légales<\/a>/s);
     assert.match(res.text, /href="mailto:contact@medipile\.fr"/);
     // Dans le texte de la page aussi : le Markdown admet les liens mailto.
-    const pourquoi = await request(app).get('/pourquoi').expect(200);
-    assert.match(pourquoi.text, /<p>[^<]*<a href="mailto:contact@medipile\.fr">contact@medipile\.fr<\/a>/);
+    assert.match(res.text, /<p>[^<]*<a href="mailto:contact@medipile\.fr">contact@medipile\.fr<\/a>/);
+    const mentions = await request(app).get('/mentions-legales').expect(200);
+    assert.doesNotMatch(mentions.text, /class="brouillon"|à compléter/);
   });
 
-  it('en production : une page non relue n’a pas d’adresse ni de lien', async () => {
+  it('en production : une page non relue n’a pas d’adresse ni de lien, une page relue en a', async () => {
     config.env = 'production';
     await request(app).get('/pourquoi').expect(404);
-    await request(app).get('/mentions-legales').expect(404);
+    const mentions = await request(app).get('/mentions-legales').expect(200);
+    assert.match(mentions.text, /capital de 3 000 euros/);
     const accueil = await request(app).get('/fiches').expect(200);
     assert.doesNotMatch(accueil.text, /href="\/pourquoi"/);
+    assert.match(accueil.text, /href="\/mentions-legales"/);
     assert.match(accueil.text, /href="mailto:contact@medipile\.fr"/);
   });
 });

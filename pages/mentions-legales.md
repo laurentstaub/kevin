@@ -1,12 +1,12 @@
 ---
 titre: Mentions légales
 auteur: Antheos Data
-relu:
+relu: 2026-10-23
 ---
 
 ## Éditeur
 
-Médipile (medipile.fr) est édité par Antheos Data, société par actions simplifiée unipersonnelle au capital de [à compléter : capital] euros, immatriculée sous le numéro SIREN [à compléter : SIREN], dont le siège est situé [à compléter : adresse du siège].
+Médipile (medipile.fr) est édité par Antheos Data, société par actions simplifiée au capital de 3 000 euros, immatriculée au RCS de Paris sous le numéro 948 306 865 (SIRET du siège : 948 306 865 00015), dont le siège est situé 59 rue de Ponthieu, bureau 326, 75008 Paris.
 
 Directeur de la publication : Laurent Staub.
 
@@ -18,7 +18,7 @@ Le site est hébergé par Heroku, service de Salesforce, Inc., 415 Mission Stree
 
 ## Données reproduites
 
-Les informations sur les médicaments proviennent de la base de données publique des médicaments, publiée par l'Agence nationale de sécurité du médicament et des produits de santé (ANSM), et des avis de la Haute Autorité de santé qu'elle reprend. Elles sont reproduites sans modification de leur contenu. [à compléter : licence de réutilisation des données de la BDPM]
+Les informations sur les médicaments proviennent de la base de données publique des médicaments, publiée par l'Agence nationale de sécurité du médicament et des produits de santé (ANSM), et des avis de la Haute Autorité de santé qu'elle reprend. Elles sont reproduites sans modification de leur contenu, dans les conditions de la Licence Ouverte / Open Licence (Etalab) sous laquelle la base est publiée sur data.gouv.fr.
 
 ## Données personnelles
 
