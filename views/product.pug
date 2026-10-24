@@ -167,14 +167,66 @@ block content
   .corps
     main.contenu
 
-      //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
-      //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
       - const nbConditions = delivrance.groupes.reduce((total, groupe) => total + groupe.conditions.length, 0)
       //- `remboursement` : indications lues, `null` sans restriction, `indisponible` en panne.
       - const rembourse = Boolean(remboursement && !remboursement.indisponible)
       - const priseEnChargeIllisible = Boolean(remboursement && remboursement.indisponible)
       - const bdpm = links.official.find((lien) => lien.key === 'bdpm')
-      details.bloc#delivrance
+      - const enCours = securite ? securite.infos.filter((info) => info.enCours).length : 0
+      - const sansActifs = parExcipient ? parExcipient.sans : []
+      - const deglutitionActif = Boolean(deglutition && deglutition.actif)
+      - const filtreActif = sansActifs.length > 0 || deglutitionActif
+      - const masquesTotal = (parExcipient ? parExcipient.masques : 0) + (deglutition ? deglutition.masques : 0)
+      - const avecEvaluation = Boolean(evaluation && evaluation.length > 0)
+      - const avecSecurite = Boolean(securite && securite.total > 0)
+      - const avecAlternatives = Boolean(alternatives && (alternatives.categories.length > 0 || filtreActif))
+      - const options = optionsAlternatives
+      - const pluriel = (nombre, mot) => `${nombre} ${mot}${nombre > 1 ? 's' : ''}`
+
+      //- Une seule barre pour la fiche : les quatre blocs d'abord, Délivrance en
+      //- tête, chacun ouvert sous la barre, au-dessus du document ; puis les
+      //- documents, en onglets (un seul affiché). Même corps, même trait sous ce qui est affiché.
+      //- Le compte des blocs en petit, son sens en infobulle. Fermé, un bloc
+      //- n'existe que dans la barre ; ouvert, il garde son titre. Sans
+      //- JavaScript, les bascules sont cachées et les blocs restent natifs
+      //- (classe `js` posée par apparence.js).
+      - const ligne = [{ id: 'delivrance', nom: 'Délivrance', ouvert: false }]
+      - if (delivrance.indisponible) ligne[0].mentions = [['Conditions indisponibles', "Les conditions de prescription et de délivrance n'ont pas pu être lues"]]
+      - else if (priseEnChargeIllisible) ligne[0].mentions = [['Prise en charge à vérifier', "Les indications ouvrant droit au remboursement n'ont pas pu être lues"]]
+      - else if (rembourse) ligne[0].mentions = [['Indications remboursées', 'La prise en charge ne couvre que certaines indications, précisées dans le bloc']]
+      - else Object.assign(ligne[0], { compte: nbConditions > 0 ? String(nbConditions) : null, titre: nbConditions > 0 ? `${pluriel(nbConditions, 'condition')} de délivrance` : 'Aucune condition enregistrée' })
+      - if (avecEvaluation) ligne.push({ id: 'evaluation', nom: 'Avis HAS', compte: String(evaluation.length), titre: `${evaluation.length} avis de la Commission de la transparence`, ouvert: false })
+      - if (avecSecurite) ligne.push({ id: 'securite', nom: 'Sécurité', compte: String(securite.total), titre: `${pluriel(securite.total, 'information')} de sécurité ANSM`, ouvert: enCours > 0 })
+      - if (avecAlternatives) ligne.push({ id: 'alternatives', nom: 'Alternatives', compte: masquesTotal > 0 ? `${options} · ${masquesTotal} masquée${masquesTotal > 1 ? 's' : ''}` : String(options), titre: pluriel(options, 'option'), ouvert: filtreActif })
+      nav.fiche-nav(aria-label="Contenu de la fiche")
+        .bascules
+          each entree in ligne
+            button.bascule(type="button" aria-controls=entree.id aria-expanded=String(entree.ouvert) title=entree.titre)
+              span.bascule-nom= entree.nom
+              each mention in (entree.mentions || [])
+                span.mention(title=mention[1])= mention[0]
+              if entree.compte
+                span.bascule-compte= entree.compte
+        if hasDocuments
+          if documents.length > 1
+            .onglets(role="tablist" aria-label="Documents officiels")
+              each doc, i in documents
+                button.onglet(
+                  type="button"
+                  role="tab"
+                  id=`onglet-${doc.type}`
+                  aria-controls=doc.anchor
+                  aria-selected=(i === 0 ? 'true' : 'false')
+                  tabindex=(i === 0 ? 0 : -1)
+                  title=doc.label
+                )= doc.court
+          else
+            .onglets
+              span.onglet(aria-selected="true" title=documents[0].label)= documents[0].court
+
+      //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
+      //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
+      details.bloc.en-ligne#delivrance
         summary.bloc-tete
           h2.section-titre Délivrance
           //- Pannes et prise en charge seulement : les conditions elles-mêmes
@@ -264,7 +316,7 @@ block content
       //- Évaluation HAS : avis de la Commission de la transparence, du plus récent
       //- au plus ancien. SMR et ASMR sont donnés par indication, libellé HAS mot
       //- pour mot ; l'avis complet est seulement lié.
-      if evaluation && evaluation.length > 0
+      if avecEvaluation
         - const ROMAIN = /^(?:I{1,3}|IV|V)$/
         //- Libellé découpé en phrase d'introduction et énumération (has.js).
         mixin libelleHas(valeur, lignes)
@@ -292,7 +344,7 @@ block content
             each ligne in avis.asmr
               +libelleHas(ROMAIN.test(ligne.valeur) ? `ASMR ${ligne.valeur}` : ligne.valeur, ligne.lignes)
 
-        details.bloc#evaluation
+        details.bloc.en-ligne#evaluation
           summary.bloc-tete
             h2.section-titre Évaluation HAS
             span.bloc-compte #{evaluation.length} avis
@@ -308,9 +360,8 @@ block content
       //- sur la BDPM ; passées, elles restent lisibles, dites archivées.
       if securite === null
         p.section-meta#securite Informations de sécurité ANSM momentanément indisponibles.
-      else if securite && securite.total > 0
-        - const enCours = securite.infos.filter((info) => info.enCours).length
-        details.bloc#securite(open=enCours > 0)
+      else if avecSecurite
+        details.bloc.en-ligne#securite(open=enCours > 0)
           summary.bloc-tete
             h2.section-titre Informations de sécurité
             span.bloc-compte #{securite.total} information#{securite.total > 1 ? 's' : ''} ANSM
@@ -336,13 +387,8 @@ block content
       //- adaptation, le prescripteur, ou dit pourquoi il est écarté.
       //- Un filtre actif garde le bloc ouvert, même s'il a tout masqué : sinon
       //- plus rien ne permettrait de l'ôter.
-      - const sansActifs = parExcipient ? parExcipient.sans : []
-      - const deglutitionActif = Boolean(deglutition && deglutition.actif)
-      - const filtreActif = sansActifs.length > 0 || deglutitionActif
-      - const masquesTotal = (parExcipient ? parExcipient.masques : 0) + (deglutition ? deglutition.masques : 0)
-      if alternatives && (alternatives.categories.length > 0 || filtreActif)
-        - const options = optionsAlternatives
-        details.bloc#alternatives(open=filtreActif)
+      if avecAlternatives
+        details.bloc.en-ligne#alternatives(open=filtreActif)
           summary.bloc-tete
             h2.section-titre Alternatives
             span.bloc-compte
@@ -453,27 +499,13 @@ block content
                           else
                             td.subst-motif= item.motif
 
-      //- Contenu principal, jamais replié : le document lu sert de titre
-      //- (« RCP »), les autres documents en onglets au même niveau.
+      //- Contenu principal, jamais replié : le document lu est l'onglet actif
+      //- de la barre de la fiche, les autres documents ses voisins.
       if hasDocuments
         //- Mots trouvés par la recherche (?q=…), surlignés par documents.js.
         section.bloc.bloc-documents#documents(data-mots=(motsTrouves && motsTrouves.length > 0 ? JSON.stringify(motsTrouves) : null))
+          //- Onglets des documents : dans la barre de la fiche, plus haut.
           h2.sr-only Documents officiels
-          if documents.length > 1
-            .onglets(role="tablist" aria-label="Documents officiels")
-              each doc, i in documents
-                button.onglet(
-                  type="button"
-                  role="tab"
-                  id=`onglet-${doc.type}`
-                  aria-controls=doc.anchor
-                  aria-selected=(i === 0 ? 'true' : 'false')
-                  tabindex=(i === 0 ? 0 : -1)
-                  title=doc.label
-                )= doc.court
-          else
-            .onglets
-              span.onglet(aria-selected="true" title=documents[0].label)= documents[0].court
 
           //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
           //- Non supporté (Safari), il vaut `hidden`.

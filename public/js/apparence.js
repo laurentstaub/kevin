@@ -7,6 +7,9 @@
 (function () {
   const CLE = 'apparence';
   const racine = document.documentElement;
+  // JavaScript actif, dit avant les styles : ce qui n'a de sens qu'avec lui
+  // (la ligne des blocs de la fiche) s'affiche sans décaler la page.
+  racine.classList.add('js');
   const poser = (valeur) => {
     if (valeur === 'light' || valeur === 'dark') racine.dataset.theme = valeur;
     else delete racine.dataset.theme;

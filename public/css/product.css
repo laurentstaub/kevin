@@ -9,13 +9,21 @@
   padding: var(--sp-4) var(--sp-4) var(--sp-3);
 }
 
+/* En-tête resserré : sur l'écran bas du comptoir, chaque ligne gagnée est une
+   ligne du document. Le fil ATC tient sur une ligne fine au-dessus du nom. */
 .identite-haut {
   border-bottom: 0;
+  padding-top: var(--sp-2);
   padding-bottom: 0;
+}
+
+.identite-haut .identite-tete {
+  padding-bottom: 0.25rem;
 }
 
 .identite-bas {
   padding-top: 0;
+  padding-bottom: var(--sp-2);
 }
 
 .identite-inner {
@@ -66,8 +74,10 @@
 /* ---------- Dosages et formes ---------- */
 
 /* Autres dosages et formes : liens alignés ; le dosage affiché est dans le titre. */
+/* Autant de blanc au-dessus qu'au-dessous (padding bas de .identite-bas) :
+   l'interligne de la ligne du dessus en fait déjà une part. */
 .formes {
-  margin-top: var(--sp-2);
+  margin-top: var(--sp-1);
 }
 
 .formes-liste {
@@ -229,6 +239,113 @@ a.signal-valeur {
 /* Le titre porte son filet quand il n'est pas dans un bloc repliable. */
 .contenu > section > .section-titre {
   border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+/* Barre de la fiche : les quatre blocs, Délivrance en tête, puis les documents
+   en onglets après un filet. Même corps, même gris au repos, même trait sous ce
+   qui est affiché : bloc ouvert, onglet actif. Fermé, un bloc n'est que dans la
+   barre ; sans JavaScript, bascules cachées et blocs natifs. */
+.fiche-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 var(--sp-2);
+  margin-bottom: var(--sp-1);
+  border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+.bascules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-2);
+}
+
+/* Filet court entre blocs et documents, centré sur la ligne : il ne touche ni
+   le haut de la barre ni le trait des onglets. */
+.js .bascules + .onglets {
+  padding-left: var(--sp-2);
+  background: linear-gradient(var(--rule), var(--rule)) left center / var(--rule-width) 1.2em no-repeat;
+}
+
+html:not(.js) .bascules {
+  display: none;
+}
+
+.js .contenu > details.en-ligne:not([open]) {
+  display: none;
+}
+
+.onglet,
+.bascule {
+  appearance: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: calc(-1 * var(--rule-width));
+  padding: var(--sp-1) 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.onglet:hover,
+.bascule:hover {
+  color: var(--ink);
+}
+
+.onglet[aria-selected='true'],
+.bascule[aria-expanded='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* Bloc ouvert depuis la barre : la barre le nomme déjà, son titre devient une
+   petite ligne grise, qui le referme toujours d'un clic. */
+.js .contenu > details.en-ligne > .bloc-tete {
+  border-bottom: 0;
+}
+
+/* Compte et mentions sont déjà dans la barre. */
+.js .contenu > details.en-ligne > .bloc-tete > :not(.section-titre) {
+  display: none;
+}
+
+.js .contenu > details.en-ligne > .bloc-tete .section-titre {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding-bottom: 0;
+}
+
+.js .contenu > details.en-ligne > .bloc-tete .section-titre::before {
+  font-size: 1em;
+}
+
+/* Le compte d'un bloc : petit, gris ; son sens est en infobulle. */
+.bascule-compte {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.bascule .mention {
+  font-weight: 400;
+}
+
+/* Les onglets sont dans la barre au-dessus : le document la suit sans blanc. */
+.contenu > .bloc-documents {
+  padding-top: 0;
 }
 
 /* Volume du bloc, visible même replié. */
@@ -572,40 +689,11 @@ td.forme {
 
 /* ---------- Onglets RCP / Notice ---------- */
 
-/* Pas de filet sous la barre : l'état actif est un aplat. */
-/* Onglets = titre de la section : le document lu (« RCP ») en titre serif gras,
-   les autres au même corps, en gris. Filet commun, trait sous l'actif. */
+/* Dans la barre de la fiche (plus haut) : même style que les bascules. */
 .onglets {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--sp-4);
-  margin-bottom: var(--sp-1);
-  border-bottom: var(--rule-width) solid var(--rule-medium);
-}
-
-.onglet {
-  appearance: none;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  margin-bottom: calc(-1 * var(--rule-width));
-  padding: 0 0 var(--sp-1);
-  font-family: var(--font-head);
-  font-size: var(--titre-bloc);
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--faint);
-  cursor: pointer;
-}
-
-.onglet:hover {
-  color: var(--ink);
-}
-
-.onglet[aria-selected='true'] {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
+  gap: 0 var(--sp-2);
 }
 
 /* Document unique : titre, pas commande. */
@@ -1384,8 +1472,14 @@ span.onglet {
     max-width: none;
   }
 
-  .onglet[aria-selected='false'] {
+  .onglet[aria-selected='false'],
+  .bascules {
     display: none;
+  }
+
+  /* Tous les blocs s'impriment, ouverts ou non. */
+  .contenu > details.en-ligne {
+    display: block !important;
   }
 
   .onglet[aria-selected='true'] {

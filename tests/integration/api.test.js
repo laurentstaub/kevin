@@ -412,7 +412,7 @@ describe('API', { skip }, () => {
     });
 
     it('propose « sans lactose » dans les alternatives, et masque ce qui en contient', async () => {
-      const bloc = (texte) => texte.match(/<details class="bloc" id="alternatives"[\s\S]*?<\/details>/)?.[0] ?? '';
+      const bloc = (texte) => texte.match(/<details class="bloc en-ligne" id="alternatives"[\s\S]*?<\/details>/)?.[0] ?? '';
 
       const avant = bloc((await request(app).get('/product/61111114').expect(200)).text);
       assert.match(avant, /href="\?sans=lactose#alternatives"/);
@@ -488,7 +488,7 @@ describe('API', { skip }, () => {
 
     it('liste les informations de sécurité ANSM, sans lien hors des domaines autorisés', async () => {
       const res = await request(app).get('/product/61111120').expect(200);
-      const bloc = res.text.match(/<details class="bloc" id="securite"[\s\S]*?<\/details>/)?.[0] ?? '';
+      const bloc = res.text.match(/<details class="bloc en-ligne" id="securite"[\s\S]*?<\/details>/)?.[0] ?? '';
 
       assert.match(bloc, /2 informations ANSM/);
       // La plus récente d'abord, entités décodées, lien conservé.

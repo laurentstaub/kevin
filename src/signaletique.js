@@ -76,24 +76,32 @@ export function pictoForme(forme) {
   return 'boite';
 }
 
+/** Une forme seule : sa tête, sans qualificatifs galéniques, LP / LM / GR en sigle. */
+function abregerUne(forme) {
+  const sigle = /lib[ée]ration prolong[ée]e/.test(forme) ? 'LP'
+    : /lib[ée]ration modifi[ée]e/.test(forme) ? 'LM'
+      : /gastro-r[ée]sistant/.test(forme) ? 'GR' : null;
+  const texte = forme.split(/\s+(?:à|en|de|du|des|avec|sans)\s+|,/)[0]
+    .replace(/(^|\s)(pellicul[ée]e?s?|s[ée]cables?|quadris[ée]cables?|enrob[ée]e?s?|drag[ée]ifi[ée]e?s?|gastro-r[ée]sistante?s?)(?=\s|$)/g, '$1')
+    .replace(/\s+/g, ' ').trim();
+  return sigle && texte ? `${texte} ${sigle}` : texte;
+}
+
 /**
  * Forme abrégée pour la bande : la tête du libellé BDPM, sans ses qualificatifs
  * galéniques, avec LP / LM / GR en sigle. « gélule à libération prolongée » →
  * « gélule LP » ; « poudre pour solution buvable en sachet » → « solution buvable ».
+ * Les formes combinées s'abrègent une à une, sans doublon : « comprimé pelliculé
+ * et comprimé pelliculé » (Paxlovid) → « comprimé », pas « comprimé et comprimé ».
  */
 export function abregerForme(forme) {
   let texte = String(forme ?? '').toLowerCase().trim();
   if (!texte) return '';
-  const sigle = /lib[ée]ration prolong[ée]e/.test(texte) ? 'LP'
-    : /lib[ée]ration modifi[ée]e/.test(texte) ? 'LM'
-      : /gastro-r[ée]sistant/.test(texte) ? 'GR' : null;
   // « poudre pour solution injectable » : ce qui compte est ce qu'on administre.
   const pour = texte.match(/\bpour\s+(.+)$/);
   if (pour) texte = pour[1];
-  texte = texte.split(/\s+(?:à|en|de|du|des|avec|sans)\s+|,/)[0];
-  texte = texte.replace(/(^|\s)(pellicul[ée]e?s?|s[ée]cables?|quadris[ée]cables?|enrob[ée]e?s?|drag[ée]ifi[ée]e?s?|gastro-r[ée]sistante?s?)(?=\s|$)/g, '$1')
-    .replace(/\s+/g, ' ').trim();
-  return sigle ? `${texte} ${sigle}` : texte;
+  const parties = texte.split(/\s+et\s+/).map(abregerUne).filter(Boolean);
+  return [...new Set(parties)].join(' et ');
 }
 
 /** « 42.11 » → « 42,11 € » ; « 2.1 » → « 2,10 € ». Espace fine insécable avant le symbole. */

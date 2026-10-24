@@ -256,7 +256,11 @@ describe('rendu des gabarits', () => {
       evaluation: [avis('2026-03-04', 'Renouvellement d’inscription (CT)', 'Important', 'V'),
         avis('2019-01-10', 'Inscription (CT)', 'Modéré', 'Commentaires sans chiffrage de l’ASMR')],
     }));
-    assert.match(html, /<details class="bloc" id="evaluation">/);
+    assert.match(html, /<details class="bloc en-ligne" id="evaluation">/);
+    // La ligne des blocs annonce l'évaluation et son compte, fermée ; la sécurité,
+    // absente du produit, n'y est pas.
+    assert.match(html, /<nav class="fiche-nav"[^>]*>.*<button class="bascule" type="button" aria-controls="evaluation" aria-expanded="false" title="2 avis de la Commission de la transparence"><span class="bascule-nom">Avis HAS<\/span><span class="bascule-compte">2<\/span><\/button>.*<\/nav>/s);
+    assert.doesNotMatch(html, /aria-controls="securite"/);
     assert.match(html, /<span class="bloc-compte">2 avis<\/span>/);
     assert.match(html, /<strong class="avis-valeur">SMR important<\/strong> — Le service médical rendu est important\./);
     assert.match(html, /<strong class="avis-valeur">ASMR V<\/strong>/);
@@ -724,7 +728,9 @@ describe('rendu des gabarits', () => {
         { id: '3', denomination: 'Y 1 mg, comprimé', role: 'Générique', excipients: { lu: false, courts: [] } },
       ] },
     ], 1)));
-    assert.match(html, /<details class="bloc" id="alternatives" open/);
+    assert.match(html, /<details class="bloc en-ligne" id="alternatives" open/);
+    // Filtre actif : le bloc est ouvert, son bouton le dit, avec les masqués.
+    assert.match(html, /aria-controls="alternatives" aria-expanded="true" title="3 options"><span class="bascule-nom">Alternatives<\/span><span class="bascule-compte">3 · 1 masquée<\/span>/);
     assert.match(html, /3 options · 1 masquée/);
     assert.match(html, /class="filtre-excipient actif"[^>]*>lactose<span class="filtre-ici"> \(ce produit\)/);
     // Ôter le seul filtre actif ramène à la fiche sans paramètre ; en ajouter un les cumule.

@@ -163,6 +163,14 @@ describe('forme abrégée', () => {
     assert.equal(abregerForme('comprimé orodispersible'), 'comprimé orodispersible');
     assert.equal(abregerForme(''), '');
   });
+
+  it('abrège une forme combinée partie par partie, sans doublon', () => {
+    assert.equal(abregerForme('comprimé pelliculé et  comprimé pelliculé'), 'comprimé');
+    assert.equal(abregerForme('comprimé enrobé et  comprimé enrobé et  comprimé enrobé'), 'comprimé');
+    assert.equal(abregerForme('comprimé et  gélule'), 'comprimé et gélule');
+    assert.equal(abregerForme('comprimé à libération prolongée et  comprimé pelliculé'), 'comprimé LP et comprimé');
+    assert.equal(abregerForme('poudre et solvant pour solution injectable'), 'solution injectable');
+  });
 });
 
 describe('bande signalétique — conditions illisibles', () => {

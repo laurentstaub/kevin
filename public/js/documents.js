@@ -17,7 +17,7 @@ function idDeAncre(hash) {
 }
 
 const documents = document.querySelector('#documents');
-const onglets = documents ? [...documents.querySelectorAll('.onglet[role="tab"]')] : [];
+const onglets = [...document.querySelectorAll('.fiche-nav .onglet[role="tab"]')];
 const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
 
 // « until-found » : caché mais trouvable par la recherche du navigateur.
@@ -98,6 +98,15 @@ window.addEventListener('hashchange', () => {
 });
 
 if (location.hash) reveler(idDeAncre(location.hash));
+
+// Bascules de la barre de la fiche : chaque bouton ouvre ou ferme son bloc.
+// L'état suit le bloc, qu'il soit ouvert d'ici, par la bande, le rail ou une ancre.
+for (const bouton of document.querySelectorAll('.bascule')) {
+  const bloc = document.getElementById(bouton.getAttribute('aria-controls'));
+  if (!bloc) continue;
+  bouton.addEventListener('click', () => { bloc.open = !bloc.open; });
+  bloc.addEventListener('toggle', () => bouton.setAttribute('aria-expanded', String(bloc.open)));
+}
 
 // « Tout déplier » / « Tout replier ».
 for (const bouton of document.querySelectorAll('.deplier')) {
