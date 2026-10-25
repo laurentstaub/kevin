@@ -185,7 +185,12 @@ describe('rendu des gabarits', () => {
     const deux = rendre('product', produit({
       hasDocuments: true,
       documents: [doc('rcp', 'RCP', 'Résumé des caractéristiques du produit'), doc('notice', 'Notice', 'Notice patient')],
+      optionsAlternatives: 1,
+      alternatives: { groupe: null, categories: [{ cle: 'SUBSTITUABLE', action: 'Génériques du groupe', detail: '', lignes: [{ id: '1', denomination: 'X' }] }] },
     }));
+    // Délivrance en tête, Alternatives en dernier, les documents entre les deux.
+    const ordre = [...deux.matchAll(/role="tab" id="onglet-([a-z]+)"/g)].map(([, id]) => id);
+    assert.deepEqual(ordre, ['delivrance', 'rcp', 'notice', 'alternatives']);
     assert.match(deux, /role="tab"[^>]*>RCP<\/button>/);
     assert.match(deux, /title="Notice patient"[^>]*>Notice<\/button>/);
     // Le premier document est choisi au chargement, les blocs non.
@@ -263,7 +268,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<details class="bloc en-ligne" id="evaluation">/);
     // La ligne des blocs annonce l'évaluation et son compte, fermée ; la sécurité,
     // absente du produit, n'y est pas.
-    assert.match(html, /<div class="fiche-nav" role="tablist"[^>]*>.*<button class="onglet" type="button" role="tab" id="onglet-evaluation" aria-controls="evaluation" aria-selected="false" tabindex="-1" title="2 avis de la Commission de la transparence"><span class="onglet-nom">Avis HAS<\/span><span class="onglet-compte">2<\/span><\/button>/s);
+    assert.match(html, /<div class="fiche-nav" role="tablist"[^>]*>.*<button class="onglet onglet-bloc" type="button" role="tab" id="onglet-evaluation" aria-controls="evaluation" aria-selected="false" tabindex="-1" title="2 avis de la Commission de la transparence"><span class="onglet-nom">Avis HAS<\/span><span class="onglet-compte">2<\/span><\/button>/s);
     assert.doesNotMatch(html, /aria-controls="securite"/);
     assert.match(html, /<span class="bloc-compte">2 avis<\/span>/);
     assert.match(html, /<strong class="avis-valeur">SMR important<\/strong> — Le service médical rendu est important\./);

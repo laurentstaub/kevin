@@ -715,19 +715,18 @@ export function pageRoutes(pool) {
       documents.sort((a, b) => DOCUMENT_TYPES.indexOf(a.type) - DOCUMENT_TYPES.indexOf(b.type));
       const hasDocuments = documents.length > 0;
 
-      // Plan de la page, dans l'ordre d'affichage : le rail doit suivre la lecture.
+      // Plan de la page, dans l'ordre de la barre d'onglets : Alternatives en dernier.
       const sections = [
         { id: 'delivrance', label: 'Délivrance' },
         evaluation?.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
         securite?.total > 0 && { id: 'securite', label: 'Sécurité' },
-        // Question de comptoir : avant les documents, qui sont la référence.
-        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         hasDocuments && {
           id: 'documents',
           label: 'Documents',
           // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
           children: [],
         },
+        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
         { id: 'references', label: 'Références' },
       ].filter(Boolean);
 

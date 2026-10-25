@@ -184,11 +184,11 @@ block content
       - const pluriel = (nombre, mot) => `${nombre} ${mot}${nombre > 1 ? 's' : ''}`
 
       //- Une seule barre d'onglets pour la fiche, une seule règle : ce qui est
-      //- souligné est ce qui s'affiche dessous. Les quatre blocs d'abord,
-      //- Délivrance en tête, puis les documents après un filet. Choisi au
-      //- chargement : le premier document, ou Alternatives sous un filtre actif.
-      //- Le compte des blocs en petit, son sens en infobulle. Sans JavaScript,
-      //- onglets des blocs cachés et blocs natifs (classe `js`, apparence.js).
+      //- souligné est ce qui s'affiche dessous. Délivrance en tête, les blocs,
+      //- les documents, Alternatives en dernier. Choisi au chargement : le
+      //- premier document, ou Alternatives sous un filtre actif. Le compte des
+      //- blocs en petit, son sens en infobulle. Sans JavaScript, onglets des
+      //- blocs cachés et blocs natifs (classe `js`, apparence.js).
       - const choisi = filtreActif && avecAlternatives ? 'alternatives' : (hasDocuments ? documents[0].anchor : 'delivrance')
       - const ligne = [{ id: 'delivrance', nom: 'Délivrance' }]
       - if (delivrance.indisponible) ligne[0].mentions = [['Conditions indisponibles', "Les conditions de prescription et de délivrance n'ont pas pu être lues"]]
@@ -197,36 +197,38 @@ block content
       - else Object.assign(ligne[0], { compte: nbConditions > 0 ? String(nbConditions) : null, titre: nbConditions > 0 ? `${pluriel(nbConditions, 'condition')} de délivrance` : 'Aucune condition enregistrée' })
       - if (avecEvaluation) ligne.push({ id: 'evaluation', nom: 'Avis HAS', compte: String(evaluation.length), titre: `${evaluation.length} avis de la Commission de la transparence` })
       - if (avecSecurite) ligne.push({ id: 'securite', nom: 'Sécurité', compte: String(securite.total), titre: `${pluriel(securite.total, 'information')} de sécurité ANSM`, mentions: enCours > 0 ? [['En cours', "Information en cours d'affichage sur la base publique"]] : null })
-      - if (avecAlternatives) ligne.push({ id: 'alternatives', nom: 'Alternatives', compte: String(options), titre: pluriel(options, 'option') + (masquesTotal > 0 ? ` · ${pluriel(masquesTotal, 'masquée')} par le filtre` : '') })
+      - const fin = avecAlternatives ? [{ id: 'alternatives', nom: 'Alternatives', compte: String(options), titre: pluriel(options, 'option') + (masquesTotal > 0 ? ` · ${pluriel(masquesTotal, 'masquée')} par le filtre` : '') }] : []
+      mixin ongletBloc(entree)
+        button.onglet.onglet-bloc(
+          type="button"
+          role="tab"
+          id=`onglet-${entree.id}`
+          aria-controls=entree.id
+          aria-selected=String(entree.id === choisi)
+          tabindex=(entree.id === choisi ? 0 : -1)
+          title=entree.titre
+        )
+          span.onglet-nom= entree.nom
+          each mention in (entree.mentions || [])
+            span.mention(title=mention[1])= mention[0]
+          if entree.compte
+            span.onglet-compte= entree.compte
       .fiche-nav(role="tablist" aria-label="Contenu de la fiche")
-        .onglets-blocs
-          each entree in ligne
+        each entree in ligne
+          +ongletBloc(entree)
+        if hasDocuments
+          each doc in documents
             button.onglet(
               type="button"
               role="tab"
-              id=`onglet-${entree.id}`
-              aria-controls=entree.id
-              aria-selected=String(entree.id === choisi)
-              tabindex=(entree.id === choisi ? 0 : -1)
-              title=entree.titre
-            )
-              span.onglet-nom= entree.nom
-              each mention in (entree.mentions || [])
-                span.mention(title=mention[1])= mention[0]
-              if entree.compte
-                span.onglet-compte= entree.compte
-        if hasDocuments
-          .onglets-docs
-            each doc in documents
-              button.onglet(
-                type="button"
-                role="tab"
-                id=`onglet-${doc.type}`
-                aria-controls=doc.anchor
-                aria-selected=String(doc.anchor === choisi)
-                tabindex=(doc.anchor === choisi ? 0 : -1)
-                title=doc.label
-              )= doc.court
+              id=`onglet-${doc.type}`
+              aria-controls=doc.anchor
+              aria-selected=String(doc.anchor === choisi)
+              tabindex=(doc.anchor === choisi ? 0 : -1)
+              title=doc.label
+            )= doc.court
+        each entree in fin
+          +ongletBloc(entree)
 
       //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
       //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
@@ -385,6 +387,62 @@ block content
               |
               a(href=bdpm ? bdpm.url : '#' target="_blank" rel="noopener noreferrer") fiche BDPM
 
+      //- Contenu principal, jamais replié : le document lu est l'onglet actif
+      //- de la barre de la fiche, les autres documents ses voisins.
+      if hasDocuments
+        //- Mots trouvés par la recherche (?q=…), surlignés par documents.js.
+        section.bloc.bloc-documents#documents(data-mots=(motsTrouves && motsTrouves.length > 0 ? JSON.stringify(motsTrouves) : null))
+          //- Onglets des documents : dans la barre de la fiche, plus haut.
+          h2.sr-only Documents officiels
+
+          //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
+          //- Non supporté (Safari), il vaut `hidden`.
+          each doc, i in documents
+            article.document(
+              id=doc.anchor
+              data-type=doc.type
+              data-libelle=doc.label
+              role="tabpanel"
+              aria-labelledby=`onglet-${doc.type}`
+              hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
+            )
+              //- Ligne de service unique : date, provenance, lien officiel, commande.
+              p.document-meta
+                if doc.lastUpdated
+                  span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
+                if doc.source === 'bdpm_pdf'
+                  span Texte reconstruit depuis le PDF européen
+                if doc.url
+                  a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
+                if doc.rubriques && doc.rubriques.length > 0
+                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
+                //- Sans bouton : copier un passage y joint sa source (documents.js).
+                span.astuce-copie Un passage copié emporte sa source
+                if doc.manquantes && doc.manquantes.length > 0
+                  span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
+
+              if doc.emprunte
+                p.emprunt
+                  strong Texte emprunté.
+                  |  Cette spécialité est une importation parallèle : la base publique ne lui attribue ni RCP ni notice. Le document ci-dessous est celui de&nbsp;
+                  a(href=`/product/${doc.emprunte.id}`)= specialite(doc.emprunte.denomination_medicament)
+                  if doc.emprunte.titulaires
+                    |  (#{doc.emprunte.titulaires.trim()})
+                  | , dont ce produit est la copie distribuée en France.
+
+              if doc.rubriques && doc.rubriques.length > 0
+                .rubriques
+                  //- Numérotation et ordre officiels ; seules les rubriques cliniques s'ouvrent.
+                  each rubrique in doc.rubriques
+                    +rubrique(rubrique, rubrique.clinique === true)
+
+              else if doc.html
+                .document-corps!= doc.html
+
+              else if doc.url
+                p.doc-externe
+                  | Ce document n'est disponible qu'au format PDF sur le site officiel.
+
       //- Alternatives : les candidats classés par action au comptoir (substitution.js,
       //- repris de dispomed). Le groupe générique du Répertoire ANSM fonde la
       //- substitution de droit (CSP, art. L.5121-1) ; le reste demande une
@@ -502,62 +560,6 @@ block content
                               span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
                           else
                             td.subst-motif= item.motif
-
-      //- Contenu principal, jamais replié : le document lu est l'onglet actif
-      //- de la barre de la fiche, les autres documents ses voisins.
-      if hasDocuments
-        //- Mots trouvés par la recherche (?q=…), surlignés par documents.js.
-        section.bloc.bloc-documents#documents(data-mots=(motsTrouves && motsTrouves.length > 0 ? JSON.stringify(motsTrouves) : null))
-          //- Onglets des documents : dans la barre de la fiche, plus haut.
-          h2.sr-only Documents officiels
-
-          //- `hidden="until-found"` : ⌘F fouille et ouvre le panneau caché.
-          //- Non supporté (Safari), il vaut `hidden`.
-          each doc, i in documents
-            article.document(
-              id=doc.anchor
-              data-type=doc.type
-              data-libelle=doc.label
-              role="tabpanel"
-              aria-labelledby=`onglet-${doc.type}`
-              hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
-            )
-              //- Ligne de service unique : date, provenance, lien officiel, commande.
-              p.document-meta
-                if doc.lastUpdated
-                  span Mis à jour le #{new Date(doc.lastUpdated).toLocaleDateString('fr-FR')}
-                if doc.source === 'bdpm_pdf'
-                  span Texte reconstruit depuis le PDF européen
-                if doc.url
-                  a(href=doc.url target="_blank" rel="noopener noreferrer") Version officielle
-                if doc.rubriques && doc.rubriques.length > 0
-                  button.deplier(type="button" data-cible=doc.anchor) Tout déplier
-                //- Sans bouton : copier un passage y joint sa source (documents.js).
-                span.astuce-copie Un passage copié emporte sa source
-                if doc.manquantes && doc.manquantes.length > 0
-                  span.manquantes Rubriques absentes du document source : #{doc.manquantes.join(', ')}
-
-              if doc.emprunte
-                p.emprunt
-                  strong Texte emprunté.
-                  |  Cette spécialité est une importation parallèle : la base publique ne lui attribue ni RCP ni notice. Le document ci-dessous est celui de&nbsp;
-                  a(href=`/product/${doc.emprunte.id}`)= specialite(doc.emprunte.denomination_medicament)
-                  if doc.emprunte.titulaires
-                    |  (#{doc.emprunte.titulaires.trim()})
-                  | , dont ce produit est la copie distribuée en France.
-
-              if doc.rubriques && doc.rubriques.length > 0
-                .rubriques
-                  //- Numérotation et ordre officiels ; seules les rubriques cliniques s'ouvrent.
-                  each rubrique in doc.rubriques
-                    +rubrique(rubrique, rubrique.clinique === true)
-
-              else if doc.html
-                .document-corps!= doc.html
-
-              else if doc.url
-                p.doc-externe
-                  | Ce document n'est disponible qu'au format PDF sur le site officiel.
 
       details.bloc#references
         summary.bloc-tete

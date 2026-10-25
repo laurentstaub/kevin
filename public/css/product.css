@@ -242,9 +242,9 @@ a.signal-valeur {
 }
 
 /* Barre de la fiche : des onglets, une règle. Ce qui est souligné est ce qui
-   s'affiche dessous, et un seul à la fois. Les quatre blocs d'abord, Délivrance
-   en tête, puis les documents après un filet. Sans JavaScript, onglets des
-   blocs cachés et blocs natifs, repliables. */
+   s'affiche dessous, et un seul à la fois. Délivrance en tête, Alternatives en
+   dernier, sans séparateur. Sans JavaScript, onglets des blocs cachés et blocs
+   natifs, repliables. */
 .fiche-nav {
   display: flex;
   flex-wrap: wrap;
@@ -254,21 +254,7 @@ a.signal-valeur {
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-.onglets-blocs,
-.onglets-docs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--sp-2);
-}
-
-/* Filet court entre blocs et documents, centré sur la ligne : il ne touche ni
-   le haut de la barre ni le trait de l'onglet actif. */
-.js .onglets-blocs + .onglets-docs {
-  padding-left: var(--sp-2);
-  background: linear-gradient(var(--rule), var(--rule)) left center / var(--rule-width) 1.2em no-repeat;
-}
-
-html:not(.js) .onglets-blocs {
+html:not(.js) .onglet-bloc {
   display: none;
 }
 
@@ -620,14 +606,15 @@ td.forme {
 
 /* ---------- Découpe des titres : numéro / libellé ---------- */
 
-/* Titres de rubrique au-dessus du corps de lecture (1,0625 rem) : la
-   sous-rubrique à sa hauteur, le chapitre un cran dessus, les blocs au-dessus. */
+/* Titres de rubrique jamais plus gros que le texte qu'ils annoncent (corps de
+   lecture 1,0625 rem) : le chapitre à sa hauteur, en serif gras ; la
+   sous-rubrique un cran dessous, en sans-serif. */
 :root {
-  --titre-n2: 1.0625rem;
-  --titre-n1: 1.2rem;
+  --titre-n2: 1rem;
+  --titre-n1: 1.0625rem;
   /* Même corps que les chapitres du RCP : un titre de bloc n'est pas plus
      gros que ce qu'il contient. */
-  --titre-bloc: 1.2rem;
+  --titre-bloc: var(--titre-n1);
 }
 
 .num {
@@ -789,10 +776,10 @@ td.forme {
 }
 
 /* Repliées : pas de blanc entre rubriques, filet clair. Le filet ne se
-   renforce qu'au bord d'une rubrique ouverte. */
+   renforce qu'au bord d'une rubrique ouverte. Pas de marge au-dessus : elle
+   s'ajoutait au blanc sous le titre précédent, qui paraissait collé en haut. */
 .rubrique.rub-n1 {
   border-top: var(--rule-width) solid var(--rule);
-  margin-top: var(--sp-1);
 }
 
 /* Rubrique ouverte : filet des deux côtés. */
@@ -818,7 +805,7 @@ td.forme {
   font-family: var(--font-head);
   font-size: var(--titre-n1);
   font-weight: 700;
-  margin: var(--sp-1) 0 0;
+  margin: 0;
   padding: 0.35rem 0;
   border-top: var(--rule-width) solid var(--rule);
   scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
@@ -1059,8 +1046,8 @@ td.forme {
 .rubrique-corps .sous-titre,
 .document-corps .sous-titre {
   font-family: var(--font-body);
-  /* Un cran au-dessus de l'intertitre serif (1 em) : le sans-serif paraît plus petit à corps égal. */
-  font-size: 1.08em;
+  /* Corps de la sous-rubrique qui le contient : un intertitre ne la dépasse pas. */
+  font-size: var(--titre-n2);
   font-weight: 600;
   color: var(--ink);
   margin: 1.6em 0 0.5em;
@@ -1447,14 +1434,15 @@ td.forme {
   }
 
   /* Seul le document affiché s'imprime ; son onglet en devient le titre. */
-  .onglets-docs {
+  .fiche-nav {
     display: block;
     margin: var(--sp-3) 0 var(--sp-1);
     max-width: none;
+    border: 0;
   }
 
   .onglet[aria-selected='false'],
-  .onglets-blocs {
+  .onglet-bloc {
     display: none;
   }
 

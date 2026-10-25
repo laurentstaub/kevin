@@ -262,19 +262,18 @@ describe('API', { skip }, () => {
       assert.doesNotMatch(res.text, /class="formes"/);
     });
 
-    it('place Alternatives avant Documents, dans la page comme dans le rail', async () => {
+    it('place Alternatives après Documents, dans la page, la barre et le rail', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
 
       const blocs = [...res.text.matchAll(/class="bloc[^"]*" id="(\w+)"|id="(\w+)" class="bloc/g)]
         .map((correspondance) => correspondance[1] ?? correspondance[2]);
-      const rail = [...res.text.matchAll(/<a class="rail-lien" href="#(\w+)">/g)].map((correspondance) => correspondance[1]);
+      const barre = [...res.text.matchAll(/role="tab" id="onglet-\w+" aria-controls="([\w-]+)"/g)]
+        .map((correspondance) => (correspondance[1].startsWith('doc-') ? 'documents' : correspondance[1]));
+      const rail = [...res.text.matchAll(/<a class="rail-lien rail-seul" href="#(\w+)">/g)].map((correspondance) => correspondance[1]);
 
-      for (const ordre of [blocs, rail]) {
-        const documents = ordre.indexOf('documents');
-        const alternatives = ordre.indexOf('alternatives');
-        if (documents !== -1 && alternatives !== -1) {
-          assert.ok(alternatives < documents, `attendu alternatives avant documents : ${ordre.join(' → ')}`);
-        }
+      for (const ordre of [blocs, barre, rail]) {
+        assert.ok(ordre.includes('alternatives') && ordre.includes('documents'), `deux entrées attendues : ${ordre.join(' → ')}`);
+        assert.ok(ordre.indexOf('documents') < ordre.indexOf('alternatives'), `attendu documents avant alternatives : ${ordre.join(' → ')}`);
       }
     });
 
