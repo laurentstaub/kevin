@@ -300,8 +300,9 @@ titre('PDF — reconstruction du HTML');
   verifier('les rubriques deviennent des titres', html.includes('<h2>4.3  Contre-indications</h2>'));
   verifier('le corps devient des paragraphes', html.includes('<p>Hypersensibilite a la substance active.</p>'));
   verifier(
-    'le tableau de posologie garde son alignement',
-    /<pre>Poids\s+Dose unitaire\s+Maximum par jour\n30 a 50 kg/.test(html),
+    'le tableau de posologie devient un tableau, une rangée par tranche de poids',
+    html.includes('<thead><tr><th>Poids</th><th>Dose unitaire</th><th>Maximum par jour</th></tr></thead>')
+      && html.includes('<tr><td>30 a 50 kg</td><td>500 mg</td><td>3 g</td></tr>'),
   );
   verifier(
     '« 30 a 50 kg » n’est pas pris pour une rubrique',
