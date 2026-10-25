@@ -851,12 +851,12 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 
 @media (min-width: 75rem) {
   :root {
-    /* 288 px : à 240, les libellés du plan passent à la ligne. Reste 912 px
-       au contenu à 1200 px, pour 736 requis. */
+    /* 288 px : à 240, les libellés des classes passent à la ligne. Reste
+       912 px au contenu à 1200 px, pour 736 requis. */
     --rail-l: 18rem;
   }
 
-  /* Sans rail (accueil) : pas de colonne réservée. */
+  /* Sans rail (accueil, résultats, fiche) : pas de colonne réservée. */
   body:not(:has(> .rail)) {
     --rail-l: 0rem;
   }
@@ -929,11 +929,6 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
   text-decoration: none;
 }
 
-/* Lien sans code : pas de gouttière. */
-.rail-seul {
-  display: block;
-}
-
 /* Sur fond teinté, le survol éclaircit ; l'état sélectionné reste distinct. */
 .rail-lien:hover {
   background: var(--bg);
@@ -959,37 +954,6 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
 
 .rail-label {
   line-height: 1.35;
-}
-
-/* Libellés CNAM reçus en capitales sans accents : remis en bas de casse. */
-/* ---------- Plan de la fiche ---------- */
-
-/* Imbrication marquée par le retrait ; sous-rubriques un cran plus petites. */
-.rail-rubrique {
-  padding-left: var(--sp-2);
-  font-size: var(--fs-xs);
-}
-
-/* Gouttière élargie pour les codes à quatre signes (« 4.10 »). */
-.rail-p2 {
-  padding-left: var(--sp-3);
-  grid-template-columns: 2.1rem 1fr;
-}
-
-
-.rail-rubrique .rail-code {
-  font-size: 0.95em;
-}
-
-/* Rubrique en cours (posée par documents.js) : même aplat « vous êtes ici ». */
-.rail-ici,
-.rail-ici:hover {
-  background: var(--accent-pale);
-  color: var(--accent);
-}
-
-.rail-ici .rail-code {
-  color: var(--accent);
 }
 
 /* ---------- Impression ---------- */

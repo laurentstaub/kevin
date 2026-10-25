@@ -28,10 +28,10 @@ html(lang="fr")
     link(rel="stylesheet", href=`/css/app.css?v=${v}`)
     block styles
   body
-    //- Pas de rail sur l'accueil (il liste déjà les classes) ni sur les résultats :
-    //- la recherche prend toute la largeur.
+    //- Pas de rail sur l'accueil (il liste déjà les classes), les résultats ni la
+    //- fiche : la recherche et la lecture prennent toute la largeur.
     if !sansRail
-      +rail(rail, railActif, sections, documents)
+      +rail(rail, railActif)
     block content
     //- Qui est derrière le site, et où écrire : une ligne, sur toutes les pages.
     if pied

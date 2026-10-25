@@ -25,8 +25,7 @@ const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttri
 const estDocument = (i) => Boolean(panneaux[i]?.matches('article.document'));
 for (const panneau of panneaux) if (panneau?.tagName === 'DETAILS') panneau.open = true;
 
-// Dernier document affiché : le plan du rail et le filtre y restent quand un
-// bloc est à l'écran.
+// Dernier document affiché : le filtre y reste quand un bloc est à l'écran.
 let dernierDocument = panneaux.findIndex((panneau, i) => estDocument(i) && !panneau.hidden);
 
 // « until-found » : caché mais trouvable par la recherche du navigateur.
@@ -232,119 +231,6 @@ if (enveloppes.length > 0) {
   documents?.addEventListener('toggle', bientot, true);
   for (const onglet of onglets) onglet.addEventListener('click', bientot);
   bientot();
-}
-
-// ---------------------------------------------------------------------------
-// Rail : reflet de la page, jamais un second modèle.
-// Il montre le plan du document affiché et surligne la rubrique en cours ;
-// ses liens sont des ancres que `reveler` déplie.
-
-const rail = document.querySelector('.rail');
-
-if (rail && documents) {
-  const jeux = [...rail.querySelectorAll('.rail-sous')];
-
-  // Le plan suit le document affiché, ou le dernier quand un bloc l'a remplacé.
-  const suivreOnglet = () => {
-    const type = panneaux[dernierDocument]?.dataset.type;
-    for (const jeu of jeux) jeu.hidden = type ? jeu.dataset.doc !== type : false;
-  };
-
-  for (const onglet of onglets) onglet.addEventListener('click', suivreOnglet);
-  for (const panneau of panneaux) panneau?.addEventListener('beforematch', suivreOnglet);
-  if (jeux.length > 1) suivreOnglet();
-
-  // --- Repère de lecture ---------------------------------------------------
-
-  // Le rail n'existe qu'au-delà de 1200 px.
-  const large = matchMedia('(min-width: 75rem)');
-  let cibles = null;
-  const perimerCibles = () => { cibles = null; };
-
-  const paires = () => {
-    if (!cibles) {
-      cibles = [];
-      for (const lien of rail.querySelectorAll('.rail-plan .rail-lien[href^="#"]')) {
-        if (lien.closest('[hidden]')) continue;
-        const cible = document.getElementById(idDeAncre(lien.hash));
-        // Un panneau caché (autre onglet) garde une position : l'écarter.
-        if (cible && !cible.closest('[hidden]')) cibles.push({ lien, cible });
-      }
-      // Ordre du document, pas du balisage : les rubriques sont imbriquées
-      // sous « Documents » mais le suivent dans la page.
-      cibles.sort((a, b) => (
-        a.cible.compareDocumentPosition(b.cible) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
-      ));
-    }
-    return cibles;
-  };
-
-  let marque = null;
-
-  const marquer = (lien) => {
-    if (lien === marque) return;
-    marque?.classList.remove('rail-ici');
-    lien?.classList.add('rail-ici');
-    marque = lien;
-  };
-
-  /**
-   * Seuil sous l'endroit où se pose un titre ancré (`scroll-margin-top:
-   * barre + sp-2`), sinon le repère reste sur la rubrique précédente.
-   */
-  const seuilDeLecture = () => (barre?.getBoundingClientRect().bottom ?? 0) + 24;
-
-  const peindre = () => {
-    if (!large.matches) return;
-    const seuil = seuilDeLecture();
-
-    const liste = paires();
-    let trouve = null;
-    for (const { lien, cible } of liste) {
-      if (cible.getBoundingClientRect().top > seuil) break;
-      trouve = lien;
-    }
-
-    // En haut de page : la première entrée.
-    marquer(trouve ?? liste[0]?.lien ?? null);
-  };
-
-  let differe = false;
-  const bientot = () => {
-    if (differe) return;
-    differe = true;
-    requestAnimationFrame(() => { differe = false; peindre(); });
-  };
-
-  const rafraichir = () => { perimerCibles(); bientot(); };
-
-  /**
-   * Le clic du rail fait le défilement lui-même : le navigateur calcule la
-   * position de l'ancre avant que `reveler` n'ouvre les blocs qui précèdent.
-   */
-  rail.addEventListener('click', (e) => {
-    const lien = e.target.closest('.rail-plan .rail-lien[href^="#"]');
-    if (!lien) return;
-
-    const id = idDeAncre(lien.hash);
-    const cible = reveler(id);
-    if (!cible) return;
-
-    e.preventDefault();
-    marquer(lien);
-    titreDe(cible).scrollIntoView({ block: 'start' });
-    // Sans empiler d'entrée d'historique.
-    history.replaceState(null, '', `#${id}`);
-    perimerCibles();
-  });
-
-  addEventListener('scroll', bientot, { passive: true });
-  addEventListener('resize', rafraichir, { passive: true });
-  large.addEventListener('change', rafraichir);
-  documents.addEventListener('toggle', rafraichir, true);
-  for (const onglet of onglets) onglet.addEventListener('click', rafraichir);
-
-  peindre();
 }
 
 // ---------------------------------------------------------------------------

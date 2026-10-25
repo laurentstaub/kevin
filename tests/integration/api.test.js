@@ -262,26 +262,24 @@ describe('API', { skip }, () => {
       assert.doesNotMatch(res.text, /class="formes"/);
     });
 
-    it('place Alternatives après Documents, dans la page, la barre et le rail', async () => {
+    it('place Alternatives après Documents, dans la page comme dans la barre', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
 
       const blocs = [...res.text.matchAll(/class="bloc[^"]*" id="(\w+)"|id="(\w+)" class="bloc/g)]
         .map((correspondance) => correspondance[1] ?? correspondance[2]);
       const barre = [...res.text.matchAll(/role="tab" id="onglet-\w+" aria-controls="([\w-]+)"/g)]
         .map((correspondance) => (correspondance[1].startsWith('doc-') ? 'documents' : correspondance[1]));
-      const rail = [...res.text.matchAll(/<a class="rail-lien rail-seul" href="#(\w+)">/g)].map((correspondance) => correspondance[1]);
 
-      for (const ordre of [blocs, barre, rail]) {
+      for (const ordre of [blocs, barre]) {
         assert.ok(ordre.includes('alternatives') && ordre.includes('documents'), `deux entrées attendues : ${ordre.join(' → ')}`);
         assert.ok(ordre.indexOf('documents') < ordre.indexOf('alternatives'), `attendu documents avant alternatives : ${ordre.join(' → ')}`);
       }
     });
 
-    it('réduit le rail au plan de la fiche, sans les classes thérapeutiques', async () => {
+    it('n’a pas de rail : la barre d’onglets est le plan de la fiche', async () => {
       const res = await request(app).get('/product/61111111').expect(200);
-      assert.match(res.text, /class="rail"/);
-      assert.doesNotMatch(res.text, /Classes thérapeutiques/);
-      assert.doesNotMatch(res.text, /class="rail-lien[^"]*" href="\/classe\//);
+      assert.doesNotMatch(res.text, /class="rail"/);
+      assert.match(res.text, /class="fiche-nav" role="tablist"/);
     });
   });
 

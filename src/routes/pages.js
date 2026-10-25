@@ -715,21 +715,6 @@ export function pageRoutes(pool) {
       documents.sort((a, b) => DOCUMENT_TYPES.indexOf(a.type) - DOCUMENT_TYPES.indexOf(b.type));
       const hasDocuments = documents.length > 0;
 
-      // Plan de la page, dans l'ordre de la barre d'onglets : Alternatives en dernier.
-      const sections = [
-        { id: 'delivrance', label: 'Délivrance' },
-        evaluation?.length > 0 && { id: 'evaluation', label: 'Évaluation HAS' },
-        securite?.total > 0 && { id: 'securite', label: 'Sécurité' },
-        hasDocuments && {
-          id: 'documents',
-          label: 'Documents',
-          // Rubriques déjà sommaires dans le document : pas de doublon dans le rail.
-          children: [],
-        },
-        alternatives.categories.length > 0 && { id: 'alternatives', label: 'Alternatives' },
-        { id: 'references', label: 'Références' },
-      ].filter(Boolean);
-
       const resumeAtc = resumerClasse(classeAtc);
       const genericGroup = alternatives.groupe;
       const optionsAlternatives = compterOptions(alternatives.categories);
@@ -792,9 +777,9 @@ export function pageRoutes(pool) {
         variantes,
         remboursement,
         resumeAtc,
-        // Rail réduit au plan : le fil ATC en tête de fiche mène aux classes,
-        // et la recherche ailleurs.
-        rail: null,
+        // Pas de rail : la barre d'onglets est le plan de la fiche, le document
+        // replié celui de ses rubriques, et le fil ATC mène aux classes.
+        sansRail: true,
         genericGroup,
         documents,
         hasDocuments,
@@ -804,7 +789,6 @@ export function pageRoutes(pool) {
           // Conditions inconnues : le lien reste proposé, faute de savoir.
           dispensationParticuliere: delivrance.indisponible || delivrance.groupes.length > 0,
         }),
-        sections,
       });
     }),
   );
