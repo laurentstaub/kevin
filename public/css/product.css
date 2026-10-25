@@ -250,7 +250,8 @@ a.signal-valeur {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0 var(--sp-2);
-  margin-bottom: var(--sp-1);
+  /* Un peu d'air sous la bande signalétique. */
+  margin: var(--sp-2) 0 var(--sp-1);
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
@@ -287,7 +288,7 @@ html:not(.js) .onglet-bloc {
   gap: 0.35em;
   background: none;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   border-radius: 0;
   margin-bottom: calc(-1 * var(--rule-width));
   padding: var(--sp-1) 0;
@@ -303,9 +304,10 @@ html:not(.js) .onglet-bloc {
   color: var(--ink);
 }
 
+/* Onglet affiché : la couleur d'accent, texte et trait, pour le repérer d'un coup d'œil. */
 .onglet[aria-selected='true'] {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 /* Le compte d'un bloc : petit, gris ; son sens est en infobulle. */
