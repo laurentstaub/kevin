@@ -1,8 +1,10 @@
 /**
  * Casse d'affichage des noms venus de la BDPM, qui écrit tout en capitales.
  *
- * Convention OMS : la DCI est un nom commun, en bas de casse (paracétamol) ;
- * la spécialité est un nom propre, avec capitale (Doliprane). Les sigles
+ * La DCI est un nom commun (convention OMS), mais elle s'affiche toujours en
+ * libellé autonome : capitale initiale, le reste en bas de casse
+ * (« Atorvastatine et ézétimibe »). La spécialité est un nom propre, avec
+ * capitale à chaque mot (Doliprane). Les sigles
  * (B12, NPH, IgG) gardent leur forme ; la liste est dans data/sigles.json.
  * Les accents que la BDPM omet (EZETIMIBE) sont rendus d'après data/accents.json,
  * déduit des RCP par scripts/accents.js.
@@ -52,9 +54,15 @@ function parMot(texte, regle) {
   }).join('');
 }
 
-/** DCI, substance, signature de molécule : « chlorhydrate de tramadol + paracétamol ». */
+/**
+ * DCI, substance, signature de molécule : « Chlorhydrate de tramadol + paracétamol ».
+ * Capitale à la première lettre seulement si c'est une minuscule : un sigle en
+ * tête (IgG) reste tel quel.
+ */
+const basDeCasse = (texte) => parMot(texte, (mot) => mot.toLowerCase());
+
 export function dci(texte) {
-  return parMot(texte, (mot) => mot.toLowerCase());
+  return basDeCasse(texte).replace(/^(\P{L}*)(\p{Ll})/u, (_, avant, lettre) => avant + lettre.toUpperCase());
 }
 
 /** Dénomination de spécialité : « Paracétamol Teva 500 mg, comprimé ».
@@ -78,6 +86,6 @@ export function specialite(texte) {
  */
 export function phrase(texte) {
   // « À » seul, que la règle des mots criés ne voit pas, est aussi la préposition.
-  const bas = dci(texte).replace(/(?<!vitamines?) [AÀ] (?=\p{L}{3,})/gu, ' à ');
+  const bas = basDeCasse(texte).replace(/(?<!vitamines?) [AÀ] (?=\p{L}{3,})/gu, ' à ');
   return bas.charAt(0).toUpperCase() + bas.slice(1);
 }

@@ -17,18 +17,34 @@ function idDeAncre(hash) {
 }
 
 const documents = document.querySelector('#documents');
+// Barre de la fiche : blocs (Délivrance, Avis HAS…) et documents, un seul
+// affiché. Les blocs sont des <details> natifs, ouverts une fois pour toutes :
+// l'onglet les montre ou les cache, sans JavaScript ils se replient seuls.
 const onglets = [...document.querySelectorAll('.fiche-nav .onglet[role="tab"]')];
 const panneaux = onglets.map((onglet) => document.getElementById(onglet.getAttribute('aria-controls')));
+const estDocument = (i) => Boolean(panneaux[i]?.matches('article.document'));
+for (const panneau of panneaux) if (panneau?.tagName === 'DETAILS') panneau.open = true;
+
+// Dernier document affiché : le plan du rail et le filtre y restent quand un
+// bloc est à l'écran.
+let dernierDocument = panneaux.findIndex((panneau, i) => estDocument(i) && !panneau.hidden);
 
 // « until-found » : caché mais trouvable par la recherche du navigateur.
 // Non supporté, il vaut `hidden`.
 function activerOnglet(indice) {
+  if (estDocument(indice)) dernierDocument = indice;
   onglets.forEach((onglet, i) => {
     const actif = i === indice;
     onglet.setAttribute('aria-selected', actif ? 'true' : 'false');
     onglet.tabIndex = actif ? 0 : -1;
     if (panneaux[i]) panneaux[i].hidden = actif ? false : 'until-found';
   });
+}
+
+// État servi par la page : le premier document, ou Alternatives sous un filtre.
+if (onglets.length > 0) {
+  const choisi = onglets.findIndex((onglet) => onglet.getAttribute('aria-selected') === 'true');
+  activerOnglet(choisi === -1 ? 0 : choisi);
 }
 
 // Le navigateur révèle seul un panneau trouvé : les onglets doivent suivre,
@@ -62,8 +78,12 @@ function sousRubriques(charniere) {
   return suite;
 }
 
-/** Titre visible d'une cible : il porte la marge d'ancrage. */
+/**
+ * Titre visible d'une cible : il porte la marge d'ancrage. Un bloc de la barre
+ * n'a plus de titre : on vise la barre, qui le nomme, et le bloc dessous.
+ */
 function titreDe(cible) {
+  if (cible.matches('details.en-ligne')) return document.querySelector('.fiche-nav') ?? cible;
   return cible.tagName === 'DETAILS' ? cible.querySelector(':scope > summary') ?? cible : cible;
 }
 
@@ -72,8 +92,7 @@ function reveler(id) {
   const cible = id && document.getElementById(id);
   if (!cible) return null;
 
-  const panneau = cible.closest('[role="tabpanel"]');
-  const indice = panneaux.indexOf(panneau);
+  const indice = panneaux.findIndex((panneau) => panneau?.contains(cible));
   if (indice !== -1) activerOnglet(indice);
 
   // La cible peut être elle-même un <details>.
@@ -97,15 +116,16 @@ window.addEventListener('hashchange', () => {
   reveler(idDeAncre(location.hash));
 });
 
-if (location.hash) reveler(idDeAncre(location.hash));
-
-// Bascules de la barre de la fiche : chaque bouton ouvre ou ferme son bloc.
-// L'état suit le bloc, qu'il soit ouvert d'ici, par la bande, le rail ou une ancre.
-for (const bouton of document.querySelectorAll('.bascule')) {
-  const bloc = document.getElementById(bouton.getAttribute('aria-controls'));
-  if (!bloc) continue;
-  bouton.addEventListener('click', () => { bloc.open = !bloc.open; });
-  bloc.addEventListener('toggle', () => bouton.setAttribute('aria-expanded', String(bloc.open)));
+if (location.hash) {
+  const cible = reveler(idDeAncre(location.hash));
+  // Arrivée sur un bloc de la barre (#alternatives) : le navigateur a défilé
+  // avant que la page ne soit stable ; on recale, barre visible au-dessus.
+  if (cible?.matches('details.en-ligne')) {
+    // Un tour plus tard : le navigateur refait son propre défilement au chargement.
+    const recaler = () => setTimeout(() => titreDe(cible).scrollIntoView({ block: 'start' }), 0);
+    if (document.readyState === 'complete') recaler();
+    else addEventListener('load', recaler, { once: true });
+  }
 }
 
 // « Tout déplier » / « Tout replier ».
@@ -224,10 +244,9 @@ const rail = document.querySelector('.rail');
 if (rail && documents) {
   const jeux = [...rail.querySelectorAll('.rail-sous')];
 
-  // Le plan suit l'onglet actif.
+  // Le plan suit le document affiché, ou le dernier quand un bloc l'a remplacé.
   const suivreOnglet = () => {
-    const actif = onglets.findIndex((onglet) => onglet.getAttribute('aria-selected') === 'true');
-    const type = panneaux[actif]?.dataset.type;
+    const type = panneaux[dernierDocument]?.dataset.type;
     for (const jeu of jeux) jeu.hidden = type ? jeu.dataset.doc !== type : false;
   };
 
@@ -248,7 +267,8 @@ if (rail && documents) {
       for (const lien of rail.querySelectorAll('.rail-plan .rail-lien[href^="#"]')) {
         if (lien.closest('[hidden]')) continue;
         const cible = document.getElementById(idDeAncre(lien.hash));
-        if (cible) cibles.push({ lien, cible });
+        // Un panneau caché (autre onglet) garde une position : l'écarter.
+        if (cible && !cible.closest('[hidden]')) cibles.push({ lien, cible });
       }
       // Ordre du document, pas du balisage : les rubriques sont imbriquées
       // sous « Documents » mais le suivent dans la page.
@@ -564,7 +584,7 @@ if (filtre) {
 
   // Le document affiché : l'onglet actif, ou le seul document.
   const corpsAffiche = () => {
-    const article = panneaux.find((panneau) => panneau && !panneau.hidden)
+    const article = panneaux.find((panneau, i) => estDocument(i) && !panneau.hidden)
       ?? documents.querySelector('.document');
     return article?.querySelector('.rubriques, .document-corps') ?? null;
   };
@@ -662,6 +682,9 @@ if (filtre) {
 
   let attente = null;
   champ.addEventListener('input', () => {
+    // Un bloc à l'écran : on cherche dans un document, on y revient.
+    const actif = onglets.findIndex((onglet) => onglet.getAttribute('aria-selected') === 'true');
+    if (actif !== -1 && !estDocument(actif) && dernierDocument !== -1) onglets[dernierDocument].click();
     clearTimeout(attente);
     attente = setTimeout(appliquer, 120);
   });
@@ -709,12 +732,13 @@ if (filtre) {
     bouton.addEventListener('click', () => aller(courant + Number(bouton.dataset.pas), true));
   }
 
-  // Autre onglet : le filtre passe au document affiché.
-  for (const onglet of onglets) {
+  // Autre document : le filtre passe au document affiché. Un bloc ne le lève pas.
+  onglets.forEach((onglet, i) => {
+    if (!estDocument(i)) return;
     onglet.addEventListener('click', () => {
       if (champ.value) appliquer();
     });
-  }
+  });
 }
 
 // ---------------------------------------------------------------------------

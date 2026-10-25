@@ -188,12 +188,16 @@ describe('rendu des gabarits', () => {
     }));
     assert.match(deux, /role="tab"[^>]*>RCP<\/button>/);
     assert.match(deux, /title="Notice patient"[^>]*>Notice<\/button>/);
+    // Le premier document est choisi au chargement, les blocs non.
+    assert.match(deux, /aria-controls="doc-rcp" aria-selected="true" tabindex="0"/);
+    assert.match(deux, /aria-controls="doc-notice" aria-selected="false" tabindex="-1"/);
+    assert.match(deux, /aria-controls="delivrance" aria-selected="false"/);
+    // Document unique : un onglet aussi, pour revenir d'un bloc au RCP.
     const un = rendre('product', produit({
       hasDocuments: true,
       documents: [doc('rcp', 'RCP', 'Résumé des caractéristiques du produit')],
     }));
-    assert.match(un, /<span class="onglet"[^>]*>RCP<\/span>/);
-    assert.doesNotMatch(un, /role="tab"/);
+    assert.match(un, /role="tab"[^>]*aria-controls="doc-rcp" aria-selected="true"[^>]*>RCP<\/button>/);
   });
 
   // Un filtre, dans la barre sous le champ de recherche, pour le document affiché ;
@@ -259,7 +263,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<details class="bloc en-ligne" id="evaluation">/);
     // La ligne des blocs annonce l'évaluation et son compte, fermée ; la sécurité,
     // absente du produit, n'y est pas.
-    assert.match(html, /<nav class="fiche-nav"[^>]*>.*<button class="bascule" type="button" aria-controls="evaluation" aria-expanded="false" title="2 avis de la Commission de la transparence"><span class="bascule-nom">Avis HAS<\/span><span class="bascule-compte">2<\/span><\/button>.*<\/nav>/s);
+    assert.match(html, /<div class="fiche-nav" role="tablist"[^>]*>.*<button class="onglet" type="button" role="tab" id="onglet-evaluation" aria-controls="evaluation" aria-selected="false" tabindex="-1" title="2 avis de la Commission de la transparence"><span class="onglet-nom">Avis HAS<\/span><span class="onglet-compte">2<\/span><\/button>/s);
     assert.doesNotMatch(html, /aria-controls="securite"/);
     assert.match(html, /<span class="bloc-compte">2 avis<\/span>/);
     assert.match(html, /<strong class="avis-valeur">SMR important<\/strong> — Le service médical rendu est important\./);
@@ -704,7 +708,7 @@ describe('rendu des gabarits', () => {
     assert.match(html, /<h3 class="subst-action">Génériques du groupe<\/h3>/);
     assert.match(html, /<h3 class="subst-action">Même sous-classe ATC<\/h3>/);
     assert.match(html, /<a href="\/classe\/D01AE">Autres antifongiques à usage topique<\/a>/);
-    assert.match(html, /<span class="subst-molecule">éconazole<\/span><span class="subst-atc">D01AC03<\/span>/);
+    assert.match(html, /<span class="subst-molecule">Éconazole<\/span><span class="subst-atc">D01AC03<\/span>/);
     assert.match(html, /<details class="subst-ecartes"><summary class="formes-plus">1 écarté, avec la raison<\/summary>/);
     assert.match(html, /Voie différente/);
     assert.match(html, /ansm\.sante\.fr\/documents\/reference\/repertoire-des-medicaments-generiques/);
@@ -730,7 +734,8 @@ describe('rendu des gabarits', () => {
     ], 1)));
     assert.match(html, /<details class="bloc en-ligne" id="alternatives" open/);
     // Filtre actif : le bloc est ouvert, son bouton le dit, avec les masqués.
-    assert.match(html, /aria-controls="alternatives" aria-expanded="true" title="3 options"><span class="bascule-nom">Alternatives<\/span><span class="bascule-compte">3 · 1 masquée<\/span>/);
+    // Filtre actif : l'onglet Alternatives est choisi au chargement.
+    assert.match(html, /aria-controls="alternatives" aria-selected="true" tabindex="0" title="3 options · 1 masquée par le filtre"><span class="onglet-nom">Alternatives<\/span><span class="onglet-compte">3<\/span>/);
     assert.match(html, /3 options · 1 masquée/);
     assert.match(html, /class="filtre-excipient actif"[^>]*>lactose<span class="filtre-ici"> \(ce produit\)/);
     // Ôter le seul filtre actif ramène à la fiche sans paramètre ; en ajouter un les cumule.

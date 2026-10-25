@@ -137,7 +137,7 @@ describe('routes, IA active', () => {
     assert.match(res.text, /interprétée par Kevin/);
     assert.match(res.text, /brut=1/);
     // Le nom mène aux spécialités de la molécule ; seule la croix retire le filtre.
-    assert.match(res.text, /class="jeton-nom" href="\/search\?q=tramadol"[^>]*>tramadol/);
+    assert.match(res.text, /class="jeton-nom" href="\/search\?q=tramadol"[^>]*>Tramadol/);
     assert.match(res.text, /class="jeton-croix" href="\/documents\?q=allaitement[^"]*"[^>]*>×/);
     assert.doesNotMatch(res.text, /class="jeton-croix" href="[^"]*molecule=/);
   });

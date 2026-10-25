@@ -183,46 +183,50 @@ block content
       - const options = optionsAlternatives
       - const pluriel = (nombre, mot) => `${nombre} ${mot}${nombre > 1 ? 's' : ''}`
 
-      //- Une seule barre pour la fiche : les quatre blocs d'abord, Délivrance en
-      //- tête, chacun ouvert sous la barre, au-dessus du document ; puis les
-      //- documents, en onglets (un seul affiché). Même corps, même trait sous ce qui est affiché.
-      //- Le compte des blocs en petit, son sens en infobulle. Fermé, un bloc
-      //- n'existe que dans la barre ; ouvert, il garde son titre. Sans
-      //- JavaScript, les bascules sont cachées et les blocs restent natifs
-      //- (classe `js` posée par apparence.js).
-      - const ligne = [{ id: 'delivrance', nom: 'Délivrance', ouvert: false }]
+      //- Une seule barre d'onglets pour la fiche, une seule règle : ce qui est
+      //- souligné est ce qui s'affiche dessous. Les quatre blocs d'abord,
+      //- Délivrance en tête, puis les documents après un filet. Choisi au
+      //- chargement : le premier document, ou Alternatives sous un filtre actif.
+      //- Le compte des blocs en petit, son sens en infobulle. Sans JavaScript,
+      //- onglets des blocs cachés et blocs natifs (classe `js`, apparence.js).
+      - const choisi = filtreActif && avecAlternatives ? 'alternatives' : (hasDocuments ? documents[0].anchor : 'delivrance')
+      - const ligne = [{ id: 'delivrance', nom: 'Délivrance' }]
       - if (delivrance.indisponible) ligne[0].mentions = [['Conditions indisponibles', "Les conditions de prescription et de délivrance n'ont pas pu être lues"]]
       - else if (priseEnChargeIllisible) ligne[0].mentions = [['Prise en charge à vérifier', "Les indications ouvrant droit au remboursement n'ont pas pu être lues"]]
       - else if (rembourse) ligne[0].mentions = [['Indications remboursées', 'La prise en charge ne couvre que certaines indications, précisées dans le bloc']]
       - else Object.assign(ligne[0], { compte: nbConditions > 0 ? String(nbConditions) : null, titre: nbConditions > 0 ? `${pluriel(nbConditions, 'condition')} de délivrance` : 'Aucune condition enregistrée' })
-      - if (avecEvaluation) ligne.push({ id: 'evaluation', nom: 'Avis HAS', compte: String(evaluation.length), titre: `${evaluation.length} avis de la Commission de la transparence`, ouvert: false })
-      - if (avecSecurite) ligne.push({ id: 'securite', nom: 'Sécurité', compte: String(securite.total), titre: `${pluriel(securite.total, 'information')} de sécurité ANSM`, ouvert: enCours > 0 })
-      - if (avecAlternatives) ligne.push({ id: 'alternatives', nom: 'Alternatives', compte: masquesTotal > 0 ? `${options} · ${masquesTotal} masquée${masquesTotal > 1 ? 's' : ''}` : String(options), titre: pluriel(options, 'option'), ouvert: filtreActif })
-      nav.fiche-nav(aria-label="Contenu de la fiche")
-        .bascules
+      - if (avecEvaluation) ligne.push({ id: 'evaluation', nom: 'Avis HAS', compte: String(evaluation.length), titre: `${evaluation.length} avis de la Commission de la transparence` })
+      - if (avecSecurite) ligne.push({ id: 'securite', nom: 'Sécurité', compte: String(securite.total), titre: `${pluriel(securite.total, 'information')} de sécurité ANSM`, mentions: enCours > 0 ? [['En cours', "Information en cours d'affichage sur la base publique"]] : null })
+      - if (avecAlternatives) ligne.push({ id: 'alternatives', nom: 'Alternatives', compte: String(options), titre: pluriel(options, 'option') + (masquesTotal > 0 ? ` · ${pluriel(masquesTotal, 'masquée')} par le filtre` : '') })
+      .fiche-nav(role="tablist" aria-label="Contenu de la fiche")
+        .onglets-blocs
           each entree in ligne
-            button.bascule(type="button" aria-controls=entree.id aria-expanded=String(entree.ouvert) title=entree.titre)
-              span.bascule-nom= entree.nom
+            button.onglet(
+              type="button"
+              role="tab"
+              id=`onglet-${entree.id}`
+              aria-controls=entree.id
+              aria-selected=String(entree.id === choisi)
+              tabindex=(entree.id === choisi ? 0 : -1)
+              title=entree.titre
+            )
+              span.onglet-nom= entree.nom
               each mention in (entree.mentions || [])
                 span.mention(title=mention[1])= mention[0]
               if entree.compte
-                span.bascule-compte= entree.compte
+                span.onglet-compte= entree.compte
         if hasDocuments
-          if documents.length > 1
-            .onglets(role="tablist" aria-label="Documents officiels")
-              each doc, i in documents
-                button.onglet(
-                  type="button"
-                  role="tab"
-                  id=`onglet-${doc.type}`
-                  aria-controls=doc.anchor
-                  aria-selected=(i === 0 ? 'true' : 'false')
-                  tabindex=(i === 0 ? 0 : -1)
-                  title=doc.label
-                )= doc.court
-          else
-            .onglets
-              span.onglet(aria-selected="true" title=documents[0].label)= documents[0].court
+          .onglets-docs
+            each doc in documents
+              button.onglet(
+                type="button"
+                role="tab"
+                id=`onglet-${doc.type}`
+                aria-controls=doc.anchor
+                aria-selected=String(doc.anchor === choisi)
+                tabindex=(doc.anchor === choisi ? 0 : -1)
+                title=doc.label
+              )= doc.court
 
       //- Délivrance : « puis-je le délivrer, et à quelles conditions », lisible bloc
       //- fermé. Source : `cis_cpd_bdpm` ; Meddispar est seulement lié, jamais copié.
@@ -514,8 +518,8 @@ block content
               id=doc.anchor
               data-type=doc.type
               data-libelle=doc.label
-              role=(documents.length > 1 ? 'tabpanel' : null)
-              aria-labelledby=(documents.length > 1 ? `onglet-${doc.type}` : null)
+              role="tabpanel"
+              aria-labelledby=`onglet-${doc.type}`
               hidden=(documents.length > 1 && i > 0 ? 'until-found' : false)
             )
               //- Ligne de service unique : date, provenance, lien officiel, commande.

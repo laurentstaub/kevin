@@ -100,7 +100,7 @@ describe('médicaments', () => {
       ligne('2', 'ASSOCIATION X', ['ACIDE ACÉTYLSALICYLIQUE', 'CAFÉINE'], { par_substance: true }),
     ]);
     assert.deepEqual(aspirine.cis, ['1']);
-    assert.equal(aspirine.libelle, 'acide acétylsalicylique');
+    assert.equal(aspirine.libelle, 'Acide acétylsalicylique');
   });
 
   it('repère une substance commune', () => {

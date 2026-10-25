@@ -3,29 +3,31 @@ import assert from 'node:assert/strict';
 import { dci, specialite, phrase } from '../../src/casse.js';
 
 describe('casse d’affichage', () => {
-  it('met la DCI en bas de casse, sigles et chiffres épargnés', () => {
-    assert.equal(dci('PARACÉTAMOL'), 'paracétamol');
-    assert.equal(dci('CHLORHYDRATE DE TRAMADOL + PARACÉTAMOL'), 'chlorhydrate de tramadol + paracétamol');
-    assert.equal(dci('INSULINE NPH'), 'insuline NPH');
-    assert.equal(dci('VITAMINE B12'), 'vitamine B12');
-    assert.equal(dci('VITAMINE A'), 'vitamine A');
-    assert.equal(dci('IMMUNOGLOBULINE IGG'), 'immunoglobuline IgG');
-    assert.equal(dci("BROMURE D'IPRATROPIUM"), "bromure d'ipratropium");
+  it('met la DCI en bas de casse, capitale initiale, sigles et chiffres épargnés', () => {
+    assert.equal(dci('PARACÉTAMOL'), 'Paracétamol');
+    assert.equal(dci('CHLORHYDRATE DE TRAMADOL + PARACÉTAMOL'), 'Chlorhydrate de tramadol + paracétamol');
+    assert.equal(dci('INSULINE NPH'), 'Insuline NPH');
+    assert.equal(dci('VITAMINE B12'), 'Vitamine B12');
+    assert.equal(dci('VITAMINE A'), 'Vitamine A');
+    assert.equal(dci('IMMUNOGLOBULINE IGG'), 'Immunoglobuline IgG');
+    assert.equal(dci("BROMURE D'IPRATROPIUM"), "Bromure d'ipratropium");
   });
 
   // Les accents omis par la BDPM, rendus d'après data/accents.json.
   it('rend les accents de la table', () => {
-    assert.equal(dci('ATORVASTATINE ET EZETIMIBE'), 'atorvastatine et ézétimibe');
+    assert.equal(dci('ATORVASTATINE ET EZETIMIBE'), 'Atorvastatine et ézétimibe');
     assert.equal(specialite('PARACETAMOL TEVA 500 mg'), 'Paracétamol Teva 500 mg');
     assert.equal(phrase('MEDICAMENTS EN CARDIOLOGIE'), 'Médicaments en cardiologie');
   });
 
   it('traite un accent combinant comme une capitale', () => {
-    assert.equal(dci('ACE\u0301TYLSALICYLIQUE'), 'acétylsalicylique');
+    assert.equal(dci('ACE\u0301TYLSALICYLIQUE'), 'Acétylsalicylique');
   });
 
   it('laisse ce qui n’est pas crié', () => {
-    assert.equal(dci('paracétamol'), 'paracétamol');
+    assert.equal(dci('paracétamol'), 'Paracétamol');
+    // Un sigle en tête garde sa forme : seule une minuscule prend la capitale.
+    assert.equal(dci('IgG humaine'), 'IgG humaine');
     assert.equal(dci(''), '');
     assert.equal(dci(null), '');
   });

@@ -497,6 +497,8 @@ describe('API', { skip }, () => {
       // Domaine non autorisé : l'intitulé reste, sans lien.
       assert.match(bloc, /<span>Ancienne information archivée<\/span>/);
       assert.doesNotMatch(bloc, /evil\.example\.com/);
+      // L'information en cours s'annonce dans la barre, sans ouvrir le bloc.
+      assert.match(res.text, /id="onglet-securite"[^>]*aria-selected="false"[^>]*><span class="onglet-nom">Sécurité<\/span><span class="mention"[^>]*>En cours<\/span><span class="onglet-compte">2<\/span>/);
     });
 
     it('n’affiche pas le bloc sans information', async () => {
@@ -532,9 +534,9 @@ describe('API', { skip }, () => {
       const res = await request(app).get('/documents?q=allongement%20QT').expect(200);
       const molecules = [...res.text.matchAll(/class="trouvaille-molecule"[^>]*>([^<]+)</g)]
         .map((correspondance) => correspondance[1]);
-      assert.ok(molecules.indexOf('acide acétylsalicylique') !== -1, `aspirine trouvée : ${molecules.join(', ')}`);
-      assert.ok(molecules.indexOf('fluindione') !== -1, `fluindione trouvée : ${molecules.join(', ')}`);
-      assert.ok(molecules.indexOf('acide acétylsalicylique') < molecules.indexOf('fluindione'),
+      assert.ok(molecules.indexOf('Acide acétylsalicylique') !== -1, `aspirine trouvée : ${molecules.join(', ')}`);
+      assert.ok(molecules.indexOf('Fluindione') !== -1, `fluindione trouvée : ${molecules.join(', ')}`);
+      assert.ok(molecules.indexOf('Acide acétylsalicylique') < molecules.indexOf('Fluindione'),
         `attendu l'aspirine (4.8) avant la fluindione (4.9) : ${molecules.join(', ')}`);
     });
   });
