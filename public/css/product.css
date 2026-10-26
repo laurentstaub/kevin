@@ -241,18 +241,35 @@ a.signal-valeur {
   border-bottom: var(--rule-width) solid var(--rule-medium);
 }
 
-/* Barre de la fiche : des onglets, une règle. Ce qui est souligné est ce qui
-   s'affiche dessous, et un seul à la fois. Délivrance en tête, Alternatives en
-   dernier, sans séparateur. Sans JavaScript, onglets des blocs cachés et blocs
-   natifs, repliables. */
+/* Barre de la fiche : des onglets, et une carte. L'onglet choisi est soudé au
+   panneau teinté qu'il affiche, un seul à la fois. Délivrance en tête,
+   Alternatives en dernier, sans séparateur. Sans JavaScript, onglets des blocs
+   cachés et blocs natifs, repliables, sans carte. */
+:root {
+  /* La carte déborde de la colonne d'autant : le texte garde sa largeur. */
+  --carte-marge: var(--sp-3);
+}
+
+@media (max-width: 52rem) {
+  :root {
+    --carte-marge: var(--sp-1);
+  }
+}
+
 .fiche-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0 var(--sp-2);
+  gap: 0;
   /* Un peu d'air sous la bande signalétique. */
   margin: var(--sp-2) 0 var(--sp-1);
   border-bottom: var(--rule-width) solid var(--rule-medium);
+}
+
+/* Le filet de la barre devient le haut de la carte : même largeur qu'elle. */
+.js .fiche-nav {
+  margin: var(--sp-2) calc(-1 * var(--carte-marge)) 0;
+  padding: 0 calc(var(--carte-marge) - 0.5em);
 }
 
 html:not(.js) .onglet-bloc {
@@ -287,11 +304,11 @@ html:not(.js) .onglet-bloc {
   align-items: baseline;
   gap: 0.35em;
   background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
+  border: var(--rule-width) solid transparent;
+  border-bottom: 0;
   border-radius: 0;
   margin-bottom: calc(-1 * var(--rule-width));
-  padding: var(--sp-1) 0;
+  padding: var(--sp-1) 0.5em;
   font-family: var(--font-body);
   font-size: var(--fs-base);
   font-weight: 600;
@@ -304,10 +321,38 @@ html:not(.js) .onglet-bloc {
   color: var(--ink);
 }
 
-/* Onglet affiché : la couleur d'accent, texte et trait, pour le repérer d'un coup d'œil. */
+/* Onglet affiché : en couleur d'accent, et soudé à sa carte (même teinte, même
+   filet ; l'ombre efface le filet de la barre sous lui). */
 .onglet[aria-selected='true'] {
   color: var(--accent);
-  border-bottom-color: var(--accent);
+}
+
+.js .onglet[aria-selected='true'] {
+  background: var(--bg-tint);
+  border-color: var(--rule-medium);
+  box-shadow: 0 var(--rule-width) 0 var(--bg-tint);
+}
+
+.js .contenu > details.en-ligne:not([hidden]),
+.js .bloc-documents > article.document:not([hidden]) {
+  background: var(--bg-tint);
+  border: var(--rule-width) solid var(--rule-medium);
+  border-top: 0;
+  margin-inline: calc(-1 * var(--carte-marge));
+  padding: var(--sp-2) var(--carte-marge) var(--sp-3);
+}
+
+/* Le haut de la carte fait déjà filet et marge : son premier élément n'en
+   ajoute pas (« Aucune condition enregistrée »). */
+.js .contenu > details.en-ligne > summary + * {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* Ce qui colle ou masque le texte dessous prend la teinte de la carte. */
+.js .rubrique[open] > .rubrique-tete {
+  background: var(--bg-tint);
 }
 
 /* Le compte d'un bloc : petit, gris ; son sens est en infobulle. */
@@ -1165,7 +1210,7 @@ td.forme {
   .table-defilante tr > :first-child {
     position: sticky;
     left: 0;
-    background: var(--bg);
+    background: var(--bg-tint);
   }
 }
 
@@ -1439,8 +1484,20 @@ td.forme {
   .fiche-nav {
     display: block;
     margin: var(--sp-3) 0 var(--sp-1);
+    padding: 0;
     max-width: none;
     border: 0;
+  }
+
+  /* Pas de carte sur papier : ni teinte ni cadre. */
+  .js .contenu > details.en-ligne:not([hidden]),
+  .js .bloc-documents > article.document:not([hidden]),
+  .js .onglet[aria-selected='true'] {
+    background: none;
+    border: 0;
+    box-shadow: none;
+    margin-inline: 0;
+    padding-inline: 0;
   }
 
   .onglet[aria-selected='false'],
