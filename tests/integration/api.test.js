@@ -672,6 +672,14 @@ describe('API', { skip }, () => {
       assert.equal(occurrences, 1);
     });
 
+    // Plus de bloc Références : le CIS mène à la BDPM, les ruptures le suivent.
+    it('porte les liens sortants sur la ligne d’identité', async () => {
+      const res = await request(app).get('/product/61111111').expect(200);
+      assert.match(res.text, /<a href="[^"]*61111111[^"]*" target="_blank" rel="noopener noreferrer" title="Fiche officielle BDPM">CIS 61111111<\/a><span class="sep"><\/span><a href="[^"]+" target="_blank" rel="noopener noreferrer" title="[^"]+">Ruptures<\/a>/);
+      assert.doesNotMatch(res.text, /id="references"/);
+      assert.doesNotMatch(res.text, /PubMed/);
+    });
+
     it('n’applique aucun coin arrondi au-delà de 2 px', async () => {
       const css = await request(app).get('/css/product.css').expect(200);
       const rayons = [...css.text.matchAll(/border-radius:\s*(\d+)px/g)].map((correspondance) => Number(correspondance[1]));

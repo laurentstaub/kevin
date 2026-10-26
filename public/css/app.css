@@ -990,7 +990,7 @@ a.resultat:hover .resultat-nom { text-decoration-thickness: calc(var(--trait) + 
     margin: 0;
   }
 
-  /* Adresses imprimées seulement dans les références. */
+  /* Adresses imprimées seulement dans les listes de liens. */
   .liens a[href^="http"]::after {
     content: ' — ' attr(href);
     font-size: 0.85em;

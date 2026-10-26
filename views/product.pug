@@ -108,7 +108,17 @@ block content
         if product.titulaires
           span= product.titulaires
           span.sep
-        span CIS #{product.id}
+        //- Les liens sortants tiennent ici : le CIS mène à sa fiche BDPM, puis les
+        //- ruptures (Dispomed). Meddispar est dans Délivrance, là où il sert.
+        - const fiche = links.official.find((lien) => lien.key === 'bdpm')
+        - const ruptures = links.official.find((lien) => lien.key === 'availability')
+        if fiche
+          a(href=fiche.url target="_blank" rel="noopener noreferrer" title=fiche.label) CIS #{product.id}
+        else
+          span CIS #{product.id}
+        if ruptures
+          span.sep
+          a(href=ruptures.url target="_blank" rel="noopener noreferrer" title=ruptures.hint) Ruptures
         //- Importation parallèle : même médicament, sans documentation propre.
         if importation
           span.sep
@@ -560,22 +570,6 @@ block content
                               span.role(class=item.role === 'Princeps' ? 'role-princeps' : '')= item.role
                           else
                             td.subst-motif= item.motif
-
-      details.bloc#references
-        summary.bloc-tete
-          h2.section-titre Références
-          span.bloc-compte Ce produit ailleurs
-        //- Liens sortants officiels.
-        ul.liens
-          each link in links.official
-            li
-              a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
-        if links.scientific.length > 0
-          p.section-meta Littérature et registres, sur #{links.scientific[0].hint}
-          ul.liens
-            each link in links.scientific
-              li
-                a(href=link.url target="_blank" rel="noopener noreferrer")= link.label
 
 block scripts
   script(src=`/js/search.js?v=${v}` defer)
