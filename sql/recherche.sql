@@ -73,3 +73,92 @@ BEGIN
 END $$;
 
 -- Le filtre par rubrique utilise l'index sur `numero` (sections.sql).
+
+-- ------------------------------------------- signatures des molécules
+--
+-- Le nom de molécule d'une spécialité (« PARACETAMOL + TRAMADOL »), qui
+-- regroupe ses rubriques trouvées. Il ne dépend que des compositions : calculé
+-- une fois ici plutôt qu'à chaque recherche, où il coûtait 0,3 à 0,8 s sur
+-- les mots courants. Recalculé par build-sections et par ce fichier.
+CREATE SCHEMA IF NOT EXISTS docs;
+
+CREATE TABLE IF NOT EXISTS docs.signatures (
+  code_cis   varchar(20) PRIMARY KEY,
+  signature  text        NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION docs.calculer_signatures() RETURNS integer
+LANGUAGE plpgsql AS $$
+DECLARE
+  nombre integer;
+BEGIN
+  DELETE FROM docs.signatures;
+  INSERT INTO docs.signatures (code_cis, signature)
+  -- Les libellés du sel, découpés en mots — sans accents ni ponctuation,
+  -- « BROMURE D'IPRATROPIUM » devenant {BROMURE, D, IPRATROPIUM}.
+  WITH libelles AS (
+    SELECT c.code_substance, c.denomination_substance AS nom,
+           string_to_array(btrim(regexp_replace(
+             upper(public.f_unaccent(c.denomination_substance)),
+             '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
+    FROM dbpm.cis_compo_bdpm c
+    WHERE c.nature_composant = 'SA'
+  ),
+  -- Les fractions thérapeutiques rattachées au même numéro de liaison.
+  fractions AS (
+    SELECT sa.code_substance, ft.denomination_substance AS nom,
+           string_to_array(btrim(regexp_replace(
+             upper(public.f_unaccent(ft.denomination_substance)),
+             '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
+    FROM dbpm.cis_compo_bdpm sa
+    JOIN dbpm.cis_compo_bdpm ft
+      ON ft.code_cis = sa.code_cis
+     AND ft.numero_liaison_saft = sa.numero_liaison_saft
+     AND ft.nature_composant = 'FT'
+    WHERE sa.nature_composant = 'SA'
+  ),
+  -- Une fraction ne peut nommer la substance que si tous ses mots sont des
+  -- mots du sel. C'est toute la règle, et elle a été trouvée en constatant
+  -- les dégâts de l'autre : onze produits de contraste réunis sous « IODE »,
+  -- le carboxymaltose ferrique avec le sulfate ferreux, l'acétylcystéine
+  -- sous « CYSTÉINE ». La fraction thérapeutique n'est pas la molécule,
+  -- c'est ce qui, dans le sel, porte l'effet — parfois un simple atome.
+  candidats AS (
+    SELECT code_substance, nom FROM libelles
+    UNION
+    SELECT f.code_substance, f.nom
+    FROM fractions f
+    WHERE EXISTS (SELECT 1 FROM libelles l
+                  WHERE l.code_substance = f.code_substance AND f.mots <@ l.mots)
+  ),
+  noms AS MATERIALIZED (
+    SELECT DISTINCT ON (code_substance) code_substance, nom
+    FROM candidats
+    WHERE coalesce(nom, '') <> ''
+    ORDER BY code_substance, length(nom), nom
+  )
+  -- La signature : l'ensemble trié des noms résolus. Sur le nom et non sur
+  -- le code, sans quoi DARUNAVIR sort trois fois — un code par sel, et la
+  -- base elle-même leur donne le même nom. Les spécialités sans composition
+  -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe vide
+  -- commun, qui les réunirait sans qu'elles aient rien en partage.
+  SELECT m.code_cis,
+         coalesce(string_agg(DISTINCT n.nom, ' + ' ORDER BY n.nom), 'cis:' || m.code_cis)
+  FROM dbpm.cis_bdpm m
+  LEFT JOIN dbpm.cis_compo_bdpm c
+    ON c.code_cis = m.code_cis AND c.nature_composant = 'SA'
+  LEFT JOIN noms n ON n.code_substance = c.code_substance
+  GROUP BY m.code_cis;
+  GET DIAGNOSTICS nombre = ROW_COUNT;
+  RETURN nombre;
+END $$;
+
+-- Sans les tables de la BDPM (base partagée, avant chargement) : reporté.
+DO $$
+BEGIN
+  IF to_regclass('dbpm.cis_bdpm') IS NULL OR to_regclass('dbpm.cis_compo_bdpm') IS NULL THEN
+    RAISE NOTICE 'tables de la BDPM absentes : signatures reportées';
+    RETURN;
+  END IF;
+  RAISE NOTICE 'signatures : % spécialités', docs.calculer_signatures();
+END $$;

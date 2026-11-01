@@ -179,6 +179,12 @@ while (restant > 0) {
 // ou en cours de chargement (garde-fou de purgerOrphelins).
 const orphelins = await purgerOrphelins(pool, { aBlanc: SEC });
 
+// Noms de molécule de la recherche dans les documents, d'après les compositions
+// chargées (sql/recherche.sql) : absents avant la première migration.
+const signatures = SEC ? null : await pool.query('SELECT docs.calculer_signatures() AS nombre')
+  .then(({ rows }) => rows[0].nombre)
+  .catch((err) => { console.error(`\n  signatures non recalculées : ${err.message} — npm run db:recherche`); return null; });
+
 // ------------------------------------------------------------------ bilan
 
 const pct = (nombre) => (bilan.traites === 0 ? '—' : `${Math.round((nombre / bilan.traites) * 100)} %`);
@@ -200,6 +206,9 @@ if (orphelins.purge) {
   console.log(`  orphelines              ${orphelins.rubriques.toLocaleString('fr-FR')} rubriques`
     + ` (${orphelins.orphelins.toLocaleString('fr-FR')} spécialités retirées)`
     + (orphelins.raison ? ` — ${orphelins.raison}` : SEC ? ' — à purger' : ''));
+}
+if (signatures !== null) {
+  console.log(`  noms de molécule        ${signatures.toLocaleString('fr-FR')} spécialités`);
 }
 if (bilan.traites) {
   console.log(`  moyenne par document    ${(bilan.rubriques / bilan.traites).toFixed(1)}`);

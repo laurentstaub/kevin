@@ -139,7 +139,7 @@ La colonne `vecteur` est générée : elle n'est pas dans l'archive et se recalc
 
 Les archives font 290 Mo (`dbpm`) et 365 Mo (`docs`). En local, la restauration prend 18 s et 2 min. Vers Heroku, le transfert et une base partagée allongent cette durée : compter de trente minutes à une heure.
 
-Puis les index reportés et les statistiques :
+Puis les index reportés, les noms de molécule de la recherche (`docs.signatures`, recalculés d'après les compositions chargées) et les statistiques :
 
 ```bash
 npm run db:setup && npm run db:recherche

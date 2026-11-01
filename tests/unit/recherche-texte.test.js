@@ -58,6 +58,12 @@ describe('rechercheAbsente', () => {
     }), true);
   });
 
+  // Noms de molécule calculés d'avance : leur table manque tant que la migration n'a pas tourné.
+  it('reconnaît la table des signatures absente, pas une autre', () => {
+    assert.equal(rechercheAbsente({ code: '42P01', message: 'relation "docs.signatures" does not exist' }), true);
+    assert.equal(rechercheAbsente({ code: '42P01', message: 'relation "dbpm.cis_bdpm" does not exist' }), false);
+  });
+
   it('ne prend pas une panne passagère pour une absence', () => {
     assert.equal(rechercheAbsente({ code: '57014', message: 'canceling statement due to statement timeout' }), false);
     assert.equal(rechercheAbsente({ code: '53300', message: 'too many connections' }), false);
@@ -261,7 +267,8 @@ describe('titre de rubrique', () => {
     const pool = { query: async (texte) => { textes.push(texte); return { rows: [] }; } };
     await chercherDansDocuments(pool, 'excipients', { limite: 20 });
     assert.match(textes[0], /AS titre/);
-    assert.match(textes[0], /to_tsvector\('french_nu', coalesce\(s\.libelle, ''\)\) @@ q\.titre THEN -100/);
+    // Le titre est lu dans le vecteur stocké (poids A), pas réanalysé.
+    assert.match(textes[0], /ts_filter\(s\.vecteur, '\{a\}'\) @@ q\.titre THEN -100/);
   });
 });
 

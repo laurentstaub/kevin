@@ -66,8 +66,11 @@ const RANG = `coalesce(array_position(ARRAY[${PRIORITE.map((numero) => `'${numer
  * autres : « excipients » mène à 6.1 Liste des excipients plutôt qu'à la
  * rubrique 2, qui mentionne un excipient à effet notoire. Écart supérieur à
  * RANG entier : le RCP reste devant la notice, la priorité du comptoir départage.
+ * Le titre est lu dans le vecteur stocké, où il porte le poids A
+ * (sql/recherche.sql) : to_tsvector sur chaque titre trouvé coûtait 0,2 s
+ * pour « grossesse ».
  */
-const TITRE = `CASE WHEN to_tsvector('${LANGUE}', coalesce(s.libelle, '')) @@ q.titre THEN -100 ELSE 0 END`;
+const TITRE = `CASE WHEN ts_filter(s.vecteur, '{a}') @@ q.titre THEN -100 ELSE 0 END`;
 
 /** Un concept au moins dans le titre (tous, ce serait rarement). */
 export function composerTitre(concepts) {
@@ -208,8 +211,10 @@ const VECTEUR = 's.vecteur';
  */
 export function rechercheAbsente(err) {
   // 42704 undefined_object (la configuration), 42883 undefined_function,
-  // 42703 undefined_column (la colonne vecteur)
+  // 42703 undefined_column (la colonne vecteur), 42P01 undefined_table
+  // (docs.signatures)
   return ['42704', '42883', '42703'].includes(err?.code)
+    || (err?.code === '42P01' && /signatures/.test(err?.message ?? ''))
     || /french_nu|websearch_to_tsquery|vecteur/i.test(err?.message ?? '');
 }
 
@@ -455,8 +460,12 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      tout AS MATERIALIZED (
        -- Toutes les rubriques trouvées, notées pour le classement. Sans le
        -- texte, qui faisait dépasser le délai : il est rejoint par sa clé
-       -- primaire pour la page affichée seulement.
+       -- primaire pour la page affichée seulement. Chaque rubrique porte le
+       -- nom de molécule de sa spécialité, calculé d'avance (docs.signatures,
+       -- sql/recherche.sql) : une spécialité plus récente que le calcul
+       -- retombe sur son CIS, comme une spécialité sans composition.
        SELECT s.code_cis, s.document_type, s.position, s.numero, s.libelle,
+              coalesce(g.signature, 'cis:' || s.code_cis) AS signature,
               ts_rank_cd(${VECTEUR}, q.tq) AS score,
               CASE WHEN $4::text IS NULL THEN true
                    ELSE ${VECTEUR} @@ phraseto_tsquery('${LANGUE}', $4::text) END AS exact,
@@ -464,7 +473,8 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
               -- Rubrique du comptoir (RCP, liste PRIORITE) : le surdosage (4.9),
               -- les propriétés et la notice ne décident pas du classement.
               ${RANG} < ${PRIORITE.length} AS clinique
-       FROM docs.rcp_sections s, q
+       FROM docs.rcp_sections s
+       LEFT JOIN docs.signatures g ON g.code_cis = s.code_cis, q
        WHERE ${VECTEUR} @@ q.tq
          -- Plusieurs concepts : rapprochés, pas dispersés dans la rubrique.
          ${proche ? `AND ${VECTEUR} @@ q.proche` : ''}
@@ -477,88 +487,6 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
     ? 'AND s.code_cis = ANY (ARRAY(SELECT code_cis FROM cis_molecule))'
     : 'AND $5::text IS NULL'}
      ),
-     -- Les substances en jeu, pour ne nommer que celles-là.
-     substances AS (
-       SELECT DISTINCT c.code_substance
-       FROM dbpm.cis_compo_bdpm c
-       WHERE c.code_cis IN (SELECT DISTINCT code_cis FROM tout)
-         AND c.nature_composant = 'SA'
-     ),
-     -- Les libellés du sel, découpés en mots — sans accents ni ponctuation,
-     -- « BROMURE D'IPRATROPIUM » devenant {BROMURE, D, IPRATROPIUM}.
-     libelles AS (
-       SELECT c.code_substance, c.denomination_substance AS nom,
-              string_to_array(btrim(regexp_replace(
-                upper(public.f_unaccent(c.denomination_substance)),
-                '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
-       FROM dbpm.cis_compo_bdpm c
-       WHERE c.nature_composant = 'SA'
-         AND c.code_substance IN (SELECT code_substance FROM substances)
-     ),
-     -- Les fractions thérapeutiques rattachées au même numéro de liaison.
-     fractions AS (
-       SELECT sa.code_substance, ft.denomination_substance AS nom,
-              string_to_array(btrim(regexp_replace(
-                upper(public.f_unaccent(ft.denomination_substance)),
-                '[^A-Z0-9]+', ' ', 'g')), ' ') AS mots
-       FROM dbpm.cis_compo_bdpm sa
-       JOIN dbpm.cis_compo_bdpm ft
-         ON ft.code_cis = sa.code_cis
-        AND ft.numero_liaison_saft = sa.numero_liaison_saft
-        AND ft.nature_composant = 'FT'
-       WHERE sa.nature_composant = 'SA'
-         AND sa.code_substance IN (SELECT code_substance FROM substances)
-     ),
-     -- Une fraction ne peut nommer la substance que si tous ses mots sont des
-     -- mots du sel. C'est toute la règle, et elle a été trouvée en constatant
-     -- les dégâts de l'autre : onze produits de contraste réunis sous « IODE »,
-     -- le carboxymaltose ferrique avec le sulfate ferreux, l'acétylcystéine
-     -- sous « CYSTÉINE ». La fraction thérapeutique n'est pas la molécule,
-     -- c'est ce qui, dans le sel, porte l'effet — parfois un simple atome.
-     candidats AS (
-       SELECT code_substance, nom FROM libelles
-       UNION
-       SELECT f.code_substance, f.nom
-       FROM fractions f
-       WHERE EXISTS (SELECT 1 FROM libelles l
-                     WHERE l.code_substance = f.code_substance AND f.mots <@ l.mots)
-     ),
-     -- MATERIALIZED : calculée une fois. Inlinée, elle était retriée à chaque
-     -- spécialité, et « allaitement » (3 000 occurrences) dépassait le délai.
-     noms AS MATERIALIZED (
-       SELECT DISTINCT ON (code_substance) code_substance, nom
-       FROM candidats
-       WHERE coalesce(nom, '') <> ''
-       ORDER BY code_substance, length(nom), nom
-     ),
-     -- La signature : l'ensemble trié des noms résolus. Sur le nom et non sur
-     -- le code, sans quoi DARUNAVIR sort trois fois — un code par sel, et la
-     -- base elle-même leur donne le même nom.
-     --
-     -- Les spécialités sans composition — deux sur treize mille six cents —
-     -- retombent sur leur propre CIS plutôt que de se fondre dans un groupe
-     -- vide commun, qui les réunirait sans qu'elles aient rien en partage.
-     -- Jointure agrégée plutôt qu'un sous-select corrélé : un seul passage
-     -- sur les compositions, quel que soit le nombre d'occurrences. Les noms
-     -- en table de correspondance : joints comme une CTE, mal estimée, ils
-     -- étaient relus en entier pour chaque spécialité (1 813 × 10 883 lignes
-     -- pour « insuffisance hépatique », 1,3 s).
-     dictionnaire AS MATERIALIZED (
-       SELECT jsonb_object_agg(code_substance, nom) AS noms FROM noms
-     ),
-     -- Le dictionnaire est lu une fois (sous-requête scalaire) : joint à
-     -- chaque ligne, il était recopié dans le tri du regroupement.
-     molecule AS MATERIALIZED (
-       SELECT t.code_cis,
-              coalesce(string_agg(DISTINCT x.nom, ' + ' ORDER BY x.nom), 'cis:' || t.code_cis) AS signature
-       FROM (SELECT DISTINCT code_cis FROM tout) t
-       LEFT JOIN LATERAL (
-         SELECT (SELECT noms FROM dictionnaire) ->> c.code_substance::text AS nom
-         FROM dbpm.cis_compo_bdpm c
-         WHERE c.code_cis = t.code_cis AND c.nature_composant = 'SA'
-       ) x ON true
-       GROUP BY t.code_cis
-     ),
      -- Le classement, sur toutes les rubriques : les molécules trouvées dans
      -- une rubrique du comptoir d'abord, puis l'expression exacte, puis la
      -- rubrique qui répond le mieux à la question du comptoir, puis le score.
@@ -568,7 +496,7 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
      -- Par molécule et non par rubrique : un plafond en rubriques laissait une
      -- molécule à trois cents génériques occuper la place des autres.
      classement AS MATERIALIZED (
-       SELECT m.signature, count(DISTINCT t.code_cis)::int AS specialites, max(t.score) AS score,
+       SELECT t.signature, count(DISTINCT t.code_cis)::int AS specialites, max(t.score) AS score,
               bool_or(t.clinique) AS clinique,
               coalesce(bool_or(t.exact) FILTER (WHERE t.clinique), bool_or(t.exact)) AS exact,
               coalesce(min(t.rang) FILTER (WHERE t.exact AND t.clinique),
@@ -576,9 +504,9 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                        min(t.rang) FILTER (WHERE t.exact),
                        min(t.rang)) AS rang,
               -- Nombre de substances : filtré sur un médicament, la molécule seule passe avant ses associations.
-              array_length(string_to_array(m.signature, ' + '), 1) AS composants
-       FROM tout t JOIN molecule m USING (code_cis)
-       GROUP BY m.signature
+              array_length(string_to_array(t.signature, ' + '), 1) AS composants
+       FROM tout t
+       GROUP BY t.signature
      ),
      -- Les mieux classées seulement, détaillées ci-dessous.
      resume AS MATERIALIZED (
@@ -588,16 +516,16 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        LIMIT ${MOLECULES_MAX}
      ),
      trouve AS (
-       SELECT t.* FROM tout t JOIN molecule m USING (code_cis)
-       WHERE m.signature IN (SELECT signature FROM resume)
+       SELECT t.* FROM tout t
+       WHERE t.signature IN (SELECT signature FROM resume)
      ),
      -- Princeps (référent de groupe générique) : la spécialité la plus connue
      -- représente sa molécule et fournit ses phrases.
      enrichi AS (
-       SELECT t.*, m.signature,
+       SELECT t.*,
               EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
                       WHERE g.code_cis = t.code_cis AND g.type_generique = '0') AS princeps
-       FROM trouve t JOIN molecule m USING (code_cis)
+       FROM trouve t
      ),
      -- Une entrée par rubrique et par molécule, portée par sa meilleure
      -- occurrence : le numéro affiché doit mener quelque part de précis. Le
@@ -634,13 +562,23 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
        FROM par_rubrique p GROUP BY signature
      ),
      -- Une entrée par rubrique et par spécialité : l'accordéon déplié montre
-     -- les points de chaque dosage, chacun menant à son propre RCP.
-     par_specialite_rubrique AS (
-       SELECT DISTINCT ON (code_cis, document_type, numero)
-              code_cis, document_type, numero, libelle, position, exact
-       FROM enrichi
-       WHERE coalesce(numero, '') <> ''
-       ORDER BY code_cis, document_type, numero, exact DESC, score DESC
+     -- les points de chaque dosage, chacun menant à son propre RCP. Agrégées
+     -- une fois par spécialité : lues pour chacune des spécialités de la page,
+     -- elles rescannaient toutes les occurrences (672 fois pour « grossesse »).
+     par_specialite_rubrique AS MATERIALIZED (
+       SELECT code_cis,
+              json_agg(json_build_object(
+                'numero', numero, 'libelle', libelle, 'type', document_type,
+                'exact', exact, 'ancre', document_type || '-' || position)
+                ORDER BY document_type <> 'rcp', numero) AS rubriques
+       FROM (
+         SELECT DISTINCT ON (code_cis, document_type, numero)
+                code_cis, document_type, numero, libelle, position, exact
+         FROM enrichi
+         WHERE coalesce(numero, '') <> ''
+         ORDER BY code_cis, document_type, numero, exact DESC, score DESC
+       ) unique_rubrique
+       GROUP BY code_cis
      ),
      meilleur AS (
        SELECT DISTINCT ON (signature)
@@ -699,13 +637,10 @@ export async function chercherDansDocuments(pool, requete, options = {}) {
                       'princeps', EXISTS (SELECT 1 FROM dbpm.cis_gener_bdpm g
                                           WHERE g.code_cis = p.code_cis AND g.type_generique = '0'),
                       'ancre', p.ancre,
-                      'rubriques', (SELECT json_agg(json_build_object(
-                                             'numero', r.numero, 'libelle', r.libelle, 'type', r.document_type,
-                                             'exact', r.exact, 'ancre', r.document_type || '-' || r.position)
-                                           ORDER BY r.document_type <> 'rcp', r.numero)
-                                    FROM par_specialite_rubrique r WHERE r.code_cis = p.code_cis))
+                      'rubriques', rs.rubriques)
                     ORDER BY s.denomination_medicament, p.code_cis)
              FROM par_specialite p JOIN dbpm.cis_bdpm s ON s.code_cis = p.code_cis
+             LEFT JOIN par_specialite_rubrique rs ON rs.code_cis = p.code_cis
              WHERE p.signature = r.signature) AS liste
      FROM resume r
      JOIN meilleur b USING (signature)
