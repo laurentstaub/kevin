@@ -43,9 +43,9 @@ describe('routes des pages et pied de page', () => {
     const res = await request(app).get('/pourquoi').expect(200);
     assert.match(res.text, /class="brouillon"/);
     assert.match(res.text, /<footer class="pied">.*href="\/mentions-legales">Mentions légales<\/a>/s);
-    assert.match(res.text, /href="mailto:contact@medipile\.fr"/);
+    assert.match(res.text, /href="mailto:contact@antheosdata\.com"/);
     // Dans le texte de la page aussi : le Markdown admet les liens mailto.
-    assert.match(res.text, /<p>[^<]*<a href="mailto:contact@medipile\.fr">contact@medipile\.fr<\/a>/);
+    assert.match(res.text, /<p>[^<]*<a href="mailto:contact@antheosdata\.com">contact@antheosdata\.com<\/a>/);
     const mentions = await request(app).get('/mentions-legales').expect(200);
     assert.doesNotMatch(mentions.text, /class="brouillon"|à compléter/);
   });
@@ -58,7 +58,7 @@ describe('routes des pages et pied de page', () => {
     const accueil = await request(app).get('/fiches').expect(200);
     assert.doesNotMatch(accueil.text, /href="\/pourquoi"/);
     assert.match(accueil.text, /href="\/mentions-legales"/);
-    assert.match(accueil.text, /href="mailto:contact@medipile\.fr"/);
+    assert.match(accueil.text, /href="mailto:contact@antheosdata\.com"/);
   });
 });
 
@@ -83,7 +83,7 @@ describe('signaler une erreur', () => {
       cis: '60234100', denomination: 'DOLIPRANE 1000 mg, comprimé', type: 'rcp',
       numero: '4.2', libelle: 'Posologie et mode d’administration', adresse: 'https://medipile.fr/product/60234100#rcp-7',
     });
-    assert.match(lien, /^mailto:contact@medipile\.fr\?subject=/);
+    assert.match(lien, /^mailto:contact@antheosdata\.com\?subject=/);
     const url = new URL(lien);
     assert.equal(url.searchParams.get('subject'), 'Erreur · DOLIPRANE 1000 mg, comprimé · RCP 4.2');
     const corps = url.searchParams.get('body');

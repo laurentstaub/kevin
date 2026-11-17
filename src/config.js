@@ -59,7 +59,7 @@ export const config = {
   },
 
   // Adresse qui reçoit les signalements d'erreur et les contacts (liens mailto).
-  contact: process.env.CONTACT_EMAIL ?? 'contact@medipile.fr',
+  contact: process.env.CONTACT_EMAIL ?? 'contact@antheosdata.com',
 
   // Adresse publique du site (« https://medipile.fr ») : liens canoniques,
   // sitemap, OpenSearch. Vide : déduite de la requête (développement).

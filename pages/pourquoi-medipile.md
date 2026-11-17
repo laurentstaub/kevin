@@ -35,4 +35,4 @@ Médipile est un outil d'information destiné aux professionnels de santé. Il n
 
 ## Signaler une erreur
 
-Chaque rubrique porte un lien « Signaler une erreur », qui prépare un courriel avec la spécialité et la rubrique concernées. On peut aussi écrire à [contact@medipile.fr](mailto:contact@medipile.fr).
+Chaque rubrique porte un lien « Signaler une erreur », qui prépare un courriel avec la spécialité et la rubrique concernées. On peut aussi écrire à [contact@antheosdata.com](mailto:contact@antheosdata.com).

@@ -10,7 +10,7 @@ Médipile (medipile.fr) est édité par Antheos Data, société par actions simp
 
 Directeur de la publication : Laurent Staub.
 
-Contact : [contact@medipile.fr](mailto:contact@medipile.fr).
+Contact : [contact@antheosdata.com](mailto:contact@antheosdata.com).
 
 ## Hébergement
 
@@ -30,4 +30,4 @@ Comme tout serveur web, l'hébergeur conserve pour une durée limitée des journ
 
 ## Responsabilité
 
-Médipile est un outil d'information destiné aux professionnels de santé. Il reproduit des documents officiels sans les interpréter et ne remplace ni le jugement professionnel ni un logiciel d'aide à la dispensation certifié. Le résumé des caractéristiques du produit en vigueur fait foi. Une erreur de reproduction peut être signalée à [contact@medipile.fr](mailto:contact@medipile.fr).
+Médipile est un outil d'information destiné aux professionnels de santé. Il reproduit des documents officiels sans les interpréter et ne remplace ni le jugement professionnel ni un logiciel d'aide à la dispensation certifié. Le résumé des caractéristiques du produit en vigueur fait foi. Une erreur de reproduction peut être signalée à [contact@antheosdata.com](mailto:contact@antheosdata.com).
