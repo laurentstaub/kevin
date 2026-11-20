@@ -53,20 +53,17 @@
   .paire-sens { grid-template-columns: 1fr; row-gap: var(--sp-3); }
 }
 
-/* Sens sans passage : à la place des citations, avec le même filet. */
-.sens-vide {
-  padding-left: var(--sp-2);
-  border-left: 2px dashed var(--rule-medium);
-}
+/* Un seul sens parle : il prend toute la largeur. */
+.paire-sens-un { grid-template-columns: 1fr; }
 
-.sens-vide p {
-  margin: 0 0 0.3em;
-  font-family: var(--font-lecture);
+/* Les sens où le RCP se tait : une ligne, sous ce qui est cité. */
+.silence {
+  margin: var(--sp-2) 0 0;
   font-size: var(--fs-sm);
+  color: var(--faint);
 }
 
-.sens-vide p.manque { font-family: var(--font-body); }
-.sens-vide a { font-size: var(--fs-xs); }
+.silence a { font-size: var(--fs-xs); }
 
 .sens-titre {
   margin: 0;

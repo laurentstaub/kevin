@@ -494,7 +494,7 @@ describe('rendu des gabarits', () => {
       a: { libelle: 'Atorvastatine' }, b: { libelle: 'Pamplemousse (jus et fruit)' }, ansm,
       niveau: ansm.length ? 'apec' : null, libelleNiveau: ansm.length ? 'À prendre en compte' : null,
       niveauSource: ansm.length ? 'ansm' : null, communes: [], memeClasse: [], cite: false,
-      sens: [sensVide, { ...sensVide, horsRcp: true }],
+      sens: [sensVide, { ...sensVide, de: 'Pamplemousse (jus et fruit)', sur: 'A', horsRcp: true }],
     });
     const couple = {
       de: 'ATORVASTATINE', avec: 'PAMPLEMOUSSE (JUS ET FRUIT)', niveaux: ['apec'], libelleNiveau: 'À prendre en compte',
@@ -504,9 +504,37 @@ describe('rendu des gabarits', () => {
     const avec = rendre('interactions', { saisie: 'atorvastatine pamplemousse', resultat: resultat([couple]) });
     assert.match(avec, /<span class="niveau-part">selon le thésaurus de l'ANSM<\/span>/);
     assert.match(avec, /<blockquote class="citation citation-ansm">.*Atorvastatine \+ Pamplemousse \(jus et fruit\).*Augmentation des concentrations/s);
-    assert.match(avec, /Pas de RCP : ce n'est pas un médicament\./);
+    assert.match(avec, /<p class="silence">Rubrique 4\.5 : pas de RCP découpé pour A ; Pamplemousse \(jus et fruit\) n'a pas de RCP\.<\/p>/);
     const sans = rendre('interactions', { saisie: 'x', resultat: resultat([]) });
     assert.match(sans, /Thésaurus de l'ANSM \(septembre 2023\) : aucune entrée pour ce couple\./);
+  });
+
+  // Seroplex × clarithromycine : le thésaurus cite le couple, les 4.5 se taisent.
+  // Le silence tient en une ligne ; plus de « 0 RCP sur 36 » en colonne, qui se
+  // lisait comme « pas d'interaction ».
+  it('les sens muets tiennent en une ligne, les sens cités en colonnes', () => {
+    const muet = (de, sur, rcp, cis) => ({
+      de, sur, cherche: sur, rcp, citant: 0, passages: [], autres: 0, horsRcp: false,
+      lecture: { cis, ancre: 'rcp-8', denomination: `${de} 5 mg` },
+    });
+    const passage = {
+      niveau: 'pe', libelleNiveau: 'Précaution d’emploi', par: 'classe', classe: 'Allongeant le QT', extrait: 'Surveillance ECG.',
+      exemple: { cis: '61', ancre: 'rcp-8', denomination: 'SEROPLEX 5 mg' }, nb: 3, variantes: 0,
+    };
+    const paire = (sens) => ({
+      a: { libelle: 'Seroplex' }, b: { libelle: 'Clarithromycine' }, ansm: [], niveau: 'pe', libelleNiveau: 'Précaution d’emploi',
+      niveauSource: 'ansm', communes: [], memeClasse: [], cite: false, sens,
+    });
+    const rendu = (sens) => rendre('interactions', { saisie: 'x', resultat: { medicaments: [], inconnus: [], paires: [paire(sens)] } });
+
+    const silencieux = rendu([muet('Seroplex', 'Clarithromycine', 5, '61'), muet('Clarithromycine', 'Seroplex', 36, '62')]);
+    assert.doesNotMatch(silencieux, /class="sens"|RCP sur \d+ nomment|paire-sens/);
+    assert.match(silencieux, /<p class="silence">Rubrique 4\.5 : rien sur Clarithromycine dans les RCP de Seroplex \(5 lus\) ·<a href="\/product\/61#rcp-8">lire la 4\.5<\/a> ; rien sur Seroplex dans les RCP de Clarithromycine \(36 lus\)/);
+
+    const unSens = rendu([{ ...muet('Seroplex', 'Clarithromycine', 5, '61'), citant: 3, passages: [passage] }, muet('Clarithromycine', 'Seroplex', 36, '62')]);
+    assert.match(unSens, /<div class="paire-sens paire-sens-un"><div class="sens"><h3 class="sens-titre">RCP de Seroplex/);
+    assert.match(unSens, /<p class="sens-compte">Cité par 3 RCP sur 5<\/p>/);
+    assert.match(unSens, /<p class="silence">Rubrique 4\.5 : rien sur Seroplex dans les RCP de Clarithromycine \(36 lus\)/);
   });
 
   // Accueil : les molécules les plus fournies, sous les classes.

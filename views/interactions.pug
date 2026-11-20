@@ -8,33 +8,17 @@ include _correction.pug
 //- parce que les deux RCP divergent souvent et que l'écart est une information.
 
 mixin sens(s)
+  //- Un sens où le RCP parle : ses citations. Les sens muets tiennent en une
+  //- ligne sous la paire (mixin silence) : un « 0 RCP sur 36 » en colonne se
+  //- lisait comme « pas d'interaction », même quand le thésaurus en cite une.
   //- Trois rangées partagées par les deux colonnes (titre, décompte, passages) :
   //- un décompte sur deux lignes ne décale pas les citations d'en face.
   .sens
     h3.sens-titre
       | RCP de #{s.de}
       span.sens-sur  sur #{s.sur}
-    p.sens-compte
-      if s.horsRcp
-        | Pas de RCP : ce n'est pas un médicament.
-      else if s.sansObjet
-        | Même substance : rien à chercher dans ce sens.
-      else if s.rcp === 0
-        | Aucun RCP découpé en rubriques.
-      else
-        | #{s.citant} RCP sur #{s.rcp} nomment #{s.cherche}#{s.classes && s.classes.length ? ` ou sa classe (${s.classes.join(', ')})` : ''} en rubrique 4.5.
+    p.sens-compte Cité par #{s.citant} RCP sur #{s.rcp}
     .sens-corps
-      //- Sens vide : le dire à la place des citations, et donner la 4.5 à lire.
-      //- Un silence n'est pas une absence d'interaction.
-      if !s.horsRcp && !s.sansObjet && s.rcp > 0 && s.passages.length === 0
-        .sens-vide
-          p Aucun passage de la 4.5 ne nomme #{s.cherche}#{s.classes && s.classes.length ? ' ni sa classe' : ''}.
-          if s.classes && s.classes.length
-            p.manque Le RCP peut employer une formulation de classe que la table ne connaît pas encore.
-          else
-            p.manque Le RCP peut viser sa classe thérapeutique sans nommer la molécule : celle-ci n'est pas dans la table des classes.
-          if s.lecture
-            a(href=`/product/${s.lecture.cis}#${s.lecture.ancre}`) Lire la 4.5 de #{specialite(s.lecture.denomination)}
       each passage in s.passages
         blockquote.citation
           if passage.libelleNiveau
@@ -55,6 +39,26 @@ mixin sens(s)
               span.variantes  · #{passage.variantes} rédaction#{passage.variantes > 1 ? 's' : ''} voisine#{passage.variantes > 1 ? 's' : ''}
       if s.autres > 0
         p.manque #{s.autres} autre#{s.autres > 1 ? 's' : ''} rédaction#{s.autres > 1 ? 's' : ''} du même passage ou d'autres passages, dans les RCP liés.
+
+//- Les sens où le RCP ne dit rien de l'autre médicament, sur une ligne grise :
+//- ce qui a été lu, et la 4.5 à lire soi-même. Même substance : rien à dire.
+mixin silence(muets)
+  - const dits = muets.filter((s) => !s.sansObjet)
+  if dits.length
+    p.silence
+      | Rubrique 4.5 :
+      each s, i in dits
+        |  
+        if s.horsRcp
+          | #{s.de} n'a pas de RCP
+        else if s.rcp === 0
+          | pas de RCP découpé pour #{s.de}
+        else
+          | rien sur #{s.sur} dans les RCP de #{s.de} (#{s.rcp} lu#{s.rcp > 1 ? 's' : ''})
+          if s.lecture
+            |  ·
+            a(href=`/product/${s.lecture.cis}#${s.lecture.ancre}`) lire la 4.5
+        | #{i < dits.length - 1 ? ' ;' : '.'}
 
 block styles
   link(rel="stylesheet", href=`/css/fiche.css?v=${v}`)
@@ -100,6 +104,7 @@ block content
               span.niveau-part selon #{paire.minorite.nb} RCP sur #{paire.minorite.sur} (#{paire.minorite.de})
           else if !paire.ansm.length && !paire.cite && !paire.communes.length && !paire.memeClasse.length
             span.niveau.niveau-aucun Aucune mention trouvée
+            span.niveau-part ce n'est pas une preuve d'absence : le RCP fait foi
         if paire.communes.length
           p.communes Même substance dans les deux : #{paire.communes.join(', ')}.
         //- Même classe ATC de niveau 4 : un fait de classification, pas une
@@ -127,9 +132,12 @@ block content
                 footer Thésaurus des interactions médicamenteuses, ANSM, 15 septembre 2023
           else
             p.manque Thésaurus de l'ANSM (septembre 2023) : aucune entrée pour ce couple.
-        .paire-sens
-          each s in paire.sens
-            +sens(s)
+        - const parlants = paire.sens.filter((s) => s.passages && s.passages.length > 0)
+        if parlants.length
+          .paire-sens(class=parlants.length === 1 ? 'paire-sens-un' : null)
+            each s in parlants
+              +sens(s)
+        +silence(paire.sens.filter((s) => !s.passages || s.passages.length === 0))
 
     p.fiche-source
       | Le thésaurus des interactions de l'ANSM est cité tel quel, dans sa
