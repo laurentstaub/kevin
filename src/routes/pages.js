@@ -16,6 +16,7 @@ import {
 } from '../galenique.js';
 import { getInfosSecurite } from '../securite.js';
 import { getComptoir } from '../comptoir.js';
+import { getPharmacologie } from '../pharmacologie.js';
 import { rubriqueDuComptoir, motDuComptoir } from '../concepts-document.js';
 import { corriger } from '../correction.js';
 
@@ -165,7 +166,7 @@ export function pageRoutes(pool) {
       // Enfants déjà au niveau molécule (ex. J05AF) : pas de seconde liste.
       const enfantsMolecules = classe.enfants[0]?.level === FEUILLE;
 
-      const [specialitesListe, molecules, portrait] = await Promise.all([
+      const [specialitesListe, molecules, portrait, pharmacologie] = await Promise.all([
         feuille ? getSpecialitesDeClasse(pool, code, classe.label) : [],
         feuille || enfantsMolecules ? [] : getMoleculesDeClasse(pool, code),
         // Facultatif : son absence ne doit pas bloquer la page.
@@ -173,6 +174,13 @@ export function pageRoutes(pool) {
           console.error('[atc] portrait indisponible pour', code, err.message);
           return null;
         }),
+        // Molécule seulement : la 5.1 et la 5.2 du RCP d'une spécialité de référence.
+        classe.level === FEUILLE
+          ? getPharmacologie(pool, code).catch((err) => {
+            console.error('[pharmacologie] indisponible pour', code, err.message);
+            return null;
+          })
+          : null,
       ]);
 
       // Chapeau signé facultatif : fiches/classes/<code>.md.
@@ -187,7 +195,7 @@ export function pageRoutes(pool) {
         ...metaClasse({ code, libelle: phrase(classe.label), molecule: feuille, specialites: commercialisees.length }),
         canonique: `${origine(req)}/classe/${code}`,
         substitution,
-        classe, feuille, molecules, railActif: code[0],
+        classe, feuille, molecules, pharmacologie, railActif: code[0],
         commercialisees: regrouperSpecialites(commercialisees),
         retirees: regrouperSpecialites(specialitesListe.filter((sp) => !sp.commercialise)),
         portrait: lirePortrait(portrait),

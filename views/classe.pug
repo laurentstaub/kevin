@@ -59,6 +59,16 @@ block content
       p.page-meta
         +specialites(classe.specialites)
 
+      //- Molécule : sa pharmacologie, rubriques 5.1 et 5.2 du RCP d'une
+      //- spécialité de référence (src/pharmacologie.js). Le RCP fait foi.
+      if pharmacologie && pharmacologie.rubriques.length
+        p.pharmacologie
+          | Pharmacologie selon le RCP de #[a(href=`/product/${pharmacologie.cis}`)= specialite(pharmacologie.denomination)] :
+          each rubrique, i in pharmacologie.rubriques
+            if i > 0
+              span.sep
+            |  #[a(href=`/product/${pharmacologie.cis}#${rubrique.ancre}`) #{rubrique.libelle} (#{rubrique.numero})]
+
       //- Portrait de la classe en chiffres.
       if portrait.length
         dl.portrait

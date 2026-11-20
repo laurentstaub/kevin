@@ -769,6 +769,12 @@ td.forme {
   scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
 }
 
+/* L'ancre (#rcp-14) vise le <details>, pas son titre : sans la même marge, la
+   rubrique arrivait tout en haut et ses premières lignes sous la barre. */
+details.rubrique {
+  scroll-margin-top: calc(var(--barre-h) + var(--nom-h) + var(--signal-h) + var(--sp-2));
+}
+
 /* Rubrique ouverte : son titre colle sous la bande tant qu'on lit son texte,
    poussé par le titre suivant. Fond plein pour masquer le texte qui passe
    dessous, filet pour le détacher. */
@@ -1360,6 +1366,7 @@ td.forme {
 
   .contenu > .bloc,
   .rubrique-tete,
+  details.rubrique,
   .charniere,
   .document-corps .doc-heading {
     scroll-margin-top: calc(var(--barre-h) + var(--sp-2));

@@ -869,6 +869,20 @@ describe('page de classe', () => {
     assert.doesNotMatch(html, /produit/i);
   });
 
+  // Molécule : une ligne de liens vers la 5.1 et la 5.2, rien sans référence.
+  it('montre la pharmacologie de la molécule, selon un RCP', () => {
+    const html = page({
+      feuille: true,
+      pharmacologie: {
+        cis: '60958897', denomination: 'SEROPLEX 5 mg, comprimé pelliculé',
+        rubriques: [{ numero: '5.1', libelle: 'pharmacodynamie', ancre: 'rcp-14' }, { numero: '5.2', libelle: 'pharmacocinétique', ancre: 'rcp-15' }],
+      },
+    });
+    assert.match(html, /Pharmacologie selon le RCP de <a href="\/product\/60958897">Seroplex 5 mg, comprimé pelliculé<\/a> :/);
+    assert.match(html, /<a href="\/product\/60958897#rcp-14">pharmacodynamie \(5\.1\)<\/a><span class="sep"><\/span> <a href="\/product\/60958897#rcp-15">pharmacocinétique \(5\.2\)<\/a>/);
+    assert.doesNotMatch(page({ feuille: true, pharmacologie: null }), /class="pharmacologie"/);
+  });
+
   // Les spécialités retirées sont repliées.
   it('range les spécialités par forme et par nom, un lien par dosage', () => {
     const sp = (id, denomination, forme, extra = {}) => ({

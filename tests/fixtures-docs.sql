@@ -54,6 +54,13 @@ VALUES
   ('61111115', 'rcp', 2, '6.1', 'Liste des excipients', 2, true,
    '<p>Lactose monohydraté, cellulose microcristalline, stéarate de magnésium.</p>',
    'Lactose monohydraté, cellulose microcristalline, stéarate de magnésium.', 'bdpm_html'),
+  -- Pharmacologie de la molécule (page /classe/N02BE01) : seule spécialité avec une 5.1.
+  ('61111115', 'rcp', 3, '5.1', 'Propriétés pharmacodynamiques', 2, true,
+   '<p>Mécanisme d''action : action centrale et périphérique.</p>',
+   'Mécanisme d''action : action centrale et périphérique.', 'bdpm_html'),
+  ('61111115', 'rcp', 4, '5.2', 'Propriétés pharmacocinétiques', 2, true,
+   '<p>Absorption rapide et complète par voie orale.</p>',
+   'Absorption rapide et complète par voie orale.', 'bdpm_html'),
 
   ('61111117', 'rcp', 1, '6.1', 'Liste des excipients', 2, true,
    '<p>Cellulose microcristalline, povidone, stéarate de magnésium.</p>',
@@ -72,6 +79,6 @@ INSERT INTO docs.document_parse
 VALUES
   ('61111111', 'rcp', 'fixture', 1, 7, 'ok', '{}', 'bdpm_html'),
   ('61111114', 'rcp', 'fixture', 1, 1, 'partiel', '{4.2}', 'bdpm_html'),
-  ('61111115', 'rcp', 'fixture', 1, 2, 'partiel', '{4.2}', 'bdpm_html'),
+  ('61111115', 'rcp', 'fixture', 1, 4, 'partiel', '{4.2}', 'bdpm_html'),
   ('61111117', 'rcp', 'fixture', 1, 1, 'partiel', '{4.2}', 'bdpm_html'),
   ('61111120', 'rcp', 'fixture', 1, 1, 'partiel', '{4.2}', 'bdpm_html');

@@ -232,8 +232,10 @@ describe('API', { skip }, () => {
         'Paracétamol Arrow',
         'Paracétamol Teva',
       ]);
+      // Dans la liste des spécialités : la ligne de pharmacologie, au-dessus, relie aussi un RCP.
+      const liste = res.text.slice(res.text.indexOf('class="liste specialites-liste"'));
       for (const cis of ['61111114', '61111119', '61111115', '61111117', '61111118']) {
-        assert.equal(res.text.split(`href="/product/${cis}"`).length - 1, 1, `CIS ${cis}`);
+        assert.equal(liste.split(`href="/product/${cis}"`).length - 1, 1, `CIS ${cis}`);
       }
       // Le non commercialisé est replié à part.
       const replie = res.text.match(/<details class="molecules-reste">[\s\S]*?<\/details>/)?.[0] ?? '';
@@ -596,6 +598,21 @@ describe('API', { skip }, () => {
     it('sans rubrique, la recherche habituelle', async () => {
       const res = await request(app).get('/documents?q=povidone&molecule=doliprane&question=x').expect(200);
       assert.doesNotMatch(res.text, /class="lecture"/);
+    });
+  });
+
+  describe('pharmacologie', () => {
+    // Molécule : la 5.1 et la 5.2 du RCP d'une spécialité de référence, en liens.
+    it('relie la page d’une molécule aux rubriques 5.1 et 5.2 d’un RCP', async () => {
+      const res = await request(app).get('/classe/N02BE01').expect(200);
+      assert.match(res.text, /<p class="pharmacologie">Pharmacologie selon le RCP de <a href="\/product\/61111115">/);
+      assert.match(res.text, /<a href="\/product\/61111115#rcp-3">pharmacodynamie \(5\.1\)<\/a>/);
+      assert.match(res.text, /<a href="\/product\/61111115#rcp-4">pharmacocinétique \(5\.2\)<\/a>/);
+    });
+
+    it('ne la montre pas au-dessus de la molécule', async () => {
+      const res = await request(app).get('/classe/N02BE').expect(200);
+      assert.doesNotMatch(res.text, /class="pharmacologie"/);
     });
   });
 

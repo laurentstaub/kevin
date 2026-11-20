@@ -233,6 +233,10 @@
 .portrait-libelle { font-size: var(--fs-xs); color: var(--faint); }
 .portrait-base { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--faint); }
 
+/* Molécule : sa pharmacologie, une ligne de liens vers la 5.1 et la 5.2 du RCP. */
+.pharmacologie { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); color: var(--muted); }
+.pharmacologie .sep::before { content: "·"; margin: 0 0.5em; color: var(--faint); }
+
 /* Texte non relu, visible en développement seulement. */
 .brouillon {
   margin: var(--sp-3) 0 0;
