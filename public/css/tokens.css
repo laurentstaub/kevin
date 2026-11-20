@@ -125,14 +125,24 @@
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }
 
-/* Ce qui n'est pas une couleur, light-dark() ne le couvre pas : le trait des
-   liens, et le corps. En polarité inverse l'acuité baisse et les traits clairs
-   paraissent plus maigres : 17 px au lieu de 16, tout en rem suit d'un bloc. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
+/* Corps de base, tout en rem suit d'un bloc. Les écrans d'officine (1280 ×
+   1024, 1366 × 768) donnent peu de largeur : à la souris et sous 1440 px de
+   large, 15 px au lieu de 16. Pas en dessous : sur un écran de faible densité,
+   le texte perd en netteté, et le RCP est en serif. Le téléphone garde 16 px. */
+:root { --echelle: 1; font-size: calc(100% * var(--echelle)); }
+
+@media (hover: hover) and (pointer: fine) and (max-width: 1440px) {
+  :root { --echelle: 0.9375; }
 }
 
-:root[data-theme="dark"] { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: 106.25%; }
+/* Ce qui n'est pas une couleur, light-dark() ne le couvre pas : le trait des
+   liens, et le corps. En polarité inverse l'acuité baisse et les traits clairs
+   paraissent plus maigres : 6,25 % de plus (17 px au lieu de 16). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: calc(106.25% * var(--echelle)); }
+}
+
+:root[data-theme="dark"] { --trait: 0.5px; --gras: #fff; --lissage: antialiased; font-size: calc(106.25% * var(--echelle)); }
 
 /* À l'impression, toujours clair, même forcé en sombre. */
 @media print {
