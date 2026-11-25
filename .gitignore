@@ -23,3 +23,6 @@ npm-debug.log*
 
 # Espace de travail de l assistant
 .claude/
+
+# PDF du calendrier vaccinal : 10 Mo, inutiles au site ; le .txt suffit aux comparaisons
+sources/vaccins/*.pdf

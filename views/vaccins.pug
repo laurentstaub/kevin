@@ -1,0 +1,57 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+include _frise.pug
+
+//- Calendrier vaccinal : filtre par statut et frise (_frise.pug).
+//- Le filtre agit en CSS (:has) ; /js/vaccins.js ne fait que reporter le choix
+//- dans l'adresse, pour qu'un lien garde le filtre.
+
+block styles
+  link(rel="stylesheet" href=`/css/vaccins.css?v=${v}`)
+
+block content
+  +barreSituation('Calendrier vaccinal')
+
+  main.corps.corps-frise
+    header.doc-entete
+      h1.section-titre Calendrier des vaccinations
+      p.page-meta
+        | Population générale · version de #{source.version} ·
+        |
+        a(href=source.url) document du ministère chargé de la santé
+
+    //- Filtre au-dessus de la frise : un seul statut à la fois. Formulaire GET :
+    //- sans script, /vaccins?statut=recommande ouvre la page déjà filtrée.
+    form.frise-filtres(method="get" action="/vaccins")
+      fieldset
+        legend Afficher
+        each choix in [['tous', 'Tous'], ['obligatoire', 'Obligatoires'], ['recommande', 'Recommandés']]
+          label
+            input(type="radio" name="statut" id=`statut-${choix[0]}` value=choix[0] checked=statut === choix[0])
+            |  #{choix[1]}
+
+    +legendeFrise
+      li.frise-legende-note Survoler ou toucher une ligne pour le détail, cliquer le nom pour la fiche.
+
+    +frise(lignes, graduations, true)
+
+    p.page-meta.frise-source
+      | Transcription des tableaux synoptiques 4.1 et 4.2. En cas de doute, le document du ministère fait foi.
+
+    //- Les vaccins, dans l'ordre de la frise : la maladie (fiche signée, publiée
+    //- une fois relue), puis la fiche. Appels de note : vers la fiche.
+    section.vaccins-resumes(aria-labelledby="vaccins-resumes-titre")
+      h2.vaccins-resumes-titre#vaccins-resumes-titre Les vaccins du calendrier
+      each vaccin in resumes
+        article.vaccin-resume(id=`resume-${vaccin.id}`)
+          h3.vaccin-resume-titre
+            a(href=`/vaccins/${vaccin.id}`)= vaccin.nom
+          if vaccin.resume
+            .chapeau-texte!= vaccin.resume
+          p.page-meta
+            a(href=`/vaccins/${vaccin.id}`) Recommandations, spécialités et chiffres →
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
+  script(src=`/js/vaccins.js?v=${v}` defer)

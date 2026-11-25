@@ -5,7 +5,7 @@ Une fiche est un fichier Markdown de ce dossier, publié à `/fiches/<nom-du-fic
 ## Ce qu'une fiche contient
 
 - **Un en-tête** : `titre`, `auteur`, `relu` (date AAAA-MM-JJ), et `liste` si elle en porte une. **Sans date de relecture, la fiche n'est pas publiée** — elle se prévisualise en développement seulement.
-- **Un texte court, signé.** Titres `##`, paragraphes, listes `-`, `**gras**`, `*italique*`, `[lien](https://…)`. Rien d'autre : pas de HTML, pas de tableau.
+- **Un texte court, signé.** Titres `##`, paragraphes, listes `-`, `**gras**`, `*italique*`, `[lien](https://…)`, notes `[^1]` et références `[^1]: …` sous le texte. Rien d'autre : pas de HTML, pas de tableau.
 - **Des blocs calculés**, qui ne se rédigent pas :
   - `::: substances <liste>` — la liste de `data/listes/<liste>.json`, une ligne par substance. Une liste est la copie exacte d'un groupe du thésaurus ANSM (`npm run extraire-thesaurus`) : ni ajout ni retrait, c'est l'ANSM qui dit qu'une substance en fait partie ;
   - `::: citations rubriques=4.4,4.5 termes=QT` — pour chaque substance, les phrases de son RCP qui portent ces termes (élargis par le thésaurus), dans ces rubriques.
@@ -26,3 +26,11 @@ Tout ce qui porte sur une molécule est cité du RCP, jamais réécrit. Le texte
 `fiches/classes/<code>.md`, code ATC en minuscules (`m01a.md`), s'affiche en
 tête de `/classe/M01A`. Même format, même règle de publication (`relu:`), sans
 directive de calcul : deux ou trois phrases signées. Modèle : `classes/_modele.md`.
+
+## La maladie et le vaccin
+
+`fiches/vaccins/<id>.md`, identifiant du vaccin dans `data/calendrier-vaccinal.json`
+(`pnc.md`), s'affiche en tête de `/vaccins/pnc`. Même format, même règle de
+publication (`relu:`), sans directive de calcul : cinq paragraphes courts et
+chiffrés, chaque chiffre suivi d'un appel de note (`[^1]`), les références
+numérotées sous le texte (`[^1]: Auteur, [titre](https://…), date.`). Modèle : `vaccins/_modele.md`.

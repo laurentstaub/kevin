@@ -1,0 +1,849 @@
+{
+  "source": {
+    "titre": "Calendrier des vaccinations et recommandations vaccinales 2026",
+    "editeur": "Ministère chargé de la santé",
+    "version": "juillet 2026",
+    "url": "https://sante.gouv.fr/IMG/pdf/2026_07_calendrier_vaccinal-2026_a4_93p_v11.pdf",
+    "fichier": "sources/vaccins/2026_07_calendrier_vaccinal-2026_a4_93p_v11.pdf",
+    "sha256": "4da06e7e60d7a2fb6c04ba0f2d58eaa8fc7333c650ff4e03bea9b8870ecdf204",
+    "transcrit": [
+      "4.1 Tableau des vaccinations chez les enfants et les adolescents – 2026, recommandations générales et rattrapage (page 58)",
+      "4.2 Tableau des vaccinations recommandées chez les adultes – 2026, recommandations générales et rattrapage (page 62)"
+    ]
+  },
+  "conventions": {
+    "ages": "En mois révolus, bornes incluses : de_mois = premier mois concerné, a_mois = dernier mois concerné ; a_mois null = sans limite d'âge. « 11 à 14 ans révolus » = 132 à 179. Quand le tableau ne donne qu'une bande sans âge écrit, les bornes reprennent les colonnes qu'elle couvre.",
+    "type": "dose : un âge ou une fenêtre courte (de_mois = a_mois pour un âge fixe) ; periode : une plage (rattrapage, fenêtre de plusieurs années).",
+    "nature": "calendrier | rattrapage",
+    "obligation": "obligatoire | recommande | propose — « condition » précise à qui s'applique l'obligation.",
+    "texte": "Libellé de la cellule du tableau, recopié tel quel (null si l'événement vient du texte du chapitre 2).",
+    "coadministration": "Encadré vert du tableau : co-administration possible.",
+    "pages": "Pages imprimées du PDF ; la première est celle du tableau ou du texte qui fonde l'événement.",
+    "nes_a_partir_du": "Date de naissance à partir de laquelle l'événement s'applique (obligations de 2018 et 2023, ROR des personnes nées depuis 1980). Sert au curseur quand la date de naissance est connue.",
+    "rythme": "Répétition au-delà de la première dose : annuel, tous les 10 ans."
+  },
+  "a_verifier": [
+    "Page 60, note *** du tableau 4.1 : « Rattrapage chez les personnes âgées entre 15 et 19 ans révolus. Un intervalle de 5 mois doit être respecté en deux doses. » Contredit le tableau (page 58) et le chapitre 2.12 (page 28) : rattrapage de 15 à 26 ans révolus, 3 doses à 0, 2 et 6 mois. Transcrit selon le chapitre 2.12.",
+    "Méningocoques B et ACWY : le document écrit tantôt « nés après le 1er janvier 2023 » (pages 5 et 26), tantôt « à compter du 1er janvier 2023 » (page 26, encadré). Transcrit « à compter du ». Vérifier la date contre le décret d'obligation."
+  ],
+  "vaccins": [
+    {
+      "id": "vrs",
+      "nom": "Virus respiratoire syncytial",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 0,
+          "a_mois": 0,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "condition": "Réservée aux enfants dont la mère n'a pas reçu une injection de vaccin Abrysvo durant la grossesse",
+          "texte": "L'immunisation par un anticorps monoclonal Beyfortus est réalisée dès la naissance (idéalement avant la sortie de la maternité) pour les nourrissons nés au cours de la campagne et idéalement avant la saison d'épidémie pour ceux nés en dehors de la période de la campagne.",
+          "coadministration": false,
+          "pages": [
+            58
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 900,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "A partir de 75 ans : 1 dose d'Abrysvo ou d'Arexvy ou mResvia",
+          "precision": "Une seule dose ; la nécessité d'un rappel n'est pas établie à ce jour (chapitre 2.14).",
+          "coadministration": true,
+          "pages": [
+            62,
+            31
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dtcap",
+      "nom": "Diphtérie, tétanos, coqueluche, poliomyélite",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 2,
+          "a_mois": 2,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "DTCaP",
+          "coadministration": true,
+          "pages": [
+            58,
+            15,
+            9
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 4,
+          "a_mois": 4,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "DTCaP",
+          "coadministration": true,
+          "pages": [
+            58,
+            15,
+            9
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 11,
+          "a_mois": 11,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "DTCaP",
+          "precision": "Rappel à 11 mois ; ce schéma ne doit pas être différé.",
+          "coadministration": true,
+          "pages": [
+            58,
+            15,
+            9
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 72,
+          "a_mois": 72,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "DTCaP",
+          "coadministration": false,
+          "pages": [
+            58,
+            15
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 132,
+          "a_mois": 167,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "dTcaP entre 11 et 13 ans",
+          "precision": "dTcaP : vaccin combiné diphtérie, tétanos, poliomyélite et coqueluche avec des doses réduites d'anatoxine diphtérique (d) et d'antigènes coquelucheux (ca).",
+          "coadministration": true,
+          "pages": [
+            58,
+            61,
+            15
+          ]
+        },
+        {
+          "type": "dose",
+          "de_mois": 300,
+          "a_mois": 300,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "Rappel dTcaP",
+          "coadministration": true,
+          "pages": [
+            62,
+            15
+          ]
+        },
+        {
+          "type": "dose",
+          "de_mois": 540,
+          "a_mois": 540,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "Rappel dTcaP",
+          "coadministration": true,
+          "pages": [
+            62,
+            15
+          ]
+        },
+        {
+          "type": "dose",
+          "de_mois": 780,
+          "a_mois": 780,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "Rappel dTcaP",
+          "coadministration": true,
+          "pages": [
+            62,
+            15
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 900,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "rythme": "tous les 10 ans",
+          "texte": "Rappel dTcaP à 75, 85 ans…",
+          "precision": "Les rappels de l'adulte sont recommandés aux âges fixes de 25 ans, 45 ans et 65 ans, puis tous les 10 ans.",
+          "coadministration": true,
+          "pages": [
+            62,
+            15
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 300,
+          "a_mois": 479,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "condition": "Adultes n'ayant pas reçu de rappel à 25 ans",
+          "texte": "1 dose dTcaP chez l'adulte jusqu'à 39 ans révolus, n'ayant pas reçu de rappel à 25 ans",
+          "coadministration": false,
+          "pages": [
+            62
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hib",
+      "nom": "Haemophilus influenzae b",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 2,
+          "a_mois": 2,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hib",
+          "coadministration": true,
+          "pages": [
+            58,
+            25
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 4,
+          "a_mois": 4,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hib",
+          "coadministration": true,
+          "pages": [
+            58,
+            25
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 11,
+          "a_mois": 11,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hib",
+          "coadministration": true,
+          "pages": [
+            58,
+            25
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        }
+      ]
+    },
+    {
+      "id": "hepb",
+      "nom": "Hépatite B",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 2,
+          "a_mois": 2,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hep B",
+          "coadministration": true,
+          "pages": [
+            58,
+            22
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 4,
+          "a_mois": 4,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hep B",
+          "coadministration": true,
+          "pages": [
+            58,
+            22
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 11,
+          "a_mois": 11,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "Hep B",
+          "coadministration": true,
+          "pages": [
+            58,
+            22
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "periode",
+          "de_mois": 12,
+          "a_mois": 191,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "texte": "3 doses selon le schéma 0, 1, 6 mois ou, de 11 à 15 ans révolus, 2 doses selon le schéma 0, 6 mois",
+          "precision": "Le schéma à 2 doses n'est possible qu'avec les vaccins ayant l'AMM pour cette indication (Engerix B20 µg), en respectant un intervalle de 6 mois entre les 2 doses. Le vaccin Engerix B10 µg n'est pas adapté au schéma à 2 doses.",
+          "coadministration": false,
+          "pages": [
+            58,
+            61,
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pnc",
+      "nom": "Pneumocoque",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 2,
+          "a_mois": 2,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "PnC",
+          "precision": "PnC : vaccin pneumococcique polyosidique conjugué 15-valent (Vaxneuvance) ou 13-valent (Prevenar 13).",
+          "coadministration": true,
+          "pages": [
+            58,
+            61,
+            29
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 4,
+          "a_mois": 4,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "PnC",
+          "precision": "PnC : vaccin pneumococcique polyosidique conjugué 15-valent (Vaxneuvance) ou 13-valent (Prevenar 13).",
+          "coadministration": true,
+          "pages": [
+            58,
+            61,
+            29
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 11,
+          "a_mois": 11,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "PnC",
+          "precision": "PnC : vaccin pneumococcique polyosidique conjugué 15-valent (Vaxneuvance) ou 13-valent (Prevenar 13).",
+          "coadministration": true,
+          "pages": [
+            58,
+            61,
+            29
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "periode",
+          "de_mois": 780,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "1 dose de VPC20 ou VPC21",
+          "precision": "Dose unique de vaccin pneumococcique conjugué 20-valent (Prevenar20) ou 21-valent (Capvaxive) ; la nécessité d'un rappel n'a pas été établie.",
+          "coadministration": false,
+          "pages": [
+            62,
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rotavirus",
+      "nom": "Rotavirus",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 2,
+          "a_mois": 2,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "Rota",
+          "precision": "Rotarix : 2 doses, à 2 et 3 mois ; RotaTeq : 3 doses, à 2, 3 et 4 mois. Schéma complet avec le même vaccin ; âge limite : 6 mois pour Rotarix, 8 mois pour RotaTeq.",
+          "coadministration": false,
+          "pages": [
+            58,
+            35
+          ]
+        },
+        {
+          "type": "dose",
+          "de_mois": 3,
+          "a_mois": 3,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "Rota",
+          "coadministration": false,
+          "pages": [
+            58,
+            35
+          ]
+        },
+        {
+          "type": "dose",
+          "de_mois": 4,
+          "a_mois": 4,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "condition": "Avec RotaTeq seulement (3 doses)",
+          "texte": "+/- Rota",
+          "coadministration": false,
+          "pages": [
+            58,
+            61,
+            35
+          ]
+        }
+      ]
+    },
+    {
+      "id": "menb",
+      "nom": "Méningocoque B",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 3,
+          "a_mois": 3,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2023",
+          "texte": "MnB",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ],
+          "nes_a_partir_du": "2023-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 5,
+          "a_mois": 5,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2023",
+          "texte": "MnB",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ],
+          "nes_a_partir_du": "2023-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 12,
+          "a_mois": 12,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2023",
+          "texte": "MnB",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ],
+          "nes_a_partir_du": "2023-01-01"
+        },
+        {
+          "type": "periode",
+          "de_mois": 12,
+          "a_mois": 24,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "texte": "rattrapage jusqu'à 24 mois",
+          "coadministration": false,
+          "pages": [
+            58,
+            61,
+            26
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 24,
+          "a_mois": 59,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "condition": "Obligatoire pour les enfants nés à compter du 1er janvier 2023 non vaccinés conformément au calendrier avant l'âge de 2 ans",
+          "texte": "rattrapage transitoire",
+          "precision": "Rattrapage transitoire pour les enfants de 2 à 4 ans révolus (5e anniversaire).",
+          "coadministration": false,
+          "pages": [
+            58,
+            26
+          ]
+        }
+      ]
+    },
+    {
+      "id": "menacwy",
+      "nom": "Méningocoques ACWY (vaccin conjugué)",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 6,
+          "a_mois": 6,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2023",
+          "texte": "MnACWY",
+          "precision": "Nimenrix à 6 mois.",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ],
+          "nes_a_partir_du": "2023-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 12,
+          "a_mois": 12,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2023",
+          "texte": "MnACWY",
+          "precision": "Nimenrix ou MenQuadfi à 12 mois.",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ],
+          "nes_a_partir_du": "2023-01-01"
+        },
+        {
+          "type": "periode",
+          "de_mois": 12,
+          "a_mois": 24,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "obligatoire",
+          "condition": "Nourrissons jamais vaccinés contre les sérogroupes ACWY, y compris ceux déjà vaccinés contre le sérogroupe C",
+          "texte": null,
+          "precision": "La vaccination de rattrapage entre 12 et 24 mois est obligatoire et nécessite une dose de vaccin contre les méningocoques ACWY.",
+          "coadministration": false,
+          "pages": [
+            26
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 24,
+          "a_mois": 59,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "condition": "Obligatoire pour les enfants nés à compter du 1er janvier 2023 non vaccinés conformément au calendrier avant l'âge de 2 ans",
+          "texte": "rattrapage transitoire, même si vacciné méningo C",
+          "coadministration": false,
+          "pages": [
+            58,
+            26
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 132,
+          "a_mois": 179,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "texte": "1 dose de ACWY entre 11-14 ans",
+          "precision": "Indépendamment du statut vaccinal (Nimenrix, MenQuadfi ou Menveo).",
+          "coadministration": true,
+          "pages": [
+            58,
+            26
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 180,
+          "a_mois": 299,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "texte": "1 dose entre 15 et 24 ans",
+          "coadministration": false,
+          "pages": [
+            58,
+            62,
+            61,
+            64
+          ],
+          "precision": "Rattrapage selon le schéma à une dose, recommandé jusqu'à l'âge de 24 ans révolus."
+        }
+      ]
+    },
+    {
+      "id": "ror",
+      "nom": "Rougeole, oreillons, rubéole",
+      "evenements": [
+        {
+          "type": "dose",
+          "de_mois": 12,
+          "a_mois": 12,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "ROR 1",
+          "coadministration": true,
+          "pages": [
+            58,
+            36
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "dose",
+          "de_mois": 16,
+          "a_mois": 18,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "obligatoire",
+          "condition": "Enfants nés à compter du 1er janvier 2018",
+          "texte": "ROR 2",
+          "precision": "La seconde dose ne constitue pas un rappel ; délai minimal d'un mois entre les doses.",
+          "coadministration": false,
+          "pages": [
+            58,
+            36
+          ],
+          "nes_a_partir_du": "2018-01-01"
+        },
+        {
+          "type": "periode",
+          "de_mois": 72,
+          "a_mois": 215,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "texte": "2 doses à au moins 1 mois d'intervalle, si pas de vaccin antérieur ; 1 dose si une seule dose vaccinale antérieure",
+          "precision": "Les nourrissons vaccinés avant 12 mois reçoivent 2 doses supplémentaires (12 mois puis 16-18 mois), soit 3 doses au total.",
+          "coadministration": false,
+          "pages": [
+            58,
+            36
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 216,
+          "a_mois": 539,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "condition": "Personnes nées depuis 1980",
+          "nes_a_partir_du": "1980-01-01",
+          "texte": "Atteindre 2 doses au total chez les personnes nées depuis 1980",
+          "coadministration": false,
+          "pages": [
+            62,
+            36
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 216,
+          "a_mois": 779,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "condition": "Femmes non vaccinées en âge de procréer",
+          "texte": "1 dose de ROR chez les femmes non vaccinées en âge de procréer",
+          "coadministration": false,
+          "pages": [
+            62
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hpv",
+      "nom": "Papillomavirus humains",
+      "evenements": [
+        {
+          "type": "periode",
+          "de_mois": 132,
+          "a_mois": 179,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "condition": "Filles et garçons",
+          "texte": "2 doses espacées de 5 à 13 mois",
+          "coadministration": true,
+          "pages": [
+            58,
+            28
+          ]
+        },
+        {
+          "type": "periode",
+          "de_mois": 180,
+          "a_mois": 323,
+          "population": "generale",
+          "nature": "rattrapage",
+          "obligation": "recommande",
+          "texte": "3 doses selon le schéma 0, 2, 6 mois avec le vaccin nonavalent (15 à 26 ans révolus)",
+          "precision": "Gardasil 9 ; les trois doses en moins d'un an. Voir a_verifier : note *** de la page 60.",
+          "coadministration": false,
+          "pages": [
+            58,
+            62,
+            28
+          ]
+        }
+      ]
+    },
+    {
+      "id": "covid",
+      "nom": "Covid-19",
+      "evenements": [
+        {
+          "type": "periode",
+          "de_mois": 780,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "rythme": "annuel",
+          "texte": "Vaccination recommandée chez l'adulte de 65 ans et plus. 1 dose annuelle à l'automne. Dose de printemps recommandée pour les personnes de 80 ans et plus ou les résidents d'EHPAD et USLD, en respectant un délai d'au moins 3 mois après la dernière injection/ infection.",
+          "coadministration": false,
+          "pages": [
+            62,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grippe",
+      "nom": "Grippe saisonnière",
+      "evenements": [
+        {
+          "type": "periode",
+          "de_mois": 780,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "rythme": "annuel",
+          "texte": "1 dose annuelle",
+          "coadministration": false,
+          "pages": [
+            62,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zona",
+      "nom": "Zona",
+      "evenements": [
+        {
+          "type": "periode",
+          "de_mois": 780,
+          "a_mois": null,
+          "population": "generale",
+          "nature": "calendrier",
+          "obligation": "recommande",
+          "condition": "Adultes immunocompétents",
+          "texte": "A partir de 65 ans : vaccination avec le vaccin Shingrix ; 2 doses espacées de 2 mois",
+          "precision": "Également recommandée après un zona ou une vaccination par Zostavax, en respectant un délai d'au moins un an avant la première dose.",
+          "coadministration": true,
+          "pages": [
+            62,
+            64,
+            44
+          ]
+        }
+      ]
+    }
+  ]
+}

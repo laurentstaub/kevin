@@ -97,6 +97,19 @@ block content
     if notice
       p.notice= notice
 
+    //- Calendrier vaccinal : même présentation qu'une classe, une seule ligne.
+    if !results && calendrier
+      nav.classes(aria-label="Calendrier vaccinal")
+        h2.classes-titre
+          | Calendrier vaccinal
+          span.classes-unite= `Version de ${calendrier.version}`
+        ul.classes-liste
+          li
+            a.classe-lien(href="/vaccins")
+              span.classe-code J07
+              span.classe-label De la naissance à 85 ans et plus : obligations et recommandations
+              span.classe-compte= `${calendrier.vaccins} vaccins`
+
     //- Entrée par classe ATC, pour qui ne cherche pas un nom.
     if !results && classes && classes.length > 0
       nav.classes(aria-label="Parcourir par classe thérapeutique")

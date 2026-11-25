@@ -145,3 +145,11 @@ describe('fiche — rendu', () => {
     assert.match(page, /Brouillon/);
   });
 });
+
+it('decouper : appels de note en exposant, références numérotées sous le texte', () => {
+  const blocs = decouper('Un chiffre[^1], un autre[^2].\n\n[^1]: Source A, [titre](https://exemple.fr).\n[^2]: Source B.');
+  assert.equal(blocs.length, 2);
+  assert.match(blocs[0].html, /<sup class="appel"><a href="#ref-1">1<\/a><\/sup>/);
+  assert.match(blocs[1].html, /^<ol class="references"><li id="ref-1" value="1">Source A, <a href="https:\/\/exemple\.fr"/);
+  assert.match(blocs[1].html, /<li id="ref-2" value="2">Source B\.<\/li><\/ol>$/);
+});

@@ -30,7 +30,8 @@
     "check-donnees": "node scripts/check-donnees.js",
     "comparer-ia": "node scripts/comparer-ia.js",
     "collect-documents": "node scripts/collect-documents.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "veille-vaccins": "node scripts/veille-calendrier-vaccinal.js"
   },
   "dependencies": {
     "express": "^5.1.0",

@@ -3,7 +3,8 @@
  * date de relecture et source ; sans date de relecture, pas de publication.
  * Ce qui porte sur une molécule est cité depuis les RCP via des blocs
  * déclaratifs (`::: substances …`), calculés dans un JSON versionné et relu.
- * Markdown restreint (titres, paragraphes, listes, gras, italique, liens) :
+ * Markdown restreint (titres, paragraphes, listes, gras, italique, liens, notes
+ * « [^1] » et leurs références « [^1]: … ») :
  * tout est échappé, puis seuls ces motifs sont reconnus.
  */
 
@@ -15,6 +16,8 @@ export const DOSSIER_FICHES = path.join(ROOT, 'fiches');
 export const DOSSIER_CALCULS = path.join(ROOT, 'data', 'fiches');
 /** Les chapeaux des pages de classe : `fiches/classes/m01a.md` pour M01A. */
 export const DOSSIER_CLASSES = path.join(DOSSIER_FICHES, 'classes');
+/** La maladie et le vaccin, en tête de `/vaccins/<id>` : `fiches/vaccins/pnc.md`. */
+export const DOSSIER_VACCINS = path.join(DOSSIER_FICHES, 'vaccins');
 /** Les pages du site (« Pourquoi Médipile », mentions légales) : même format, même règle. */
 export const DOSSIER_PAGES = path.join(ROOT, 'pages');
 
@@ -30,6 +33,8 @@ const lienSur = (url) => /^(https?:\/\/|\/|mailto:)/.test(url);
 
 function enLigne(texte) {
   return echapper(texte)
+    // Appel de note « [^2] » : chiffre en exposant, lien vers la référence sous le texte.
+    .replace(/\[\^(\d{1,2})\]/g, '<sup class="appel"><a href="#ref-$1">$1</a></sup>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, '$1<em>$2</em>')
     // Une paire de parenthèses est admise dans l'URL (ANSM, Wikipédia).
@@ -77,12 +82,21 @@ export function decouper(corps) {
   const blocs = [];
   let paragraphe = [];
   let liste = [];
+  let notes = [];
 
   const vider = () => {
     if (paragraphe.length) blocs.push({ type: 'html', html: `<p>${enLigne(paragraphe.join(' '))}</p>` });
     if (liste.length) blocs.push({ type: 'html', html: `<ul>${liste.map((element) => `<li>${enLigne(element)}</li>`).join('')}</ul>` });
+    if (notes.length) {
+      blocs.push({
+        type: 'html',
+        html: `<ol class="references">${notes.map(({ numero, texte }) =>
+          `<li id="ref-${numero}" value="${numero}">${enLigne(texte)}</li>`).join('')}</ol>`,
+      });
+    }
     paragraphe = [];
     liste = [];
+    notes = [];
   };
 
   for (const brute of corps.split(/\r?\n/)) {
@@ -96,6 +110,14 @@ export function decouper(corps) {
       blocs.push({ type: 'html', html: `<h${niveau}>${enLigne(titre[2])}</h${niveau}>` });
       continue;
     }
+    // Référence « [^2]: Santé publique France, [bilan 2023](https://…) », sous le texte.
+    const note = /^\[\^(\d{1,2})\]:\s+(.+)$/.exec(ligne);
+    if (note) {
+      if (paragraphe.length || liste.length) vider();
+      notes.push({ numero: note[1], texte: note[2] });
+      continue;
+    }
+    if (notes.length) vider();
     const puce = /^[-*]\s+(.+)$/.exec(ligne);
     if (puce) { if (paragraphe.length) vider(); liste.push(puce[1]); continue; }
     if (liste.length) vider();

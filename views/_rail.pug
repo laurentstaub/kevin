@@ -6,6 +6,13 @@
 //- Pas de lien « Accueil » : la barre collante en porte déjà un.
 mixin rail(classes, actif)
   aside.rail(aria-label="Navigation")
+    //- Repères hors classification. Pas de rail sur les pages du calendrier.
+    p.rail-titre Repères
+    nav.rail-groupe
+      a.rail-lien(href="/vaccins" title="Calendrier des vaccinations, de la naissance à 85 ans et plus")
+        //- Colonne de code vide : le libellé s'aligne sur ceux des classes.
+        span.rail-code
+        span.rail-label Calendrier vaccinal
     if classes && classes.length
       p.rail-titre Classes thérapeutiques
       nav.rail-groupe

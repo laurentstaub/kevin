@@ -29,7 +29,7 @@ import {
   getExcipients, excipientsDe, cisDesAlternatives, filtrerAlternatives, lireSans, lienAlternatives,
 } from '../excipients.js';
 import {
-  lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES, DOSSIER_PAGES,
+  lireFiche, listerFiches, lireCalcul, publiee, DOSSIER_CLASSES, DOSSIER_PAGES, DOSSIER_VACCINS,
 } from '../fiches.js';
 import { lienSignalement } from '../signalement.js';
 import { regrouperSpecialites } from '../specialites.js';
@@ -38,6 +38,9 @@ import { searchMedications } from '../search.js';
 import { getProduct, getVariantes } from '../products.js';
 import { getAlternatives } from '../alternatives.js';
 import { compterOptions } from '../substitution.js';
+import {
+  frise, lireCalendrier, ficheVaccin, getSpecialitesVaccins, calendrierDe, resumeTopo,
+} from '../vaccins.js';
 import { getDocuments, withSections, DOCUMENT_TYPES } from '../documents.js';
 import { getSections } from '../sections.js';
 import {
@@ -143,6 +146,8 @@ export function pageRoutes(pool) {
         ia: iaActive(),
         query: '', filter: 'all', results: null, classes, molecules, sansRail: true,
         colonnes: COLONNES,
+        // Entrée vers la frise : version du calendrier et nombre de lignes.
+        calendrier: (({ source, vaccins }) => ({ version: source.version, vaccins: vaccins.length }))(lireCalendrier()),
       });
     }),
   );
@@ -350,7 +355,9 @@ export function pageRoutes(pool) {
           .filter(([, slug]) => publiee(lireFiche(slug, DOSSIER_PAGES)))
           .map(([adresse]) => adresse);
         const chemins = await cheminsIndexables(pool, fiches);
-        cheminsEnCache = { depuis: Date.now(), chemins: [chemins[0], ...pages, ...chemins.slice(1)] };
+        // Calendrier vaccinal : la frise et une page par ligne.
+        const vaccins = ['/vaccins', ...lireCalendrier().vaccins.map((vaccin) => `/vaccins/${vaccin.id}`)];
+        cheminsEnCache = { depuis: Date.now(), chemins: [chemins[0], ...pages, ...vaccins, ...chemins.slice(1)] };
       }
       res.type('application/xml').set('Cache-Control', 'public, max-age=86400').send(sitemap(origine(req), cheminsEnCache.chemins));
     }),
@@ -559,6 +566,58 @@ export function pageRoutes(pool) {
 
   /** Fiches thématiques. Non relue : brouillon en développement, absente en production. */
 
+  /** Calendrier vaccinal : frise de la population générale, rendue côté serveur. */
+  router.get(
+    '/vaccins',
+    wrap(async (req, res) => {
+      const calendrier = frise(lireCalendrier());
+      res.render('vaccins', {
+        title: `Calendrier vaccinal · ${MARQUE}`,
+        description: 'Calendrier des vaccinations en France, de la naissance à 85 ans et plus, transcrit des tableaux du ministère chargé de la santé.',
+        // ?statut=obligatoire|recommande : le choix arrive coché, le filtre (CSS)
+        // s'applique dès l'affichage. Toute autre valeur : tous les statuts.
+        statut: ['obligatoire', 'recommande'].includes(req.query.statut) ? req.query.statut : 'tous',
+        // La frise prend toute la largeur : pas de rail.
+        sansRail: true,
+        ...calendrier,
+        // Sous la frise, chaque vaccin : la maladie en quelques lignes, tirée de
+        // sa fiche signée quand elle est publiée, et le lien vers la fiche.
+        resumes: calendrier.lignes.map((ligne) => {
+          const topo = lireFiche(ligne.id, DOSSIER_VACCINS);
+          return {
+            id: ligne.id,
+            nom: ligne.nom,
+            resume: topo && visible(topo) ? resumeTopo(topo, `/vaccins/${ligne.id}`) : '',
+          };
+        }),
+      });
+    }),
+  );
+
+  /**
+   * Fiche d'un vaccin : recommandations du calendrier et spécialités
+   * commercialisées qui protègent contre la maladie (vaccins combinés compris).
+   */
+  router.get(
+    '/vaccins/:id',
+    wrap(async (req, res, next) => {
+      const id = String(req.params.id ?? '');
+      if (!/^[a-z]{2,12}$/.test(id)) return next();
+      const calendrier = lireCalendrier();
+      if (!calendrier.vaccins.some((vaccin) => vaccin.id === id)) return next();
+      const fiche = ficheVaccin(calendrier, id, await getSpecialitesVaccins(pool));
+      // La maladie et le vaccin : texte signé, facultatif, publié une fois relu.
+      const topo = lireFiche(id, DOSSIER_VACCINS);
+      res.render('vaccin', {
+        topo: topo && visible(topo) ? topo : null,
+        sansRail: true,
+        title: `${fiche.ligne.nom} · Calendrier vaccinal · ${MARQUE}`,
+        description: `Vaccination contre : ${fiche.ligne.nom}. Recommandations du calendrier des vaccinations et spécialités commercialisées.`,
+        ...fiche,
+      });
+    }),
+  );
+
   router.get(
     '/fiches',
     wrap(async (req, res) => {
@@ -724,6 +783,17 @@ export function pageRoutes(pool) {
       const hasDocuments = documents.length > 0;
 
       const resumeAtc = resumerClasse(classeAtc);
+      // Vaccins et anticorps (J07, J06BD) : lignes du calendrier vaccinal et âges
+      // où le calendrier cite la spécialité. Panne : la ligne se tait.
+      const estVaccin = (classeAtc ?? []).some((niveau) => /^(J07|J06BD)/.test(niveau.code ?? ''));
+      const calendrierVaccinal = estVaccin
+        ? await getSpecialitesVaccins(pool)
+          .then((liste) => calendrierDe(lireCalendrier(), cis, liste))
+          .catch((err) => {
+            console.error('[vaccins] calendrier indisponible pour', cis, err.message);
+            return [];
+          })
+        : [];
       const genericGroup = alternatives.groupe;
       const optionsAlternatives = compterOptions(alternatives.categories);
 
@@ -785,6 +855,7 @@ export function pageRoutes(pool) {
         variantes,
         remboursement,
         resumeAtc,
+        calendrierVaccinal,
         // Pas de rail : la barre d'onglets est le plan de la fiche, le document
         // replié celui de ses rubriques, et le fil ATC mène aux classes.
         sansRail: true,

@@ -1,0 +1,22 @@
+{
+  "description": "Rattachement des spécialités de la base publique des médicaments aux lignes du calendrier vaccinal. Règle de Médipile, pas du ministère : elle porte sur les substances actives (cis_compo_bdpm), en minuscules et sans accents, parce que le code ATC ne suit pas les lignes du calendrier (un hexavalent J07CA09 couvre six maladies). Vérifiée sur l'inventaire du 23 novembre 2026 : 45 spécialités commercialisées en J07 et J06BD.",
+  "pieges": [
+    "La protéine porteuse des vaccins conjugués (« conjugué à l'anatoxine tétanique », « protéine CRM197 de Corynebacterium diphteriae ») ne fait pas un vaccin diphtérie-tétanos : seule une substance qui commence par « anatoxine » compte.",
+    "« zona » en mot entier : la souche grippale A/Arizona le contient."
+  ],
+  "substances": {
+    "vrs": "nirsevimab|palivizumab|syncytial|\\bvrs\\b",
+    "dtcap": "^anatoxine (diphterique|tetanique)|coqueluch|pertussi|bordetella|poliomyeli",
+    "hib": "haemophilus",
+    "hepb": "hepatite b",
+    "pnc": "pneumococ|streptococcus pneumoniae",
+    "rotavirus": "rotavirus",
+    "menb": "meningitidis.*groupe b\\b",
+    "menacwy": "meningitidis.*groupe (a|w)",
+    "ror": "rougeole|oreillons|rubeol",
+    "hpv": "papillomavirus",
+    "covid": "sars-cov|covid",
+    "grippe": "grippe",
+    "zona": "\\bzona\\b"
+  }
+}

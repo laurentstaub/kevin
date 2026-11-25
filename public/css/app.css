@@ -250,7 +250,21 @@
 .chapeau { max-width: var(--measure); margin: 0 0 var(--sp-4); }
 .chapeau .brouillon { margin: 0 0 var(--sp-2); }
 .chapeau-texte p { font-family: var(--font-lecture); line-height: 1.6; margin: 0 0 var(--sp-2); }
+.chapeau-texte ul { margin: 0 0 var(--sp-2); padding-left: 1.2em; }
+.chapeau-texte li { font-family: var(--font-lecture); line-height: 1.6; margin: 0 0 var(--sp-1); }
 .chapeau-signature { font-size: var(--fs-xs); color: var(--faint); margin: 0; }
+
+/* Notes des textes signés : appel en exposant, références numérotées dessous. */
+sup.appel { font-size: 0.7em; line-height: 0; }
+sup.appel a { text-decoration: none; padding: 0 0.1em; }
+ol.references {
+  margin: 0 0 var(--sp-2);
+  padding-left: 1.6em;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--muted);
+}
+ol.references li:target { background: var(--accent-pale); }
 
 /* ---------- Champ de recherche ---------- */
 
@@ -704,6 +718,18 @@
   text-decoration-thickness: var(--trait);
   text-decoration-color: var(--trait-couleur);
   text-underline-offset: 3px;
+}
+
+/* Fiche d'un vaccin : seconde ligne sous le fil ATC. */
+.atc-vaccin {
+  flex-basis: 100%;
+}
+
+/* Âges cités : en clair, sans capitales. */
+.atc-citee {
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* ---------- Résultats ---------- */

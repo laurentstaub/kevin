@@ -95,6 +95,19 @@ block content
             span.atc-sep ›
             //- La feuille s'affiche par son code : son libellé répéterait la DCI.
             a.atc-code(href=`/classe/${resumeAtc.feuille.code}` title=`${resumeAtc.feuille.code} — ${dci(resumeAtc.feuille.label)}`)= resumeAtc.feuille.code
+        //- Vaccin : lignes du calendrier vaccinal et âges où il est cité.
+        if calendrierVaccinal && calendrierVaccinal.length
+          nav.atc.atc-vaccin(aria-label="Calendrier vaccinal")
+            span.atc-etiquette Calendrier vaccinal
+            each groupe, rang in calendrierVaccinal
+              if rang > 0
+                span.atc-sep ·
+              each ligne, n in groupe.lignes
+                if n > 0
+                  span.atc-sep ,
+                a.atc-maillon(href=`/vaccins/${ligne.id}`)= ligne.nom
+              if groupe.citee
+                span.atc-citee= `cité pour ${groupe.citee}`
 
   .titre-colle
     .identite-inner

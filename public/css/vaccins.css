@@ -1,0 +1,323 @@
+/* Frise du calendrier vaccinal (/vaccins).
+ * Trois degrés, comme les statuts de délivrance (DESIGN.md §1) : aplat pour
+ * l'obligatoire, contour pour le recommandé, hachures pour le rattrapage. Le
+ * statut se dit aussi par un mot, dans l'infobulle et la légende.
+ */
+
+.corps-frise { max-width: 72rem; }
+
+/* ------------------------------------------------------------ filtres */
+.frise-filtres { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); }
+.frise-filtres fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.frise-filtres legend { float: left; color: var(--muted); }
+.frise-filtres label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.frise-filtres input { accent-color: var(--accent); width: 1rem; height: 1rem; margin: 0; }
+
+/* Un statut à la fois. « Obligatoires » : tout ce qui est obligatoire, rattrapage
+   obligatoire compris. « Recommandés » : tout le reste, rattrapage recommandé
+   compris. Disparaissent les jalons, puis les voies et les lignes devenues
+   vides, et les lignes du détail. */
+.corps-frise:has(#statut-obligatoire:checked) {
+  & .jalon:not(.jalon-obligatoire),
+  & .frise-legende li:has(.jalon-recommande),
+  & .frise-voie:not(:has(.jalon-obligatoire)),
+  & .frise-ligne:not(:has(.jalon-obligatoire)),
+  & .detail-liste li:not(.detail-ligne-obligatoire) { display: none; }
+}
+.corps-frise:has(#statut-recommande:checked) {
+  & .jalon.jalon-obligatoire,
+  & .frise-legende li:has(.jalon-obligatoire),
+  & .frise-voie:not(:has(.jalon:not(.jalon-obligatoire))),
+  & .frise-ligne:not(:has(.jalon:not(.jalon-obligatoire))),
+  & .detail-liste li.detail-ligne-obligatoire { display: none; }
+}
+
+/* ------------------------------------------------------------ légende */
+.frise-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.frise-legende li { display: flex; align-items: center; gap: var(--sp-1); }
+.frise-legende .jalon { position: static; transform: none; }
+.frise-legende .jalon-barre { width: 2rem; }
+.frise-legende-note { color: var(--faint); }
+
+/* ------------------------------------------------------------ grille */
+.frise {
+  --nom: 13rem;
+  display: grid;
+  grid-template-columns: var(--nom) 1fr;
+  position: relative;
+  font-size: var(--fs-sm);
+}
+.frise-tete { display: contents; }
+/* Une vraie boîte par ligne, alignée sur les colonnes de la frise (subgrid) :
+   elle porte le survol et le détail. */
+.frise-ligne {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  position: relative;
+  outline: none;
+}
+/* Une seule ligne active : celle sous la souris ; la ligne qui a le focus
+   (clavier) seulement quand la souris est hors de la frise. Sinon
+   le détail de la ligne cliquée restait ouvert sous celui de la ligne survolée. */
+.frise-ligne-active:hover,
+.frise:not(:hover) .frise-ligne-active:focus-visible {
+  z-index: 3;
+  background: color-mix(in srgb, var(--accent-pale) 55%, transparent);
+}
+.frise-ligne:focus-visible .frise-nom { color: var(--accent); text-decoration: underline; }
+
+.frise-nom {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.4rem var(--sp-2) 0.4rem 0;
+  color: var(--ink);
+  line-height: 1.3;
+  border-top: 1px solid var(--rule);
+}
+.frise-nom a { color: inherit; text-decoration: none; }
+.frise-nom a:hover, .frise-nom a:focus-visible { color: var(--lien); text-decoration: underline; }
+.frise-tete .frise-nom { border-top: 0; color: var(--faint); font-style: italic; }
+
+/* Axe des âges, au-dessus des pistes. */
+.frise-axe {
+  grid-column: 2;
+  position: relative;
+  z-index: 1;
+  height: 2.6rem;
+  border-bottom: 1px solid var(--rule-medium);
+}
+.graduation {
+  position: absolute;
+  bottom: 0.25rem;
+  padding: 0 0.2rem;
+  background: var(--bg);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+.graduation-rang-1 { bottom: 1.35rem; }
+.graduation:first-child { transform: none; padding-left: 0; }
+.graduation-fin { transform: translateX(-100%); }
+.graduation-fin::after { content: ' et plus'; }
+
+/* Repères verticaux : une couche sous l'axe et toutes les pistes, hors de la
+   grille (un élément de grille sur toutes les lignes repousserait les pistes). */
+.frise-reperes {
+  position: absolute;
+  inset: 0 0 0 var(--nom);
+  pointer-events: none;
+}
+.repere {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--rule);
+}
+/* Changement d'échelle : 2 ans et 18 ans. */
+.repere-palier { border-left: 1px dashed var(--rule-medium); }
+
+.frise-piste {
+  grid-column: 2;
+  position: relative;
+  z-index: 1;
+  /* Jalons au milieu de la ligne, même quand le nom tient sur deux ou trois lignes. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--rule);
+}
+.frise-voie { position: relative; height: 0.9rem; }
+.frise-voie + .frise-voie { margin-top: 0.3rem; }
+
+/* ------------------------------------------------------------ jalons (marques de la frise ; .marque est pris par app.css) */
+.jalon {
+  position: absolute;
+  top: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+/* Dose à âge fixe : un rectangle vertical, centré sur l'âge exact. */
+.jalon-point {
+  z-index: 1;
+  width: 0.4rem;
+  height: 1.1rem;
+  transform: translate(-50%, -50%);
+}
+.jalon-barre {
+  height: 0.6rem;
+  transform: translateY(-50%);
+  min-width: 0.5rem;
+}
+
+/* Recommandé : la même forme en vert clair. Un contour foncé ressortait plus que
+   l'aplat de l'obligatoire et inversait la hiérarchie. */
+.jalon-obligatoire { background: var(--accent); }
+.jalon-recommande { background: var(--accent-soft); }
+
+/* Rattrapage : hachures, quel que soit le statut ; l'obligatoire garde un contour plein. */
+.jalon.jalon-rattrapage {
+  background: repeating-linear-gradient(
+    -45deg, var(--accent-soft) 0 2px, transparent 2px 5px);
+  border: 1px solid var(--accent-soft);
+}
+.jalon.jalon-rattrapage.jalon-obligatoire { border: 1px solid var(--accent); }
+
+/* Sans limite d'âge : la barre s'efface vers la droite. */
+.jalon-ouverte {
+  border-right: 0;
+  mask-image: linear-gradient(to right, #000 85%, transparent);
+}
+
+/* ------------------------------------------------------------ petit écran */
+@media (max-width: 52rem) {
+  /* Défilement sur petit écran seulement : un cadre défilant couperait le
+     détail en grand écran. */
+  .frise-cadre { overflow-x: auto; }
+  .frise { --nom: 8rem; min-width: 46rem; font-size: var(--fs-xs); }
+  /* Le nom du vaccin reste visible pendant le défilement. */
+  .frise-nom { position: sticky; left: 0; z-index: 2; background: var(--bg); }
+}
+
+.frise-source { margin-top: var(--sp-3); }
+
+/* ------------------------------------------------------------ détail au survol */
+.frise-detail {
+  display: none;
+  /* Transparent à la souris : en descendant, on survole la ligne suivante, pas
+     le détail de la précédente qui la recouvre. */
+  pointer-events: none;
+  position: absolute;
+  top: 100%;
+  left: var(--nom);
+  right: 0;
+  max-width: 44rem;
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
+  background: var(--bg);
+  border: 1px solid var(--rule-medium);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 14%, transparent);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+.frise-ligne-active:hover .frise-detail,
+.frise:not(:hover) .frise-ligne-active:focus-visible .frise-detail { display: block; }
+
+.detail-titre { margin: 0 0 var(--sp-1); font-family: var(--font-head); font-size: var(--fs-base); }
+.detail-liste { margin: 0; padding: 0; list-style: none; }
+.detail-liste li {
+  display: grid;
+  grid-template-columns: 7.5rem 9rem 1fr auto;
+  gap: var(--sp-1);
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--rule);
+}
+.detail-age { color: var(--ink); font-variant-numeric: tabular-nums; }
+.detail-statut { color: var(--muted); }
+.detail-obligatoire { color: var(--accent); font-weight: 600; }
+.detail-texte { color: var(--ink); }
+.detail-condition, .detail-precision { display: block; color: var(--muted); font-size: var(--fs-xs); }
+.detail-pages { color: var(--faint); font-size: var(--fs-xs); white-space: nowrap; }
+
+/* Petit écran : pas de survol, le détail s'ouvre au toucher dans le flux, sous
+   la ligne, et reste à la largeur de l'écran pendant le défilement. */
+@media (max-width: 52rem) {
+  .frise-detail {
+    position: sticky;
+    left: 0;
+    grid-column: 1 / -1;
+    width: calc(100vw - 2 * var(--sp-2));
+    max-width: none;
+    box-sizing: border-box;
+    box-shadow: none;
+  }
+  .detail-liste li { grid-template-columns: 6rem 1fr; }
+  .detail-texte, .detail-pages { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------------ fiche d'un vaccin */
+/* Retour au calendrier, détaché du titre. */
+.fiche-vaccin-retour { margin-bottom: var(--sp-3); }
+
+/* Parties séparées d'un filet fin ; frise pleine largeur, textes centrés. */
+.fiche-vaccin-partie {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--rule);
+}
+/* Double classe : l'emporte sur les marges propres des titres et des listes
+   (.fiche-vaccin-titre, .specialites-vaccin), déclarées plus bas. */
+.fiche-vaccin-partie.fiche-vaccin-lecture > *,
+.page-meta.fiche-vaccin-source {
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+.fiche-vaccin-lecture .chapeau { margin-bottom: 0; }
+.fiche-vaccin-titre {
+  margin: 0 0 var(--sp-1);
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  font-weight: 400;
+}
+.fiche-vaccin-lecture .detail-liste { font-size: var(--fs-sm); }
+
+.specialites-vaccin { margin: 0; padding: 0; list-style: none; }
+.specialites-vaccin li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem var(--sp-2);
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+.specialite-vaccin-nom { grid-column: 1; color: var(--lien); }
+.specialite-vaccin-atc {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+.specialite-vaccin-citee, .specialite-vaccin-aussi { grid-column: 1 / -1; font-size: var(--fs-sm); }
+.specialite-vaccin-citee { color: var(--accent); }
+.specialite-vaccin-aussi { color: var(--muted); }
+
+/* Sous la frise : un vaccin par bloc, séparés par un filet. */
+.vaccins-resumes { margin: var(--sp-6) auto 0; max-width: var(--measure); }
+.vaccins-resumes-titre {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-head);
+  font-size: var(--fs-lg);
+  font-weight: 400;
+}
+.vaccin-resume {
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--rule);
+}
+.vaccin-resume-titre {
+  margin: 0 0 var(--sp-1);
+  font-family: var(--font-head);
+  font-size: var(--fs-md);
+  font-weight: 400;
+}
+.vaccin-resume .chapeau-texte p { margin: 0 0 var(--sp-1); }
+.vaccin-resume .page-meta { margin: 0; }

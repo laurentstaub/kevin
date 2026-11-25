@@ -1,0 +1,75 @@
+//- Frise du calendrier vaccinal et détail des recommandations, partagés par la
+//- page /vaccins et la fiche /vaccins/:id. Positions et largeurs calculées dans
+//- src/vaccins.js, en pourcentage de la piste.
+
+mixin legendeFrise()
+  ul.frise-legende
+    li
+      span.jalon.jalon-point.jalon-obligatoire
+      | Obligatoire
+    li
+      span.jalon.jalon-point.jalon-recommande
+      | Recommandé
+    li
+      span.jalon.jalon-barre.jalon-rattrapage
+      | Rattrapage
+    if block
+      block
+
+mixin detailListe(detail)
+  ul.detail-liste
+    each item in detail
+      li(class={ 'detail-ligne-obligatoire': item.obligatoire })
+        span.detail-age= item.age
+        span.detail-statut(class={ 'detail-obligatoire': item.obligatoire })= item.statut
+        span.detail-texte
+          = item.texte
+          if item.condition
+            span.detail-condition= item.condition
+          if item.precision
+            span.detail-precision= item.precision
+          if item.rythme
+            span.detail-precision Rythme : #{item.rythme}
+        span.detail-pages= item.pages
+
+//- @param {object[]} lignes      une par vaccin (src/vaccins.js → frise)
+//- @param {object[]} graduations
+//- @param {boolean}  avecDetail  encadré au survol et nom en lien vers la fiche :
+//-                               la fiche, qui affiche déjà le détail, s'en passe
+mixin frise(lignes, graduations, avecDetail)
+  //- Sur petit écran, la frise garde sa largeur et défile : des âges serrés
+  //- deviendraient illisibles.
+  .frise-cadre
+    .frise(role="table" aria-label="Calendrier des vaccinations par âge")
+      .frise-tete(role="row")
+        span.frise-nom(role="columnheader") Vaccin contre
+        .frise-axe(role="columnheader")
+          each grad in graduations
+            span.graduation(style=`left:${grad.x}%` class=[`graduation-rang-${grad.rang}`, grad.x === 100 && 'graduation-fin'])= grad.texte
+
+      .frise-reperes(aria-hidden="true")
+        each grad in graduations
+          span.repere(style=`left:${grad.x}%` class={ 'repere-palier': grad.palier })
+
+      each ligne in lignes
+        //- La ligne prend le focus au clavier : le détail s'ouvre au survol, au
+        //- toucher et au focus, sans script.
+        .frise-ligne(role="row" id=`vaccin-${ligne.id}` tabindex=avecDetail ? '0' : undefined aria-describedby=avecDetail ? `detail-${ligne.id}` : undefined class={ 'frise-ligne-active': avecDetail })
+          span.frise-nom(role="rowheader")
+            if avecDetail
+              a(href=`/vaccins/${ligne.id}`)= ligne.nom
+            else
+              = ligne.nom
+          .frise-piste(role="cell")
+            each voie in ligne.voies
+              .frise-voie
+                each m in voie
+                  span.jalon(
+                    class=m.classes
+                    style=m.point ? `left:${m.gauche}%` : `left:${m.gauche}%;width:${m.largeur}%`
+                    aria-hidden="true"
+                  )
+          if avecDetail
+            .frise-detail(id=`detail-${ligne.id}` role="tooltip")
+              p.detail-titre= ligne.nom
+              +detailListe(ligne.detail)

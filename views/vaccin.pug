@@ -1,0 +1,73 @@
+extends layout.pug
+include _barre.pug
+include _recherche.pug
+include _frise.pug
+
+//- Fiche d'un vaccin : sa ligne de frise, les recommandations du calendrier, et
+//- les spécialités commercialisées qui protègent contre la maladie
+//- (src/vaccins.js → ficheVaccin ; rattachement : data/correspondance-vaccins.json).
+
+block styles
+  link(rel="stylesheet" href=`/css/vaccins.css?v=${v}`)
+
+block content
+  +barreSituation('Calendrier vaccinal')
+
+  main.corps.corps-frise
+    header.doc-entete
+      p.page-meta.fiche-vaccin-retour
+        a(href="/vaccins") ← Calendrier des vaccinations
+      h1.section-titre= ligne.nom
+      p.page-meta
+        | Population générale · calendrier de #{source.version} ·
+        |
+        a(href=source.url) document du ministère chargé de la santé
+
+    //- Parties séparées d'un filet : la frise sur toute la largeur, puis les
+    //- textes en colonne de lecture centrée (.fiche-vaccin-lecture).
+    section.fiche-vaccin-partie(aria-label="Frise")
+      +legendeFrise
+      +frise([ligne], graduations, false)
+
+    //- La maladie et le vaccin : texte signé (fiches/vaccins/<id>.md), facultatif.
+    if topo
+      section.fiche-vaccin-partie.fiche-vaccin-lecture(aria-label="La maladie et le vaccin")
+        .chapeau.topo-vaccin
+          if !topo.meta.relu
+            p.brouillon
+              strong Brouillon
+              |  — non relu, non publié.
+          each bloc in topo.blocs
+            if bloc.type === 'html'
+              .chapeau-texte!= bloc.html
+          p.chapeau-signature
+            if topo.meta.auteur
+              = topo.meta.auteur
+            if topo.meta.relu
+              |  · relu le #{new Date(topo.meta.relu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+
+    section.fiche-vaccin-partie.fiche-vaccin-lecture
+      h2.fiche-vaccin-titre Recommandations du calendrier
+      +detailListe(ligne.detail)
+
+    section.fiche-vaccin-partie.fiche-vaccin-lecture
+      h2.fiche-vaccin-titre Spécialités commercialisées
+      if specialites.length === 0
+        p.vide Aucune spécialité commercialisée trouvée dans la base publique des médicaments pour cette vaccination.
+      else
+        ul.specialites-vaccin
+          each sp in specialites
+            li
+              a.specialite-vaccin-nom(href=`/product/${sp.id}` title=specialite(sp.denomination))= specialite(sp.nom)
+              if sp.citee
+                span.specialite-vaccin-citee Citée par le calendrier : #{sp.citee}
+              if sp.aussi.length
+                span.specialite-vaccin-aussi Protège aussi contre : #{sp.aussi.join(' · ')}
+              span.specialite-vaccin-atc= sp.atc
+
+    p.page-meta.frise-source.fiche-vaccin-source
+      | Recommandations : transcription des tableaux synoptiques 4.1 et 4.2, le document du ministère fait foi.
+      | Spécialités : base publique des médicaments, rattachées d'après leurs substances actives.
+
+block scripts
+  script(src=`/js/search.js?v=${v}` defer)
